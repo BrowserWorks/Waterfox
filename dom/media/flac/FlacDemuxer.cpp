@@ -430,7 +430,8 @@ public:
   // Convenience methods to external FlacFrameParser ones.
   bool IsHeaderBlock(const uint8_t* aPacket, size_t aLength) const
   {
-    return mParser.IsHeaderBlock(aPacket, aLength);
+    auto res = mParser.IsHeaderBlock(aPacket, aLength);
+    return res.isOk() ? res.unwrap() : false;
   }
 
   uint32_t HeaderBlockLength(const uint8_t* aPacket) const
@@ -440,7 +441,7 @@ public:
 
   bool DecodeHeaderBlock(const uint8_t* aPacket, size_t aLength)
   {
-    return mParser.DecodeHeaderBlock(aPacket, aLength);
+    return mParser.DecodeHeaderBlock(aPacket, aLength).isOk();
   }
 
   bool HasFullMetadata() const { return mParser.HasFullMetadata(); }
