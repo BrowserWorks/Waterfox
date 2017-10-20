@@ -1738,7 +1738,8 @@ EventSourceImpl::ParseCharacter(char16_t aChr)
         NS_ENSURE_SUCCESS(rv, rv);
 
         mStatus = PARSE_STATE_BEGIN_OF_LINE;
-      } else {
+      } else if (aChr != 0) {
+        // Avoid appending the null char to the field value.
         mLastFieldValue += aChr;
       }
 
@@ -1757,7 +1758,8 @@ EventSourceImpl::ParseCharacter(char16_t aChr)
         mStatus = PARSE_STATE_BEGIN_OF_LINE;
       } else if (aChr == COLON_CHAR) {
         mStatus = PARSE_STATE_COMMENT;
-      } else {
+      } else if (aChr != 0) {
+        // Avoid appending the null char to the field name.
         mLastFieldName += aChr;
         mStatus = PARSE_STATE_FIELD_NAME;
       }
