@@ -1307,5 +1307,13 @@ def select_linker(linker, c_compiler, developer_options, build_env):
             die("Could not use lld as linker")
 
 
-set_config('LD_IS_BFD', depends(select_linker.KIND)(lambda x: x == 'bfd' or None))
+set_config('LD_IS_BFD', depends(select_linker.KIND)
+           (lambda x: x == 'bfd' or None))
 set_config('LINKER_LDFLAGS', select_linker.LINKER_FLAG)
+
+
+js_option('--enable-clang-plugin', env='ENABLE_CLANG_PLUGIN',
+          help="Enable building with the mozilla clang plugin")
+
+add_old_configure_assignment('ENABLE_CLANG_PLUGIN',
+                             depends_if('--enable-clang-plugin')(lambda _: True))
