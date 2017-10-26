@@ -282,6 +282,7 @@ public:
   {
     return mPlaybackRate != 0.0 &&
            mTimeline &&
+           !mTimeline->GetCurrentTime().IsNull() &&
            (PlayState() == AnimationPlayState::Running ||
             mPendingState == PendingState::PlayPending);
   }
