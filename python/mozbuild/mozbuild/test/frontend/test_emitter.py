@@ -211,6 +211,24 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertEqual(flags.flags['MOZBUILD_CFLAGS'], ['-Wall', '-funroll-loops'])
         self.assertEqual(flags.flags['MOZBUILD_CXXFLAGS'], ['-funroll-loops', '-Wall'])
 
+    def test_debug_flags(self):
+        reader = self.reader('compile-flags', extra_substs={
+            'MOZ_DEBUG_FLAGS': '-g',
+            'MOZ_DEBUG_SYMBOLS': '1',
+        })
+        sources, lib, flags = self.read_topsrcdir(reader)
+        self.assertIsInstance(flags, ComputedFlags)
+        self.assertEqual(flags.flags['DEBUG'], ['-g'])
+
+    def test_disable_debug_flags(self):
+        reader = self.reader('compile-flags', extra_substs={
+            'MOZ_DEBUG_FLAGS': '-g',
+            'MOZ_DEBUG_SYMBOLS': '',
+        })
+        sources, lib, flags = self.read_topsrcdir(reader)
+        self.assertIsInstance(flags, ComputedFlags)
+        self.assertEqual(flags.flags['DEBUG'], [])
+
     def test_host_compile_flags(self):
         reader = self.reader('host-compile-flags', extra_substs={
             'HOST_CXXFLAGS': ['-Wall', '-Werror'],
