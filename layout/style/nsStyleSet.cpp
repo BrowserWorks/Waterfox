@@ -1131,9 +1131,7 @@ nsStyleSet::FileRules(nsIStyleRuleProcessor::EnumFunc aCollectorFunc,
   bool haveImportantUARules = !aRuleWalker->GetCheckForImportantRules();
 
   aRuleWalker->SetLevel(SheetType::User, false, true);
-  bool skipUserStyles =
-    aElement && aElement->IsInNativeAnonymousSubtree();
-  if (!skipUserStyles && mRuleProcessors[SheetType::User]) // NOTE: different
+  if (mRuleProcessors[SheetType::User]) // NOTE: different
     (*aCollectorFunc)(mRuleProcessors[SheetType::User], aData);
   nsRuleNode* lastUserRN = aRuleWalker->CurrentNode();
   bool haveImportantUserRules = !aRuleWalker->GetCheckForImportantRules();
@@ -1151,7 +1149,7 @@ nsStyleSet::FileRules(nsIStyleRuleProcessor::EnumFunc aCollectorFunc,
                                static_cast<ElementDependentRuleProcessorData*>(aData),
                                &cutOffInheritance);
   }
-  if (!skipUserStyles && !cutOffInheritance && // NOTE: different
+  if (!cutOffInheritance && // NOTE: different
       mRuleProcessors[SheetType::Doc])
     (*aCollectorFunc)(mRuleProcessors[SheetType::Doc], aData);
   nsRuleNode* lastDocRN = aRuleWalker->CurrentNode();
@@ -1159,7 +1157,7 @@ nsStyleSet::FileRules(nsIStyleRuleProcessor::EnumFunc aCollectorFunc,
   nsTArray<nsRuleNode*> lastScopedRNs;
   nsTArray<bool> haveImportantScopedRules;
   bool haveAnyImportantScopedRules = false;
-  if (!skipUserStyles && !cutOffInheritance &&
+  if (!cutOffInheritance &&
       aElement && aElement->IsElementInStyleScope()) {
     lastScopedRNs.SetLength(mScopedDocSheetRuleProcessors.Length());
     haveImportantScopedRules.SetLength(mScopedDocSheetRuleProcessors.Length());
@@ -1294,8 +1292,7 @@ nsStyleSet::WalkRuleProcessors(nsIStyleRuleProcessor::EnumFunc aFunc,
   if (mRuleProcessors[SheetType::Agent])
     (*aFunc)(mRuleProcessors[SheetType::Agent], aData);
 
-  bool skipUserStyles = aData->mElement->IsInNativeAnonymousSubtree();
-  if (!skipUserStyles && mRuleProcessors[SheetType::User]) // NOTE: different
+  if (mRuleProcessors[SheetType::User]) // NOTE: different
     (*aFunc)(mRuleProcessors[SheetType::User], aData);
 
   if (mRuleProcessors[SheetType::PresHint])
@@ -1310,7 +1307,7 @@ nsStyleSet::WalkRuleProcessors(nsIStyleRuleProcessor::EnumFunc aFunc,
       mBindingManager->WalkRules(aFunc, aData, &cutOffInheritance);
     }
   }
-  if (!skipUserStyles && !cutOffInheritance) {
+  if (!cutOffInheritance) {
     if (mRuleProcessors[SheetType::Doc]) // NOTE: different
       (*aFunc)(mRuleProcessors[SheetType::Doc], aData);
     if (aData->mElement->IsElementInStyleScope()) {
