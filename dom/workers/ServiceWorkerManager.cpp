@@ -3479,6 +3479,8 @@ void
 ServiceWorkerManager::FireControllerChange(ServiceWorkerRegistrationInfo* aRegistration)
 {
   AssertIsOnMainThread();
+
+  AutoTArray<nsCOMPtr<nsIDocument>, 16> documents;
   for (auto iter = mControlledDocuments.Iter(); !iter.Done(); iter.Next()) {
     if (iter.UserData() != aRegistration) {
       continue;
@@ -3489,6 +3491,12 @@ ServiceWorkerManager::FireControllerChange(ServiceWorkerRegistrationInfo* aRegis
       continue;
     }
 
+    documents.AppendElement(doc);
+  }
+
+  // Fire event after iterating mControlledDocuments is done to prevent
+  // modification by reentering from the event handlers during iteration.
+  for (auto& doc : documents) {
     FireControllerChangeOnDocument(doc);
   }
 }
