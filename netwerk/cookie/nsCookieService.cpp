@@ -4659,6 +4659,19 @@ nsCookieService::CookieExistsNative(nsICookie2* aCookie,
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsCookieService::CookieExists2(nsICookie2 *aCookie,
+                               bool       *aFoundCookie)
+{
+  NS_ENSURE_ARG_POINTER(aCookie);
+
+  OriginAttributes attrs;
+
+  aCookie->GetOriginAttributes2(&attrs);
+
+  return CookieExistsNative(aCookie, &attrs, aFoundCookie);
+}
+
 // For a given base domain, find either an expired cookie or the oldest cookie
 // by lastAccessed time.
 int64_t
