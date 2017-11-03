@@ -6587,6 +6587,13 @@ nsWindow::ClearCachedResources()
     }
 }
 
+nsresult
+nsWindow::SetNonClientMargins(LayoutDeviceIntMargin &aMargins)
+{
+  SetDrawsInTitlebar(aMargins.top == 0);
+  return NS_OK;
+}
+
 void
 nsWindow::SetDrawsInTitlebar(bool aState)
 {
