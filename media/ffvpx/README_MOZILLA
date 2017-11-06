@@ -25,7 +25,7 @@ add to configure command: --disable-asm --disable-x86asm --cc='clang -m32'
 replace: s/HAVE_SYSCTL 1/HAVE_SYSCTL 0/ and s/HAVE_MEMALIGN 1/HAVE_MEMALIGN 0/ and s/HAVE_POSIX_MEMALIGN 1/HAVE_POSIX_MEMALIGN 0/
 
 
-config_unix64.h/config_unix64.asm:
+config_unix32.h/config_unix64.h/config_unix64.asm:
 replace: s/HAVE_SYSCTL 1/HAVE_SYSCTL 0
 
 config_win32/64.h/asm:
