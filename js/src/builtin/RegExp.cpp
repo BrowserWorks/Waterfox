@@ -251,7 +251,7 @@ js::ExecuteRegExpLegacy(JSContext* cx, RegExpStatics* res, Handle<RegExpObject*>
 static bool
 CheckPatternSyntaxSlow(JSContext* cx, HandleAtom pattern, RegExpFlags flags)
 {
-    CompileOptions options(cx);
+    CompileOptions options(cx, JSVERSION_DEFAULT);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
 #ifdef JS_NEW_REGEXP
     return irregexp::CheckPatternSyntax(cx, dummyTokenStream, pattern, flags);

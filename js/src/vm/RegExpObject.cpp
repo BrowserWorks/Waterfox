@@ -276,7 +276,7 @@ RegExpObject::create(JSContext* cx,
 {
     Maybe<CompileOptions> dummyOptions;
     if (!tokenStream && !options) {
-        dummyOptions.emplace(cx);
+        dummyOptions.emplace(cx, JSVERSION_DEFAULT);
         options = dummyOptions.ptr();
     }
     Maybe<TokenStream> dummyTokenStream;
@@ -1270,7 +1270,7 @@ RegExpShared::compile(JSContext* cx,
     if (!re->ignoreCase() && !StringHasRegExpMetaChars(pattern))
         re->canStringMatch = true;
 
-    CompileOptions options(cx);
+    CompileOptions options(cx, JSVERSION_DEFAULT);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
 
     LifoAllocScope scope(&cx->tempLifoAlloc());
@@ -1952,7 +1952,7 @@ JS::CheckRegExpSyntax(JSContext* cx,
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
 
-    CompileOptions options(cx);
+    CompileOptions options(cx, JSVERSION_DEFAULT);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
 
     mozilla::Range<const char16_t> source(chars, length);
