@@ -2716,7 +2716,7 @@ tls13_SetupPendingCipherSpec(sslSocket *ss)
 
     ssl_GetSpecWriteLock(ss); /*******************************/
 
-    pSpec = ss->ssl3.pwSpec;
+    spec = ss->ssl3.pwSpec;
     /* Version isn't set when we send 0-RTT data. */
     pSpec->version = PR_MAX(SSL_LIBRARY_VERSION_TLS_1_3, ss->version);
 

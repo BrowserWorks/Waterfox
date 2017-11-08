@@ -6711,46 +6711,8 @@ ssl3_HandleServerHello(sslSocket *ss, PRUint8 *b, PRUint32 length)
     /* find selected cipher suite in our list. */
     rv = ssl3_ConsumeHandshakeNumber(ss, &temp, 2, &b, &length);
     if (rv != SECSuccess) {
-        goto loser; /* alert has been sent */
-    }
-    i = ssl3_config_match_init(ss);
-    PORT_Assert(i > 0);
-    if (i <= 0) {
         errCode = PORT_GetError();
         goto loser;
-    }
-    for (i = 0; i < ssl_V3_SUITES_IMPLEMENTED; i++) {
-        ssl3CipherSuiteCfg *suite = &ss->cipherSuites[i];
-        if (temp == suite->cipher_suite) {
-            SSLVersionRange vrange = { ss->version, ss->version };
-            if (!config_match(suite, ss->ssl3.policy, &vrange, ss)) {
-                /* config_match already checks whether the cipher suite is
-                 * acceptable for the version, but the check is repeated here
-                 * in order to give a more precise error code. */
-                if (!ssl3_CipherSuiteAllowedForVersionRange(temp, &vrange)) {
-                    desc = handshake_failure;
-                    errCode = SSL_ERROR_CIPHER_DISALLOWED_FOR_VERSION;
-                    goto alert_loser;
-                }
-
-                break; /* failure */
-            }
-
-            suite_found = PR_TRUE;
-            break; /* success */
-        }
-    }
-    if (!suite_found) {
-        desc = handshake_failure;
-        errCode = SSL_ERROR_NO_CYPHER_OVERLAP;
-        goto alert_loser;
-    }
-
-    rv = ssl3_SetCipherSuite(ss, (ssl3CipherSuite)temp, PR_TRUE);
-    if (rv != SECSuccess) {
-        desc = internal_error;
-        errCode = PORT_GetError();
-        goto alert_loser;
     }
 
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
