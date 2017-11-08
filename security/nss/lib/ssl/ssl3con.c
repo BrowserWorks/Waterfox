@@ -6711,8 +6711,9 @@ ssl3_HandleServerHello(sslSocket *ss, PRUint8 *b, PRUint32 length)
     /* find selected cipher suite in our list. */
     rv = ssl3_ConsumeHandshakeNumber(ss, &temp, 2, &b, &length);
     if (rv != SECSuccess) {
+        desc = handshake_failure;
         errCode = PORT_GetError();
-        goto loser;
+        goto alert_loser;
     }
 
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
