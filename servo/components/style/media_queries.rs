@@ -12,7 +12,7 @@ use cssparser::{Delimiter, Parser, Token, ParserInput};
 use parser::ParserContext;
 use selectors::parser::SelectorParseError;
 use serialize_comma_separated_list;
-use std::ascii::AsciiExt;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::fmt;
 use style_traits::{ToCss, ParseError, StyleParseError};
 

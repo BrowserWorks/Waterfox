@@ -19,7 +19,7 @@ use parser::{Parse, ParserContext, log_css_error};
 use properties::StyleBuilder;
 use selectors::parser::SelectorParseError;
 use shared_lock::{SharedRwLockReadGuard, ToCssWithGuard};
-use std::ascii::AsciiExt;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::borrow::Cow;
 use std::fmt;
 use std::iter::Enumerate;
