@@ -63,7 +63,6 @@ use script_traits::DocumentActivity;
 use servo_atoms::Atom;
 use servo_config::prefs::PREFS;
 use servo_url::ServoUrl;
-use std::ascii::AsciiExt;
 use std::borrow::ToOwned;
 use std::cell::Cell;
 use std::default::Default;
