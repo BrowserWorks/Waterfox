@@ -1744,6 +1744,7 @@ GMPServiceParent::RecvLaunchGMP(const nsCString& aNodeId,
 {
   if (mService->IsShuttingDown()) {
     *aOutRv = NS_ERROR_ILLEGAL_DURING_SHUTDOWN;
+    *aOutErrorDescription = NS_LITERAL_CSTRING("Service is shutting down.");
     return IPC_OK();
   }
 
@@ -1752,12 +1753,14 @@ GMPServiceParent::RecvLaunchGMP(const nsCString& aNodeId,
     *aOutPluginId = gmp->GetPluginId();
   } else {
     *aOutRv = NS_ERROR_FAILURE;
+    *aOutErrorDescription = NS_LITERAL_CSTRING("SelectPluginForAPI returns nullptr.");
     *aOutPluginId = 0;
     return IPC_OK();
   }
 
   if (!gmp->EnsureProcessLoaded(aOutProcessId)) {
     *aOutRv = NS_ERROR_FAILURE;
+    *aOutErrorDescription = NS_LITERAL_CSTRING("Process has not loaded.");
     return IPC_OK();
   }
 
@@ -1770,9 +1773,12 @@ GMPServiceParent::RecvLaunchGMP(const nsCString& aNodeId,
 
   Endpoint<PGMPContentParent> parent;
   Endpoint<PGMPContentChild> child;
-  if (NS_WARN_IF(NS_FAILED(PGMPContent::CreateEndpoints(
-        OtherPid(), *aOutProcessId, &parent, &child)))) {
-    *aOutRv = NS_ERROR_FAILURE;
+  nsresult rv =
+    PGMPContent::CreateEndpoints(OtherPid(), *aOutProcessId, &parent, &child);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    *aOutRv = rv;
+    *aOutErrorDescription =
+      NS_LITERAL_CSTRING("PGMPContent::CreateEndpoints failed.");
     return IPC_OK();
   }
 
@@ -1780,6 +1786,8 @@ GMPServiceParent::RecvLaunchGMP(const nsCString& aNodeId,
 
   if (!gmp->SendInitGMPContentChild(Move(child))) {
     *aOutRv = NS_ERROR_FAILURE;
+    *aOutErrorDescription =
+      NS_LITERAL_CSTRING("SendInitGMPContentChild failed.");
     return IPC_OK();
   }
 
@@ -1807,6 +1815,7 @@ GMPServiceParent::RecvLaunchGMPForNodeId(
     aNodeId.mOrigin(), aNodeId.mTopLevelOrigin(), aNodeId.mGMPName(), nodeId);
   if (!NS_SUCCEEDED(rv)) {
     *aOutRv = rv;
+    *aOutErrorDescription = NS_LITERAL_CSTRING("GetNodeId failed.");
     return IPC_OK();
   }
   return RecvLaunchGMP(nodeId,
