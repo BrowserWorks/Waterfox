@@ -132,6 +132,7 @@ class TreeMetadataEmitter(LoggingMixin):
         self._binaries = OrderedDict()
         self._compile_dirs = set()
         self._host_compile_dirs = set()
+        self._asm_compile_dirs = set()
         self._compile_flags = dict()
         self._linkage = []
         self._static_linking_shared = set()
@@ -855,6 +856,8 @@ class TreeMetadataEmitter(LoggingMixin):
                         sorted_files, canonical_suffix_for_file):
                     if canonical_suffix in ('.cpp', '.mm'):
                         cxx_sources[variable] = True
+                    elif canonical_suffix in ('.s', '.S'):
+                        self._asm_compile_dirs.add(context.objdir)
                     arglist = [context, list(files), canonical_suffix]
                     if (variable.startswith('UNIFIED_') and
                             'FILES_PER_UNIFIED_FILE' in context):
@@ -904,6 +907,7 @@ class TreeMetadataEmitter(LoggingMixin):
         computed_flags = ComputedFlags(context, context['COMPILE_FLAGS'])
         computed_link_flags = ComputedFlags(context, context['LINK_FLAGS'])
         computed_host_flags = ComputedFlags(context, context['HOST_COMPILE_FLAGS'])
+        computed_as_flags = ComputedFlags(context, context['ASM_FLAGS'])
 
         # Proxy some variables as-is until we have richer classes to represent
         # them. We should aim to keep this set small because it violates the
@@ -934,7 +938,7 @@ class TreeMetadataEmitter(LoggingMixin):
                 for dll in context['DELAYLOAD_DLLS']])
             context['OS_LIBS'].append('delayimp')
 
-        for v in ['CMFLAGS', 'CMMFLAGS', 'ASFLAGS']:
+        for v in ['CMFLAGS', 'CMMFLAGS']:
             if v in context and context[v]:
                 passthru.variables['MOZBUILD_' + v] = context[v]
 
@@ -1138,13 +1142,18 @@ class TreeMetadataEmitter(LoggingMixin):
         for name, jar in context.get('JAVA_JAR_TARGETS', {}).items():
             yield ContextWrapped(context, jar)
 
+        computed_as_flags.resolve_flags('MOZBUILD',
+                                        context.get('ASFLAGS'))
+
         if context.get('USE_YASM') is True:
             yasm = context.config.substs.get('YASM')
             if not yasm:
                 raise SandboxValidationError('yasm is not available', context)
             passthru.variables['AS'] = yasm
-            passthru.variables['ASFLAGS'] = context.config.substs.get('YASM_ASFLAGS')
             passthru.variables['AS_DASH_C_FLAG'] = ''
+            computed_as_flags.resolve_flags('OS',
+                                            context.config.substs.get('YASM_ASFLAGS', []))
+
 
         for (symbol, cls) in [
                 ('ANDROID_RES_DIRS', AndroidResDirs),
@@ -1170,6 +1179,10 @@ class TreeMetadataEmitter(LoggingMixin):
         if context.objdir in self._compile_dirs:
             self._compile_flags[context.objdir] = computed_flags
             yield computed_link_flags
+
+        if context.objdir in self._asm_compile_dirs:
+            yield computed_as_flags
+
         if context.objdir in self._host_compile_dirs:
             yield computed_host_flags
 
