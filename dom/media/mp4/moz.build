@@ -9,9 +9,33 @@ EXPORTS += [
     'MP4Demuxer.h',
 ]
 
-UNIFIED_SOURCES += [
-    'MP4Decoder.cpp',
+EXPORTS.mp4_demuxer += [
+    'Atom.h',
+    'AtomType.h',
+    'Box.h',
+    'BufferStream.h',
+    'DecoderData.h',
+    'Index.h',
+    'Interval.h',
+    'MoofParser.h',
+    'MP4Metadata.h',
+    'ResourceStream.h',
+    'SinfParser.h',
+    'Stream.h',
 ]
+
+UNIFIED_SOURCES += [
+    'Box.cpp',
+    'BufferStream.cpp',
+    'DecoderData.cpp',
+    'Index.cpp',
+    'MoofParser.cpp',
+    'MP4Decoder.cpp',
+    'MP4Metadata.cpp',
+    'ResourceStream.cpp',
+    'SinfParser.cpp',
+]
+
 
 SOURCES += [
     'MP4Demuxer.cpp',
@@ -21,3 +45,39 @@ FINAL_LIBRARY = 'xul'
 
 if CONFIG['MOZ_GONK_MEDIACODEC']:
     DEFINES['MOZ_GONK_MEDIACODEC'] = True
+
+
+# Supress warnnings for now.
+if CONFIG['_MSC_VER']:
+    CFLAGS += [
+        '-wd4013', # 'function' undefined; assuming extern returning int
+        '-wd4101', # unreferenced local variable
+    ]
+    CXXFLAGS += [
+        '-wd4018', # '<' : signed/unsigned mismatch
+        '-wd4275', # non dll-interface class used as base for dll-interface class
+        '-wd4305', # '=' : truncation from 'double' to 'float'
+        '-wd4309', # '=' : truncation of constant value
+        '-wd4355', # 'this' : used in base member initializer list
+        '-wd4804', # '>' : unsafe use of type 'bool' in operation
+        '-wd4099', # mismatched class/struct tags
+    ]
+elif CONFIG['GNU_CXX']:
+    CFLAGS += [
+        '-Wno-comment',
+        '-Wno-sign-compare',
+        '-Wno-unused-function',
+    ]
+    CXXFLAGS += [
+        '-Werror=format',
+        '-Wno-multichar',
+        '-Wno-sign-compare',
+        '-Wno-unused',
+    ]
+    if CONFIG['CLANG_CXX']:
+        CXXFLAGS += [
+            '-Wno-mismatched-tags',
+            '-Wno-tautological-constant-out-of-range-compare',
+            '-Wno-unreachable-code-return',
+            '-Wno-implicit-fallthrough',
+        ]
