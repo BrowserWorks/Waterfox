@@ -1050,7 +1050,7 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time,
     return rv;
   }
   bool skipPinningChecksBecauseOfMITMMode =
-    true;
+    (!isBuiltInRoot && mPinningMode == CertVerifier::pinningAllowUserCAMITM);
   // If mHostname isn't set, we're not verifying in the context of a TLS
   // handshake, so don't verify HPKP in those cases.
   if (mHostname && (mPinningMode != CertVerifier::pinningDisabled) &&
