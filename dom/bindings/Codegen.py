@@ -7873,7 +7873,7 @@ class CGPerSignatureCall(CGThing):
                 CustomElementReactionsStack* reactionsStack = GetCustomElementReactionsStack(${obj});
                 Maybe<AutoCEReaction> ceReaction;
                 if (reactionsStack) {
-                  ceReaction.emplace(reactionsStack);
+                  ceReaction.emplace(reactionsStack, cx);
                 }
                 """, obj=objectName)))
 
