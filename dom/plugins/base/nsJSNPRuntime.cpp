@@ -2062,8 +2062,6 @@ CreateNPObjectMember(NPP npp, JSContext *cx,
   
   JS::Rooted<JSObject*> obj(cx, aObj);
 
-  JS::Rooted<JSObject*> obj(cx, aObj);
-
   JSObject *memobj = ::JS_NewObject(cx, &sNPObjectMemberClass);
   if (!memobj) {
     free(memberPrivate);
