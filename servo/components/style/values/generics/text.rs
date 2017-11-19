@@ -8,12 +8,12 @@ use app_units::Au;
 use cssparser::Parser;
 use parser::ParserContext;
 use properties::animated_properties::Animatable;
-use std::fmt;
-use style_traits::{ToCss, ParseError};
+use style_traits::ParseError;
+use values::animated::ToAnimatedZero;
 
 /// A generic value for the `initial-letter` property.
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue)]
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue, ToCss)]
 pub enum InitialLetter<Number, Integer> {
     /// `normal`
     Normal,
@@ -26,29 +26,6 @@ impl<N, I> InitialLetter<N, I> {
     #[inline]
     pub fn normal() -> Self {
         InitialLetter::Normal
-    }
-}
-
-impl<N, I> ToCss for InitialLetter<N, I>
-where
-    N: ToCss,
-    I: ToCss,
-{
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result
-    where
-        W: fmt::Write,
-    {
-        match *self {
-            InitialLetter::Normal => dest.write_str("normal"),
-            InitialLetter::Specified(ref size, ref sink) => {
-                size.to_css(dest)?;
-                if let Some(ref sink) = *sink {
-                    dest.write_str(" ")?;
-                    sink.to_css(dest)?;
-                }
-                Ok(())
-            },
-        }
     }
 }
 
@@ -115,6 +92,14 @@ impl<Value> Animatable for Spacing<Value>
         let other = other.value().unwrap_or(&zero);
         this.compute_distance(other)
     }
+}
+
+impl<V> ToAnimatedZero for Spacing<V>
+where
+    V: From<Au>,
+{
+    #[inline]
+    fn to_animated_zero(&self) -> Result<Self, ()> { Err(()) }
 }
 
 /// A generic value for the `line-height` property.

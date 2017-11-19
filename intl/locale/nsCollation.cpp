@@ -4,8 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsCollation.h"
+#include "mozilla/intl/LocaleService.h"
 #include "nsIServiceManager.h"
-#include "prmem.h"
 #include "nsString.h"
 
 NS_IMPL_ISUPPORTS(nsCollation, nsICollation)
@@ -118,7 +118,20 @@ nsCollation::Initialize(const nsACString& locale)
 {
   NS_ENSURE_TRUE((!mInit), NS_ERROR_ALREADY_INITIALIZED);
 
-  mLocale = locale;
+  // Check whether locale parameter is valid.  If no, use application locale
+  UErrorCode status = U_ZERO_ERROR;
+  UCollator* collator = ucol_open(PromiseFlatCString(locale).get(), &status);
+  if (U_SUCCESS(status)) {
+    mLocale = locale;
+  } else {
+    status = U_ZERO_ERROR;
+    mozilla::LocaleService::GetInstance()->GetAppLocaleAsLangTag(mLocale);
+    collator = ucol_open(mLocale.get(), &status);
+    if (NS_WARN_IF(U_FAILURE(status))) {
+      return NS_ERROR_UNEXPECTED;
+    }
+  }
+  ucol_close(collator);
 
   mInit = true;
   return NS_OK;
@@ -142,8 +155,8 @@ nsCollation::AllocateRawSortKey(int32_t strength, const nsAString& stringIn,
   int32_t keyLength = ucol_getSortKey(mCollatorICU, str, stringInLen, nullptr, 0);
   NS_ENSURE_TRUE((stringInLen == 0 || keyLength > 0), NS_ERROR_FAILURE);
 
-  // Since key is freed elsewhere with PR_Free, allocate with PR_Malloc.
-  uint8_t* newKey = (uint8_t*)PR_Malloc(keyLength + 1);
+  // Since key is freed elsewhere with free, allocate with malloc.
+  uint8_t* newKey = (uint8_t*)malloc(keyLength + 1);
   if (!newKey) {
       return NS_ERROR_OUT_OF_MEMORY;
   }

@@ -325,10 +325,12 @@ KeyPair::Sign(const nsACString & textToSign,
 }
 
 KeyGenRunnable::KeyGenRunnable(KeyType keyType,
-                               nsIIdentityKeyGenCallback * callback,
+                               nsIIdentityKeyGenCallback* callback,
                                nsIEventTarget* operationThread)
-  : mKeyType(keyType)
-  , mCallback(new nsMainThreadPtrHolder<nsIIdentityKeyGenCallback>(callback))
+  : mozilla::Runnable("KeyGenRunnable")
+  , mKeyType(keyType)
+  , mCallback(new nsMainThreadPtrHolder<nsIIdentityKeyGenCallback>(
+      "KeyGenRunnable::mCallback", callback))
   , mRv(NS_ERROR_NOT_INITIALIZED)
   , mThread(operationThread)
 {
@@ -351,8 +353,8 @@ GenerateKeyPair(PK11SlotInfo * slot,
     return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
   }
   if (!*publicKey) {
-	  SECKEY_DestroyPrivateKey(*privateKey);
-	  *privateKey = nullptr;
+    SECKEY_DestroyPrivateKey(*privateKey);
+    *privateKey = nullptr;
     MOZ_CRASH("PK11_GnerateKeyPair returned private key without public key");
   }
 
@@ -468,7 +470,7 @@ KeyGenRunnable::Run()
         if (NS_SUCCEEDED(mRv)) {
           MOZ_ASSERT(privk);
           MOZ_ASSERT(pubk);
-		  // mKeyPair will take over ownership of privk and pubk
+      // mKeyPair will take over ownership of privk and pubk
           mKeyPair = new KeyPair(privk, pubk, mThread);
         }
       }
@@ -482,12 +484,14 @@ KeyGenRunnable::Run()
   return NS_OK;
 }
 
-SignRunnable::SignRunnable(const nsACString & aText,
-                           SECKEYPrivateKey * privateKey,
-                           nsIIdentitySignCallback * aCallback)
-  : mTextToSign(aText)
+SignRunnable::SignRunnable(const nsACString& aText,
+                           SECKEYPrivateKey* privateKey,
+                           nsIIdentitySignCallback* aCallback)
+  : mozilla::Runnable("SignRunnable")
+  , mTextToSign(aText)
   , mPrivateKey(SECKEY_CopyPrivateKey(privateKey))
-  , mCallback(new nsMainThreadPtrHolder<nsIIdentitySignCallback>(aCallback))
+  , mCallback(new nsMainThreadPtrHolder<nsIIdentitySignCallback>(
+      "SignRunnable::mCallback", aCallback))
   , mRv(NS_ERROR_NOT_INITIALIZED)
 {
 }

@@ -9,7 +9,7 @@
 
 use std::fmt;
 use style_traits::ToCss;
-use values::computed::LengthOrPercentage;
+use values::computed::{LengthOrPercentage, Percentage};
 use values::generics::position::Position as GenericPosition;
 
 /// The computed value of a CSS `<position>`
@@ -25,7 +25,10 @@ impl Position {
     /// `50% 50%`
     #[inline]
     pub fn center() -> Self {
-        Self::new(LengthOrPercentage::Percentage(0.5), LengthOrPercentage::Percentage(0.5))
+        Self::new(
+            LengthOrPercentage::Percentage(Percentage(0.5)),
+            LengthOrPercentage::Percentage(Percentage(0.5)),
+        )
     }
 
     /// `0% 0%`

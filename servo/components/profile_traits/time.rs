@@ -90,6 +90,8 @@ pub enum ProfilerCategory {
     ScriptExitFullscreen = 0x78,
     ScriptWebVREvent = 0x79,
     ScriptWorkletEvent = 0x7a,
+    TimeToFirstPaint = 0x80,
+    TimeToFirstContentfulPaint = 0x81,
     ApplicationHeartbeat = 0x90,
 }
 
@@ -128,7 +130,7 @@ pub fn profile<T, F>(category: ProfilerCategory,
 
     send_profile_data(category,
                       meta,
-                      profiler_chan,
+                      &profiler_chan,
                       start_time,
                       end_time,
                       start_energy,
@@ -138,7 +140,7 @@ pub fn profile<T, F>(category: ProfilerCategory,
 
 pub fn send_profile_data(category: ProfilerCategory,
                          meta: Option<TimerMetadata>,
-                         profiler_chan: ProfilerChan,
+                         profiler_chan: &ProfilerChan,
                          start_time: u64,
                          end_time: u64,
                          start_energy: u64,

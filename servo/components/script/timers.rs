@@ -12,7 +12,7 @@ use dom::eventsource::EventSourceTimeoutCallback;
 use dom::globalscope::GlobalScope;
 use dom::testbinding::TestBindingCallback;
 use dom::xmlhttprequest::XHRTimeoutCallback;
-use euclid::length::Length;
+use euclid::Length;
 use heapsize::HeapSizeOf;
 use ipc_channel::ipc::IpcSender;
 use js::jsapi::{HandleValue, Heap};
@@ -350,7 +350,7 @@ pub enum TimerCallback {
 #[derive(JSTraceable, Clone)]
 enum InternalTimerCallback {
     StringTimerCallback(DOMString),
-    FunctionTimerCallback(Rc<Function>, Rc<Vec<Heap<JSVal>>>),
+    FunctionTimerCallback(Rc<Function>, Rc<Box<[Heap<JSVal>]>>),
 }
 
 impl HeapSizeOf for InternalTimerCallback {
@@ -392,7 +392,7 @@ impl JsTimers {
                 for (i, item) in arguments.iter().enumerate() {
                     args.get_mut(i).unwrap().set(item.get());
                 }
-                InternalTimerCallback::FunctionTimerCallback(function, Rc::new(args))
+                InternalTimerCallback::FunctionTimerCallback(function, Rc::new(args.into_boxed_slice()))
             }
         };
 

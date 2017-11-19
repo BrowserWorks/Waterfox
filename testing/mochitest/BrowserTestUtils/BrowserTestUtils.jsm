@@ -20,7 +20,6 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://testing-common/TestUtils.jsm");
 Cu.import("resource://testing-common/ContentTask.jsm");
@@ -94,26 +93,26 @@ this.BrowserTestUtils = {
    * @resolves When the tab has been closed.
    * @rejects Any exception from taskFn is propagated.
    */
-  withNewTab: Task.async(function* (options, taskFn) {
+  async withNewTab(options, taskFn) {
     if (typeof(options) == "string") {
       options = {
         gBrowser: Services.wm.getMostRecentWindow("navigator:browser").gBrowser,
         url: options
       }
     }
-    let tab = yield BrowserTestUtils.openNewForegroundTab(options);
+    let tab = await BrowserTestUtils.openNewForegroundTab(options);
     let originalWindow = tab.ownerGlobal;
-    let result = yield taskFn(tab.linkedBrowser);
+    let result = await taskFn(tab.linkedBrowser);
     let finalWindow = tab.ownerGlobal;
     if (originalWindow == finalWindow && !tab.closing && tab.linkedBrowser) {
-      yield BrowserTestUtils.removeTab(tab);
+      await BrowserTestUtils.removeTab(tab);
     } else {
       Services.console.logStringMessage(
         "BrowserTestUtils.withNewTab: Tab was already closed before " +
         "removeTab would have been called");
     }
     return Promise.resolve(result);
-  }),
+  },
 
   /**
    * Opens a new tab in the foreground.
@@ -319,25 +318,41 @@ this.BrowserTestUtils = {
     });
   },
 
+  _webProgressListeners: new Set(),
+
   /**
    * Waits for the web progress listener associated with this tab to fire a
    * STATE_STOP for the toplevel document.
    *
    * @param {xul:browser} browser
    *        A xul:browser.
+   * @param {String} expectedURI (optional)
+   *        A specific URL to check the channel load against
+   * @param {Boolean} checkAborts (optional, defaults to false)
+   *        Whether NS_BINDING_ABORTED stops 'count' as 'real' stops
+   *        (e.g. caused by the stop button or equivalent APIs)
    *
    * @return {Promise}
    * @resolves When STATE_STOP reaches the tab's progress listener
    */
-  browserStopped(browser) {
+  browserStopped(browser, expectedURI, checkAborts=false) {
     return new Promise(resolve => {
+      const kDocStopFlags = Ci.nsIWebProgressListener.STATE_IS_NETWORK |
+                            Ci.nsIWebProgressListener.STATE_STOP;
       let wpl = {
         onStateChange(aWebProgress, aRequest, aStateFlags, aStatus) {
-          if (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP &&
+          dump("Saw state " + aStateFlags.toString(16) + " and status " + aStatus.toString(16) + "\n");
+          if (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK &&
+              aStateFlags & Ci.nsIWebProgressListener.STATE_STOP &&
+              (checkAborts || aStatus != Cr.NS_BINDING_ABORTED) &&
               aWebProgress.isTopLevel) {
-            browser.webProgress.removeProgressListener(filter);
-            filter.removeProgressListener(wpl);
-            resolve();
+            let chan = aRequest.QueryInterface(Ci.nsIChannel);
+            dump("Browser loaded " + chan.originalURI.spec + "\n");
+            if (!expectedURI || chan.originalURI.spec == expectedURI) {
+              browser.removeProgressListener(wpl);
+              BrowserTestUtils._webProgressListeners.delete(wpl);
+              resolve();
+            }
           };
         },
         onSecurityChange() {},
@@ -346,12 +361,12 @@ this.BrowserTestUtils = {
         QueryInterface: XPCOMUtils.generateQI([
           Ci.nsIWebProgressListener,
           Ci.nsIWebProgressListener2,
+          Ci.nsISupportsWeakReference,
         ]),
       };
-      const filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
-                       .createInstance(Ci.nsIWebProgress);
-      filter.addProgressListener(wpl, Ci.nsIWebProgress.NOTIFY_ALL);
-      browser.webProgress.addProgressListener(filter, Ci.nsIWebProgress.NOTIFY_ALL);
+      browser.addProgressListener(wpl);
+      this._webProgressListeners.add(wpl);
+      dump("Waiting for browser load" + (expectedURI ? (" of " + expectedURI) : "") + "\n");
     });
   },
 
@@ -457,9 +472,9 @@ this.BrowserTestUtils = {
    *         A Promise which resolves the next time that a DOM window
    *         opens and the delayed startup observer notification fires.
    */
-  waitForNewWindow: Task.async(function* (delayedStartup=true,
+  async waitForNewWindow(delayedStartup=true,
                                           initialBrowserLoaded=null) {
-    let win = yield this.domWindowOpened();
+    let win = await this.domWindowOpened();
 
     let promises = [
       TestUtils.topicObserved("browser-delayed-startup-finished",
@@ -467,7 +482,7 @@ this.BrowserTestUtils = {
     ];
 
     if (initialBrowserLoaded) {
-      yield this.waitForEvent(win, "DOMContentLoaded");
+      await this.waitForEvent(win, "DOMContentLoaded");
 
       let browser = win.gBrowser.selectedBrowser;
 
@@ -477,17 +492,17 @@ this.BrowserTestUtils = {
                                 : Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
       if (win.gMultiProcessBrowser &&
           !E10SUtils.canLoadURIInProcess(initialBrowserLoaded, process)) {
-        yield this.waitForEvent(browser, "XULFrameLoaderCreated");
+        await this.waitForEvent(browser, "XULFrameLoaderCreated");
       }
 
       let loadPromise = this.browserLoaded(browser, false, initialBrowserLoaded);
       promises.push(loadPromise);
     }
 
-    yield Promise.all(promises);
+    await Promise.all(promises);
 
     return win;
-  }),
+  },
 
   /**
    * Loads a new URI in the given browser and waits until we really started
@@ -502,7 +517,7 @@ this.BrowserTestUtils = {
    * @return {Promise}
    * @resolves When we started loading the given URI.
    */
-  loadURI: Task.async(function* (browser, uri) {
+  async loadURI(browser, uri) {
     // Load the new URI.
     browser.loadURI(uri);
 
@@ -519,9 +534,9 @@ this.BrowserTestUtils = {
     // should wait for the new frameLoader to be created. This will happen
     // asynchronously when the browser's remoteness changes.
     if (!E10SUtils.canLoadURIInProcess(uri, process)) {
-      yield this.waitForEvent(browser, "XULFrameLoaderCreated");
+      await this.waitForEvent(browser, "XULFrameLoaderCreated");
     }
-  }),
+  },
 
   /**
    * @param win (optional)
@@ -588,7 +603,7 @@ this.BrowserTestUtils = {
    * @return {Promise}
    *         Resolves with the new window once it is loaded.
    */
-  openNewBrowserWindow: Task.async(function*(options={}) {
+  async openNewBrowserWindow(options={}) {
     let argString = Cc["@mozilla.org/supports-string;1"].
                     createInstance(Ci.nsISupportsString);
     argString.data = "";
@@ -610,6 +625,14 @@ this.BrowserTestUtils = {
       features += ",height=" + options.height;
     }
 
+    if (options.left) {
+      features += ",left=" + options.left;
+    }
+
+    if (options.top) {
+      features += ",top=" + options.top;
+    }
+
     if (options.hasOwnProperty("remote")) {
       let remoteState = options.remote ? "remote" : "non-remote";
       features += `,${remoteState}`;
@@ -628,11 +651,11 @@ this.BrowserTestUtils = {
 
     let loadPromise = this.firstBrowserLoaded(win);
 
-    yield startupPromise;
-    yield loadPromise;
+    await startupPromise;
+    await loadPromise;
 
     return win;
-  }),
+  },
 
   /**
    * Closes a window.
@@ -903,7 +926,7 @@ this.BrowserTestUtils = {
       messageManager.addMessageListener(message, function onMessage(msg) {
         if (!checkFn || checkFn(msg)) {
           messageManager.removeMessageListener(message, onMessage);
-          resolve();
+          resolve(msg.data);
         }
       });
     });
@@ -984,7 +1007,7 @@ this.BrowserTestUtils = {
    * @resolves An Object with key-value pairs representing the data from the
    *           crash report's extra file (if applicable).
    */
-  crashBrowser: Task.async(function*(browser, shouldShowTabCrashPage=true) {
+  async crashBrowser(browser, shouldShowTabCrashPage=true) {
     let extra = {};
     let KeyValueParser = {};
     if (AppConstants.MOZ_CRASHREPORTER) {
@@ -1120,7 +1143,7 @@ this.BrowserTestUtils = {
     let mm = browser.messageManager;
     mm.loadFrameScript("data:,(" + frame_script.toString() + ")();", false);
 
-    yield Promise.all(expectedPromises);
+    await Promise.all(expectedPromises);
 
     if (shouldShowTabCrashPage) {
       let gBrowser = browser.ownerGlobal.gBrowser;
@@ -1131,7 +1154,7 @@ this.BrowserTestUtils = {
     }
 
     return extra;
-  }),
+  },
 
   /**
    * Returns a promise that is resolved when element gains attribute (or,
@@ -1309,7 +1332,7 @@ this.BrowserTestUtils = {
   waitForCondition(condition, msg, interval=100, maxTries=50) {
     return new Promise((resolve, reject) => {
       let tries = 0;
-      let intervalID = setInterval(Task.async(function* () {
+      let intervalID = setInterval(async function() {
         if (tries >= maxTries) {
           clearInterval(intervalID);
           msg += ` - timed out after ${maxTries} tries.`;
@@ -1319,7 +1342,7 @@ this.BrowserTestUtils = {
 
         let conditionPassed = false;
         try {
-          conditionPassed = yield condition();
+          conditionPassed = await condition();
         } catch(e) {
           msg += ` - threw exception: ${e}`;
           clearInterval(intervalID);
@@ -1332,7 +1355,7 @@ this.BrowserTestUtils = {
           resolve();
         }
         tries++;
-      }), interval);
+      }, interval);
     });
   },
 
@@ -1403,7 +1426,7 @@ this.BrowserTestUtils = {
    * @returns Promise
    */
   contentPainted(browser) {
-    return ContentTask.spawn(browser, null, function*() {
+    return ContentTask.spawn(browser, null, async function() {
       return new Promise((resolve) => {
         addEventListener("MozAfterPaint", function onPaint() {
           removeEventListener("MozAfterPaint", onPaint);
@@ -1464,9 +1487,9 @@ this.BrowserTestUtils = {
     return rv.then(() => this._knownAboutPages.delete(aboutModule));
   },
 
-  *_removeAboutPageRegistrations() {
+  async _removeAboutPageRegistrations() {
     for (let aboutModule of this._knownAboutPages) {
-      yield this.unregisterAboutPage(aboutModule);
+      await this.unregisterAboutPage(aboutModule);
     }
     Services.ppmm.removeDelayedProcessScript(kAboutPageRegistrationContentScript);
   },

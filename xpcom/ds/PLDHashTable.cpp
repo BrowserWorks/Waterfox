@@ -13,6 +13,7 @@
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/OperatorNewExtensions.h"
 #include "nsAlgorithm.h"
+#include "nsPointerHashKeys.h"
 #include "mozilla/Likely.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/ChaosMode.h"
@@ -72,7 +73,7 @@ PLDHashTable::HashStringKey(const void* aKey)
 /* static */ PLDHashNumber
 PLDHashTable::HashVoidPtrKeyStub(const void* aKey)
 {
-  return (PLDHashNumber)(ptrdiff_t)aKey >> 2;
+  return nsPtrHashKey<void>::HashKey(aKey);
 }
 
 /* static */ bool

@@ -414,6 +414,7 @@ void SkScalerContext_FreeType_Base::generateGlyphImage(
                     SK_TRACEFTR(err, "Could not render glyph.");
                     return;
                 }
+
                 SkMask mask;
                 glyph.toMask(&mask);
 #ifdef SK_SHOW_TEXT_BLIT_COVERAGE
@@ -492,6 +493,7 @@ void SkScalerContext_FreeType_Base::generateGlyphImage(
                 */
                 FT_Outline_Translate(outline, dx - ((bbox.xMin + dx) & ~63),
                                               dy - ((bbox.yMin + dy) & ~63));
+
                 target.width = glyph.fWidth;
                 target.rows = glyph.fHeight;
                 target.pitch = glyph.rowBytes();

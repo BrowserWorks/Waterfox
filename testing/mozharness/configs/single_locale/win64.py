@@ -14,10 +14,13 @@ config = {
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s",
         "L10NBASEDIR": "../../l10n",
         "MOZ_MAKE_COMPLETE_MAR": "1",
-        "PATH": 'C:\\mozilla-build\\nsis-3.01;'
-                '%s' % (os.environ.get('path')),
+        "PATH": '%(abs_objdir)s\\..\\xz-5.2.3\\bin_x86-64;'
+                'C:\\mozilla-build\\nsis-3.01;'
+                + '%s' % (os.environ.get('path')),
         'TOOLTOOL_CACHE': 'c:/builds/tooltool_cache',
         'TOOLTOOL_HOME': '/c/builds',
+        'EN_US_PACKAGE_NAME': 'target.zip',
+        'EN_US_PKG_INST_BASENAME': 'target.installer',
     },
     "ssh_key_dir": "~/.ssh",
     "log_name": "single_locale",
@@ -29,8 +32,7 @@ config = {
     'tooltool_url': 'https://api.pub.build.mozilla.org/tooltool/',
     'tooltool_script': [sys.executable,
                         'C:/mozilla-build/tooltool.py'],
-    'tooltool_bootstrap': "setup.sh",
-    'tooltool_manifest_src': 'browser/config/tooltool-manifests/win64/releng.manifest',
+    'tooltool_manifest_src': 'browser/config/tooltool-manifests/win64/l10n.manifest',
     # balrog credential file:
     'balrog_credentials_file': 'oauth.txt',
 

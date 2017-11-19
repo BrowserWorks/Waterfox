@@ -15,11 +15,10 @@
 #include "mozilla/Base64.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/dom/DOMError.h"
-#include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileReaderBinding.h"
 #include "mozilla/dom/ProgressEvent.h"
-#include "nsContentUtils.h"
+#include "mozilla/Encoding.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsDOMJSUtils.h"
 #include "nsError.h"
@@ -72,6 +71,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(FileReader)
   NS_INTERFACE_MAP_ENTRY(nsITimerCallback)
   NS_INTERFACE_MAP_ENTRY(nsIInputStreamCallback)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
+  NS_INTERFACE_MAP_ENTRY(nsINamed)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 NS_IMPL_ADDREF_INHERITED(FileReader, DOMEventTargetHelper)
@@ -120,7 +120,7 @@ FileReader::FileReader(nsIGlobalObject* aGlobal,
   if (NS_IsMainThread()) {
     mTarget = aGlobal->EventTargetFor(TaskCategory::Other);
   } else {
-    mTarget = do_GetCurrentThread();
+    mTarget = GetCurrentThreadSerialEventTarget();
   }
 
   SetDOMStringToNull(mResult);
@@ -324,6 +324,8 @@ FileReader::DoReadData(uint64_t aCount)
     //Update memory buffer to reflect the contents of the file
     if (!size.isValid() ||
         // PR_Realloc doesn't support over 4GB memory size even if 64-bit OS
+        // XXX: it's likely that this check is unnecessary and the comment is
+        // wrong because we no longer use PR_Realloc outside of NSPR and NSS.
         size.value() > UINT32_MAX ||
         size.value() > mTotal) {
       return NS_ERROR_OUT_OF_MEMORY;
@@ -372,22 +374,30 @@ FileReader::ReadFileContent(Blob& aBlob,
   mDataFormat = aDataFormat;
   CopyUTF16toUTF8(aCharset, mCharset);
 
-  nsresult rv;
-  nsCOMPtr<nsIStreamTransportService> sts =
-    do_GetService(kStreamTransportServiceCID, &rv);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    aRv.Throw(rv);
-    return;
-  }
-
   nsCOMPtr<nsIInputStream> stream;
   mBlob->GetInternalStream(getter_AddRefs(stream), aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
+  bool nonBlocking = false;
+  aRv = stream->IsNonBlocking(&nonBlocking);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+
   mAsyncStream = do_QueryInterface(stream);
-  if (!mAsyncStream) {
+
+  // We want to have a non-blocking nsIAsyncInputStream.
+  if (!mAsyncStream || !nonBlocking) {
+    nsresult rv;
+    nsCOMPtr<nsIStreamTransportService> sts =
+      do_GetService(kStreamTransportServiceCID, &rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aRv.Throw(rv);
+      return;
+    }
+
     nsCOMPtr<nsITransport> transport;
     aRv = sts->CreateInputTransport(stream,
                                     /* aStartOffset */ 0,
@@ -451,37 +461,33 @@ FileReader::GetAsText(Blob *aBlob,
                       uint32_t aDataLen,
                       nsAString& aResult)
 {
-  // The BOM sniffing is baked into the "decode" part of the Encoding
-  // Standard, which the File API references.
-  nsAutoCString encoding;
-  if (!nsContentUtils::CheckForBOM(
-        reinterpret_cast<const unsigned char *>(aFileData),
-        aDataLen,
-        encoding)) {
-    // BOM sniffing failed. Try the API argument.
-    if (!EncodingUtils::FindEncodingForLabel(aCharset,
-                                             encoding)) {
-      // API argument failed. Try the type property of the blob.
-      nsAutoString type16;
-      aBlob->GetType(type16);
-      NS_ConvertUTF16toUTF8 type(type16);
-      nsAutoCString specifiedCharset;
-      bool haveCharset;
-      int32_t charsetStart, charsetEnd;
-      NS_ExtractCharsetFromContentType(type,
-                                       specifiedCharset,
-                                       &haveCharset,
-                                       &charsetStart,
-                                       &charsetEnd);
-      if (!EncodingUtils::FindEncodingForLabel(specifiedCharset, encoding)) {
-        // Type property failed. Use UTF-8.
-        encoding.AssignLiteral("UTF-8");
-      }
+  // Try the API argument.
+  const Encoding* encoding = Encoding::ForLabel(aCharset);
+  if (!encoding) {
+    // API argument failed. Try the type property of the blob.
+    nsAutoString type16;
+    aBlob->GetType(type16);
+    NS_ConvertUTF16toUTF8 type(type16);
+    nsAutoCString specifiedCharset;
+    bool haveCharset;
+    int32_t charsetStart, charsetEnd;
+    NS_ExtractCharsetFromContentType(type,
+                                     specifiedCharset,
+                                     &haveCharset,
+                                     &charsetStart,
+                                     &charsetEnd);
+    encoding = Encoding::ForLabel(specifiedCharset);
+    if (!encoding) {
+      // Type property failed. Use UTF-8.
+      encoding = UTF_8_ENCODING;
     }
   }
 
-  return nsContentUtils::ConvertStringFromEncoding(
-      encoding, aFileData, aDataLen, aResult);
+  auto data = MakeSpan(reinterpret_cast<const uint8_t*>(aFileData),
+                       aDataLen);
+  nsresult rv;
+  Tie(rv, encoding) = encoding->Decode(data, aResult);
+  return NS_FAILED(rv) ? rv : NS_OK;
 }
 
 nsresult
@@ -676,6 +682,14 @@ FileReader::OnInputStreamReady(nsIAsyncInputStream* aStream)
     StartProgressEventTimer();
   }
 
+  return NS_OK;
+}
+
+// nsINamed
+NS_IMETHODIMP
+FileReader::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("FileReader");
   return NS_OK;
 }
 

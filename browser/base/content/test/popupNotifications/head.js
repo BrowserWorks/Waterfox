@@ -1,7 +1,5 @@
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
 
@@ -212,6 +210,9 @@ function checkPopup(popup, notifyObj) {
        "main action label matches");
     is(notification.getAttribute("buttonaccesskey"),
        notifyObj.mainAction.accessKey, "main action accesskey matches");
+    is(notification.getAttribute("buttonhighlight"),
+       (!notifyObj.mainAction.disableHighlight).toString(),
+       "main action highlight matches");
   }
   if (notifyObj.secondaryActions && notifyObj.secondaryActions.length > 0) {
     let secondaryAction = notifyObj.secondaryActions[0];

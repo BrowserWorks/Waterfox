@@ -231,13 +231,15 @@ FileSystemTaskChildBase::SetError(const nsresult& aErrorValue)
  * FileSystemTaskParentBase class
  */
 
-FileSystemTaskParentBase::FileSystemTaskParentBase(FileSystemBase* aFileSystem,
-                                                   const FileSystemParams& aParam,
-                                                   FileSystemRequestParent* aParent)
-  : mErrorValue(NS_OK)
+FileSystemTaskParentBase::FileSystemTaskParentBase(
+  FileSystemBase* aFileSystem,
+  const FileSystemParams& aParam,
+  FileSystemRequestParent* aParent)
+  : Runnable("dom::FileSystemTaskParentBase")
+  , mErrorValue(NS_OK)
   , mFileSystem(aFileSystem)
   , mRequestParent(aParent)
-  , mBackgroundEventTarget(NS_GetCurrentThread())
+  , mBackgroundEventTarget(GetCurrentThreadEventTarget())
 {
   MOZ_ASSERT(XRE_IsParentProcess(),
              "Only call from parent process!");
@@ -251,8 +253,12 @@ FileSystemTaskParentBase::~FileSystemTaskParentBase()
 {
   // This task can be released on different threads because we dispatch it (as
   // runnable) to main-thread, I/O and then back to the PBackground thread.
-  NS_ProxyRelease(mBackgroundEventTarget, mFileSystem.forget());
-  NS_ProxyRelease(mBackgroundEventTarget, mRequestParent.forget());
+  NS_ProxyRelease(
+    "FileSystemTaskParentBase::mFileSystem",
+    mBackgroundEventTarget, mFileSystem.forget());
+  NS_ProxyRelease(
+    "FileSystemTaskParentBase::mRequestParent",
+    mBackgroundEventTarget, mRequestParent.forget());
 }
 
 void

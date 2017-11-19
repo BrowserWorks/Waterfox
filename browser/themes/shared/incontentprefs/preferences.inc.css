@@ -5,11 +5,26 @@
 %endif
 @namespace html "http://www.w3.org/1999/xhtml";
 
-#mainPrefPane {
+.main-content {
+  padding-top: 0;
+}
+
+.pane-container {
+  display: block;
   max-width: 800px;
+}
+
+#mainPrefPane {
+  width: 100%;
   padding: 0;
   font: message-box;
   font-size: 1.25rem;
+}
+
+description.indent,
+.indent > description {
+  font-size: 1.18rem;
+  color: #737373;
 }
 
 * {
@@ -17,21 +32,26 @@
 }
 
 button,
-treecol {
+treecol,
+html|option {
   /* override the * rule */
   -moz-user-select: none;
 }
 
 #engineList treechildren::-moz-tree-image(engineShown, checked),
 #blocklistsTree treechildren::-moz-tree-image(selectionCol, checked) {
-  list-style-image: url("chrome://global/skin/in-content/check.svg#check");
+  list-style-image: url("chrome://global/skin/in-content/check.svg");
+  -moz-context-properties: fill, stroke;
+  fill: #2292d0;
+  stroke: none;
   width: 21px;
   height: 21px;
 }
 
 #engineList treechildren::-moz-tree-image(engineShown, checked, selected),
 #blocklistsTree treechildren::-moz-tree-image(selectionCol, checked, selected) {
-  list-style-image: url("chrome://global/skin/in-content/check.svg#check-inverted");
+  fill: white;
+  stroke: #0095dd;
 }
 
 #engineList treechildren::-moz-tree-row,
@@ -51,6 +71,26 @@ treecol {
 
 .accessory-button {
   min-width: 145px;
+}
+
+/* Subcategory title */
+
+/**
+ * The first subcategory title for each category should not have margin-top.
+ */
+#generalCategory,
+#searchCategory,
+#browserPrivacyCategory,
+#firefoxAccountCategory {
+  margin-top: 0;
+}
+
+.header-name {
+  font-size: 2rem;
+}
+
+.subcategory {
+  margin-top: 48px;
 }
 
 /* Category List */
@@ -77,8 +117,8 @@ treecol {
   list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#general");
 }
 
-#category-application > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#content");
+#category-search > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#search");
 }
 
 #category-privacy > .category-icon {
@@ -87,14 +127,6 @@ treecol {
 
 #category-sync > .category-icon {
   list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#sync");
-}
-
-#category-advanced > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#advanced");
-}
-
-#category-search-results > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#searchResults");
 }
 
 @media (max-width: 800px) {
@@ -232,19 +264,12 @@ treecol {
   margin-left: 0;
 }
 
-/* This learn-more link is inserted at the end of a
-   xul:description element so it should behave like normal text. */
-#trackingProtectionLearnMore {
-  white-space: normal;
-  margin-inline-start: 0;
+#doNotTrackLearnMoreBox {
+  margin-top: 30px
 }
 
 #trackingProtectionAdvancedSettings {
   margin-inline-start: 15px;
-}
-
-#crashReporterGroup {
-  margin-top: 0;
 }
 
 /* Collapse the non-active vboxes in decks to use only the height the
@@ -263,6 +288,10 @@ description > html|a {
   cursor: pointer;
 }
 
+description > checkbox {
+  vertical-align: middle;
+}
+
 #weavePrefsDeck > vbox > label,
 #weavePrefsDeck > vbox > groupbox,
 #weavePrefsDeck > vbox > description,
@@ -270,6 +299,11 @@ description > html|a {
 #weavePrefsDeck > #hasFxaAccount > hbox > label {
   /* no margin-inline-start for elements at the beginning of a line */
   margin-inline-start: 0;
+}
+
+groupbox {
+  /* Give more available space for displaying tooltip on scrollable groupbox */
+  margin-top: 15px !important;
 }
 
 #tabsElement {
@@ -381,15 +415,18 @@ description > html|a {
  */
 
 #fxaProfileImage {
-  max-width: 60px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   list-style-image: url(chrome://browser/skin/fxa/default-avatar.svg);
   margin-inline-end: 15px;
-  image-rendering: -moz-crisp-edges;
+  image-rendering: auto;
+  border: 1px solid transparent;
 }
 
 #fxaLoginStatus[hasName] #fxaProfileImage {
-  max-width: 80px;
+  width: 80px;
+  height: 80px;
 }
 
 #fxaProfileImage.actionable {
@@ -397,11 +434,11 @@ description > html|a {
 }
 
 #fxaProfileImage.actionable:hover {
-  box-shadow: 0px 0px 0px 1px #0095DD;
+  border-color: #0095DD;
 }
 
 #fxaProfileImage.actionable:hover:active {
-  box-shadow: 0px 0px 0px 1px #ff9500;
+  border-color: #ff9500;
 }
 
 #noFxaAccount {
@@ -516,11 +553,13 @@ description > html|a {
 
 .fxaFirefoxLogo {
   list-style-image: url(chrome://browser/skin/fxa/logo.png);
-  max-width: 64px;
+  width: 64px;
+  height: 64px;
   margin-inline-end: 14px;
 }
 
 .fxaMobilePromo {
+  line-height: 28px;
   margin-bottom: 20px;
   margin-top: 25px;
 }
@@ -536,21 +575,18 @@ description > html|a {
 }
 
 .androidLink {
-  background-image: url("chrome://browser/skin/fxa/android.png");
+  list-style-image: url("chrome://browser/skin/fxa/android.png");
 }
 
 .iOSLink {
-  background-image: url("chrome://browser/skin/fxa/ios.png");
+  list-style-image: url("chrome://browser/skin/fxa/ios.png");
 }
 
 .androidLink,
 .iOSLink {
-  margin: 0 0 0 2px;
-  padding-left: 28px;
-  padding-top: 6px;
+  vertical-align: bottom;
+  padding: 0 5px;
   height: 28px;
-  background-repeat: no-repeat;
-  background-size: 24px 28px;
 }
 
 #tosPP-small {
@@ -560,10 +596,10 @@ description > html|a {
 
 @media (min-resolution: 1.1dppx) {
   .androidLink {
-    background-image: url("chrome://browser/skin/fxa/android@2x.png");
+    list-style-image: url("chrome://browser/skin/fxa/android@2x.png");
   }
   .iOSLink {
-    background-image: url("chrome://browser/skin/fxa/ios@2x.png");
+    list-style-image: url("chrome://browser/skin/fxa/ios@2x.png");
   }
   .fxaFirefoxLogo {
     list-style-image: url(chrome://browser/skin/fxa/logo@2x.png);
@@ -613,19 +649,48 @@ description > html|a {
   text-decoration: none;
 }
 
+.search-container {
+  position: sticky;
+  background-color: var(--in-content-page-background);
+  width: 100%;
+  top: 0;
+  z-index: 1;
+}
+
+#searchInput {
+  width: 230px;
+  margin: 20px 0;
+}
+
+#searchInput .textbox-search-icons:not([selectedIndex="1"]) {
+  display: none;
+}
+
 .search-tooltip {
+  font-size: 1.25rem;
   position: absolute;
   padding: 0 10px;
-  bottom: 100%;
   background-color: #ffe900;
+  border: 1px solid #d7b600;
+  -moz-user-select: none;
+  bottom: 35px;
 }
 
 .search-tooltip:hover,
 .search-tooltip:hover::before {
-  filter: opacity(10%);
+  opacity: .1;
 }
 
 .search-tooltip::before {
+  position: absolute;
+  content: "";
+  border: 7px solid transparent;
+  border-top-color: #d7b600;
+  top: 100%;
+  offset-inline-start: calc(50% - 7px);
+}
+
+.search-tooltip::after {
   position: absolute;
   content: "";
   border: 6px solid transparent;
@@ -636,4 +701,28 @@ description > html|a {
 
 .search-tooltip-parent {
   position: relative;
+}
+
+menulist[indicator=true] > menupopup menuitem:not([image]) > .menu-iconic-left {
+  display: -moz-box;
+  min-width: auto; /* Override the min-width defined in menu.css */
+  margin-inline-end: 6px;
+}
+
+menulist[indicator=true] > menupopup menuitem:not([image]) > .menu-iconic-left > .menu-iconic-icon {
+  width: 8px;
+  height: 10px;
+  margin: 0;
+}
+
+menulist[indicator=true] > menupopup menuitem[indicator=true]:not([image]) > .menu-iconic-left > .menu-iconic-icon {
+  list-style-image: url(chrome://browser/skin/preferences/in-content-new/search-arrow-indicator.svg);
+}
+
+menulist[indicator=true] > menupopup menuitem[indicator=true]:not([image]) > .menu-iconic-left > .menu-iconic-icon:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
+}
+
+.menu-iconic-highlightable-text {
+  margin: 0; /* Align with the margin of xul:label.menu-iconic-text */
 }

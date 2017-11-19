@@ -108,7 +108,7 @@ public:
   {
     MOZ_ASSERT(NS_IsMainThread());
 
-    PROFILER_LABEL("HTMLCanvasElement", "FrameCapture", js::ProfileEntry::Category::OTHER);
+    AUTO_PROFILER_LABEL("RequestedFrameRefreshObserver::WillRefresh", OTHER);
 
     if (!mOwningElement) {
       return;
@@ -130,7 +130,8 @@ public:
 
     RefPtr<SourceSurface> snapshot;
     {
-      PROFILER_LABEL("HTMLCanvasElement", "GetSnapshot", js::ProfileEntry::Category::OTHER);
+      AUTO_PROFILER_LABEL(
+        "RequestedFrameRefreshObserver::WillRefresh:GetSnapshot", OTHER);
       snapshot = mOwningElement->GetSurfaceSnapshot(nullptr);
       if (!snapshot) {
         return;
@@ -139,7 +140,8 @@ public:
 
     RefPtr<DataSourceSurface> copy;
     {
-      PROFILER_LABEL("HTMLCanvasElement", "CopySnapshot", js::ProfileEntry::Category::OTHER);
+      AUTO_PROFILER_LABEL(
+        "RequestedFrameRefreshObserver::WillRefresh:CopySurface", OTHER);
       copy = CopySurface(snapshot);
       if (!copy) {
         return;
@@ -147,7 +149,8 @@ public:
     }
 
     {
-      PROFILER_LABEL("HTMLCanvasElement", "SetFrame", js::ProfileEntry::Category::OTHER);
+      AUTO_PROFILER_LABEL(
+        "RequestedFrameRefreshObserver::WillRefresh:SetFrame", OTHER);
       mOwningElement->SetFrameCapture(copy.forget(), aTime);
       mOwningElement->MarkContextCleanForFrameCapture();
     }
@@ -241,8 +244,10 @@ HTMLCanvasPrintState::Done()
     if (mCanvas) {
       mCanvas->InvalidateCanvas();
     }
-    RefPtr<nsRunnableMethod<HTMLCanvasPrintState> > doneEvent =
-      NewRunnableMethod(this, &HTMLCanvasPrintState::NotifyDone);
+    RefPtr<nsRunnableMethod<HTMLCanvasPrintState>> doneEvent =
+      NewRunnableMethod("dom::HTMLCanvasPrintState::NotifyDone",
+                        this,
+                        &HTMLCanvasPrintState::NotifyDone);
     if (NS_SUCCEEDED(NS_DispatchToCurrentThread(doneEvent))) {
       mPendingNotify = true;
     }
@@ -521,11 +526,11 @@ HTMLCanvasElement::DispatchPrintCallback(nsITimerCallback* aCallback)
   }
   mPrintState = new HTMLCanvasPrintState(this, mCurrentContext, aCallback);
 
-  RefPtr<nsRunnableMethod<HTMLCanvasElement> > renderEvent =
-    NewRunnableMethod(this, &HTMLCanvasElement::CallPrintCallback);
-  return OwnerDoc()->Dispatch("HTMLCanvasElement::CallPrintCallback",
-                              TaskCategory::Other,
-                              renderEvent.forget());
+  RefPtr<nsRunnableMethod<HTMLCanvasElement>> renderEvent =
+    NewRunnableMethod("dom::HTMLCanvasElement::CallPrintCallback",
+                      this,
+                      &HTMLCanvasElement::CallPrintCallback);
+  return OwnerDoc()->Dispatch(TaskCategory::Other, renderEvent.forget());
 }
 
 void
@@ -844,13 +849,15 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
     // According to spec, blob should return null if either its horizontal
     // dimension or its vertical dimension is zero. See link below.
     // https://html.spec.whatwg.org/multipage/scripting.html#dom-canvas-toblob
-    OwnerDoc()->Dispatch("FireNullBlobEvent",
-                  TaskCategory::Other,
-                  NewRunnableMethod<Blob*, const char*>(
-                          &aCallback,
-                          static_cast<void(BlobCallback::*)(
-                            Blob*, const char*)>(&BlobCallback::Call),
-                          nullptr, nullptr));
+    OwnerDoc()->Dispatch(
+      TaskCategory::Other,
+      NewRunnableMethod<Blob*, const char*>(
+        "dom::HTMLCanvasElement::ToBlob",
+        &aCallback,
+        static_cast<void (BlobCallback::*)(Blob*, const char*)>(
+          &BlobCallback::Call),
+        nullptr,
+        nullptr));
     return;
   }
 
@@ -1353,7 +1360,8 @@ HTMLCanvasElement::OnVisibilityChange()
     {
     public:
       explicit Runnable(AsyncCanvasRenderer* aRenderer)
-        : mRenderer(aRenderer)
+        : mozilla::CancelableRunnable("Runnable")
+        , mRenderer(aRenderer)
       {}
 
       NS_IMETHOD Run() override
@@ -1365,19 +1373,14 @@ HTMLCanvasElement::OnVisibilityChange()
         return NS_OK;
       }
 
-      void Revoke()
-      {
-        mRenderer = nullptr;
-      }
-
     private:
       RefPtr<AsyncCanvasRenderer> mRenderer;
     };
 
     RefPtr<nsIRunnable> runnable = new Runnable(mAsyncCanvasRenderer);
-    nsCOMPtr<nsIThread> activeThread = mAsyncCanvasRenderer->GetActiveThread();
-    if (activeThread) {
-      activeThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL);
+    nsCOMPtr<nsIEventTarget> activeTarget = mAsyncCanvasRenderer->GetActiveEventTarget();
+    if (activeTarget) {
+      activeTarget->Dispatch(runnable, nsIThread::DISPATCH_NORMAL);
     }
     return;
   }
@@ -1395,7 +1398,8 @@ HTMLCanvasElement::OnMemoryPressure()
     {
     public:
       explicit Runnable(AsyncCanvasRenderer* aRenderer)
-        : mRenderer(aRenderer)
+        : mozilla::CancelableRunnable("Runnable")
+        , mRenderer(aRenderer)
       {}
 
       NS_IMETHOD Run() override
@@ -1407,19 +1411,14 @@ HTMLCanvasElement::OnMemoryPressure()
         return NS_OK;
       }
 
-      void Revoke()
-      {
-        mRenderer = nullptr;
-      }
-
     private:
       RefPtr<AsyncCanvasRenderer> mRenderer;
     };
 
     RefPtr<nsIRunnable> runnable = new Runnable(mAsyncCanvasRenderer);
-    nsCOMPtr<nsIThread> activeThread = mAsyncCanvasRenderer->GetActiveThread();
-    if (activeThread) {
-      activeThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL);
+    nsCOMPtr<nsIEventTarget> activeTarget = mAsyncCanvasRenderer->GetActiveEventTarget();
+    if (activeTarget) {
+      activeTarget->Dispatch(runnable, nsIThread::DISPATCH_NORMAL);
     }
     return;
   }

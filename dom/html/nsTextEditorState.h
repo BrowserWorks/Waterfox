@@ -14,6 +14,7 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/TextEditor.h"
 #include "mozilla/WeakPtr.h"
 #include "mozilla/dom/HTMLInputElementBinding.h"
 #include "mozilla/dom/Nullable.h"
@@ -24,7 +25,6 @@ class nsTextInputSelectionImpl;
 class nsAnonDivObserver;
 class nsISelectionController;
 class nsFrameSelection;
-class nsIEditor;
 class nsITextControlElement;
 class nsFrame;
 
@@ -153,7 +153,7 @@ public:
     MOZ_ASSERT(!mMutationObserver);
   }
 
-  nsIEditor* GetEditor();
+  mozilla::TextEditor* GetTextEditor();
   nsISelectionController* GetSelectionController() const;
   nsFrameSelection* GetConstFrameSelection();
   nsresult BindToFrame(nsTextControlFrame* aFrame);
@@ -178,8 +178,19 @@ public:
     // be within the length of the new value.  In either case, if the value has
     // not changed the cursor won't move.
     eSetValue_MoveCursorToEndIfValueChanged = 1 << 3,
+    // The value is changed for a XUL text control as opposed to for an HTML
+    // text control.  Such value changes are different in that they preserve the
+    // undo history.
+    eSetValue_ForXUL                = 1 << 4,
   };
-  MOZ_MUST_USE bool SetValue(const nsAString& aValue, uint32_t aFlags);
+  MOZ_MUST_USE bool SetValue(const nsAString& aValue,
+                             const nsAString* aOldValue,
+                             uint32_t aFlags);
+  MOZ_MUST_USE bool SetValue(const nsAString& aValue,
+                             uint32_t aFlags)
+  {
+    return SetValue(aValue, nullptr, aFlags);
+  }
   void GetValue(nsAString& aValue, bool aIgnoreWrap) const;
   bool HasNonEmptyValue();
   // The following methods are for textarea element to use whether default
@@ -443,7 +454,7 @@ private:
   // mSelCon is non-null while we have an mBoundFrame.
   RefPtr<nsTextInputSelectionImpl> mSelCon;
   RefPtr<RestoreSelectionState> mRestoringSelection;
-  nsCOMPtr<nsIEditor> mEditor;
+  RefPtr<mozilla::TextEditor> mTextEditor;
   nsCOMPtr<mozilla::dom::Element> mRootNode;
   nsCOMPtr<mozilla::dom::Element> mPlaceholderDiv;
   nsCOMPtr<mozilla::dom::Element> mPreviewDiv;

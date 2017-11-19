@@ -263,7 +263,7 @@ int TestNrSocket::getaddr(nr_transport_addr *addrp) {
 void TestNrSocket::close() {
   if (timer_handle_) {
     NR_async_timer_cancel(timer_handle_);
-    timer_handle_ = 0;
+    timer_handle_ = nullptr;
   }
   internal_socket_->close();
   for (RefPtr<PortMapping>& port_mapping : port_mappings_) {
@@ -310,6 +310,10 @@ void TestNrSocket::process_delayed_cb(NR_SOCKET s, int how, void *cb_arg) {
 int TestNrSocket::sendto(const void *msg, size_t len,
                          int flags, nr_transport_addr *to) {
   MOZ_ASSERT(internal_socket_->my_addr().protocol != IPPROTO_TCP);
+
+  if (nat_->nat_delegate_ && nat_->nat_delegate_->on_sendto(nat_, msg, len, flags, to)) {
+    return 0;
+  }
 
   UCHAR *buf = static_cast<UCHAR*>(const_cast<void*>(msg));
   if (nat_->block_stun_ &&
@@ -517,6 +521,11 @@ int TestNrSocket::connect(nr_transport_addr *addr) {
 
 int TestNrSocket::write(const void *msg, size_t len, size_t *written) {
   UCHAR *buf = static_cast<UCHAR*>(const_cast<void*>(msg));
+
+  if (nat_->nat_delegate_ && nat_->nat_delegate_->on_write(nat_, msg, len, written)) {
+    return R_INTERNAL;
+  }
+
   if (nat_->block_stun_ && nr_is_stun_message(buf, len)) {
     // Should cause this socket to be abandoned
     r_log(LOG_GENERIC, LOG_DEBUG,
@@ -575,6 +584,10 @@ int TestNrSocket::read(void *buf, size_t maxlen, size_t *len) {
 
   if (r) {
     return r;
+  }
+
+  if (nat_->nat_delegate_ && nat_->nat_delegate_->on_read(nat_, buf, maxlen, len)) {
+    return R_INTERNAL;
   }
 
   if (nat_->block_tcp_ && !tls_) {

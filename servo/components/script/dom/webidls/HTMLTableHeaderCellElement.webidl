@@ -3,9 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmltableheadercellelement
+[HTMLConstructor]
 interface HTMLTableHeaderCellElement : HTMLTableCellElement {
+  // [CEReactions]
   //         attribute DOMString scope;
+  // [CEReactions]
   //         attribute DOMString abbr;
+  // [CEReactions]
   //         attribute DOMString sorted;
-  //void sort();
+  // void sort();
 };

@@ -19,10 +19,12 @@
 #include "nsTObserverArray.h"       // for member
 #include "mozilla/ErrorResult.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/SizeOfState.h"    // for SizeOfState
 #include "mozilla/dom/EventTarget.h" // for base class
 #include "js/TypeDecls.h"     // for Handle, Value, JSObject, JSContext
 #include "mozilla/dom/DOMString.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "nsTHashtable.h"
 #include <iosfwd>
 
 // Including 'windows.h' will #define GetClassInfo to something else.
@@ -41,7 +43,6 @@ class nsIContent;
 class nsIDocument;
 class nsIDOMElement;
 class nsIDOMNodeList;
-class nsIEditor;
 class nsIFrame;
 class nsIMutationObserver;
 class nsINode;
@@ -52,13 +53,15 @@ class nsIURI;
 class nsNodeSupportsWeakRefTearoff;
 class nsNodeWeakReference;
 class nsDOMMutationObserver;
+class nsRange;
 
 namespace mozilla {
 class EventListenerManager;
+class TextEditor;
 namespace dom {
 /**
- * @return true if aChar is what the DOM spec defines as 'space character'.
- * http://dom.spec.whatwg.org/#space-character
+ * @return true if aChar is what the WHATWG defines as a 'ascii whitespace'.
+ * https://infra.spec.whatwg.org/#ascii-whitespace
  */
 inline bool IsSpaceCharacter(char16_t aChar) {
   return aChar == ' ' || aChar == '\t' || aChar == '\n' || aChar == '\r' ||
@@ -266,7 +269,8 @@ private:
 // defined, it is inherited from nsINode.
 // This macro isn't actually specific to nodes, and bug 956400 will move it into MFBT.
 #define NS_DECL_SIZEOF_EXCLUDING_THIS \
-  virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
+  virtual size_t SizeOfExcludingThis(mozilla::SizeOfState& aState) \
+    const override;
 
 // Categories of node properties
 // 0 is global.
@@ -324,15 +328,15 @@ public:
   // The following members don't need to be measured:
   // - nsIContent: mPrimaryFrame, because it's non-owning and measured elsewhere
   //
-  virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+  virtual size_t SizeOfExcludingThis(mozilla::SizeOfState& aState) const;
 
   // SizeOfIncludingThis doesn't need to be overridden by sub-classes because
   // sub-classes of nsINode are guaranteed to be laid out in memory in such a
   // way that |this| points to the start of the allocated object, even in
-  // methods of nsINode's sub-classes, and so |aMallocSizeOf(this)| is always
+  // methods of nsINode's sub-classes, so aState.mMallocSizeOf(this) is always
   // safe to call no matter which object it was invoked on.
-  virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const {
-    return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
+  virtual size_t SizeOfIncludingThis(mozilla::SizeOfState& aState) const {
+    return aState.mMallocSizeOf(this) + SizeOfExcludingThis(aState);
   }
 
   friend class nsNodeUtils;
@@ -1093,7 +1097,7 @@ public:
     /**
      * A list of mutation observers
      */
-    nsTObserverArray<nsIMutationObserver*> mMutationObservers;
+    nsAutoTObserverArray<nsIMutationObserver*, 1> mMutationObservers;
 
     /**
      * An object implementing nsIDOMNodeList for this content (childNodes)
@@ -1107,6 +1111,12 @@ public:
      * nsNodeWeakReference.
      */
     nsNodeWeakReference* MOZ_NON_OWNING_REF mWeakReference;
+
+    /**
+     * A set of ranges in the common ancestor for the selection to which
+     * this node belongs to.
+     */
+    mozilla::UniquePtr<nsTHashtable<nsPtrHashKey<nsRange>>> mCommonAncestorRanges;
 
     /**
      * Number of descendant nodes in the uncomposed document that have been
@@ -1242,7 +1252,8 @@ public:
    * an editor. Note that this should be only used for getting input or textarea
    * editor's root content. This method doesn't support HTML editors.
    */
-  nsIContent* GetTextEditorRootContent(nsIEditor** aEditor = nullptr);
+  nsIContent* GetTextEditorRootContent(
+                mozilla::TextEditor** aTextEditor = nullptr);
 
   /**
    * Get the nearest selection root, ie. the node that will be selected if the
@@ -1530,10 +1541,11 @@ private:
     NodeIsContent,
     // Set if the node has animations or transitions
     ElementHasAnimations,
-    // Set if node has a dir attribute with a valid value (ltr, rtl, or auto)
+    // Set if node has a dir attribute with a valid value (ltr, rtl, or auto).
+    // Note that we cannot compute this from the dir attribute event state
+    // flags, because we can't use those to distinguish
+    // <bdi dir="some-invalid-value"> and <bdi dir="auto">.
     NodeHasValidDirAttribute,
-    // Set if node has a dir attribute with a fixed value (ltr or rtl, NOT auto)
-    NodeHasFixedDir,
     // Set if the node has dir=auto and has a property pointing to the text
     // node that determines its direction
     NodeHasDirAutoSet,
@@ -1541,8 +1553,6 @@ private:
     // and has a TextNodeDirectionalityMap property listing the elements whose
     // direction it determines.
     NodeHasTextNodeDirectionalityMap,
-    // Set if the node has dir=auto.
-    NodeHasDirAuto,
     // Set if a node in the node's parent chain has dir=auto.
     NodeAncestorHasDirAuto,
     // Set if the element is in the scope of a scoped style sheet; this flag is
@@ -1561,6 +1571,9 @@ private:
     ParserHasNotified,
     // Sets if the node is apz aware or we have apz aware listeners.
     MayBeApzAware,
+    // Set if the element might have any kind of anonymous content children,
+    // which would not be found through the element's children list.
+    ElementMayHaveAnonymousChildren,
     // Guard value
     BooleanFlagCount
   };
@@ -1637,17 +1650,6 @@ public:
   void SetHasValidDir() { SetBoolFlag(NodeHasValidDirAttribute); }
   void ClearHasValidDir() { ClearBoolFlag(NodeHasValidDirAttribute); }
   bool HasValidDir() const { return GetBoolFlag(NodeHasValidDirAttribute); }
-  void SetHasFixedDir() {
-    MOZ_ASSERT(NodeType() != nsIDOMNode::TEXT_NODE,
-               "SetHasFixedDir on text node");
-    SetBoolFlag(NodeHasFixedDir);
-  }
-  void ClearHasFixedDir() {
-    MOZ_ASSERT(NodeType() != nsIDOMNode::TEXT_NODE,
-               "ClearHasFixedDir on text node");
-    ClearBoolFlag(NodeHasFixedDir);
-  }
-  bool HasFixedDir() const { return GetBoolFlag(NodeHasFixedDir); }
   void SetHasDirAutoSet() {
     MOZ_ASSERT(NodeType() != nsIDOMNode::TEXT_NODE,
                "SetHasDirAutoSet on text node");
@@ -1676,16 +1678,12 @@ public:
     return GetBoolFlag(NodeHasTextNodeDirectionalityMap);
   }
 
-  void SetHasDirAuto() { SetBoolFlag(NodeHasDirAuto); }
-  void ClearHasDirAuto() { ClearBoolFlag(NodeHasDirAuto); }
-  bool HasDirAuto() const { return GetBoolFlag(NodeHasDirAuto); }
-
   void SetAncestorHasDirAuto() { SetBoolFlag(NodeAncestorHasDirAuto); }
   void ClearAncestorHasDirAuto() { ClearBoolFlag(NodeAncestorHasDirAuto); }
   bool AncestorHasDirAuto() const { return GetBoolFlag(NodeAncestorHasDirAuto); }
 
-  bool NodeOrAncestorHasDirAuto() const
-    { return HasDirAuto() || AncestorHasDirAuto(); }
+  // Implemented in nsIContentInlines.h.
+  inline bool NodeOrAncestorHasDirAuto() const;
 
   void SetIsElementInStyleScope(bool aValue) {
     MOZ_ASSERT(IsElement(), "SetIsInStyleScope on a non-Element node");
@@ -1714,6 +1712,10 @@ public:
   {
     return GetBoolFlag(MayBeApzAware);
   }
+
+  void SetMayHaveAnonymousChildren() { SetBoolFlag(ElementMayHaveAnonymousChildren); }
+  bool MayHaveAnonymousChildren() const { return GetBoolFlag(ElementMayHaveAnonymousChildren); }
+
 protected:
   void SetParentIsContent(bool aValue) { SetBoolFlag(ParentIsContent, aValue); }
   void SetIsInDocument() { SetBoolFlag(IsInDocument); }
@@ -1759,6 +1761,7 @@ public:
   void UnbindObject(nsISupports* aObject);
 
   void GetBoundMutationObservers(nsTArray<RefPtr<nsDOMMutationObserver> >& aResult);
+  void GenerateXPath(nsAString& aResult);
 
   already_AddRefed<mozilla::dom::AccessibleNode> GetAccessibleNode();
 
@@ -1905,6 +1908,27 @@ public:
                                                   CallerType aCallerType,
                                                   ErrorResult& aRv);
 
+  const nsTHashtable<nsPtrHashKey<nsRange>>* GetExistingCommonAncestorRanges() const
+  {
+    if (!HasSlots()) {
+      return nullptr;
+    }
+    mozilla::UniquePtr<nsTHashtable<nsPtrHashKey<nsRange>>>& ranges =
+      GetExistingSlots()->mCommonAncestorRanges;
+    return ranges.get();
+  }
+
+  nsTHashtable<nsPtrHashKey<nsRange>>* GetExistingCommonAncestorRanges()
+  {
+    nsINode::nsSlots* slots = GetExistingSlots();
+    return slots ? slots->mCommonAncestorRanges.get() : nullptr;
+  }
+
+  mozilla::UniquePtr<nsTHashtable<nsPtrHashKey<nsRange>>>& GetCommonAncestorRangesPtr()
+  {
+    return Slots()->mCommonAncestorRanges;
+  }
+
 protected:
 
   // Override this function to create a custom slots class.
@@ -1930,7 +1954,7 @@ protected:
     return GetExistingSlots();
   }
 
-  nsTObserverArray<nsIMutationObserver*> *GetMutationObservers()
+  nsAutoTObserverArray<nsIMutationObserver*, 1> *GetMutationObservers()
   {
     return HasSlots() ? &GetExistingSlots()->mMutationObservers : nullptr;
   }

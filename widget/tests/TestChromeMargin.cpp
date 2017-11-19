@@ -24,10 +24,8 @@
 #define nsReadableUtils_h___
 class nsACString;
 class nsAString;
-class nsAFlatString;
-class nsAFlatCString;
-class nsAdoptingString;
-class nsAdoptingCString;
+class nsString;
+class nsCString;
 class nsXPIDLString;
 template<class T> class nsReadingIterator;
 #endif

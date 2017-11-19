@@ -50,9 +50,6 @@ module.exports = {
     // No space padding in parentheses
     "space-in-parens": ["error", "never"],
 
-    // Commas at the end of the line not the start
-    "comma-style": "error",
-
     // Functions are not required to consistently return something or nothing
     "consistent-return": "off",
 
@@ -251,9 +248,6 @@ module.exports = {
 
     // Allow use of undefined variable.
     "no-undefined": "off",
-
-    // Disallow the use of Boolean literals in conditional expressions.
-    "no-unneeded-ternary": "error",
 
     // We use var-only-at-top-level instead of no-var as we allow top level
     // vars.

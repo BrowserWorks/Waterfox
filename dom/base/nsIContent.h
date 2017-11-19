@@ -244,6 +244,14 @@ public:
     return IsInNativeAnonymousSubtree() || (!IsInShadowTree() && GetBindingParent() != nullptr);
   }
 
+  /*
+   * Return true if this node is the shadow root of an use-element shadow tree.
+   */
+  bool IsRootOfUseElementShadowTree() const {
+    return GetParent() && GetParent()->IsSVGElement(nsGkAtoms::use) &&
+           IsRootOfAnonymousSubtree();
+  }
+
   /**
    * Return true iff this node is in an HTML document (in the HTML5 sense of
    * the term, i.e. not in an XHTML/XML document).
@@ -519,10 +527,12 @@ public:
    * Determines if an event attribute name (such as onclick) is valid for
    * a given element type.
    * @note calls nsContentUtils::IsEventAttributeName with right flag
-   * @note overridden by subclasses as needed
+   * @note *Internal is overridden by subclasses as needed
    * @param aName the event name to look up
    */
-  virtual bool IsEventAttributeName(nsIAtom* aName)
+  bool IsEventAttributeName(nsIAtom* aName);
+
+  virtual bool IsEventAttributeNameInternal(nsIAtom* aName)
   {
     return false;
   }
@@ -812,10 +822,10 @@ public:
    * This method is called when the parser finishes creating the element's children,
    * if any are present.
    *
-   * NOTE: this is currently only called for textarea, select, applet, and
-   * object elements in the HTML content sink.  If you want
-   * to call it on your element, modify the content sink of your
-   * choice to do so.  This is an efficiency measure.
+   * NOTE: this is currently only called for textarea, select, and object
+   * elements in the HTML content sink. If you want to call it on your element,
+   * modify the content sink of your choice to do so. This is an efficiency
+   * measure.
    *
    * If you also need to determine whether the parser is the one creating your
    * element (through createElement() or cloneNode() generally) then add a
@@ -832,12 +842,14 @@ public:
   }
 
   /**
-   * For HTML textarea, select, applet, and object elements, returns
-   * true if all children have been added OR if the element was not
-   * created by the parser. Returns true for all other elements.
+   * For HTML textarea, select, and object elements, returns true if all
+   * children have been added OR if the element was not created by the parser.
+   * Returns true for all other elements.
+   *
    * @returns false if the element was created by the parser and
-   *                   it is an HTML textarea, select, applet, or object
+   *                   it is an HTML textarea, select, or object
    *                   element and not all children have been added.
+   *
    * @returns true otherwise.
    */
   virtual bool IsDoneAddingChildren()
@@ -928,26 +940,18 @@ public:
   /**
    * Determining language. Look at the nearest ancestor element that has a lang
    * attribute in the XML namespace or is an HTML/SVG element and has a lang in
-   * no namespace attribute.  Returns false if no language was specified.
+   * no namespace attribute.
+   *
+   * Returns null if no language was specified. Can return the empty atom.
    */
+  nsIAtom* GetLang() const;
+
   bool GetLang(nsAString& aResult) const {
-    for (const nsIContent* content = this; content; content = content->GetParent()) {
-      if (content->GetAttrCount() > 0) {
-        // xml:lang has precedence over lang on HTML elements (see
-        // XHTML1 section C.7).
-        bool hasAttr = content->GetAttr(kNameSpaceID_XML, nsGkAtoms::lang,
-                                          aResult);
-        if (!hasAttr && content->SupportsLangAttr()) {
-          hasAttr = content->GetAttr(kNameSpaceID_None, nsGkAtoms::lang,
-                                     aResult);
-        }
-        NS_ASSERTION(hasAttr || aResult.IsEmpty(),
-                     "GetAttr that returns false should not make string non-empty");
-        if (hasAttr) {
-          return true;
-        }
-      }
+    if (auto* lang = GetLang()) {
+      aResult.Assign(nsDependentAtomString(lang));
+      return true;
     }
+
     return false;
   }
 

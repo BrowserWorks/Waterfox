@@ -19,17 +19,51 @@ function debug(aMsg) {
 
 class GeckoViewContent extends GeckoViewModule {
   init() {
-    this.messageManager.loadFrameScript("chrome://geckoview/content/GeckoViewContent.js", true);
+    this.frameScriptLoaded = false;
+  }
+
+  register() {
+    if (!this.frameScriptLoaded) {
+      this.messageManager.loadFrameScript(
+        "chrome://geckoview/content/GeckoViewContent.js", true);
+      this.frameScriptLoaded = true;
+    }
+
+    this.window.addEventListener("MozDOMFullScreen:Entered", this,
+                                 /* capture */ true, /* untrusted */ false);
+    this.window.addEventListener("MozDOMFullScreen:Exited", this,
+                                 /* capture */ true, /* untrusted */ false);
+
+    this.eventDispatcher.registerListener(this, "GeckoViewContent:ExitFullScreen");
     this.messageManager.addMessageListener("GeckoView:DOMFullscreenExit", this);
     this.messageManager.addMessageListener("GeckoView:DOMFullscreenRequest", this);
     this.messageManager.addMessageListener("GeckoView:DOMTitleChanged", this);
-
-    this.window.addEventListener("MozDOMFullscreen:Entered", this,
-                                 /* capture */ true, /* untrusted */ false);
-    this.window.addEventListener("MozDOMFullscreen:Exited", this,
-                                 /* capture */ true, /* untrusted */ false);
+    this.messageManager.addMessageListener("GeckoView:ContextMenu", this);
   }
 
+  // Bundle event handler.
+  onEvent(aEvent, aData, aCallback) {
+    debug("onEvent: " + aEvent);
+    switch (aEvent) {
+      case "GeckoViewContent:ExitFullScreen":
+        this.messageManager.sendAsyncMessage("GeckoView:DOMFullscreenExited");
+        break;
+    }
+  }
+
+  unregister() {
+    this.window.removeEventListener("MozDOMFullScreen:Entered", this,
+                                    /* capture */ true);
+    this.window.removeEventListener("MozDOMFullScreen:Exited", this,
+                                    /* capture */ true);
+    this.eventDispatcher.unregisterListener(this, "GeckoViewContent:ExitFullScreen");
+    this.messageManager.removeMessageListener("GeckoView:DOMFullscreenExit", this);
+    this.messageManager.removeMessageListener("GeckoView:DOMFullscreenRequest", this);
+    this.messageManager.removeMessageListener("GeckoView:DOMTitleChanged", this);
+    this.messageManager.removeMessageListener("GeckoView:ContextMenu", this);
+  }
+
+  // DOM event handler
   handleEvent(aEvent) {
     debug("handleEvent: aEvent.type=" + aEvent.type);
 
@@ -37,11 +71,11 @@ class GeckoViewContent extends GeckoViewModule {
       case "MozDOMFullscreen:Entered":
         if (this.browser == aEvent.target) {
           // Remote browser; dispatch to content process.
-          this.browser.messageManager.sendAsyncMessage("GeckoView:DOMFullscreenEntered");
+          this.messageManager.sendAsyncMessage("GeckoView:DOMFullscreenEntered");
         }
         break;
       case "MozDOMFullscreen:Exited":
-        this.browser.messageManager.sendAsyncMessage("GeckoView:DOMFullscreenExited");
+        this.messageManager.sendAsyncMessage("GeckoView:DOMFullscreenExited");
         break;
     }
   }
@@ -51,6 +85,15 @@ class GeckoViewContent extends GeckoViewModule {
     debug("receiveMessage " + aMsg.name);
 
     switch (aMsg.name) {
+      case "GeckoView:ContextMenu":
+        this.eventDispatcher.sendRequest({
+          type: aMsg.name,
+          screenX: aMsg.data.screenX,
+          screenY: aMsg.data.screenY,
+          elementSrc: aMsg.data.elementSrc,
+          uri: aMsg.data.uri
+        });
+        break;
       case "GeckoView:DOMFullscreenExit":
         this.window.QueryInterface(Ci.nsIInterfaceRequestor)
                    .getInterface(Ci.nsIDOMWindowUtils)

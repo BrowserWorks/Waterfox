@@ -10,8 +10,6 @@
 <!-- global XULCommandEvent -->
 
 <!DOCTYPE bindings [
-<!ENTITY % searchBarDTD SYSTEM "chrome://browser/locale/searchbar.dtd" >
-%searchBarDTD;
 <!ENTITY % browserDTD SYSTEM "chrome://browser/locale/browser.dtd">
 %browserDTD;
 ]>
@@ -38,6 +36,7 @@
                    anonid="searchbar-textbox"
                    type="autocomplete"
                    inputtype="search"
+                   placeholder="&searchInput.placeholder;"
                    flex="1"
                    autocompletepopup="PopupSearchAutoComplete"
                    autocompletesearch="search-autocomplete"
@@ -56,22 +55,20 @@
             <xul:image class="searchbar-search-button"
                        anonid="searchbar-search-button"
                        xbl:inherits="addengines"
-                       tooltiptext="&searchEndCap.label;"/>
+                       tooltiptext="&searchIcon.tooltip;"/>
           </xul:hbox>
         </xul:box>
         <xul:hbox class="search-go-container">
           <xul:image class="search-go-button" hidden="true"
                      anonid="search-go-button"
                      onclick="handleSearchCommand(event);"
-                     tooltiptext="&searchEndCap.label;"/>
+                     tooltiptext="&contentSearchSubmit.tooltip;"/>
         </xul:hbox>
       </xul:textbox>
     </content>
 
     <implementation implements="nsIObserver">
       <constructor><![CDATA[
-        this._textbox.placeholder = this._stringBundle.getString("searchPlaceholder");
-
         if (this.parentNode.parentNode.localName == "toolbarpaletteitem")
           return;
 
@@ -105,8 +102,10 @@
           // use the popup binding below, so null-check oneOffButtons.
           if (oneOffButtons) {
             oneOffButtons.telemetryOrigin = "searchbar";
-            oneOffButtons.popup = this.textbox.popup;
+            // Set .textbox first, since the popup setter will cause
+            // a _rebuild call that uses it.
             oneOffButtons.textbox = this.textbox;
+            oneOffButtons.popup = this.textbox.popup;
           }
         }, {capturing: true, once: true});
       ]]></constructor>
@@ -1462,11 +1461,7 @@
       <method name="showSettings">
         <body><![CDATA[
 
-          if (Preferences.get("browser.preferences.useOldOrganization")) {
-            openPreferences("paneSearch", {origin: "contentSearch"});
-          } else {
-            openPreferences("general-search", {origin: "contentSearch"});
-          }
+          openPreferences("paneSearch", {origin: "contentSearch"});
 
           // If the preference tab was already selected, the panel doesn't
           // close itself automatically.

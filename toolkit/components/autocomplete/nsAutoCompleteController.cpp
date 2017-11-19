@@ -55,7 +55,8 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(nsAutoCompleteController)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(nsAutoCompleteController)
 NS_INTERFACE_TABLE_HEAD(nsAutoCompleteController)
   NS_INTERFACE_TABLE(nsAutoCompleteController, nsIAutoCompleteController,
-                     nsIAutoCompleteObserver, nsITimerCallback, nsITreeView)
+                     nsIAutoCompleteObserver, nsITimerCallback, nsITreeView,
+                     nsINamed)
   NS_INTERFACE_TABLE_TO_MAP_SEGUE_CYCLE_COLLECTION(nsAutoCompleteController)
 NS_INTERFACE_MAP_END
 
@@ -756,7 +757,7 @@ nsAutoCompleteController::HandleDelete(bool *_retval)
   return NS_OK;
 }
 
-nsresult 
+nsresult
 nsAutoCompleteController::GetResultAt(int32_t aIndex, nsIAutoCompleteResult** aResult,
                                       int32_t* aRowIndex)
 {
@@ -920,6 +921,16 @@ nsAutoCompleteController::Notify(nsITimer *timer)
   }
   StartSearch(nsIAutoCompleteSearchDescriptor::SEARCH_TYPE_DELAYED);
   AfterSearches();
+  return NS_OK;
+}
+
+////////////////////////////////////////////////////////////////////////
+//// nsINamed
+
+NS_IMETHODIMP
+nsAutoCompleteController::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("nsAutoCompleteController");
   return NS_OK;
 }
 

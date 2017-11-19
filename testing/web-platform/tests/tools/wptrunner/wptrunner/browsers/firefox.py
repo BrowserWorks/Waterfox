@@ -65,6 +65,7 @@ def browser_kwargs(test_type, run_info_data, **kwargs):
     return {"binary": kwargs["binary"],
             "prefs_root": kwargs["prefs_root"],
             "extra_prefs": kwargs["extra_prefs"],
+            "test_type": test_type,
             "debug_info": kwargs["debug_info"],
             "symbols_path": kwargs["symbols_path"],
             "stackwalk_binary": kwargs["stackwalk_binary"],
@@ -76,7 +77,8 @@ def browser_kwargs(test_type, run_info_data, **kwargs):
             "timeout_multiplier": get_timeout_multiplier(test_type,
                                                          run_info_data,
                                                          **kwargs),
-            "leak_check": kwargs["leak_check"]}
+            "leak_check": kwargs["leak_check"],
+            "stylo_threads": kwargs["stylo_threads"]}
 
 
 def executor_kwargs(test_type, server_config, cache_manager, run_info_data,
@@ -87,6 +89,9 @@ def executor_kwargs(test_type, server_config, cache_manager, run_info_data,
     executor_kwargs["timeout_multiplier"] = get_timeout_multiplier(test_type,
                                                                    run_info_data,
                                                                    **kwargs)
+    if test_type == "reftest":
+        executor_kwargs["reftest_internal"] = kwargs["reftest_internal"]
+        executor_kwargs["reftest_screenshot"] = kwargs["reftest_screenshot"]
     if test_type == "wdspec":
         executor_kwargs["binary"] = kwargs["binary"]
         executor_kwargs["webdriver_binary"] = kwargs.get("webdriver_binary")
@@ -121,7 +126,8 @@ def run_info_extras(**kwargs):
 
 
 def update_properties():
-    return ["debug", "e10s", "os", "version", "processor", "bits"], {"debug", "e10s"}
+    return (["debug", "stylo", "e10s", "os", "version", "processor", "bits"],
+            {"debug", "e10s", "stylo"})
 
 
 class FirefoxBrowser(Browser):
@@ -129,13 +135,14 @@ class FirefoxBrowser(Browser):
     init_timeout = 60
     shutdown_timeout = 60
 
-    def __init__(self, logger, binary, prefs_root, extra_prefs=None, debug_info=None,
+    def __init__(self, logger, binary, prefs_root, test_type, extra_prefs=None, debug_info=None,
                  symbols_path=None, stackwalk_binary=None, certutil_binary=None,
                  ca_certificate_path=None, e10s=False, stackfix_dir=None,
-                 binary_args=None, timeout_multiplier=None, leak_check=False):
+                 binary_args=None, timeout_multiplier=None, leak_check=False, stylo_threads=1):
         Browser.__init__(self, logger)
         self.binary = binary
         self.prefs_root = prefs_root
+        self.test_type = test_type
         self.extra_prefs = extra_prefs
         self.marionette_port = None
         self.runner = None
@@ -158,6 +165,7 @@ class FirefoxBrowser(Browser):
 
         self.leak_report_file = None
         self.leak_check = leak_check
+        self.stylo_threads = stylo_threads
 
     def settings(self, test):
         return {"check_leaks": self.leak_check and not test.leaks}
@@ -169,6 +177,7 @@ class FirefoxBrowser(Browser):
 
         env = os.environ.copy()
         env["MOZ_DISABLE_NONLOCAL_CONNECTIONS"] = "1"
+        env["STYLO_THREADS"] = str(self.stylo_threads)
 
         locations = ServerLocations(filename=os.path.join(here, "server-locations.txt"))
 
@@ -180,9 +189,13 @@ class FirefoxBrowser(Browser):
                                       "dom.disable_open_during_load": False,
                                       "network.dns.localDomains": ",".join(hostnames),
                                       "network.proxy.type": 0,
-                                      "places.history.enabled": False})
+                                      "places.history.enabled": False,
+                                      "dom.send_after_paint_to_content": True})
         if self.e10s:
             self.profile.set_preferences({"browser.tabs.remote.autostart": True})
+
+        if self.test_type == "reftest":
+            self.profile.set_preferences({"layout.interruptible-reflow.enabled": False})
 
         if self.leak_check and kwargs.get("check_leaks", True):
             self.leak_report_file = os.path.join(self.profile.profile, "runtests_leaks.log")

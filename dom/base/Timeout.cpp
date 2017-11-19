@@ -12,16 +12,15 @@ namespace mozilla {
 namespace dom {
 
 Timeout::Timeout()
-  : mCleared(false),
+  : mTimeoutId(0),
+    mFiringId(TimeoutManager::InvalidFiringId),
+    mPopupState(openAllowed),
+    mReason(Reason::eTimeoutOrInterval),
+    mNestingLevel(0),
+    mCleared(false),
     mRunning(false),
     mIsInterval(false),
-    mIsTracking(false),
-    mReason(Reason::eTimeoutOrInterval),
-    mTimeoutId(0),
-    mInterval(0),
-    mFiringId(TimeoutManager::InvalidFiringId),
-    mNestingLevel(0),
-    mPopupState(openAllowed)
+    mIsTracking(false)
 {
 }
 
@@ -54,7 +53,6 @@ Timeout::SetWhenOrTimeRemaining(const TimeStamp& aBaseTime,
   if (mWindow->IsFrozen()) {
     mWhen = TimeStamp();
     mTimeRemaining = aDelay;
-    mScheduledDelay = TimeDuration(0);
     return;
   }
 
@@ -63,7 +61,6 @@ Timeout::SetWhenOrTimeRemaining(const TimeStamp& aBaseTime,
   // that it appears time passes while suspended.
   mWhen = aBaseTime + aDelay;
   mTimeRemaining = TimeDuration(0);
-  mScheduledDelay = aDelay;
 }
 
 const TimeStamp&
@@ -82,13 +79,6 @@ Timeout::TimeRemaining() const
   // Note, mWindow->IsFrozen() can be false here.  The Thaw() method calls
   // TimeRemaining() to calculate the new When() value.
   return mTimeRemaining;
-}
-
-const TimeDuration&
-Timeout::ScheduledDelay() const
-{
-  MOZ_DIAGNOSTIC_ASSERT(!mWhen.IsNull());
-  return mScheduledDelay;
 }
 
 } // namespace dom

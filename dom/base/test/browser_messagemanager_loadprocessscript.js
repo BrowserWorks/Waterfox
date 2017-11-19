@@ -2,6 +2,20 @@ var ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
            .getService(Ci.nsIMessageBroadcaster);
 ppmm.QueryInterface(Ci.nsIProcessScriptLoader);
 
+const BASE_NUMBER_OF_PROCESSES = 3;
+function checkBaseProcessCount(description) {
+  const {childCount} = ppmm;
+  // With preloaded activity-stream, process count is a bit undeterministic, so
+  // allow for some variation
+  if (Services.prefs.getBoolPref("browser.newtabpage.activity-stream.enabled")) {
+    const extraCount = BASE_NUMBER_OF_PROCESSES + 1;
+    ok(childCount === BASE_NUMBER_OF_PROCESSES || childCount === extraCount, `${description} (${BASE_NUMBER_OF_PROCESSES} or ${extraCount})`);
+  }
+  else {
+    is(childCount, BASE_NUMBER_OF_PROCESSES, `${description} (${BASE_NUMBER_OF_PROCESSES})`);
+  }
+}
+
 function processScript() {
   let cpmm = Components.classes["@mozilla.org/childprocessmessagemanager;1"]
            .getService(Components.interfaces.nsISyncMessageSender);
@@ -31,12 +45,12 @@ function initTestScript() {
 }
 var initTestScriptURL = "data:,(" + initTestScript.toString() + ")()";
 
-var checkProcess = Task.async(function*(mm) {
-  let { target } = yield promiseMessage(mm, "ProcessTest:Loaded");
+var checkProcess = async function(mm) {
+  let { target } = await promiseMessage(mm, "ProcessTest:Loaded");
   target.sendAsyncMessage("ProcessTest:Reply");
-  yield promiseMessage(target, "ProcessTest:Finished");
+  await promiseMessage(target, "ProcessTest:Finished");
   ok(true, "Saw process finished");
-});
+};
 
 function promiseMessage(messageManager, message) {
   return new Promise(resolve => {
@@ -49,57 +63,57 @@ function promiseMessage(messageManager, message) {
   })
 }
 
-add_task(function*(){
+add_task(async function(){
   // We want to count processes in this test, so let's disable the pre-allocated process manager.
-  yield SpecialPowers.pushPrefEnv({"set": [
+  await SpecialPowers.pushPrefEnv({"set": [
     ["dom.ipc.processPrelaunch.enabled", false],
   ]});
 })
 
-add_task(function*(){
+add_task(async function(){
   // This test is only relevant in e10s.
   if (!gMultiProcessBrowser)
     return;
 
   ppmm.releaseCachedProcesses();
 
-  yield SpecialPowers.pushPrefEnv({"set": [["dom.ipc.processCount", 5]]})
-  yield SpecialPowers.pushPrefEnv({"set": [["dom.ipc.keepProcessesAlive.web", 5]]})
+  await SpecialPowers.pushPrefEnv({"set": [["dom.ipc.processCount", 5]]})
+  await SpecialPowers.pushPrefEnv({"set": [["dom.ipc.keepProcessesAlive.web", 5]]})
 
   let tabs = [];
   for (let i = 0; i < 3; i++) {
-    tabs[i] = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
+    tabs[i] = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
   }
 
   for (let i = 0; i < 3; i++) {
-    yield BrowserTestUtils.removeTab(tabs[i]);
+    await BrowserTestUtils.removeTab(tabs[i]);
   }
 
   ppmm.releaseCachedProcesses();
-  is(ppmm.childCount, 3, "Should get back to 3 processes at this point.");
+  checkBaseProcessCount("Should get back to the base number of processes at this point");
 })
 
 // Test that loading a process script loads in all existing processes
-add_task(function*() {
+add_task(async function() {
   let checks = [];
   for (let i = 0; i < ppmm.childCount; i++)
     checks.push(checkProcess(ppmm.getChildAt(i)));
 
   ppmm.loadProcessScript(processScriptURL, false);
-  yield Promise.all(checks);
+  await Promise.all(checks);
 });
 
 // Test that loading a process script loads in new processes
-add_task(function*() {
+add_task(async function() {
   // This test is only relevant in e10s
   if (!gMultiProcessBrowser)
     return;
 
-  is(ppmm.childCount, 3, "Should be three processes at this point");
+  checkBaseProcessCount("Should still be at the base number of processes at this point");
 
   // Load something in the main process
   gBrowser.selectedBrowser.loadURI("about:robots");
-  yield BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
+  await BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
 
   let init = ppmm.initialProcessData;
   init.test123 = "hello";
@@ -117,18 +131,18 @@ add_task(function*() {
     ppmm.loadProcessScript(processScriptURL, true);
 
     // The main process should respond
-    yield check;
+    await check;
 
     check = checkProcess(ppmm);
     // Reset the default browser to start a new child process
     gBrowser.updateBrowserRemoteness(gBrowser.selectedBrowser, true);
     gBrowser.selectedBrowser.loadURI("about:blank");
-    yield BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
+    await BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
 
-    is(ppmm.childCount, 3, "Should be back to three processes at this point");
+    checkBaseProcessCount("Should be back to the base number of processes at this point");
 
     // The new process should have responded
-    yield check;
+    await check;
 
     ppmm.removeDelayedProcessScript(processScriptURL);
 
@@ -136,7 +150,7 @@ add_task(function*() {
     childMM = ppmm.getChildAt(2);
 
     childMM.loadProcessScript(initTestScriptURL, false);
-    let msg = yield promiseMessage(childMM, "ProcessTest:InitGood");
+    let msg = await promiseMessage(childMM, "ProcessTest:InitGood");
     is(msg.data, "bye", "initial process data was correct");
   } else {
     info("Unable to finish test entirely");

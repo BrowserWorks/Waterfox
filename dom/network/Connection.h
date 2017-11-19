@@ -9,6 +9,7 @@
 
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/NetworkInformationBinding.h"
+#include "nsContentUtils.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsINetworkProperties.h"
 
@@ -52,7 +53,11 @@ public:
   virtual JSObject* WrapObject(JSContext* aCx,
                                JS::Handle<JSObject*> aGivenProto) override;
 
-  ConnectionType Type() const { return mType; }
+  ConnectionType Type() const
+  {
+    return nsContentUtils::ShouldResistFingerprinting() ?
+             static_cast<ConnectionType>(ConnectionType::Unknown) : mType;
+  }
 
   IMPL_EVENT_HANDLER(typechange)
 
@@ -60,7 +65,7 @@ protected:
   Connection(nsPIDOMWindowInner* aWindow);
   virtual ~Connection();
 
-  void Update(ConnectionType aType, bool aIsWifi, bool aDHCPGateway,
+  void Update(ConnectionType aType, bool aIsWifi, uint32_t aDHCPGateway,
               bool aNotify);
 
   virtual void ShutdownInternal() = 0;

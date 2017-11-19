@@ -45,6 +45,7 @@ nsSHEntry::nsSHEntry(const nsSHEntry& aOther)
   : mShared(aOther.mShared)
   , mURI(aOther.mURI)
   , mOriginalURI(aOther.mOriginalURI)
+  , mResultPrincipalURI(aOther.mResultPrincipalURI)
   , mReferrerURI(aOther.mReferrerURI)
   , mReferrerPolicy(aOther.mReferrerPolicy)
   , mTitle(aOther.mTitle)
@@ -134,6 +135,21 @@ NS_IMETHODIMP
 nsSHEntry::SetOriginalURI(nsIURI* aOriginalURI)
 {
   mOriginalURI = aOriginalURI;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::GetResultPrincipalURI(nsIURI** aResultPrincipalURI)
+{
+  *aResultPrincipalURI = mResultPrincipalURI;
+  NS_IF_ADDREF(*aResultPrincipalURI);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::SetResultPrincipalURI(nsIURI* aResultPrincipalURI)
+{
+  mResultPrincipalURI = aResultPrincipalURI;
   return NS_OK;
 }
 

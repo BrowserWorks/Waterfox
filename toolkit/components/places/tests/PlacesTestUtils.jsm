@@ -128,16 +128,11 @@ this.PlacesTestUtils = Object.freeze({
    * @return {Promise}
    * @resolves When history was cleared successfully.
    * @rejects JavaScript exception.
+   *
+   * @deprecated New consumers should directly use PlacesUtils.history.clear().
    */
   clearHistory() {
-    let expirationFinished = new Promise(resolve => {
-      Services.obs.addObserver(function observe(subj, topic, data) {
-        Services.obs.removeObserver(observe, topic);
-        resolve();
-      }, PlacesUtils.TOPIC_EXPIRATION_FINISHED);
-    });
-
-    return Promise.all([expirationFinished, PlacesUtils.history.clear()]);
+    return PlacesUtils.history.clear();
   },
 
   /**
@@ -324,5 +319,30 @@ this.PlacesTestUtils = Object.freeze({
       guid: row.getResultByName("guid"),
       dateRemoved: PlacesUtils.toDate(row.getResultByName("dateRemoved")),
     }));
+  },
+
+  waitForNotification(notification, conditionFn = () => true, type = "bookmarks") {
+    let iface = type == "bookmarks" ? Ci.nsINavBookmarkObserver
+                                    : Ci.nsINavHistoryObserver;
+    return new Promise(resolve => {
+      let proxifiedObserver = new Proxy({}, {
+        get: (target, name) => {
+          if (name == "QueryInterface")
+            return XPCOMUtils.generateQI([iface]);
+          if (name == notification)
+            return (...args) => {
+              if (conditionFn.apply(this, args)) {
+                PlacesUtils[type].removeObserver(proxifiedObserver);
+                resolve();
+              }
+            }
+          if (name == "skipTags" || name == "skipDescendantsOnItemRemoval") {
+            return false;
+          }
+          return () => false;
+        }
+      });
+      PlacesUtils[type].addObserver(proxifiedObserver);
+    });
   },
 });

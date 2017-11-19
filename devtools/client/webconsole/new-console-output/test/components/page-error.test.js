@@ -142,12 +142,18 @@ describe("PageError component:", () => {
   it("has the expected indent", () => {
     const message = stubPreparedMessages.get("ReferenceError: asdf is not defined");
     const indent = 10;
-    let wrapper = render(PageError({ message, serviceContainer, indent}));
-    expect(wrapper.find(".indent").prop("style").width)
-        .toBe(`${indent * INDENT_WIDTH}px`);
+    let wrapper = render(PageError({
+      message: Object.assign({}, message, {indent}),
+      serviceContainer
+    }));
+    let indentEl = wrapper.find(".indent");
+    expect(indentEl.prop("style").width).toBe(`${indent * INDENT_WIDTH}px`);
+    expect(indentEl.prop("data-indent")).toBe(`${indent}`);
 
     wrapper = render(PageError({ message, serviceContainer}));
-    expect(wrapper.find(".indent").prop("style").width).toBe(`0`);
+    indentEl = wrapper.find(".indent");
+    expect(indentEl.prop("style").width).toBe(`0`);
+    expect(indentEl.prop("data-indent")).toBe(`0`);
   });
 
   it("has empty error notes", () => {
@@ -161,16 +167,16 @@ describe("PageError component:", () => {
 
   it("can show an error note", () => {
     const origMessage = stubPreparedMessages.get("ReferenceError: asdf is not defined");
-    const message = origMessage.set("notes", [
-      {
+    const message = Object.assign({}, origMessage, {
+      "notes": [{
         "messageBody": "test note",
         "frame": {
           "source": "http://example.com/test.js",
           "line": 2,
           "column": 6
         }
-      }
-    ]);
+      }]
+    });
 
     let wrapper = render(PageError({ message, serviceContainer }));
 
@@ -189,8 +195,8 @@ describe("PageError component:", () => {
 
   it("can show multiple error notes", () => {
     const origMessage = stubPreparedMessages.get("ReferenceError: asdf is not defined");
-    const message = origMessage.set("notes", [
-      {
+    const message = Object.assign({}, origMessage, {
+      "notes": [{
         "messageBody": "test note 1",
         "frame": {
           "source": "http://example.com/test1.js",
@@ -213,8 +219,8 @@ describe("PageError component:", () => {
           "line": 9,
           "column": 4
         }
-      }
-    ]);
+      }]
+    });
 
     let wrapper = render(PageError({ message, serviceContainer }));
 

@@ -132,6 +132,39 @@ public:
   NS_DECL_NSIATOM
 };
 
+#if defined(NS_BUILD_REFCNT_LOGGING)
+// nsFakeStringBuffers don't really use the refcounting system, but we
+// have to give a coherent series of addrefs and releases to the
+// refcount logging system, or we'll hit assertions when running with
+// XPCOM_MEM_LOG_CLASSES=nsStringBuffer.
+class FakeBufferRefcountHelper
+{
+public:
+  explicit FakeBufferRefcountHelper(nsStringBuffer* aBuffer)
+    : mBuffer(aBuffer)
+  {
+    // Account for the initial static refcount of 1, so that we don't
+    // hit a refcount logging assertion when this object first appears
+    // with a refcount of 2.
+    NS_LOG_ADDREF(aBuffer, 1, "nsStringBuffer", sizeof(nsStringBuffer));
+  }
+
+  ~FakeBufferRefcountHelper()
+  {
+    // We told the refcount logging system in the ctor that this
+    // object was created, so now we have to tell it that it was
+    // destroyed, to avoid leak reports. This may cause odd the
+    // refcount isn't actually 0.
+    NS_LOG_RELEASE(mBuffer, 0, "nsStringBuffer");
+  }
+
+private:
+  nsStringBuffer* mBuffer;
+};
+
+UniquePtr<nsTArray<FakeBufferRefcountHelper>> gFakeBuffers;
+#endif
+
 class StaticAtom final : public nsIAtom
 {
 public:
@@ -140,6 +173,15 @@ public:
     mLength = aLength;
     mIsStatic = true;
     mString = static_cast<char16_t*>(aStringBuffer->Data());
+
+#if defined(NS_BUILD_REFCNT_LOGGING)
+    MOZ_ASSERT(NS_IsMainThread());
+    if (!gFakeBuffers) {
+      gFakeBuffers = MakeUnique<nsTArray<FakeBufferRefcountHelper>>();
+    }
+    gFakeBuffers->AppendElement(aStringBuffer);
+#endif
+
     // Technically we could currently avoid doing this addref by instead making
     // the static atom buffers have an initial refcount of 2.
     aStringBuffer->AddRef();
@@ -421,21 +463,21 @@ DynamicAtom::GCAtomTableLocked(const MutexAutoLock& aProofOfLock,
     NS_ASSERTION(nonZeroRefcountAtomsCount == 0, msg.get());
   }
 
-  // During the course of this function, the atom table is locked. This means
-  // that, barring refcounting bugs in consumers, an atom can never go from
-  // refcount == 0 to refcount != 0 during a GC. However, an atom _can_ go from
-  // refcount != 0 to refcount == 0 if a Release() occurs in parallel with GC.
-  // This means that we cannot assert that gUnusedAtomCount == removedCount, and
-  // thus that there are no unused atoms at the end of a GC. We can and do,
-  // however, assert this after the last GC at shutdown.
-  if (aKind == GCKind::RegularOperation) {
-    MOZ_ASSERT(removedCount <= gUnusedAtomCount);
-  } else {
-    // Complain if somebody adds new GCKind enums.
-    MOZ_ASSERT(aKind == GCKind::Shutdown);
-    // Our unused atom count should be accurate.
-    MOZ_ASSERT(removedCount == gUnusedAtomCount);
-  }
+  // We would like to assert that gUnusedAtomCount matches the number of atoms
+  // we found in the table which we removed. During the course of this function,
+  // the atom table is locked, but this lock is not acquired for AddRef() and
+  // Release() calls. This means we might see a gUnusedAtomCount value in
+  // between, say, AddRef() incrementing mRefCnt and it decrementing
+  // gUnusedAtomCount. So, we don't bother asserting that there are no unused
+  // atoms at the end of a regular GC. But we can (and do) assert thist just
+  // after the last GC at shutdown.
+  //
+  // Note that, barring refcounting bugs, an atom can only go from a zero
+  // refcount to a non-zero refcount while the atom table lock is held, so
+  // so we won't try to resurrect a zero refcount atom while trying to delete
+  // it.
+
+  MOZ_ASSERT_IF(aKind == GCKind::Shutdown, removedCount == gUnusedAtomCount);
 
   gUnusedAtomCount -= removedCount;
 }
@@ -447,7 +489,6 @@ DynamicAtom::AddRef(void)
 {
   nsrefcnt count = ++mRefCnt;
   if (count == 1) {
-    MOZ_ASSERT(gUnusedAtomCount > 0);
     gUnusedAtomCount--;
   }
   return count;
@@ -564,6 +605,10 @@ NS_InitAtomTable()
 void
 NS_ShutdownAtomTable()
 {
+#if defined(NS_BUILD_REFCNT_LOGGING)
+  gFakeBuffers = nullptr;
+#endif
+
   delete gStaticAtomTable;
   gStaticAtomTable = nullptr;
 

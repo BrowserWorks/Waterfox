@@ -24,6 +24,7 @@ struct RawServoAnimationValueMap;
 
 namespace mozilla {
 class ServoElementSnapshot;
+class ServoStyleContext;
 struct StyleAnimation;
 struct URLExtraData;
 namespace dom {
@@ -33,6 +34,7 @@ class StyleChildrenIterator;
 struct AnimationPropertySegment;
 struct ComputedTiming;
 struct Keyframe;
+struct PropertyValuePair;
 struct PropertyStyleAnimationValuePair;
 using ComputedKeyframeValues = nsTArray<PropertyStyleAnimationValuePair>;
 } // namespace mozilla
@@ -60,6 +62,7 @@ typedef nsXBLBinding RawGeckoXBLBinding;
 typedef mozilla::URLExtraData RawGeckoURLExtraData;
 typedef nsTArray<RefPtr<RawServoAnimationValue>> RawGeckoServoAnimationValueList;
 typedef nsTArray<mozilla::Keyframe> RawGeckoKeyframeList;
+typedef nsTArray<mozilla::PropertyValuePair> RawGeckoPropertyValuePairList;
 typedef nsTArray<mozilla::ComputedKeyframeValues> RawGeckoComputedKeyframeValuesList;
 typedef nsStyleAutoArray<mozilla::StyleAnimation> RawGeckoStyleAnimationList;
 typedef nsTArray<nsFontFaceRuleContainer> RawGeckoFontFaceRuleList;
@@ -68,6 +71,7 @@ typedef mozilla::ComputedTiming RawGeckoComputedTiming;
 typedef nsTArray<const RawServoStyleRule*> RawGeckoServoStyleRuleList;
 typedef nsTArray<nsCSSPropertyID> RawGeckoCSSPropertyIDList;
 typedef mozilla::gfx::Float RawGeckoGfxMatrix4x4[16];
+typedef mozilla::dom::StyleChildrenIterator RawGeckoStyleChildrenIterator;
 
 // We have these helper types so that we can directly generate
 // things like &T or Borrowed<T> on the Rust side in the function, providing
@@ -100,6 +104,16 @@ typedef mozilla::gfx::Float RawGeckoGfxMatrix4x4[16];
   };
 #include "mozilla/ServoArcTypeList.h"
 #undef SERVO_ARC_TYPE
+
+typedef mozilla::ServoStyleContext const* ServoStyleContextBorrowed;
+typedef mozilla::ServoStyleContext const* ServoStyleContextBorrowedOrNull;
+typedef ServoComputedData const* ServoComputedDataBorrowed;
+
+struct MOZ_MUST_USE_TYPE ServoStyleContextStrong
+{
+  mozilla::ServoStyleContext* mPtr;
+  already_AddRefed<mozilla::ServoStyleContext> Consume();
+};
 
 #define DECL_OWNED_REF_TYPE_FOR(type_)    \
   typedef type_* type_##Owned;            \
@@ -145,6 +159,8 @@ DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoServoAnimationValueList)
 DECL_BORROWED_REF_TYPE_FOR(RawGeckoServoAnimationValueList)
 DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoKeyframeList)
 DECL_BORROWED_REF_TYPE_FOR(RawGeckoKeyframeList)
+DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoPropertyValuePairList)
+DECL_BORROWED_REF_TYPE_FOR(RawGeckoPropertyValuePairList)
 DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoComputedKeyframeValuesList)
 DECL_BORROWED_REF_TYPE_FOR(RawGeckoStyleAnimationList)
 DECL_BORROWED_MUT_REF_TYPE_FOR(nsTimingFunction)
@@ -156,6 +172,7 @@ DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoServoStyleRuleList)
 DECL_BORROWED_MUT_REF_TYPE_FOR(nsCSSPropertyIDSet)
 DECL_BORROWED_REF_TYPE_FOR(RawGeckoCSSPropertyIDList)
 DECL_BORROWED_REF_TYPE_FOR(nsXBLBinding)
+DECL_BORROWED_MUT_REF_TYPE_FOR(RawGeckoStyleChildrenIterator)
 
 #undef DECL_ARC_REF_TYPE_FOR
 #undef DECL_OWNED_REF_TYPE_FOR

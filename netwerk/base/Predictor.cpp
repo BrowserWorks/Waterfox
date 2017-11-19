@@ -615,9 +615,10 @@ namespace {
 class PredictorThreadShutdownRunner : public Runnable
 {
 public:
-  PredictorThreadShutdownRunner(nsIThread *ioThread, bool success)
-    :mIOThread(ioThread)
-    ,mSuccess(success)
+  PredictorThreadShutdownRunner(nsIThread* ioThread, bool success)
+    : Runnable("net::PredictorThreadShutdownRunner")
+    , mIOThread(ioThread)
+    , mSuccess(success)
   { }
   ~PredictorThreadShutdownRunner() { }
 
@@ -640,9 +641,10 @@ private:
 class PredictorOldCleanupRunner : public Runnable
 {
 public:
-  PredictorOldCleanupRunner(nsIThread *ioThread, nsIFile *dbFile)
-    :mIOThread(ioThread)
-    ,mDBFile(dbFile)
+  PredictorOldCleanupRunner(nsIThread* ioThread, nsIFile* dbFile)
+    : Runnable("net::PredictorOldCleanupRunner")
+    , mIOThread(ioThread)
+    , mDBFile(dbFile)
   { }
 
   ~PredictorOldCleanupRunner() { }
@@ -1480,7 +1482,6 @@ Predictor::RunPredictions(nsIURI *referrer,
   }
 
   len = preresolves.Length();
-  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
   for (i = 0; i < len; ++i) {
     nsCOMPtr<nsIURI> uri = preresolves[i];
     ++totalPredictions;
@@ -1550,9 +1551,7 @@ Predictor::LearnNative(nsIURI *targetURI, nsIURI *sourceURI,
 
     RefPtr<PredictorLearnRunnable> runnable = new PredictorLearnRunnable(
       targetURI, sourceURI, reason, originAttributes);
-    SystemGroup::Dispatch("PredictorLearnRunnable",
-                          TaskCategory::Other,
-                          runnable.forget());
+    SystemGroup::Dispatch(TaskCategory::Other, runnable.forget());
 
     return NS_OK;
   }

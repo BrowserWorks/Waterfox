@@ -107,11 +107,11 @@ static nsStringStats gStringStats;
 // ---------------------------------------------------------------------------
 
 void
-ReleaseData(void* aData, uint32_t aFlags)
+ReleaseData(void* aData, nsAString::DataFlags aFlags)
 {
-  if (aFlags & nsSubstring::F_SHARED) {
+  if (aFlags & nsAString::DataFlags::SHARED) {
     nsStringBuffer::FromData(aData)->Release();
-  } else if (aFlags & nsSubstring::F_OWNED) {
+  } else if (aFlags & nsAString::DataFlags::OWNED) {
     free(aData);
     STRING_STAT_INCREMENT(AdoptFree);
     // Treat this as destruction of a "StringAdopt" object for leak
@@ -139,17 +139,15 @@ public:
   {
     return mLength;
   }
-  uint32_t flags() const
+  DataFlags flags() const
   {
-    return mFlags;
+    return mDataFlags;
   }
 
-  void set(char_type* aData, size_type aLen, uint32_t aFlags)
+  void set(char_type* aData, size_type aLen, DataFlags aDataFlags)
   {
-    ReleaseData(mData, mFlags);
-    mData = aData;
-    mLength = aLen;
-    mFlags = aFlags;
+    ReleaseData(mData, mDataFlags);
+    SetData(aData, aLen, aDataFlags);
   }
 };
 
@@ -167,17 +165,15 @@ public:
   {
     return mLength;
   }
-  uint32_t flags() const
+  DataFlags flags() const
   {
-    return mFlags;
+    return mDataFlags;
   }
 
-  void set(char_type* aData, size_type aLen, uint32_t aFlags)
+  void set(char_type* aData, size_type aLen, DataFlags aDataFlags)
   {
-    ReleaseData(mData, mFlags);
-    mData = aData;
-    mLength = aLen;
-    mFlags = aFlags;
+    ReleaseData(mData, mDataFlags);
+    SetData(aData, aLen, aDataFlags);
   }
 };
 
@@ -283,7 +279,7 @@ nsStringBuffer::FromString(const nsAString& aStr)
   const nsAStringAccessor* accessor =
     static_cast<const nsAStringAccessor*>(&aStr);
 
-  if (!(accessor->flags() & nsSubstring::F_SHARED)) {
+  if (!(accessor->flags() & nsAString::DataFlags::SHARED)) {
     return nullptr;
   }
 
@@ -296,7 +292,7 @@ nsStringBuffer::FromString(const nsACString& aStr)
   const nsACStringAccessor* accessor =
     static_cast<const nsACStringAccessor*>(&aStr);
 
-  if (!(accessor->flags() & nsCSubstring::F_SHARED)) {
+  if (!(accessor->flags() & nsACString::DataFlags::SHARED)) {
     return nullptr;
   }
 
@@ -313,9 +309,8 @@ nsStringBuffer::ToString(uint32_t aLen, nsAString& aStr,
   MOZ_DIAGNOSTIC_ASSERT(data[aLen] == char16_t(0),
                         "data should be null terminated");
 
-  // preserve class flags
-  uint32_t flags = accessor->flags();
-  flags = (flags & 0xFFFF0000) | nsSubstring::F_SHARED | nsSubstring::F_TERMINATED;
+  nsAString::DataFlags flags =
+    nsAString::DataFlags::SHARED | nsAString::DataFlags::TERMINATED;
 
   if (!aMoveOwnership) {
     AddRef();
@@ -333,9 +328,8 @@ nsStringBuffer::ToString(uint32_t aLen, nsACString& aStr,
   MOZ_DIAGNOSTIC_ASSERT(data[aLen] == char(0),
                         "data should be null terminated");
 
-  // preserve class flags
-  uint32_t flags = accessor->flags();
-  flags = (flags & 0xFFFF0000) | nsCSubstring::F_SHARED | nsCSubstring::F_TERMINATED;
+  nsACString::DataFlags flags =
+    nsACString::DataFlags::SHARED | nsACString::DataFlags::TERMINATED;
 
   if (!aMoveOwnership) {
     AddRef();
@@ -357,13 +351,12 @@ nsStringBuffer::SizeOfIncludingThisEvenIfShared(mozilla::MallocSizeOf aMallocSiz
 
 // ---------------------------------------------------------------------------
 
-
-// define nsSubstring
+// define nsAString
 #include "string-template-def-unichar.h"
 #include "nsTSubstring.cpp"
 #include "string-template-undef.h"
 
-// define nsCSubstring
+// define nsACString
 #include "string-template-def-char.h"
 #include "nsTSubstring.cpp"
 #include "string-template-undef.h"

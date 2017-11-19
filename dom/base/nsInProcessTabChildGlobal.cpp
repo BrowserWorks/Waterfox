@@ -199,6 +199,14 @@ nsInProcessTabChildGlobal::GetDocShell(nsIDocShell** aDocShell)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsInProcessTabChildGlobal::GetTabEventTarget(nsIEventTarget** aTarget)
+{
+  nsCOMPtr<nsIEventTarget> target = GetMainThreadEventTarget();
+  target.forget(aTarget);
+  return NS_OK;
+}
+
 void
 nsInProcessTabChildGlobal::FireUnloadEvent()
 {
@@ -309,9 +317,15 @@ nsInProcessTabChildGlobal::InitTabChildGlobal()
 class nsAsyncScriptLoad : public Runnable
 {
 public:
-    nsAsyncScriptLoad(nsInProcessTabChildGlobal* aTabChild, const nsAString& aURL,
-                      bool aRunInGlobalScope)
-      : mTabChild(aTabChild), mURL(aURL), mRunInGlobalScope(aRunInGlobalScope) {}
+  nsAsyncScriptLoad(nsInProcessTabChildGlobal* aTabChild,
+                    const nsAString& aURL,
+                    bool aRunInGlobalScope)
+    : mozilla::Runnable("nsAsyncScriptLoad")
+    , mTabChild(aTabChild)
+    , mURL(aURL)
+    , mRunInGlobalScope(aRunInGlobalScope)
+  {
+  }
 
   NS_IMETHOD Run() override
   {

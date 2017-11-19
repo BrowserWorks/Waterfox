@@ -20,6 +20,7 @@
 #include "nsWeakReference.h"
 #include "MainThreadUtils.h"
 #include "nsTArray.h"
+#include "nsINamed.h"
 #include "nsTObserverArray.h"
 #include "nsITimer.h"
 #include "nsPluginTags.h"
@@ -35,7 +36,6 @@
 namespace mozilla {
 namespace plugins {
 class FakePluginTag;
-class PluginAsyncSurrogate;
 class PluginTag;
 } // namespace plugins
 } // namespace mozilla
@@ -76,7 +76,8 @@ public:
 class nsPluginHost final : public nsIPluginHost,
                            public nsIObserver,
                            public nsITimerCallback,
-                           public nsSupportsWeakReference
+                           public nsSupportsWeakReference,
+                           public nsINamed
 {
   friend class nsPluginTag;
   friend class nsFakePluginTag;
@@ -91,6 +92,7 @@ public:
   NS_DECL_NSIPLUGINHOST
   NS_DECL_NSIOBSERVER
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
   nsresult LoadPlugins();
   nsresult UnloadPlugins();
@@ -197,10 +199,7 @@ public:
     // Needed to whitelist for async init support
     eSpecialType_Test,
     // Informs some decisions about OOP and quirks
-    eSpecialType_Flash,
-    // Binds to the <applet> tag, has various special
-    // rules around opening channels, codebase, ...
-    eSpecialType_Java
+    eSpecialType_Flash
   };
   static SpecialType GetSpecialType(const nsACString & aMIMEType);
 
@@ -420,7 +419,6 @@ class PluginDestructionGuard : public mozilla::LinkedListElement<PluginDestructi
 {
 public:
   explicit PluginDestructionGuard(nsNPAPIPluginInstance *aInstance);
-  explicit PluginDestructionGuard(mozilla::plugins::PluginAsyncSurrogate *aSurrogate);
   explicit PluginDestructionGuard(NPP npp);
 
   ~PluginDestructionGuard();
@@ -435,17 +433,6 @@ protected:
     mDelayedDestroy = false;
 
     sList.insertBack(this);
-  }
-
-  void InitAsync()
-  {
-    NS_ASSERTION(NS_IsMainThread(), "Should be on the main thread");
-
-    mDelayedDestroy = false;
-
-    // Instances with active surrogates must be inserted *in front of* sList so
-    // that they appear to be at the bottom of the stack
-    sList.insertFront(this);
   }
 
   RefPtr<nsNPAPIPluginInstance> mInstance;

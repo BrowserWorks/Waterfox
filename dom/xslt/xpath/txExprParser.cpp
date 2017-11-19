@@ -28,7 +28,7 @@ using mozilla::Move;
  * This should move to XSLProcessor class
  */
 nsresult
-txExprParser::createAVT(const nsSubstring& aAttrValue,
+txExprParser::createAVT(const nsAString& aAttrValue,
                         txIParseContext* aContext,
                         Expr** aResult)
 {
@@ -39,7 +39,7 @@ txExprParser::createAVT(const nsSubstring& aAttrValue,
 
     nsAutoString literalString;
     bool inExpr = false;
-    nsSubstring::const_char_iterator iter, start, end, avtStart;
+    nsAString::const_char_iterator iter, start, end, avtStart;
     aAttrValue.BeginReading(iter);
     aAttrValue.EndReading(end);
     avtStart = iter;
@@ -113,7 +113,7 @@ txExprParser::createAVT(const nsSubstring& aAttrValue,
                 return NS_ERROR_XPATH_UNBALANCED_CURLY_BRACE;
             }
         }
-        
+
         // Add expression, create a concat() call if necessary
         if (!expr) {
             expr = Move(newExpr);
@@ -146,7 +146,7 @@ txExprParser::createAVT(const nsSubstring& aAttrValue,
 }
 
 nsresult
-txExprParser::createExprInternal(const nsSubstring& aExpression,
+txExprParser::createExprInternal(const nsAString& aExpression,
                                  uint32_t aSubStringPos,
                                  txIParseContext* aContext, Expr** aExpr)
 {
@@ -155,7 +155,7 @@ txExprParser::createExprInternal(const nsSubstring& aExpression,
     txExprLexer lexer;
     nsresult rv = lexer.parse(aExpression);
     if (NS_FAILED(rv)) {
-        nsASingleFragmentString::const_char_iterator start;
+        nsAString::const_char_iterator start;
         aExpression.BeginReading(start);
         aContext->SetErrorOffset(lexer.mPosition - start + aSubStringPos);
         return rv;
@@ -166,7 +166,7 @@ txExprParser::createExprInternal(const nsSubstring& aExpression,
         rv = NS_ERROR_XPATH_BINARY_EXPECTED;
     }
     if (NS_FAILED(rv)) {
-        nsASingleFragmentString::const_char_iterator start;
+        nsAString::const_char_iterator start;
         aExpression.BeginReading(start);
         aContext->SetErrorOffset(lexer.peek()->mStart - start + aSubStringPos);
 
@@ -293,7 +293,7 @@ txExprParser::createExpr(txExprLexer& lexer, txIParseContext* aContext,
         if (negations > 0) {
             if (negations % 2 == 0) {
                 FunctionCall* fcExpr = new txCoreFunctionCall(txCoreFunctionCall::NUMBER);
-                
+
                 rv = fcExpr->addParam(expr);
                 if (NS_FAILED(rv))
                     return rv;
@@ -574,7 +574,7 @@ txExprParser::createLocationStep(txExprLexer& lexer, txIParseContext* aContext,
             NS_ENSURE_SUCCESS(rv, rv);
         }
     }
-    
+
     nsAutoPtr<LocationStep> lstep(new LocationStep(nodeTest, axisIdentifier));
 
     nodeTest.forget();
@@ -681,7 +681,7 @@ txExprParser::createPathExpr(txExprLexer& lexer, txIParseContext* aContext,
         static_cast<RootExpr*>(expr.get())->setSerialize(false);
 #endif
     }
-    
+
     // We have a PathExpr containing several steps
     nsAutoPtr<PathExpr> pathExpr(new PathExpr());
 
@@ -731,7 +731,7 @@ txExprParser::createUnionExpr(txExprLexer& lexer, txIParseContext* aContext,
     nsAutoPtr<Expr> expr;
     nsresult rv = createPathExpr(lexer, aContext, getter_Transfers(expr));
     NS_ENSURE_SUCCESS(rv, rv);
-    
+
     if (lexer.peek()->mType != Token::UNION_OP) {
         *aResult = expr.forget();
         return NS_OK;
@@ -835,7 +835,7 @@ txExprParser::parseParameters(FunctionCall* aFnCall, txExprLexer& lexer,
             rv = aFnCall->addParam(expr.forget());
             NS_ENSURE_SUCCESS(rv, rv);
         }
-                    
+
         switch (lexer.peek()->mType) {
             case Token::R_PAREN :
                 lexer.nextToken();

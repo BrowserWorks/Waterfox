@@ -85,7 +85,7 @@ HashValue(const Value& v, const mozilla::HashCodeScrambler& hcs)
         return hcs.scramble(v.asRawBits());
 
     MOZ_ASSERT(!v.isGCThing(), "do not reveal pointers via hash codes");
-    return v.asRawBits();
+    return mozilla::HashGeneric(v.asRawBits());
 }
 
 HashNumber
@@ -132,6 +132,7 @@ static const ClassOps MapIteratorObjectClassOps = {
     nullptr, /* getProperty */
     nullptr, /* setProperty */
     nullptr, /* enumerate */
+    nullptr, /* newEnumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
     MapIteratorObject::finalize
@@ -290,6 +291,7 @@ const ClassOps MapObject::classOps_ = {
     nullptr, // getProperty
     nullptr, // setProperty
     nullptr, // enumerate
+    nullptr, // newEnumerate
     nullptr, // resolve
     nullptr, // mayResolve
     finalize,
@@ -562,8 +564,7 @@ MapObject::construct(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     RootedObject proto(cx);
-    RootedObject newTarget(cx, &args.newTarget().toObject());
-    if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
+    if (!GetPrototypeFromBuiltinConstructor(cx, args, &proto))
         return false;
 
     Rooted<MapObject*> obj(cx, MapObject::create(cx, proto));
@@ -870,6 +871,7 @@ static const ClassOps SetIteratorObjectClassOps = {
     nullptr, /* getProperty */
     nullptr, /* setProperty */
     nullptr, /* enumerate */
+    nullptr, /* newEnumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
     SetIteratorObject::finalize
@@ -1015,6 +1017,7 @@ const ClassOps SetObject::classOps_ = {
     nullptr, // getProperty
     nullptr, // setProperty
     nullptr, // enumerate
+    nullptr, // newEnumerate
     nullptr, // resolve
     nullptr, // mayResolve
     finalize,
@@ -1164,8 +1167,7 @@ SetObject::construct(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     RootedObject proto(cx);
-    RootedObject newTarget(cx, &args.newTarget().toObject());
-    if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
+    if (!GetPrototypeFromBuiltinConstructor(cx, args, &proto))
         return false;
 
     Rooted<SetObject*> obj(cx, SetObject::create(cx, proto));

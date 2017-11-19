@@ -33,7 +33,7 @@ public:
                        nsCString &nickname,
                        const nsNSSShutDownPreventionLock &proofOfLock);
 
-  static nsresult 
+  static nsresult
   ImportValidCACerts(int numCACerts, SECItem *CACerts, nsIInterfaceRequestor *ctx,
                      const nsNSSShutDownPreventionLock &proofOfLock);
 
@@ -52,7 +52,7 @@ private:
                            nsIInterfaceRequestor* ctx,
                            const nsNSSShutDownPreventionLock& proofOfLock);
 
-  static void DisplayCertificateAlert(nsIInterfaceRequestor *ctx, 
+  static void DisplayCertificateAlert(nsIInterfaceRequestor *ctx,
                                       const char *stringID, nsIX509Cert *certToShow,
                                       const nsNSSShutDownPreventionLock &proofOfLock);
 
@@ -73,5 +73,9 @@ private:
     0x4783,                                                            \
     {0xb3, 0x2c, 0x80, 0x12, 0x46, 0x93, 0xd8, 0x71}                   \
   }
+
+SECStatus
+ChangeCertTrustWithPossibleAuthentication(
+  const mozilla::UniqueCERTCertificate& cert, CERTCertTrust& trust, void* ctx);
 
 #endif // nsNSSCertificateDB_h

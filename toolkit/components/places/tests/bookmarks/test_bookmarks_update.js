@@ -194,10 +194,10 @@ add_task(async function update_lastModified() {
 
   bm = await PlacesUtils.bookmarks.update({ guid: bm.guid,
                                             title: "" });
-  Assert.ok(!("title" in bm));
+  Assert.strictEqual(bm.title, "");
 
   bm = await PlacesUtils.bookmarks.fetch(bm.guid);
-  Assert.ok(!("title" in bm));
+  Assert.strictEqual(bm.title, "");
 });
 
 add_task(async function update_url() {
@@ -392,7 +392,3 @@ add_task(async function update_move_append() {
   sep_2 = await PlacesUtils.bookmarks.fetch(sep_2.guid);
   ensurePosition(sep_2, folder_b.guid, 1);
 });
-
-function run_test() {
-  run_next_test();
-}

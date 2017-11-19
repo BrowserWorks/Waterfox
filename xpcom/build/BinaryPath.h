@@ -20,6 +20,8 @@
 #include "mozilla/UniquePtrExtensions.h"
 
 #ifdef MOZILLA_INTERNAL_API
+#include "nsCOMPtr.h"
+#include "nsIFile.h"
 #include "nsString.h"
 #endif
 
@@ -41,13 +43,51 @@ public:
     return NS_OK;
   }
 
+  static nsresult GetLong(wchar_t aResult[MAXPATHLEN])
+  {
+    static bool cached = false;
+    static wchar_t exeLongPath[MAXPATHLEN] = L"";
+
+    if (!cached) {
+      nsresult rv = GetW(nullptr, exeLongPath);
+
+      if (NS_FAILED(rv)) {
+        return rv;
+      }
+
+      if (!::GetLongPathNameW(exeLongPath, exeLongPath, MAXPATHLEN)) {
+        return NS_ERROR_FAILURE;
+      }
+
+      cached = true;
+    }
+
+    if (wcscpy_s(aResult, MAXPATHLEN, exeLongPath)) {
+      return NS_ERROR_FAILURE;
+    }
+
+    return NS_OK;
+  }
+
 private:
   static nsresult GetW(const char* argv0, wchar_t aResult[MAXPATHLEN])
   {
-    if (::GetModuleFileNameW(0, aResult, MAXPATHLEN)) {
-      return NS_OK;
+    static bool cached = false;
+    static wchar_t moduleFileName[MAXPATHLEN] = L"";
+
+    if (!cached) {
+      if (!::GetModuleFileNameW(0, moduleFileName, MAXPATHLEN)) {
+        return NS_ERROR_FAILURE;
+      }
+
+      cached = true;
     }
-    return NS_ERROR_FAILURE;
+
+    if (wcscpy_s(aResult, MAXPATHLEN, moduleFileName)) {
+      return NS_ERROR_FAILURE;
+    }
+
+    return NS_OK;
   }
 
 #elif defined(XP_MACOSX)
@@ -96,12 +136,6 @@ private:
     // On Android, we use the GRE_HOME variable that is set by the Java
     // bootstrap code.
     const char* greHome = getenv("GRE_HOME");
-#if defined(MOZ_WIDGET_GONK)
-    if (!greHome) {
-      greHome = "/system/b2g";
-    }
-#endif
-
     if (!greHome) {
       return NS_ERROR_FAILURE;
     }

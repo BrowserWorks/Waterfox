@@ -72,7 +72,7 @@ SVGTests::IsConditionalProcessingAttribute(const nsIAtom* aAttribute) const
 }
 
 int32_t
-SVGTests::GetBestLanguagePreferenceRank(const nsSubstring& aAcceptLangs) const
+SVGTests::GetBestLanguagePreferenceRank(const nsAString& aAcceptLangs) const
 {
   const nsDefaultStringComparator defaultComparator;
 
@@ -86,7 +86,7 @@ SVGTests::GetBestLanguagePreferenceRank(const nsSubstring& aAcceptLangs) const
     nsCharSeparatedTokenizer languageTokenizer(aAcceptLangs, ',');
     int32_t index = 0;
     while (languageTokenizer.hasMoreTokens()) {
-      const nsSubstring &languageToken = languageTokenizer.nextToken();
+      const nsAString& languageToken = languageTokenizer.nextToken();
       bool exactMatch = (languageToken == mStringListAttributes[LANGUAGE][i]);
       bool prefixOnlyMatch =
         !exactMatch &&
@@ -147,8 +147,12 @@ SVGTests::PassesConditionalProcessingTests(const nsString *aAcceptLangs) const
     }
 
     // Get our language preferences
-    const nsAutoString acceptLangs(aAcceptLangs ? *aAcceptLangs :
-      Preferences::GetLocalizedString("intl.accept_languages"));
+    nsAutoString acceptLangs;
+    if (aAcceptLangs) {
+      acceptLangs.Assign(*aAcceptLangs);
+    } else {
+      Preferences::GetLocalizedString("intl.accept_languages", acceptLangs);
+    }
 
     if (acceptLangs.IsEmpty()) {
       NS_WARNING("no default language specified for systemLanguage conditional test");

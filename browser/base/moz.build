@@ -15,6 +15,7 @@ MOCHITEST_CHROME_MANIFESTS += [
 ]
 
 BROWSER_CHROME_MANIFESTS += [
+    'content/test/about/browser.ini',
     'content/test/alerts/browser.ini',
     'content/test/captivePortal/browser.ini',
     'content/test/contextMenu/browser.ini',
@@ -36,6 +37,7 @@ BROWSER_CHROME_MANIFESTS += [
     'content/test/tabcrashed/browser.ini',
     'content/test/tabPrompts/browser.ini',
     'content/test/tabs/browser.ini',
+    'content/test/touch/browser.ini',
     'content/test/urlbar/browser.ini',
     'content/test/webextensions/browser.ini',
     'content/test/webrtc/browser.ini',

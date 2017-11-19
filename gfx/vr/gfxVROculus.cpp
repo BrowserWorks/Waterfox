@@ -11,7 +11,6 @@
 
 
 #include "prlink.h"
-#include "prmem.h"
 #include "prenv.h"
 #include "gfxPrefs.h"
 #include "nsString.h"
@@ -32,6 +31,7 @@
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/dom/GamepadEventTypes.h"
 #include "mozilla/dom/GamepadBinding.h"
+#include "mozilla/Telemetry.h"
 
 /** XXX The DX11 objects and quad blitting could be encapsulated
  *    into a separate object if either Oculus starts supporting
@@ -233,6 +233,7 @@ VROculusSession::StartPresentation(const IntSize& aSize)
     mPresenting = true;
     mPresentationSize = aSize;
     Refresh();
+    mPresentationStart = TimeStamp::Now();
   }
 }
 
@@ -242,6 +243,9 @@ VROculusSession::StopPresentation()
   if (mPresenting) {
     mLastPresentationEnd = TimeStamp::Now();
     mPresenting = false;
+    Telemetry::Accumulate(Telemetry::WEBVR_USERS_VIEW_IN, 1);
+    Telemetry::AccumulateTimeDelta(Telemetry::WEBVR_TIME_SPENT_VIEWING_IN_OCULUS,
+                                   mPresentationStart);
     Refresh();
   }
 }
@@ -1181,8 +1185,8 @@ VRDisplayOculus::NotifyVSync()
   VRDisplayHost::NotifyVSync();
 }
 
-VRControllerOculus::VRControllerOculus(dom::GamepadHand aHand)
-  : VRControllerHost(VRDeviceType::Oculus)
+VRControllerOculus::VRControllerOculus(dom::GamepadHand aHand, uint32_t aDisplayID)
+  : VRControllerHost(VRDeviceType::Oculus, aHand, aDisplayID)
   , mIndexTrigger(0.0f)
   , mHandTrigger(0.0f)
   , mVibrateThread(nullptr)
@@ -1203,8 +1207,6 @@ VRControllerOculus::VRControllerOculus(dom::GamepadHand aHand)
       break;
   }
   mControllerInfo.mControllerName = touchID;
-  mControllerInfo.mMappingType = GamepadMappingType::_empty;
-  mControllerInfo.mHand = aHand;
 
   MOZ_ASSERT(kNumOculusButton ==
              static_cast<uint32_t>(OculusLeftControllerButtonType::NumButtonType)
@@ -1321,9 +1323,10 @@ VRControllerOculus::UpdateVibrateHaptic(ovrSession aSession,
     MOZ_ASSERT(mVibrateThread);
 
     RefPtr<Runnable> runnable =
-      NewRunnableMethod<ovrSession, uint32_t, double, double, uint64_t, uint32_t>
-        (this, &VRControllerOculus::UpdateVibrateHaptic, aSession,
-         aHapticIndex, aIntensity, (duration > kVibrateRate) ? remainingTime : 0, aVibrateIndex, aPromiseID);
+      NewRunnableMethod<ovrSession, uint32_t, double, double, uint64_t, uint32_t>(
+        "VRControllerOculus::UpdateVibrateHaptic",
+        this, &VRControllerOculus::UpdateVibrateHaptic, aSession,
+        aHapticIndex, aIntensity, (duration > kVibrateRate) ? remainingTime : 0, aVibrateIndex, aPromiseID);
     NS_DelayedDispatchToCurrentThread(runnable.forget(),
                                       (duration > kVibrateRate) ? kVibrateRate : remainingTime);
   } else {
@@ -1360,8 +1363,9 @@ VRControllerOculus::VibrateHapticComplete(ovrSession aSession, uint32_t aPromise
   VRManager *vm = VRManager::Get();
   MOZ_ASSERT(vm);
 
-  CompositorThreadHolder::Loop()->PostTask(NewRunnableMethod<uint32_t>
-    (vm, &VRManager::NotifyVibrateHapticCompleted, aPromiseID));
+  CompositorThreadHolder::Loop()->PostTask(NewRunnableMethod<uint32_t>(
+                                             "VRManager::NotifyVibrateHapticCompleted",
+                                             vm, &VRManager::NotifyVibrateHapticCompleted, aPromiseID));
 }
 
 void
@@ -1385,7 +1389,8 @@ VRControllerOculus::VibrateHaptic(ovrSession aSession,
 
   RefPtr<Runnable> runnable =
        NewRunnableMethod<ovrSession, uint32_t, double, double, uint64_t, uint32_t>
-         (this, &VRControllerOculus::UpdateVibrateHaptic, aSession,
+         ("VRControllerOculus::UpdateVibrateHaptic",
+          this, &VRControllerOculus::UpdateVibrateHaptic, aSession,
           aHapticIndex, aIntensity, aDuration, mVibrateIndex, aPromiseID);
   mVibrateThread->Dispatch(runnable.forget(), NS_DISPATCH_NORMAL);
 }
@@ -1552,50 +1557,57 @@ VRSystemManagerOculus::HandleInput()
     axis = static_cast<uint32_t>(OculusControllerAxisType::ThumbstickYAxis);
     HandleAxisMove(i, axis, -inputState.Thumbstick[i].y);
 
-    // Start to process pose
+    // Process pose state.
+    GamepadPoseState poseState;
+    GetControllerPoseState(handIdx, poseState);
+    HandlePoseTracking(i, poseState, controller);
+  }
+}
+
+void
+VRSystemManagerOculus::GetControllerPoseState(uint32_t aHandIdx, GamepadPoseState& aPoseState,
+                                              bool aForceUpdate)
+{
     ovrTrackingState state = ovr_GetTrackingState(mSession->Get(), 0.0, false);
 
     // HandPoses is ordered by ovrControllerType_LTouch and ovrControllerType_RTouch,
     // therefore, we can't get its state by the index of mOculusController.
-    ovrPoseStatef& pose(state.HandPoses[handIdx]);
-    GamepadPoseState poseState;
+    ovrPoseStatef& pose(state.HandPoses[aHandIdx]);
 
-    if (state.HandStatusFlags[handIdx] & ovrStatus_OrientationTracked) {
-      poseState.flags |= GamepadCapabilityFlags::Cap_Orientation;
-      poseState.orientation[0] = pose.ThePose.Orientation.x;
-      poseState.orientation[1] = pose.ThePose.Orientation.y;
-      poseState.orientation[2] = pose.ThePose.Orientation.z;
-      poseState.orientation[3] = pose.ThePose.Orientation.w;
-      poseState.angularVelocity[0] = pose.AngularVelocity.x;
-      poseState.angularVelocity[1] = pose.AngularVelocity.y;
-      poseState.angularVelocity[2] = pose.AngularVelocity.z;
+    if (aForceUpdate || state.HandStatusFlags[aHandIdx] & ovrStatus_OrientationTracked) {
+      aPoseState.flags |= GamepadCapabilityFlags::Cap_Orientation;
+      aPoseState.orientation[0] = pose.ThePose.Orientation.x;
+      aPoseState.orientation[1] = pose.ThePose.Orientation.y;
+      aPoseState.orientation[2] = pose.ThePose.Orientation.z;
+      aPoseState.orientation[3] = pose.ThePose.Orientation.w;
+      aPoseState.angularVelocity[0] = pose.AngularVelocity.x;
+      aPoseState.angularVelocity[1] = pose.AngularVelocity.y;
+      aPoseState.angularVelocity[2] = pose.AngularVelocity.z;
 
-      poseState.flags |= GamepadCapabilityFlags::Cap_AngularAcceleration;
-      poseState.angularAcceleration[0] = pose.AngularAcceleration.x;
-      poseState.angularAcceleration[1] = pose.AngularAcceleration.y;
-      poseState.angularAcceleration[2] = pose.AngularAcceleration.z;
-      poseState.isOrientationValid = true;
+      aPoseState.flags |= GamepadCapabilityFlags::Cap_AngularAcceleration;
+      aPoseState.angularAcceleration[0] = pose.AngularAcceleration.x;
+      aPoseState.angularAcceleration[1] = pose.AngularAcceleration.y;
+      aPoseState.angularAcceleration[2] = pose.AngularAcceleration.z;
+      aPoseState.isOrientationValid = true;
     }
-    if (state.HandStatusFlags[handIdx] & ovrStatus_PositionTracked) {
-      poseState.flags |= GamepadCapabilityFlags::Cap_Position;
-      poseState.position[0] = pose.ThePose.Position.x;
-      poseState.position[1] = pose.ThePose.Position.y;
-      poseState.position[2] = pose.ThePose.Position.z;
-      poseState.linearVelocity[0] = pose.LinearVelocity.x;
-      poseState.linearVelocity[1] = pose.LinearVelocity.y;
-      poseState.linearVelocity[2] = pose.LinearVelocity.z;
+    if (aForceUpdate || state.HandStatusFlags[aHandIdx] & ovrStatus_PositionTracked) {
+      aPoseState.flags |= GamepadCapabilityFlags::Cap_Position;
+      aPoseState.position[0] = pose.ThePose.Position.x;
+      aPoseState.position[1] = pose.ThePose.Position.y;
+      aPoseState.position[2] = pose.ThePose.Position.z;
+      aPoseState.linearVelocity[0] = pose.LinearVelocity.x;
+      aPoseState.linearVelocity[1] = pose.LinearVelocity.y;
+      aPoseState.linearVelocity[2] = pose.LinearVelocity.z;
 
-      poseState.flags |= GamepadCapabilityFlags::Cap_LinearAcceleration;
-      poseState.linearAcceleration[0] = pose.LinearAcceleration.x;
-      poseState.linearAcceleration[1] = pose.LinearAcceleration.y;
-      poseState.linearAcceleration[2] = pose.LinearAcceleration.z;
+      aPoseState.flags |= GamepadCapabilityFlags::Cap_LinearAcceleration;
+      aPoseState.linearAcceleration[0] = pose.LinearAcceleration.x;
+      aPoseState.linearAcceleration[1] = pose.LinearAcceleration.y;
+      aPoseState.linearAcceleration[2] = pose.LinearAcceleration.z;
 
       float eyeHeight = ovr_GetFloat(mSession->Get(), OVR_KEY_EYE_HEIGHT, OVR_DEFAULT_EYE_HEIGHT);
-      poseState.position[1] -= eyeHeight;
-      poseState.isPositionValid = true;
+      aPoseState.position[1] -= eyeHeight;
+      aPoseState.isPositionValid = true;
     }
-    HandlePoseTracking(i, poseState, controller);
-  }
 }
 
 void
@@ -1734,7 +1746,8 @@ VRSystemManagerOculus::StopVibrateHaptic(uint32_t aControllerIdx)
 {
   // The session is available after VRDisplay is created
   // at GetHMDs().
-  if (!mSession || !mSession->IsTrackingReady()) {
+  if (!mSession || !mSession->IsTrackingReady() ||
+      (aControllerIdx >= mOculusController.Length())) {
     return;
   }
 
@@ -1766,6 +1779,11 @@ VRSystemManagerOculus::ScanForControllers()
   ovrInputState inputState;
   bool hasInputState = ovr_GetInputState(mSession->Get(), ovrControllerType_Touch,
                                          &inputState) == ovrSuccess;
+
+  if (!hasInputState) {
+    return;
+  }
+
   ovrControllerType activeControllerArray[2];
   uint32_t newControllerCount = 0;
 
@@ -1794,11 +1812,22 @@ VRSystemManagerOculus::ScanForControllers()
           hand = GamepadHand::Right;
           break;
       }
-      RefPtr<VRControllerOculus> oculusController = new VRControllerOculus(hand);
+      RefPtr<VRControllerOculus> oculusController = new VRControllerOculus(hand,
+                                                      mDisplay->GetDisplayInfo().GetDisplayID());
       mOculusController.AppendElement(oculusController);
 
       // Not already present, add it.
       AddGamepad(oculusController->GetControllerInfo());
+
+      // Process pose state.
+      // We wanna Oculus Touch has the right position when it shows up,
+      // so we force to update the pose no matter if it has OrientationTracked
+      // or PositionTracked.
+      const uint32_t handIdx = static_cast<uint32_t>(hand) - 1;
+      GamepadPoseState poseState;
+      GetControllerPoseState(handIdx, poseState, true);
+      HandlePoseTracking(i, poseState, oculusController);
+
       ++mControllerCount;
     }
   }

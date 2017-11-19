@@ -33,7 +33,7 @@ class nsAttributeTextNode final : public nsTextNode,
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
-  
+
   nsAttributeTextNode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                       int32_t aNameSpaceID,
                       nsIAtom* aAttrName) :
@@ -165,9 +165,8 @@ nsTextNode::List(FILE* out, int32_t aIndent) const
   fprintf(out, "Text@%p", static_cast<const void*>(this));
   fprintf(out, " flags=[%08x]", static_cast<unsigned int>(GetFlags()));
   if (IsCommonAncestorForRangeInSelection()) {
-    typedef nsTHashtable<nsPtrHashKey<nsRange> > RangeHashTable;
-    RangeHashTable* ranges =
-      static_cast<RangeHashTable*>(GetProperty(nsGkAtoms::range));
+    const nsTHashtable<nsPtrHashKey<nsRange>>* ranges =
+      GetExistingCommonAncestorRanges();
     fprintf(out, " ranges:%d", ranges ? ranges->Count() : 0);
   }
   fprintf(out, " primaryframe=%p", static_cast<void*>(GetPrimaryFrame()));
@@ -206,7 +205,7 @@ NS_NewAttributeContent(nsNodeInfoManager *aNodeInfoManager,
   NS_PRECONDITION(aNodeInfoManager, "Missing nodeInfoManager");
   NS_PRECONDITION(aAttrName, "Must have an attr name");
   NS_PRECONDITION(aNameSpaceID != kNameSpaceID_Unknown, "Must know namespace");
-  
+
   *aResult = nullptr;
 
   already_AddRefed<mozilla::dom::NodeInfo> ni = aNodeInfoManager->GetTextNodeInfo();
@@ -273,7 +272,8 @@ nsAttributeTextNode::AttributeChanged(nsIDocument* aDocument,
     // that if we get unbound while the event is up that's ok -- we'll just
     // have no grandparent when it fires, and will do nothing.
     void (nsAttributeTextNode::*update)() = &nsAttributeTextNode::UpdateText;
-    nsContentUtils::AddScriptRunner(NewRunnableMethod(this, update));
+    nsContentUtils::AddScriptRunner(
+      NewRunnableMethod("nsAttributeTextNode::AttributeChanged", this, update));
   }
 }
 
@@ -291,6 +291,6 @@ nsAttributeTextNode::UpdateText(bool aNotify)
     nsAutoString attrValue;
     mGrandparent->GetAttr(mNameSpaceID, mAttrName, attrValue);
     SetText(attrValue, aNotify);
-  }  
+  }
 }
 

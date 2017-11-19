@@ -8,7 +8,7 @@
  */
 
 dictionary PaymentMethodData {
-  required sequence<DOMString> supportedMethods;
+  required DOMString           supportedMethods;
            object              data;
 };
 
@@ -32,7 +32,7 @@ dictionary PaymentShippingOption {
 };
 
 dictionary PaymentDetailsModifier {
-  required sequence<DOMString>   supportedMethods;
+  required DOMString             supportedMethods;
            PaymentItem           total;
            sequence<PaymentItem> additionalDisplayItems;
            object                data;
@@ -68,19 +68,15 @@ dictionary PaymentOptions {
  SecureContext,
  Func="mozilla::dom::PaymentRequest::PrefEnabled"]
 interface PaymentRequest : EventTarget {
-  /* TODO : Add show() support in Bug 1345366
   [NewObject]
   Promise<PaymentResponse> show();
-   */
   [NewObject]
   Promise<void>            abort();
   [NewObject]
   Promise<boolean>         canMakePayment();
 
   readonly attribute DOMString            id;
-  /* TODO : Add PaymentAddress support in Bug 1345369
   readonly attribute PaymentAddress?      shippingAddress;
-   */
   readonly attribute DOMString?           shippingOption;
   readonly attribute PaymentShippingType? shippingType;
 

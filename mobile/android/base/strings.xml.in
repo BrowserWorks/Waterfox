@@ -247,6 +247,9 @@
   <string name="custom_tabs_menu_footer">&custom_tabs_menu_footer;</string>
   <string name="custom_tabs_hint_url_copy">&custom_tabs_hint_url_copy;</string>
 
+  <string name="pref_pwa">&pref_pwa;</string>
+  <string name="pref_pwa_summary">&pref_pwa_summary;</string>
+
   <string name="pref_activity_stream">&pref_activity_stream;</string>
   <string name="pref_activity_stream_summary">&pref_activity_stream_summary;</string>
 
@@ -258,10 +261,6 @@
   <string name="pref_clear_on_exit_title">&pref_clear_on_exit_title3;</string>
   <string name="pref_clear_on_exit_summary2">&pref_clear_on_exit_summary2;</string>
   <string name="pref_clear_on_exit_dialog_title">&pref_clear_on_exit_dialog_title;</string>
-  <string name="pref_plugins">&pref_plugins;</string>
-  <string name="pref_plugins_enabled">&pref_plugins_enabled;</string>
-  <string name="pref_plugins_tap_to_play">&pref_plugins_tap_to_play2;</string>
-  <string name="pref_plugins_disabled">&pref_plugins_disabled;</string>
   <string name="pref_use_system_font_size">&pref_use_system_font_size;</string>
   <string name="pref_use_system_font_size_summary">&pref_use_system_font_size_summary;</string>
   <string name="pref_media_autoplay_enabled">&pref_media_autoplay_enabled;</string>
@@ -433,6 +432,7 @@
   <string name="page_removed">&page_removed;</string>
 
   <string name="bookmark_edit_title">&bookmark_edit_title;</string>
+  <string name="bookmark_edit_folder_title">&bookmark_edit_folder_title;</string>
   <string name="bookmark_edit_name">&bookmark_edit_name;</string>
   <string name="bookmark_edit_location">&bookmark_edit_location;</string>
   <string name="bookmark_edit_keyword">&bookmark_edit_keyword;</string>
@@ -477,6 +477,9 @@
   <string name="home_remote_tabs_hidden_devices_title">&home_remote_tabs_hidden_devices_title;</string>
   <string name="home_remote_tabs_unhide_selected_devices">&home_remote_tabs_unhide_selected_devices;</string>
   <string name="pin_site_dialog_hint">&pin_site_dialog_hint;</string>
+
+  <string name="home_pinned_site">&home_pinned_site;</string>
+  <string name="home_unpinned_site">&home_unpinned_site;</string>
 
   <string name="remote_tabs_never_synced">&remote_tabs_never_synced;</string>
 

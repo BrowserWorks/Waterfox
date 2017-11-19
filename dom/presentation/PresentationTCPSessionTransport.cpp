@@ -112,17 +112,19 @@ PresentationTCPSessionTransport::BuildTCPSenderTransport(nsISocketTransport* aTr
 
   nsCOMPtr<nsIPresentationSessionTransport> sessionTransport = do_QueryObject(this);
   nsCOMPtr<nsIRunnable> onSessionTransportRunnable =
-    NewRunnableMethod
-      <nsIPresentationSessionTransport*>(mListener,
-                                         &nsIPresentationSessionTransportBuilderListener::OnSessionTransport,
-                                         sessionTransport);
+    NewRunnableMethod<nsIPresentationSessionTransport*>(
+      "nsIPresentationSessionTransportBuilderListener::OnSessionTransport",
+      mListener,
+      &nsIPresentationSessionTransportBuilderListener::OnSessionTransport,
+      sessionTransport);
 
   NS_DispatchToCurrentThread(onSessionTransportRunnable.forget());
 
-  nsCOMPtr<nsIRunnable> setReadyStateRunnable =
-    NewRunnableMethod<ReadyState>(this,
-                                  &PresentationTCPSessionTransport::SetReadyState,
-                                  ReadyState::OPEN);
+  nsCOMPtr<nsIRunnable> setReadyStateRunnable = NewRunnableMethod<ReadyState>(
+    "dom::PresentationTCPSessionTransport::SetReadyState",
+    this,
+    &PresentationTCPSessionTransport::SetReadyState,
+    ReadyState::OPEN);
   return NS_DispatchToCurrentThread(setReadyStateRunnable.forget());
 }
 
@@ -180,10 +182,8 @@ PresentationTCPSessionTransport::BuildTCPReceiverTransport(nsIPresentationChanne
     return rv;
   }
 
-  nsCOMPtr<nsIThread> mainThread;
-  NS_GetMainThread(getter_AddRefs(mainThread));
-
-  mTransport->SetEventSink(this, mainThread);
+  nsCOMPtr<nsIEventTarget> mainTarget = GetMainThreadEventTarget();
+  mTransport->SetEventSink(this, mainTarget);
 
   rv = CreateStream();
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -194,10 +194,11 @@ PresentationTCPSessionTransport::BuildTCPReceiverTransport(nsIPresentationChanne
 
   nsCOMPtr<nsIPresentationSessionTransport> sessionTransport = do_QueryObject(this);
   nsCOMPtr<nsIRunnable> runnable =
-    NewRunnableMethod
-      <nsIPresentationSessionTransport*>(mListener,
-                                         &nsIPresentationSessionTransportBuilderListener::OnSessionTransport,
-                                         sessionTransport);
+    NewRunnableMethod<nsIPresentationSessionTransport*>(
+      "nsIPresentationSessionTransportBuilderListener::OnSessionTransport",
+      mListener,
+      &nsIPresentationSessionTransportBuilderListener::OnSessionTransport,
+      sessionTransport);
   return NS_DispatchToCurrentThread(runnable.forget());
 }
 
@@ -220,10 +221,8 @@ PresentationTCPSessionTransport::CreateStream()
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  nsCOMPtr<nsIThread> mainThread;
-  NS_GetMainThread(getter_AddRefs(mainThread));
-
-  rv = asyncStream->AsyncWait(this, nsIAsyncInputStream::WAIT_CLOSURE_ONLY, 0, mainThread);
+  nsCOMPtr<nsIEventTarget> mainTarget = GetMainThreadEventTarget();
+  rv = asyncStream->AsyncWait(this, nsIAsyncInputStream::WAIT_CLOSURE_ONLY, 0, mainTarget);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }

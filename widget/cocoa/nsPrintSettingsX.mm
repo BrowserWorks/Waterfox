@@ -127,7 +127,7 @@ NS_IMETHODIMP nsPrintSettingsX::ReadPageFormatFromPrefs()
 
   nsAutoCString encodedData;
   nsresult rv =
-    Preferences::GetCString(MAC_OS_X_PAGE_SETUP_PREFNAME, &encodedData);
+    Preferences::GetCString(MAC_OS_X_PAGE_SETUP_PREFNAME, encodedData);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -305,6 +305,23 @@ nsPrintSettingsX::SetScaling(double aScaling)
 
   SetCocoaPrintInfo(newPrintInfo);
   [newPrintInfo release];
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+NS_IMETHODIMP
+nsPrintSettingsX::GetScaling(double *aScaling)
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+
+  NSDictionary* printInfoDict = [mPrintInfo dictionary];
+
+  *aScaling = [[printInfoDict objectForKey: NSPrintScalingFactor] doubleValue];
+
+  // Limit scaling precision to whole number percent values
+  *aScaling = round(*aScaling * 100.0) / 100.0;
+
   return NS_OK;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;

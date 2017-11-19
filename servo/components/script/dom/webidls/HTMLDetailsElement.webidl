@@ -3,6 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmldetailselement
+[HTMLConstructor]
 interface HTMLDetailsElement : HTMLElement {
+    [CEReactions]
     attribute boolean open;
 };

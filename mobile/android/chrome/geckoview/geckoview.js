@@ -34,7 +34,7 @@ var ModuleManager = {
     let scope = {};
     Cu.import(aResource, scope);
     this.modules[aType] = new scope[aType](
-      window, this.browser, WindowEventDispatcher, ...aArgs
+      aType, window, this.browser, WindowEventDispatcher, ...aArgs
     );
   },
 
@@ -59,4 +59,6 @@ function startup() {
                     "GeckoViewContent");
   ModuleManager.add("resource://gre/modules/GeckoViewProgress.jsm",
                     "GeckoViewProgress");
+  ModuleManager.add("resource://gre/modules/GeckoViewScroll.jsm",
+                    "GeckoViewScroll");
 }

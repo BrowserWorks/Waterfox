@@ -49,10 +49,12 @@ browser.jar:
   skin/classic/browser/webRTC-sharingScreen-menubar@2x.png
   skin/classic/browser/webRTC-indicator.css
 * skin/classic/browser/controlcenter/panel.css        (controlcenter/panel.css)
+#ifndef MOZ_PHOTON_THEME
   skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
   skin/classic/browser/customizableui/customizeMode-gridTexture.png  (customizableui/customizeMode-gridTexture.png)
   skin/classic/browser/customizableui/customizeMode-separatorHorizontal.png  (customizableui/customizeMode-separatorHorizontal.png)
   skin/classic/browser/customizableui/customizeMode-separatorVertical.png  (customizableui/customizeMode-separatorVertical.png)
+#endif
 * skin/classic/browser/customizableui/panelUI.css    (customizableui/panelUI.css)
 * skin/classic/browser/downloads/allDownloadsViewOverlay.css (downloads/allDownloadsViewOverlay.css)
   skin/classic/browser/downloads/download-glow-menuPanel.png (downloads/download-glow-menuPanel.png)
@@ -106,24 +108,8 @@ browser.jar:
   skin/classic/browser/social/services-16@2x.png            (social/services-16@2x.png)
   skin/classic/browser/social/services-64.png               (social/services-64.png)
   skin/classic/browser/social/services-64@2x.png            (social/services-64@2x.png)
-  skin/classic/browser/tabbrowser/alltabs-box-bkgnd-icon.png             (tabbrowser/alltabs-box-bkgnd-icon.png)
-  skin/classic/browser/tabbrowser/alltabs-box-bkgnd-icon@2x.png          (tabbrowser/alltabs-box-bkgnd-icon@2x.png)
-  skin/classic/browser/tabbrowser/alltabs-box-bkgnd-icon-inverted.png    (tabbrowser/alltabs-box-bkgnd-icon-inverted.png)
-  skin/classic/browser/tabbrowser/alltabs-box-bkgnd-icon-inverted@2x.png (tabbrowser/alltabs-box-bkgnd-icon-inverted@2x.png)
-  skin/classic/browser/tabbrowser/newtab.png                             (tabbrowser/newtab.png)
-  skin/classic/browser/tabbrowser/newtab@2x.png                          (tabbrowser/newtab@2x.png)
-  skin/classic/browser/tabbrowser/newtab-inverted.png                    (tabbrowser/newtab-inverted.png)
-  skin/classic/browser/tabbrowser/newtab-inverted@2x.png                 (tabbrowser/newtab-inverted@2x.png)
   skin/classic/browser/tabbrowser/tab-active-middle.png                  (tabbrowser/tab-active-middle.png)
   skin/classic/browser/tabbrowser/tab-active-middle@2x.png               (tabbrowser/tab-active-middle@2x.png)
-  skin/classic/browser/tabbrowser/tab-arrow-left.png                     (tabbrowser/tab-arrow-left.png)
-  skin/classic/browser/tabbrowser/tab-arrow-left@2x.png                  (tabbrowser/tab-arrow-left@2x.png)
-  skin/classic/browser/tabbrowser/tab-arrow-left-inverted.png            (tabbrowser/tab-arrow-left-inverted.png)
-  skin/classic/browser/tabbrowser/tab-arrow-left-inverted@2x.png         (tabbrowser/tab-arrow-left-inverted@2x.png)
-  skin/classic/browser/tabbrowser/tab-arrow-right.png                    (tabbrowser/tab-arrow-right.png)
-  skin/classic/browser/tabbrowser/tab-arrow-right@2x.png                 (tabbrowser/tab-arrow-right@2x.png)
-  skin/classic/browser/tabbrowser/tab-arrow-right-inverted.png           (tabbrowser/tab-arrow-right-inverted.png)
-  skin/classic/browser/tabbrowser/tab-arrow-right-inverted@2x.png        (tabbrowser/tab-arrow-right-inverted@2x.png)
   skin/classic/browser/tabbrowser/tab-background-end.png                 (tabbrowser/tab-background-end.png)
   skin/classic/browser/tabbrowser/tab-background-end@2x.png              (tabbrowser/tab-background-end@2x.png)
   skin/classic/browser/tabbrowser/tab-background-middle.png              (tabbrowser/tab-background-middle.png)
@@ -148,7 +134,9 @@ browser.jar:
   skin/classic/browser/sync-mobileIcon.svg  (../shared/sync-mobileIcon.svg)
   skin/classic/browser/syncProgress-horizontalbar.png
   skin/classic/browser/syncProgress-horizontalbar@2x.png
+#ifndef MOZ_PHOTON_THEME
   skin/classic/browser/Toolbar-background-noise.png         (Toolbar-background-noise.png)
+#endif
   skin/classic/browser/yosemite/menuPanel-customize.png                (menuPanel-customize-yosemite.png)
   skin/classic/browser/yosemite/menuPanel-customize@2x.png             (menuPanel-customize-yosemite@2x.png)
   skin/classic/browser/yosemite/menuPanel-exit.png                     (menuPanel-exit-yosemite.png)

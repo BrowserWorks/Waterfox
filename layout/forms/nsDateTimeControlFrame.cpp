@@ -55,12 +55,22 @@ nsDateTimeControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
 }
 
 void
-nsDateTimeControlFrame::UpdateInputBoxValue()
+nsDateTimeControlFrame::OnValueChanged()
 {
   nsCOMPtr<nsIDateTimeInputArea> inputAreaContent =
     do_QueryInterface(mInputAreaContent);
   if (inputAreaContent) {
     inputAreaContent->NotifyInputElementValueChanged();
+  }
+}
+
+void
+nsDateTimeControlFrame::OnMinMaxStepAttrChanged()
+{
+  nsCOMPtr<nsIDateTimeInputArea> inputAreaContent =
+    do_QueryInterface(mInputAreaContent);
+  if (inputAreaContent) {
+    inputAreaContent->NotifyMinMaxStepAttrChanged();
   }
 }
 
@@ -125,8 +135,22 @@ nsDateTimeControlFrame::HandleBlurEvent()
   }
 }
 
+bool
+nsDateTimeControlFrame::HasBadInput()
+{
+  nsCOMPtr<nsIDateTimeInputArea> inputAreaContent =
+    do_QueryInterface(mInputAreaContent);
+
+  bool result = false;
+  if (inputAreaContent) {
+    inputAreaContent->HasBadInput(&result);
+  }
+
+  return result;
+}
+
 nscoord
-nsDateTimeControlFrame::GetMinISize(nsRenderingContext* aRenderingContext)
+nsDateTimeControlFrame::GetMinISize(gfxContext* aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -144,7 +168,7 @@ nsDateTimeControlFrame::GetMinISize(nsRenderingContext* aRenderingContext)
 }
 
 nscoord
-nsDateTimeControlFrame::GetPrefISize(nsRenderingContext* aRenderingContext)
+nsDateTimeControlFrame::GetPrefISize(gfxContext* aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -389,7 +413,9 @@ nsDateTimeControlFrame::AttributeChanged(int32_t aNameSpaceID,
           do_QueryInterface(mInputAreaContent);
         if (aAttribute == nsGkAtoms::value) {
           if (inputAreaContent) {
-            nsContentUtils::AddScriptRunner(NewRunnableMethod(inputAreaContent,
+            nsContentUtils::AddScriptRunner(NewRunnableMethod(
+              "nsIDateTimeInputArea::NotifyInputElementValueChanged",
+              inputAreaContent,
               &nsIDateTimeInputArea::NotifyInputElementValueChanged));
           }
         } else {

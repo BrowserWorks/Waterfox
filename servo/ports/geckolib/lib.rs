@@ -10,9 +10,11 @@ extern crate env_logger;
 extern crate libc;
 #[macro_use] extern crate log;
 extern crate selectors;
+extern crate servo_arc;
 #[macro_use] extern crate style;
 extern crate style_traits;
 
+mod error_reporter;
 #[allow(non_snake_case)]
 pub mod glue;
 mod stylesheet_loader;

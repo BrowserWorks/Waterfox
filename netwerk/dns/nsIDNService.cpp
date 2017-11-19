@@ -45,8 +45,7 @@ static const char kACEPrefix[] = "xn--";
 #define NS_NET_PREF_IDNUSEWHITELIST "network.IDN.use_whitelist"
 #define NS_NET_PREF_IDNRESTRICTION  "network.IDN.restriction_profile"
 
-inline bool isOnlySafeChars(const nsAFlatString& in,
-                              const nsAFlatString& blacklist)
+inline bool isOnlySafeChars(const nsString& in, const nsString& blacklist)
 {
   return (blacklist.IsEmpty() ||
           in.FindCharInSet(blacklist) == kNotFound);
@@ -64,6 +63,9 @@ NS_IMPL_ISUPPORTS(nsIDNService,
 
 nsresult nsIDNService::Init()
 {
+  MOZ_ASSERT(NS_IsMainThread());
+  MutexAutoLock lock(mLock);
+
   nsCOMPtr<nsIPrefService> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID));
   if (prefs)
     prefs->GetBranch(NS_NET_PREF_IDNWHITELIST, getter_AddRefs(mIDNWhitelistPrefBranch));
@@ -84,6 +86,9 @@ NS_IMETHODIMP nsIDNService::Observe(nsISupports *aSubject,
                                     const char *aTopic,
                                     const char16_t *aData)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+  MutexAutoLock lock(mLock);
+
   if (!strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID)) {
     nsCOMPtr<nsIPrefBranch> prefBranch( do_QueryInterface(aSubject) );
     if (prefBranch)
@@ -94,6 +99,9 @@ NS_IMETHODIMP nsIDNService::Observe(nsISupports *aSubject,
 
 void nsIDNService::prefsChanged(nsIPrefBranch *prefBranch, const char16_t *pref)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+  mLock.AssertCurrentThreadOwns();
+
   if (!pref || NS_LITERAL_STRING(NS_NET_PREF_IDNBLACKLIST).Equals(pref)) {
     nsCOMPtr<nsISupportsString> blacklist;
     nsresult rv = prefBranch->GetComplexValue(NS_NET_PREF_IDNBLACKLIST,
@@ -132,9 +140,12 @@ void nsIDNService::prefsChanged(nsIPrefBranch *prefBranch, const char16_t *pref)
 }
 
 nsIDNService::nsIDNService()
-  : mShowPunycode(false)
+  : mLock("DNService pref value lock")
+  , mShowPunycode(false)
   , mIDNUseWhitelist(false)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
 #ifdef IDNA2008
   uint32_t IDNAOptions = UIDNA_CHECK_BIDI | UIDNA_CHECK_CONTEXTJ;
   if (!kIDNA2008_TransitionalProcessing) {
@@ -153,6 +164,8 @@ nsIDNService::nsIDNService()
 
 nsIDNService::~nsIDNService()
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
 #ifdef IDNA2008
   uidna_close(mIDNA);
 #else
@@ -292,8 +305,8 @@ nsresult nsIDNService::ACEtoUTF8(const nsACString & input, nsACString & _retval,
   nsAutoCString decodedBuf;
 
   nsACString::const_iterator start, end;
-  input.BeginReading(start); 
-  input.EndReading(end); 
+  input.BeginReading(start);
+  input.EndReading(end);
   _retval.Truncate();
 
   // loop and decode nodes
@@ -363,7 +376,7 @@ NS_IMETHODIMP nsIDNService::Normalize(const nsACString & input,
       rv = stringPrep(Substring(inUTF16, offset, len - 1), outLabel,
                       eStringPrepIgnoreErrors);
       NS_ENSURE_SUCCESS(rv, rv);
-   
+
       outUTF16.Append(outLabel);
       outUTF16.Append(char16_t('.'));
       offset += len;
@@ -382,8 +395,41 @@ NS_IMETHODIMP nsIDNService::Normalize(const nsACString & input,
   return NS_OK;
 }
 
+namespace {
+
+class MOZ_STACK_CLASS MutexSettableAutoUnlock final
+{
+  Mutex* mMutex;
+public:
+  MutexSettableAutoUnlock()
+    : mMutex(nullptr)
+  { }
+
+  void
+  Acquire(mozilla::Mutex& aMutex)
+  {
+    MOZ_ASSERT(!mMutex);
+    mMutex = &aMutex;
+    mMutex->Lock();
+  }
+
+  ~MutexSettableAutoUnlock()
+  {
+    if (mMutex) {
+      mMutex->Unlock();
+    }
+  }
+};
+
+} // anonymous namespace
+
 NS_IMETHODIMP nsIDNService::ConvertToDisplayIDN(const nsACString & input, bool * _isASCII, nsACString & _retval)
 {
+  MutexSettableAutoUnlock lock;
+  if (!NS_IsMainThread()) {
+    lock.Acquire(mLock);
+  }
+
   // If host is ACE, then convert to UTF-8 if the host is in the IDN whitelist.
   // Else, if host is already UTF-8, then make sure it is normalized per IDN.
 
@@ -459,8 +505,8 @@ static nsresult utf16ToUcs4(const nsAString& in,
 {
   uint32_t i = 0;
   nsAString::const_iterator start, end;
-  in.BeginReading(start); 
-  in.EndReading(end); 
+  in.BeginReading(start);
+  in.EndReading(end);
 
   while (start != end) {
     char16_t curChar;
@@ -468,7 +514,7 @@ static nsresult utf16ToUcs4(const nsAString& in,
     curChar= *start++;
 
     if (start != end &&
-        NS_IS_HIGH_SURROGATE(curChar) && 
+        NS_IS_HIGH_SURROGATE(curChar) &&
         NS_IS_LOW_SURROGATE(*start)) {
       out[i] = SURROGATE_TO_UCS4(curChar, *start);
       ++start;
@@ -509,7 +555,7 @@ static nsresult punycode(const nsAString& in, nsACString& out)
 
   // need maximum 20 bits to encode 16 bit Unicode character
   // (include null terminator)
-  const uint32_t kEncodedBufSize = kMaxDNSNodeLen * 20 / 8 + 1 + 1;  
+  const uint32_t kEncodedBufSize = kMaxDNSNodeLen * 20 / 8 + 1 + 1;
   char encodedBuf[kEncodedBufSize];
   punycode_uint encodedLength = kEncodedBufSize;
 
@@ -678,8 +724,8 @@ nsresult nsIDNService::stringPrepAndACE(const nsAString& in, nsACString& out,
 void nsIDNService::normalizeFullStops(nsAString& s)
 {
   nsAString::const_iterator start, end;
-  s.BeginReading(start); 
-  s.EndReading(end); 
+  s.BeginReading(start);
+  s.EndReading(end);
   int32_t index = 0;
 
   while (start != end) {
@@ -755,6 +801,10 @@ nsresult nsIDNService::decodeACE(const nsACString& in, nsACString& out,
 
 bool nsIDNService::isInWhitelist(const nsACString &host)
 {
+  if (!NS_IsMainThread()) {
+    mLock.AssertCurrentThreadOwns();
+  }
+
   if (mIDNUseWhitelist && mIDNWhitelistPrefBranch) {
     nsAutoCString tld(host);
     // make sure the host is ACE for lookup and check that there are no
@@ -781,6 +831,10 @@ bool nsIDNService::isInWhitelist(const nsACString &host)
 
 bool nsIDNService::isLabelSafe(const nsAString &label)
 {
+  if (!NS_IsMainThread()) {
+    mLock.AssertCurrentThreadOwns();
+  }
+
   if (!isOnlySafeChars(PromiseFlatString(label), mIDNBlacklist)) {
     return false;
   }
@@ -813,11 +867,8 @@ bool nsIDNService::isLabelSafe(const nsAString &label)
       ch = SURROGATE_TO_UCS4(ch, *current++);
     }
 
-    // Check for restricted characters; aspirational scripts are NOT permitted,
-    // in anticipation of the category being merged into Limited-Use scripts
-    // in the upcoming (Unicode 10.0-based) revision of UAX #31.
     IdentifierType idType = GetIdentifierType(ch);
-    if (idType == IDTYPE_RESTRICTED || idType == IDTYPE_ASPIRATIONAL) {
+    if (idType == IDTYPE_RESTRICTED) {
       return false;
     }
     MOZ_ASSERT(idType == IDTYPE_ALLOWED);
@@ -924,6 +975,10 @@ static const int32_t scriptComboTable[13][9] = {
 
 bool nsIDNService::illegalScriptCombo(Script script, int32_t& savedScript)
 {
+  if (!NS_IsMainThread()) {
+    mLock.AssertCurrentThreadOwns();
+  }
+
   if (savedScript == -1) {
     savedScript = findScriptIndex(script);
     return false;

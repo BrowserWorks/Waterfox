@@ -10,7 +10,6 @@
 #include "nsDeviceContext.h"
 #include "nsPresContext.h"
 #include "gfxContext.h"
-#include "nsRenderingContext.h"
 #include "nsGkAtoms.h"
 #include "nsIPresShell.h"
 #include "nsIPrintSettings.h"
@@ -329,7 +328,7 @@ nsSimplePageSequenceFrame::Reflow(nsPresContext*     aPresContext,
   aDesiredSize.SetOverflowAreasToDesiredBounds();
   FinishAndStoreOverflow(&aDesiredSize);
 
-  // cache the size so we can set the desired size 
+  // cache the size so we can set the desired size
   // for the other reflows that happen
   mSize.width  = maxXMost;
   mSize.height = y;
@@ -390,7 +389,7 @@ nsSimplePageSequenceFrame::GetPrintRange(int32_t* aFromPage, int32_t* aToPage)
 }
 
 // Helper Function
-void 
+void
 nsSimplePageSequenceFrame::SetPageNumberFormat(const char* aPropName, const char* aDefPropVal, bool aPageNumOnly)
 {
   // Doing this here so we only have to go get these formats once
@@ -547,13 +546,13 @@ nsSimplePageSequenceFrame::DetermineWhetherToPrintPage()
       return;
     } else {
       int32_t length = mPageRanges.Length();
-    
+
       // Page ranges are pairs (start, end)
       if (length && (length % 2 == 0)) {
         mPrintThisPage = false;
-      
+
         int32_t i;
-        for (i = 0; i < length; i += 2) {          
+        for (i = 0; i < length; i += 2) {
           if (mPageRanges[i] <= mPageNum && mPageNum <= mPageRanges[i+1]) {
             mPrintThisPage = true;
             break;
@@ -573,7 +572,7 @@ nsSimplePageSequenceFrame::DetermineWhetherToPrintPage()
       mPrintThisPage = false;  // don't print even numbered page
     }
   }
-  
+
   if (nsIPrintSettings::kRangeSelection == mPrintRangeType) {
     mPrintThisPage = true;
   }
@@ -601,7 +600,7 @@ nsSimplePageSequenceFrame::PrePrintNextPage(nsITimerCallback* aCallback, bool* a
     *aDone = true;
     return NS_ERROR_FAILURE;
   }
-  
+
   DetermineWhetherToPrintPage();
   // Nothing to do if the current page doesn't get printed OR rendering to
   // preview. For preview, the `CallPrintCallback` is called from within the
@@ -628,7 +627,7 @@ nsSimplePageSequenceFrame::PrePrintNextPage(nsITimerCallback* aCallback, bool* a
       NS_ENSURE_SUCCESS(rv, rv);
 
       mCalledBeginPage = true;
-      
+
       RefPtr<gfxContext> renderingContext = dc->CreateRenderingContext();
       NS_ENSURE_TRUE(renderingContext, NS_ERROR_OUT_OF_MEMORY);
 
@@ -685,9 +684,9 @@ nsSimplePageSequenceFrame::ResetPrintCanvasList()
   }
 
   mCurrentCanvasList.Clear();
-  mCurrentCanvasListSetup = false; 
+  mCurrentCanvasListSetup = false;
   return NS_OK;
-} 
+}
 
 NS_IMETHODIMP
 nsSimplePageSequenceFrame::PrintNextPage()
@@ -705,7 +704,7 @@ nsSimplePageSequenceFrame::PrintNextPage()
   //
   // Note: When print al the pages or a page range the printed page shows the
   // actual page number, when printing selection it prints the page number starting
-  // with the first page of the selection. For example if the user has a 
+  // with the first page of the selection. For example if the user has a
   // selection that starts on page 2 and ends on page 3, the page numbers when
   // print are 1 and then two (which is different than printing a page range, where
   // the page numbers would have been 2 and then 3)
@@ -772,11 +771,9 @@ nsSimplePageSequenceFrame::PrintNextPage()
       RefPtr<gfxContext> gCtx = dc->CreateRenderingContext();
       NS_ENSURE_TRUE(gCtx, NS_ERROR_OUT_OF_MEMORY);
 
-      nsRenderingContext renderingContext(gCtx);
-
       nsRect drawingRect(nsPoint(0, 0), currentPageFrame->GetSize());
       nsRegion drawingRegion(drawingRect);
-      nsLayoutUtils::PaintFrame(&renderingContext, currentPageFrame,
+      nsLayoutUtils::PaintFrame(gCtx, currentPageFrame,
                                 drawingRegion, NS_RGBA(0,0,0,0),
                                 nsDisplayListBuilderMode::PAINTING,
                                 nsLayoutUtils::PaintFrameFlags::PAINT_SYNC_DECODE_IMAGES);
@@ -817,7 +814,7 @@ nsSimplePageSequenceFrame::DoPageEnd()
   ResetPrintCanvasList();
 
   mPageNum++;
-  
+
   return rv;
 }
 
@@ -867,7 +864,7 @@ nsSimplePageSequenceFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 //------------------------------------------------------------------------------
 void
 nsSimplePageSequenceFrame::SetPageNumberFormat(const nsAString& aFormatStr, bool aForPageNumOnly)
-{ 
+{
   NS_ASSERTION(mPageData != nullptr, "mPageData string cannot be null!");
 
   if (aForPageNumOnly) {
@@ -880,7 +877,7 @@ nsSimplePageSequenceFrame::SetPageNumberFormat(const nsAString& aFormatStr, bool
 //------------------------------------------------------------------------------
 void
 nsSimplePageSequenceFrame::SetDateTimeStr(const nsAString& aDateTimeStr)
-{ 
+{
   NS_ASSERTION(mPageData != nullptr, "mPageData string cannot be null!");
 
   mPageData->mDateTimeStr = aDateTimeStr;
@@ -889,7 +886,7 @@ nsSimplePageSequenceFrame::SetDateTimeStr(const nsAString& aDateTimeStr)
 //------------------------------------------------------------------------------
 // For Shrink To Fit
 //
-// Return the percentage that the page needs to shrink to 
+// Return the percentage that the page needs to shrink to
 //
 NS_IMETHODIMP
 nsSimplePageSequenceFrame::GetSTFPercent(float& aSTFPercent)
@@ -897,4 +894,13 @@ nsSimplePageSequenceFrame::GetSTFPercent(float& aSTFPercent)
   NS_ENSURE_TRUE(mPageData, NS_ERROR_UNEXPECTED);
   aSTFPercent = mPageData->mShrinkToFitRatio;
   return NS_OK;
+}
+
+void
+nsSimplePageSequenceFrame::AppendDirectlyOwnedAnonBoxes(
+  nsTArray<OwnedAnonBox>& aResult)
+{
+  if (mFrames.NotEmpty()) {
+    aResult.AppendElement(mFrames.FirstChild());
+  }
 }

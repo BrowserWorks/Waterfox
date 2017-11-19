@@ -714,7 +714,7 @@ TextEditor::InsertLineBreak()
   if (!cancel && !handled) {
     // get the (collapsed) selection location
     NS_ENSURE_STATE(selection->GetRangeAt(0));
-    nsCOMPtr<nsINode> selNode = selection->GetRangeAt(0)->GetStartParent();
+    nsCOMPtr<nsINode> selNode = selection->GetRangeAt(0)->GetStartContainer();
     int32_t selOffset = selection->GetRangeAt(0)->StartOffset();
     NS_ENSURE_STATE(selNode);
 
@@ -728,8 +728,8 @@ TextEditor::InsertLineBreak()
     nsCOMPtr<nsIDocument> doc = GetDocument();
     NS_ENSURE_TRUE(doc, NS_ERROR_NOT_INITIALIZED);
 
-    // don't spaz my selection in subtransactions
-    AutoTransactionsConserveSelection dontSpazMySelection(this);
+    // don't change my selection in subtransactions
+    AutoTransactionsConserveSelection dontChangeMySelection(this);
 
     // insert a linefeed character
     rv = InsertTextImpl(NS_LITERAL_STRING("\n"), address_of(selNode),
@@ -872,12 +872,10 @@ TextEditor::UpdateIMEComposition(WidgetCompositionEvent* aCompsitionChangeEvent)
   //       of NotifiyEditorObservers(eNotifyEditorObserversOfEnd) or
   //       NotifiyEditorObservers(eNotifyEditorObserversOfCancel) which notifies
   //       TextComposition of a selection change.
-  MOZ_ASSERT(!mPlaceHolderBatch,
+  MOZ_ASSERT(!mPlaceholderBatch,
     "UpdateIMEComposition() must be called without place holder batch");
   TextComposition::CompositionChangeEventHandlingMarker
     compositionChangeEventHandlingMarker(mComposition, aCompsitionChangeEvent);
-
-  NotifyEditorObservers(eNotifyEditorObserversOfBefore);
 
   RefPtr<nsCaret> caretP = ps->GetCaret();
 
@@ -885,6 +883,8 @@ TextEditor::UpdateIMEComposition(WidgetCompositionEvent* aCompsitionChangeEvent)
   {
     AutoPlaceHolderBatch batch(this, nsGkAtoms::IMETxnName);
 
+    MOZ_ASSERT(mIsInEditAction,
+      "AutoPlaceHolderBatch should've notified the observes of before-edit");
     rv = InsertText(aCompsitionChangeEvent->mData);
 
     if (caretP) {
@@ -970,8 +970,12 @@ TextEditor::SetMaxTextLength(int32_t aMaxTextLength)
 NS_IMETHODIMP
 TextEditor::GetMaxTextLength(int32_t* aMaxTextLength)
 {
-  NS_ENSURE_TRUE(aMaxTextLength, NS_ERROR_INVALID_POINTER);
-  *aMaxTextLength = mMaxTextLength;
+  // NOTE: If you need to override this method, you need to make
+  //       MaxTextLength() virtual.
+  if (NS_WARN_IF(!aMaxTextLength)) {
+    return NS_ERROR_INVALID_POINTER;
+  }
+  *aMaxTextLength = MaxTextLength();
   return NS_OK;
 }
 
@@ -1313,6 +1317,7 @@ TextEditor::OutputToString(const nsAString& aFormatType,
   nsString resultString;
   TextRulesInfo ruleInfo(EditAction::outputText);
   ruleInfo.outString = &resultString;
+  ruleInfo.flags = aFlags;
   // XXX Struct should store a nsAReadable*
   nsAutoString str(aFormatType);
   ruleInfo.outputFormat = &str;
@@ -1330,7 +1335,7 @@ TextEditor::OutputToString(const nsAString& aFormatType,
   nsAutoCString charsetStr;
   rv = GetDocumentCharacterSet(charsetStr);
   if (NS_FAILED(rv) || charsetStr.IsEmpty()) {
-    charsetStr.AssignLiteral("ISO-8859-1");
+    charsetStr.AssignLiteral("windows-1252");
   }
 
   nsCOMPtr<nsIDocumentEncoder> encoder =

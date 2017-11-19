@@ -64,7 +64,7 @@ namespace {
 
 void
 getSiteKey(const nsACString& hostName, uint16_t port,
-           /*out*/ nsCSubstring& key)
+           /*out*/ nsACString& key)
 {
   key = hostName;
   key.AppendASCII(":");
@@ -1703,7 +1703,7 @@ nsSSLIOLayerHelpers::setInsecureFallbackSites(const nsCString& str)
   nsCCharSeparatedTokenizer toker(str, ',');
 
   while (toker.hasMoreTokens()) {
-    const nsCSubstring& host = toker.nextToken();
+    const nsACString& host = toker.nextToken();
     if (!host.IsEmpty()) {
       mInsecureFallbackSites.PutEntry(host);
     }
@@ -1714,9 +1714,9 @@ void
 nsSSLIOLayerHelpers::initInsecureFallbackSites()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  nsCString insecureFallbackHosts;
+  nsAutoCString insecureFallbackHosts;
   Preferences::GetCString("security.tls.insecure_fallback_hosts",
-                          &insecureFallbackHosts);
+                          insecureFallbackHosts);
   setInsecureFallbackSites(insecureFallbackHosts);
 }
 
@@ -1730,7 +1730,8 @@ class FallbackPrefRemover final : public Runnable
 {
 public:
   explicit FallbackPrefRemover(const nsACString& aHost)
-    : mHost(aHost)
+    : mozilla::Runnable("FallbackPrefRemover")
+    , mHost(aHost)
   {}
   NS_IMETHOD Run() override;
 private:
@@ -1741,12 +1742,12 @@ NS_IMETHODIMP
 FallbackPrefRemover::Run()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  nsCString oldValue;
-  Preferences::GetCString("security.tls.insecure_fallback_hosts", &oldValue);
+  nsAutoCString oldValue;
+  Preferences::GetCString("security.tls.insecure_fallback_hosts", oldValue);
   nsCCharSeparatedTokenizer toker(oldValue, ',');
   nsCString newValue;
   while (toker.hasMoreTokens()) {
-    const nsCSubstring& host = toker.nextToken();
+    const nsACString& host = toker.nextToken();
     if (host.Equals(mHost)) {
       continue;
     }
@@ -1873,7 +1874,7 @@ nsConvertCANamesToStrings(const UniquePLArenaPool& arena, char** caNameStrings,
             // incorrectly formatted der without the outer wrapper of type and
             // length. Fix it up by adding the top level header.
             if (dername->len <= 127) {
-                newitem.data = (unsigned char*) PR_Malloc(dername->len + 2);
+                newitem.data = (unsigned char*) malloc(dername->len + 2);
                 if (!newitem.data) {
                     goto loser;
                 }
@@ -1881,7 +1882,7 @@ nsConvertCANamesToStrings(const UniquePLArenaPool& arena, char** caNameStrings,
                 newitem.data[1] = (unsigned char) dername->len;
                 (void) memcpy(&newitem.data[2], dername->data, dername->len);
             } else if (dername->len <= 255) {
-                newitem.data = (unsigned char*) PR_Malloc(dername->len + 3);
+                newitem.data = (unsigned char*) malloc(dername->len + 3);
                 if (!newitem.data) {
                     goto loser;
                 }
@@ -1891,7 +1892,7 @@ nsConvertCANamesToStrings(const UniquePLArenaPool& arena, char** caNameStrings,
                 (void) memcpy(&newitem.data[3], dername->data, dername->len);
             } else {
                 // greater than 256, better be less than 64k
-                newitem.data = (unsigned char*) PR_Malloc(dername->len + 4);
+                newitem.data = (unsigned char*) malloc(dername->len + 4);
                 if (!newitem.data) {
                     goto loser;
                 }
@@ -1910,21 +1911,21 @@ nsConvertCANamesToStrings(const UniquePLArenaPool& arena, char** caNameStrings,
             caNameStrings[n] = const_cast<char*>("");
         } else {
             caNameStrings[n] = PORT_ArenaStrdup(arena.get(), namestring);
-            PR_Free(namestring);
+            PR_Free(namestring); // CERT_DerNameToAscii() uses PR_Malloc().
             if (!caNameStrings[n]) {
                 goto loser;
             }
         }
 
         if (newitem.data) {
-            PR_Free(newitem.data);
+            free(newitem.data);
         }
     }
 
     return SECSuccess;
 loser:
     if (newitem.data) {
-        PR_Free(newitem.data);
+        free(newitem.data);
     }
     return SECFailure;
 }
@@ -1943,7 +1944,8 @@ UserCertChoice
 nsGetUserCertChoice()
 {
   nsAutoCString value;
-  nsresult rv = Preferences::GetCString("security.default_personal_cert", &value);
+  nsresult rv =
+    Preferences::GetCString("security.default_personal_cert", value);
   if (NS_FAILED(rv)) {
     return UserCertChoice::Ask;
   }

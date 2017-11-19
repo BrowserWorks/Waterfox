@@ -131,11 +131,11 @@ static int nr_crypto_nss_random_bytes(UCHAR *buf, int len) {
 static int nr_crypto_nss_hmac(UCHAR *key, int keyl, UCHAR *buf, int bufl,
                               UCHAR *result) {
   CK_MECHANISM_TYPE mech = CKM_SHA_1_HMAC;
-  PK11SlotInfo *slot = 0;
+  PK11SlotInfo *slot = nullptr;
   MOZ_ASSERT(keyl > 0);
   SECItem keyi = { siBuffer, key, static_cast<unsigned int>(keyl)};
-  PK11SymKey *skey = 0;
-  PK11Context *hmac_ctx = 0;
+  PK11SymKey *skey = nullptr;
+  PK11Context *hmac_ctx = nullptr;
   SECStatus status;
   unsigned int hmac_len;
   SECItem param = { siBuffer, nullptr, 0 };
@@ -782,8 +782,8 @@ NrIceStats NrIceCtx::Destroy() {
   delete ice_handler_vtbl_;
   delete ice_handler_;
 
-  ice_handler_vtbl_ = 0;
-  ice_handler_ = 0;
+  ice_handler_vtbl_ = nullptr;
+  ice_handler_ = nullptr;
   streams_.clear();
 
   return stats;
@@ -942,9 +942,8 @@ abort:
   return NS_OK;
 }
 
-nsresult NrIceCtx::StartGathering(bool default_route_only, bool proxy_only) {
+void NrIceCtx::SetCtxFlags(bool default_route_only, bool proxy_only) {
   ASSERT_ON_THREAD(sts_target_);
-  SetGatheringState(ICE_CTX_GATHER_STARTED);
 
   if (default_route_only) {
     nr_ice_ctx_add_flags(ctx_, NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS);
@@ -957,6 +956,13 @@ nsresult NrIceCtx::StartGathering(bool default_route_only, bool proxy_only) {
   } else {
     nr_ice_ctx_remove_flags(ctx_, NR_ICE_CTX_FLAGS_ONLY_PROXY);
   }
+}
+
+nsresult NrIceCtx::StartGathering(bool default_route_only, bool proxy_only) {
+  ASSERT_ON_THREAD(sts_target_);
+  SetGatheringState(ICE_CTX_GATHER_STARTED);
+
+  SetCtxFlags(default_route_only, proxy_only);
 
   // This might start gathering for the first time, or again after
   // renegotiation, or might do nothing at all if gathering has already
@@ -987,7 +993,7 @@ RefPtr<NrIceMediaStream> NrIceCtx::FindStream(
 }
 
 std::vector<std::string> NrIceCtx::GetGlobalAttributes() {
-  char **attrs = 0;
+  char **attrs = nullptr;
   int attrct;
   int r;
   std::vector<std::string> ret;
@@ -1170,6 +1176,4 @@ void nr_ice_compute_codeword(char *buf, int len,char *codeword) {
 
     PL_Base64Encode(reinterpret_cast<char*>(&c), 3, codeword);
     codeword[4] = 0;
-
-    return;
 }

@@ -10,6 +10,7 @@ ${helpers.predefined_type("line-height",
                           "LineHeight",
                           "computed::LineHeight::normal()",
                           animation_value_type="ComputedValue",
+                          flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
                           spec="https://drafts.csswg.org/css2/visudet.html#propdef-line-height")}
 
 // CSS Text Module Level 3
@@ -19,6 +20,7 @@ ${helpers.single_keyword("text-transform",
                          "none capitalize uppercase lowercase",
                          extra_gecko_values="full-width",
                          animation_value_type="discrete",
+                         flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
                          spec="https://drafts.csswg.org/css-text/#propdef-text-transform")}
 
 ${helpers.single_keyword("hyphens", "manual none auto",
@@ -66,6 +68,7 @@ ${helpers.single_keyword("word-break",
                                   gecko_enum_prefix="StyleTextJustify"
                                   gecko_inexhaustive="True"
                                   animation_value_type="discrete"
+                                  flags="APPLIES_TO_PLACEHOLDER",
                                   spec="https://drafts.csswg.org/css-text/#propdef-text-justify">
     no_viewport_percentage!(SpecifiedValue);
 
@@ -109,6 +112,7 @@ ${helpers.single_keyword("text-align-last",
 
 // TODO make this a shorthand and implement text-align-last/text-align-all
 <%helpers:longhand name="text-align" animation_value_type="discrete"
+                   flags="APPLIES_TO_PLACEHOLDER"
                    spec="https://drafts.csswg.org/css-text/#propdef-text-align">
     no_viewport_percentage!(SpecifiedValue);
     pub mod computed_value {
@@ -226,8 +230,8 @@ ${helpers.single_keyword("text-align-last",
                         if context.is_root_element {
                             return get_initial_value();
                         }
-                        let parent = context.inherited_style().get_inheritedtext().clone_text_align();
-                        let ltr = context.inherited_style().writing_mode.is_bidi_ltr();
+                        let parent = context.builder.get_parent_inheritedtext().clone_text_align();
+                        let ltr = context.builder.inherited_writing_mode().is_bidi_ltr();
                         match (parent, ltr) {
                             (computed_value::T::start, true) => computed_value::T::left,
                             (computed_value::T::start, false) => computed_value::T::right,
@@ -237,7 +241,7 @@ ${helpers.single_keyword("text-align-last",
                         }
                     }
                     SpecifiedValue::MozCenterOrInherit => {
-                        let parent = context.inherited_style().get_inheritedtext().clone_text_align();
+                        let parent = context.builder.get_parent_inheritedtext().clone_text_align();
                         if parent == computed_value::T::start {
                             computed_value::T::center
                         } else {
@@ -267,12 +271,14 @@ ${helpers.predefined_type("letter-spacing",
                           "LetterSpacing",
                           "computed::LetterSpacing::normal()",
                           animation_value_type="ComputedValue",
+                          flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
                           spec="https://drafts.csswg.org/css-text/#propdef-letter-spacing")}
 
 ${helpers.predefined_type("word-spacing",
                           "WordSpacing",
                           "computed::WordSpacing::normal()",
                           animation_value_type="ComputedValue",
+                          flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
                           spec="https://drafts.csswg.org/css-text/#propdef-word-spacing")}
 
 <%helpers:longhand name="-servo-text-decorations-in-effect"
@@ -334,7 +340,7 @@ ${helpers.predefined_type("word-spacing",
                 overline: None,
                 line_through: None,
             },
-            _ => context.inherited_style().get_inheritedtext().clone__servo_text_decorations_in_effect()
+            _ => context.builder.get_parent_inheritedtext().clone__servo_text_decorations_in_effect()
         };
 
         result.underline = maybe(context.style().get_text().has_underline()
@@ -350,13 +356,13 @@ ${helpers.predefined_type("word-spacing",
     #[inline]
     pub fn derive_from_text_decoration(context: &mut Context) {
         let derived = derive(context);
-        context.mutate_style().mutate_inheritedtext().set__servo_text_decorations_in_effect(derived);
+        context.builder.set__servo_text_decorations_in_effect(derived);
     }
 
     #[inline]
     pub fn derive_from_display(context: &mut Context) {
         let derived = derive(context);
-        context.mutate_style().mutate_inheritedtext().set__servo_text_decorations_in_effect(derived);
+        context.builder.set__servo_text_decorations_in_effect(derived);
     }
 </%helpers:longhand>
 
@@ -367,6 +373,9 @@ ${helpers.predefined_type("word-spacing",
                                   needs_conversion="True"
                                   gecko_inexhaustive="True"
                                   animation_value_type="discrete"
+                                  // Only allowed for UA sheets, which set it
+                                  // !important.
+                                  flags="APPLIES_TO_PLACEHOLDER"
                                   spec="https://drafts.csswg.org/css-text/#propdef-white-space">
     use values::computed::ComputedValueAsSpecified;
     impl ComputedValueAsSpecified for SpecifiedValue {}
@@ -407,24 +416,19 @@ ${helpers.predefined_type("word-spacing",
     % endif
 </%helpers:single_keyword_computed>
 
-<%helpers:vector_longhand name="text-shadow" allow_empty="True"
-                          animation_value_type="IntermediateShadowList"
-                          ignored_when_colors_disabled="True"
-                          spec="https://drafts.csswg.org/css-backgrounds/#box-shadow">
-    pub type SpecifiedValue = specified::Shadow;
-    pub mod computed_value {
-        use values::computed::Shadow;
-        pub type T = Shadow;
-    }
+${helpers.predefined_type(
+    "text-shadow",
+    "SimpleShadow",
+    None,
+    vector=True,
+    animation_value_type="AnimatedTextShadowList",
+    ignored_when_colors_disabled=True,
+    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
+    spec="https://drafts.csswg.org/css-text-decor-3/#text-shadow-property",
+)}
 
-    pub fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
-                         -> Result<specified::Shadow, ParseError<'i>> {
-        specified::Shadow::parse(context, input, true)
-    }
-</%helpers:vector_longhand>
-
-<%helpers:longhand name="text-emphasis-style" products="gecko" need_clone="True" boxed="True"
-                   animation_value_type="none"
+<%helpers:longhand name="text-emphasis-style" products="gecko" boxed="True"
+                   animation_value_type="discrete"
                    spec="https://drafts.csswg.org/css-text-decor/#propdef-text-emphasis-style">
     use computed_values::writing_mode::T as writing_mode;
     use std::fmt;
@@ -470,16 +474,16 @@ ${helpers.predefined_type("word-spacing",
         fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
             if let Some(fill) = self.fill() {
                 if fill {
-                    try!(dest.write_str("filled"));
+                    dest.write_str("filled")?;
                 } else {
-                    try!(dest.write_str("open"));
+                    dest.write_str("open")?;
                 }
             }
             if let Some(shape) = self.shape() {
                 if self.fill().is_some() {
-                    try!(dest.write_str(" "));
+                    dest.write_str(" ")?;
                 }
-                try!(shape.to_css(dest));
+                shape.to_css(dest)?;
             }
             Ok(())
         }
@@ -487,11 +491,11 @@ ${helpers.predefined_type("word-spacing",
     impl ToCss for computed_value::KeywordValue {
         fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
             if self.fill {
-                try!(dest.write_str("filled"));
+                dest.write_str("filled")?;
             } else {
-                try!(dest.write_str("open"));
+                dest.write_str("open")?;
             }
-            try!(dest.write_str(" "));
+            dest.write_str(" ")?;
             self.shape.to_css(dest)
         }
     }
@@ -586,9 +590,9 @@ ${helpers.predefined_type("word-spacing",
             return Ok(SpecifiedValue::None);
         }
 
-        if let Ok(s) = input.try(|input| input.expect_string()) {
+        if let Ok(s) = input.try(|i| i.expect_string().map(|s| s.as_ref().to_owned())) {
             // Handle <string>
-            return Ok(SpecifiedValue::String(s.into_owned()));
+            return Ok(SpecifiedValue::String(s));
         }
 
         // Handle a pair of keywords
@@ -643,11 +647,11 @@ ${helpers.predefined_type("word-spacing",
     pub fn parse<'i, 't>(_context: &ParserContext, input: &mut Parser<'i, 't>)
                          -> Result<SpecifiedValue, ParseError<'i>> {
        if let Ok(horizontal) = input.try(|input| HorizontalWritingModeValue::parse(input)) {
-            let vertical = try!(VerticalWritingModeValue::parse(input));
+            let vertical = VerticalWritingModeValue::parse(input)?;
             Ok(SpecifiedValue(horizontal, vertical))
         } else {
-            let vertical = try!(VerticalWritingModeValue::parse(input));
-            let horizontal = try!(HorizontalWritingModeValue::parse(input));
+            let vertical = VerticalWritingModeValue::parse(input)?;
+            let horizontal = HorizontalWritingModeValue::parse(input)?;
             Ok(SpecifiedValue(horizontal, vertical))
         }
     }
@@ -724,6 +728,7 @@ ${helpers.predefined_type(
     "computed_value::T::currentcolor()",
     products="gecko", animation_value_type="IntermediateColor",
     need_clone=True, ignored_when_colors_disabled=True,
+    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
     spec="https://compat.spec.whatwg.org/#the-webkit-text-fill-color")}
 
 ${helpers.predefined_type(
@@ -732,6 +737,7 @@ ${helpers.predefined_type(
     initial_specified_value="specified::Color::currentcolor()",
     products="gecko", animation_value_type="IntermediateColor",
     need_clone=True, ignored_when_colors_disabled=True,
+    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
     spec="https://compat.spec.whatwg.org/#the-webkit-text-stroke-color")}
 
 ${helpers.predefined_type("-webkit-text-stroke-width",
@@ -740,6 +746,7 @@ ${helpers.predefined_type("-webkit-text-stroke-width",
                           initial_specified_value="specified::BorderSideWidth::Length(specified::Length::zero())",
                           computed_type="::app_units::Au",
                           products="gecko",
+                          flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
                           spec="https://compat.spec.whatwg.org/#the-webkit-text-stroke-width",
                           animation_value_type="none")}
 

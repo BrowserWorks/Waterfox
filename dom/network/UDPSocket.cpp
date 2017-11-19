@@ -498,6 +498,11 @@ UDPSocket::InitRemote(const nsAString& aLocalAddress,
     return NS_ERROR_FAILURE;
   }
 
+  nsCOMPtr<nsIEventTarget> target;
+  if (nsCOMPtr<nsIGlobalObject> global = GetOwnerGlobal()) {
+    target = global->EventTargetFor(TaskCategory::Other);
+  }
+
   rv = sock->Bind(mListenerProxy,
                   principal,
                   NS_ConvertUTF16toUTF8(aLocalAddress),
@@ -505,7 +510,8 @@ UDPSocket::InitRemote(const nsAString& aLocalAddress,
                   mAddressReuse,
                   mLoopback,
                   0,
-                  0);
+                  0,
+                  target);
 
   if (NS_FAILED(rv)) {
     return rv;
@@ -545,7 +551,9 @@ UDPSocket::Init(const nsString& aLocalAddress,
   class OpenSocketRunnable final : public Runnable
   {
   public:
-    explicit OpenSocketRunnable(UDPSocket* aSocket) : mSocket(aSocket)
+    explicit OpenSocketRunnable(UDPSocket* aSocket)
+      : mozilla::Runnable("OpenSocketRunnable")
+      , mSocket(aSocket)
     { }
 
     NS_IMETHOD Run() override

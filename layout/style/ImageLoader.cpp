@@ -121,7 +121,7 @@ ImageLoader::MaybeRegisterCSSImage(ImageLoader::Image* aImage)
   // Ignore errors here.  If cloning fails for some reason we'll put a null
   // entry in the hash and we won't keep trying to clone.
   mInClone = true;
-  canonicalRequest->Clone(this, getter_AddRefs(request));
+  canonicalRequest->SyncClone(this, mDocument, getter_AddRefs(request));
   mInClone = false;
 
   aImage->mRequests.Put(mDocument, request);
@@ -147,35 +147,33 @@ ImageLoader::RemoveRequestToFrameMapping(imgIRequest* aRequest,
   }
 #endif
 
-  mRequestToFrameMap.LookupRemoveIf(aRequest,
-    [aRequest, aFrame, this] (FrameSet* aFrameSet) {
-      MOZ_ASSERT(aFrameSet, "This should never be null");
-      aFrameSet->RemoveElementSorted(aFrame);
-      bool remove = aFrameSet->IsEmpty();
-      if (remove) {
-        nsPresContext* presContext = GetPresContext();
-        if (presContext) {
-          nsLayoutUtils::DeregisterImageRequest(presContext, aRequest, nullptr);
-        }
+  if (auto entry = mRequestToFrameMap.Lookup(aRequest)) {
+    FrameSet* frameSet = entry.Data();
+    MOZ_ASSERT(frameSet, "This should never be null");
+    frameSet->RemoveElementSorted(aFrame);
+    if (frameSet->IsEmpty()) {
+      nsPresContext* presContext = GetPresContext();
+      if (presContext) {
+        nsLayoutUtils::DeregisterImageRequest(presContext, aRequest, nullptr);
       }
-      return remove;
-    });
+      entry.Remove();
+    }
+  }
 }
 
 void
 ImageLoader::RemoveFrameToRequestMapping(imgIRequest* aRequest,
                                          nsIFrame*    aFrame)
 {
-  mFrameToRequestMap.LookupRemoveIf(aFrame,
-    [aRequest, aFrame] (RequestSet* aRequestSet) {
-      MOZ_ASSERT(aRequestSet, "This should never be null");
-      aRequestSet->RemoveElementSorted(aRequest);
-      bool remove = aRequestSet->IsEmpty();
-      if (remove) {
-        aFrame->SetHasImageRequest(false);
-      }
-      return remove;
-    });
+  if (auto entry = mFrameToRequestMap.Lookup(aFrame)) {
+    RequestSet* requestSet = entry.Data();
+    MOZ_ASSERT(requestSet, "This should never be null");
+    requestSet->RemoveElementSorted(aRequest);
+    if (requestSet->IsEmpty()) {
+      aFrame->SetHasImageRequest(false);
+      entry.Remove();
+    }
+  }
 }
 
 void
@@ -192,7 +190,7 @@ ImageLoader::DropRequestsForFrame(nsIFrame* aFrame)
 {
   MOZ_ASSERT(aFrame->HasImageRequest(), "why call me?");
   nsAutoPtr<RequestSet> requestSet;
-  mFrameToRequestMap.RemoveAndForget(aFrame, requestSet);
+  mFrameToRequestMap.Remove(aFrame, &requestSet);
   aFrame->SetHasImageRequest(false);
   if (MOZ_UNLIKELY(!requestSet)) {
     MOZ_ASSERT_UNREACHABLE("HasImageRequest was lying");
@@ -282,7 +280,7 @@ ImageLoader::LoadImage(nsIURI* aURI, nsIPrincipal* aOriginPrincipal,
 
   RefPtr<imgRequestProxy> clonedRequest;
   mInClone = true;
-  rv = request->Clone(this, getter_AddRefs(clonedRequest));
+  rv = request->SyncClone(this, mDocument, getter_AddRefs(clonedRequest));
   mInClone = false;
 
   if (NS_FAILED(rv)) {
@@ -324,7 +322,7 @@ ImageLoader::GetPresContext()
   return shell->GetPresContext();
 }
 
-void InvalidateImagesCallback(nsIFrame* aFrame, 
+void InvalidateImagesCallback(nsIFrame* aFrame,
                               DisplayItemData* aItem)
 {
   nsDisplayItem::Type type = nsDisplayItem::GetDisplayItemTypeFromKey(aItem->GetDisplayItemKey());
@@ -418,7 +416,7 @@ ImageLoader::Notify(imgIRequest* aRequest, int32_t aType, const nsIntRect* aData
 
 nsresult
 ImageLoader::OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage)
-{ 
+{
   nsPresContext* presContext = GetPresContext();
   if (!presContext) {
     return NS_OK;

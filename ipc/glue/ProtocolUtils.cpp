@@ -76,6 +76,7 @@ public:
                 NestedLevel aNestedLevel = NOT_NESTED)
     : IPC::Message(MSG_ROUTING_CONTROL, // these only go to top-level actors
                    CHANNEL_OPENED_MESSAGE_TYPE,
+                   0,
                    aNestedLevel)
   {
     IPC::WriteParam(this, aDescriptor);
@@ -643,7 +644,16 @@ IToplevelProtocol::Open(MessageChannel* aChannel,
                         mozilla::ipc::Side aSide)
 {
   SetOtherProcessId(base::GetCurrentProcId());
-  return GetIPCChannel()->Open(aChannel, aMessageLoop, aSide);
+  return GetIPCChannel()->Open(aChannel, aMessageLoop->SerialEventTarget(), aSide);
+}
+
+bool
+IToplevelProtocol::Open(MessageChannel* aChannel,
+                        nsIEventTarget* aEventTarget,
+                        mozilla::ipc::Side aSide)
+{
+  SetOtherProcessId(base::GetCurrentProcId());
+  return GetIPCChannel()->Open(aChannel, aEventTarget, aSide);
 }
 
 void

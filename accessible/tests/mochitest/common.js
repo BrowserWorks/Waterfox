@@ -253,7 +253,7 @@ function getAccessible(aAccOrElmOrID, aInterfaces, aElmObj, aDoNotFailIf)
   var elm = null;
 
   if (aAccOrElmOrID instanceof nsIAccessible) {
-    try { elm = aAccOrElmOrID.DOMNode; } catch(e) { }
+    try { elm = aAccOrElmOrID.DOMNode; } catch (e) { }
 
   } else if (aAccOrElmOrID instanceof nsIDOMNode) {
     elm = aAccOrElmOrID;
@@ -313,9 +313,8 @@ function getAccessible(aAccOrElmOrID, aInterfaces, aElmObj, aDoNotFailIf)
  */
 function isAccessible(aAccOrElmOrID, aInterfaces)
 {
-  return getAccessible(aAccOrElmOrID, aInterfaces, null,
-                       DONOTFAIL_IF_NO_ACC | DONOTFAIL_IF_NO_INTERFACE) ?
-    true : false;
+  return !!getAccessible(aAccOrElmOrID, aInterfaces, null,
+                         DONOTFAIL_IF_NO_ACC | DONOTFAIL_IF_NO_INTERFACE);
 }
 
 /**
@@ -551,7 +550,7 @@ function testAccessibleTree(aAccOrElmOrID, aAccTree, aFlags)
 
         // nsIAccessible::indexInParent
         var indexInParent = -1;
-        try { indexInParent = child.indexInParent; } catch(e) {}
+        try { indexInParent = child.indexInParent; } catch (e) {}
         is(indexInParent, i,
            "Wrong index in parent of " + prettyName(child));
 
@@ -584,7 +583,7 @@ function testAccessibleTree(aAccOrElmOrID, aAccTree, aFlags)
 function isAccessibleInCache(aNodeOrId)
 {
   var node = getNode(aNodeOrId);
-  return gAccService.getAccessibleFromCache(node) ? true : false;
+  return !!gAccService.getAccessibleFromCache(node);
 }
 
 /**

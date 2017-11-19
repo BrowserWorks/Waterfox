@@ -41,6 +41,7 @@ struct LoadInfoArgs
   PrincipalInfo               triggeringPrincipalInfo;
   OptionalPrincipalInfo       principalToInheritInfo;
   OptionalPrincipalInfo       sandboxedLoadingPrincipalInfo;
+  OptionalURIParams           resultPrincipalURI;
   uint32_t                    securityFlags;
   uint32_t                    contentPolicyType;
   uint32_t                    tainting;
@@ -63,6 +64,8 @@ struct LoadInfoArgs
   bool                        isPreflight;
   bool                        forceHSTSPriming;
   bool                        mixedContentWouldBlock;
+  bool                        isHSTSPriming;
+  bool                        isHSTSPrimingUpgrade;
 };
 
 /**

@@ -7,10 +7,12 @@
 XPIDL_SOURCES += [
     'nsIEnvironment.idl',
     'nsIEventTarget.idl',
+    'nsIHangDetails.idl',
     'nsIIdlePeriod.idl',
     'nsINamed.idl',
     'nsIProcess.idl',
     'nsIRunnable.idl',
+    'nsISerialEventTarget.idl',
     'nsISupportsPriority.idl',
     'nsIThread.idl',
     'nsIThreadInternal.idl',
@@ -46,6 +48,7 @@ EXPORTS.mozilla += [
     'Monitor.h',
     'MozPromise.h',
     'Mutex.h',
+    'RecursiveMutex.h',
     'ReentrantMonitor.h',
     'RWLock.h',
     'SchedulerGroup.h',
@@ -78,6 +81,7 @@ UNIFIED_SOURCES += [
     'nsThreadPool.cpp',
     'nsThreadUtils.cpp',
     'nsTimerImpl.cpp',
+    'RecursiveMutex.cpp',
     'RWLock.cpp',
     'SchedulerGroup.cpp',
     'SharedThreadPool.cpp',
@@ -94,10 +98,11 @@ LOCAL_INCLUDES += [
     '/tools/profiler',
 ]
 
+# BHR disabled in Beta because of bug 1389252.
 # BHR disabled for Release builds because of bug 965392.
 # BHR disabled for debug builds because of bug 979069.
 # BHR disabled for TSan builds because of bug 1121216.
-if CONFIG['MOZ_UPDATE_CHANNEL'] not in ('release') and \
+if CONFIG['NIGHTLY_BUILD'] and \
    not CONFIG['MOZ_DEBUG'] and \
    not CONFIG['MOZ_TSAN']:
     DEFINES['MOZ_ENABLE_BACKGROUND_HANG_MONITOR'] = 1

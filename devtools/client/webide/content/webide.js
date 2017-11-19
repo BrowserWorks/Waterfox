@@ -201,9 +201,6 @@ var UI = {
       case "runtime-targets":
         this.autoSelectProject();
         break;
-      case "pre-package":
-        this.prePackageLog(details);
-        break;
     }
     this._updatePromise = promise.resolve();
   },
@@ -881,12 +878,6 @@ var UI = {
 
     return gDevTools.showToolbox(target, null, host, options);
   },
-
-  prePackageLog: function (msg) {
-    if (msg == "start") {
-      UI.selectDeckPanel("logs");
-    }
-  }
 };
 
 EventEmitter.decorate(UI);
@@ -918,7 +909,7 @@ var Cmds = {
     let url = AppManager.deviceFront.screenshotToDataURL();
     return UI.busyUntil(url.then(longstr => {
       return longstr.string().then(dataURL => {
-        longstr.release().then(null, console.error);
+        longstr.release().catch(console.error);
         UI.openInBrowser(dataURL);
       });
     }), "taking screenshot");

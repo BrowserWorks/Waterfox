@@ -87,6 +87,7 @@ var gPrivacyPane = {
 
     let count = ContextualIdentityService.countContainerTabs();
     if (count == 0) {
+      ContextualIdentityService.notifyAllContainersCleared();
       Services.prefs.setBoolPref("privacy.userContext.enabled", false);
       return;
     }
@@ -106,8 +107,10 @@ var gPrivacyPane = {
     let rv = Services.prompt.confirmEx(window, title, message, buttonFlags,
                                        okButton, cancelButton, null, null, {});
     if (rv == 0) {
-      ContextualIdentityService.closeContainerTabs();
       Services.prefs.setBoolPref("privacy.userContext.enabled", false);
+      ContextualIdentityService.closeContainerTabs().then(() => {
+        ContextualIdentityService.notifyAllContainersCleared();
+      });
       return;
     }
 
@@ -466,7 +469,7 @@ var gPrivacyPane = {
       permissionType: "trackingprotection",
       hideStatusColumn: true,
       windowTitle: bundlePreferences.getString("trackingprotectionpermissionstitle"),
-      introText: bundlePreferences.getString("trackingprotectionpermissionstext"),
+      introText: bundlePreferences.getString("trackingprotectionpermissionstext2"),
     };
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
                     null, params);

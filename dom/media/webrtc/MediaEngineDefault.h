@@ -5,6 +5,7 @@
 #ifndef MEDIAENGINEDEFAULT_H_
 #define MEDIAENGINEDEFAULT_H_
 
+#include "nsINamed.h"
 #include "nsITimer.h"
 
 #include "nsAutoPtr.h"
@@ -36,6 +37,7 @@ class MediaEngineDefault;
  * The default implementation of the MediaEngine interface.
  */
 class MediaEngineDefaultVideoSource : public nsITimerCallback,
+                                      public nsINamed,
 #ifdef MOZ_WEBRTC
                                       public MediaEngineCameraVideoSource
 #else
@@ -85,23 +87,33 @@ public:
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
+  void Shutdown() override {
+    Stop(mSource, mTrackID);
+    MonitorAutoLock lock(mMonitor);
+    mImageContainer = nullptr;
+  }
+
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
 protected:
   ~MediaEngineDefaultVideoSource();
 
   friend class MediaEngineDefault;
 
+  RefPtr<SourceMediaStream> mSource;
   TrackID mTrackID;
   nsCOMPtr<nsITimer> mTimer;
-  // mMonitor protects mImage access/changes, and transitions of mState
-  // from kStarted to kStopped (which are combined with EndTrack() and
-  // image changes).
+
+#ifndef MOZ_WEBRTC
+  // mMonitor protects mImage/mImageContainer access/changes, and
+  // transitions of mState from kStarted to kStopped (which are combined
+  // with EndTrack() and image changes).
   Monitor mMonitor;
   RefPtr<layers::Image> mImage;
-
   RefPtr<layers::ImageContainer> mImageContainer;
+#endif
 
   MediaEnginePrefs mOpts;
   int mCb;
@@ -196,6 +208,12 @@ public:
   void Shutdown() override {
     MutexAutoLock lock(mMutex);
 
+    for (auto& source : mVSources) {
+      source->Shutdown();
+    }
+    for (auto& source : mASources) {
+      source->Shutdown();
+    }
     mVSources.Clear();
     mASources.Clear();
   };
@@ -205,7 +223,6 @@ private:
 
   Mutex mMutex;
   // protected with mMutex:
-
   nsTArray<RefPtr<MediaEngineVideoSource> > mVSources;
   nsTArray<RefPtr<MediaEngineAudioSource> > mASources;
 };

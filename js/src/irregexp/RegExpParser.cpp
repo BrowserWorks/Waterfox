@@ -34,6 +34,7 @@
 #include "mozilla/Move.h"
 
 #include "frontend/TokenStream.h"
+#include "irregexp/RegExpCharacters.h"
 #include "vm/ErrorReporting.h"
 #include "vm/StringBuffer.h"
 
@@ -128,6 +129,12 @@ void
 RegExpBuilder::AddAssertion(RegExpTree* assert)
 {
     FlushText();
+    if (terms_.length() > 0 && terms_.last()->IsAssertion()) {
+        // Omit repeated assertions of the same type.
+        RegExpAssertion* last = terms_.last()->AsAssertion();
+        RegExpAssertion* next = assert->AsAssertion();
+        if (last->assertion_type() == next->assertion_type()) return;
+    }
     terms_.Add(alloc, assert);
 #ifdef DEBUG
     last_added_ = ADD_ASSERT;
@@ -1418,11 +1425,9 @@ UnicodeEverythingAtom(LifoAlloc* alloc)
     // everything except \x0a, \x0d, \u2028 and \u2029
 
     CharacterRangeVector* ranges = alloc->newInfallible<CharacterRangeVector>(*alloc);
-    ranges->append(CharacterRange::Range(0x0, 0x09));
-    ranges->append(CharacterRange::Range(0x0b, 0x0c));
-    ranges->append(CharacterRange::Range(0x0e, 0x2027));
-    ranges->append(CharacterRange::Range(0x202A, unicode::LeadSurrogateMin - 1));
-    ranges->append(CharacterRange::Range(unicode::TrailSurrogateMax + 1, unicode::UTF16Max));
+    AddClassNegated(kLineTerminatorAndSurrogateRanges,
+                    kLineTerminatorAndSurrogateRangeCount,
+                    ranges);
     builder->AddAtom(alloc->newInfallible<RegExpCharacterClass>(ranges, false));
 
     builder->NewAlternative();

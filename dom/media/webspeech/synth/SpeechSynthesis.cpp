@@ -7,15 +7,16 @@
 #include "nsISupportsPrimitives.h"
 #include "nsSpeechTask.h"
 #include "mozilla/Logging.h"
-#include "mozilla/SizePrintfMacros.h"
 
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/Element.h"
 
 #include "mozilla/dom/SpeechSynthesisBinding.h"
 #include "SpeechSynthesis.h"
+#include "nsContentUtils.h"
 #include "nsSynthVoiceRegistry.h"
 #include "nsIDocument.h"
+#include "nsIDocShell.h"
 
 #undef LOG
 mozilla::LogModule*
@@ -156,7 +157,7 @@ void
 SpeechSynthesis::AdvanceQueue()
 {
   LOG(LogLevel::Debug,
-      ("SpeechSynthesis::AdvanceQueue length=%" PRIuSIZE, mSpeechQueue.Length()));
+      ("SpeechSynthesis::AdvanceQueue length=%zu", mSpeechQueue.Length()));
 
   if (mSpeechQueue.IsEmpty()) {
     return;
@@ -182,8 +183,6 @@ SpeechSynthesis::AdvanceQueue()
   if (mCurrentTask) {
     mCurrentTask->SetSpeechSynthesis(this);
   }
-
-  return;
 }
 
 void
@@ -251,6 +250,13 @@ SpeechSynthesis::GetVoices(nsTArray< RefPtr<SpeechSynthesisVoice> >& aResult)
 {
   aResult.Clear();
   uint32_t voiceCount = 0;
+  nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
+  nsCOMPtr<nsIDocShell> docShell = window ? window->GetDocShell() : nullptr;
+
+
+  if (nsContentUtils::ShouldResistFingerprinting(docShell)) {
+    return;
+  }
 
   nsresult rv = nsSynthVoiceRegistry::GetInstance()->GetVoiceCount(&voiceCount);
   if(NS_WARN_IF(NS_FAILED(rv))) {
@@ -320,10 +326,15 @@ SpeechSynthesis::Observe(nsISupports* aSubject, const char* aTopic,
     }
   } else if (strcmp(aTopic, "synth-voices-changed") == 0) {
     LOG(LogLevel::Debug, ("SpeechSynthesis::onvoiceschanged"));
-    DispatchTrustedEvent(NS_LITERAL_STRING("voiceschanged"));
-    // If we have a pending item, and voices become available, speak it.
-    if (!mCurrentTask && !mHoldQueue && HasVoices()) {
-      AdvanceQueue();
+    nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
+    nsCOMPtr<nsIDocShell> docShell = window ? window->GetDocShell() : nullptr;
+
+    if (!nsContentUtils::ShouldResistFingerprinting(docShell)) {
+      DispatchTrustedEvent(NS_LITERAL_STRING("voiceschanged"));
+      // If we have a pending item, and voices become available, speak it.
+      if (!mCurrentTask && !mHoldQueue && HasVoices()) {
+        AdvanceQueue();
+      }
     }
   }
 

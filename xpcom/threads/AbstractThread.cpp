@@ -75,6 +75,9 @@ public:
     Unused << rv;
   }
 
+  // Prevent a GCC warning about the other overload of Dispatch being hidden.
+  using AbstractThread::Dispatch;
+
   virtual bool IsCurrentThreadIn() override
   {
     // Compare NSPR threads so that this works after shutdown when
@@ -101,7 +104,10 @@ public:
     if (!mTailDispatcher.isSome()) {
       mTailDispatcher.emplace(/* aIsTailDispatcher = */ true);
 
-      nsCOMPtr<nsIRunnable> event = NewRunnableMethod(this, &EventTargetWrapper::FireTailDispatcher);
+      nsCOMPtr<nsIRunnable> event =
+        NewRunnableMethod("EventTargetWrapper::FireTailDispatcher",
+                          this,
+                          &EventTargetWrapper::FireTailDispatcher);
       nsContentUtils::RunInStableState(event.forget());
     }
 
@@ -151,7 +157,8 @@ private:
     explicit Runner(EventTargetWrapper* aThread,
                     already_AddRefed<nsIRunnable> aRunnable,
                     bool aDrainDirectTasks)
-      : mThread(aThread)
+      : CancelableRunnable("EventTargetWrapper::Runner")
+      , mThread(aThread)
       , mRunnable(aRunnable)
       , mDrainDirectTasks(aDrainDirectTasks)
     {
@@ -209,6 +216,42 @@ private:
     bool mDrainDirectTasks;
   };
 };
+
+NS_IMPL_ISUPPORTS(AbstractThread, nsIEventTarget, nsISerialEventTarget)
+
+NS_IMETHODIMP_(bool)
+AbstractThread::IsOnCurrentThreadInfallible()
+{
+  return IsCurrentThreadIn();
+}
+
+NS_IMETHODIMP
+AbstractThread::IsOnCurrentThread(bool* aResult)
+{
+  *aResult = IsCurrentThreadIn();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+AbstractThread::DispatchFromScript(nsIRunnable* aEvent, uint32_t aFlags)
+{
+  nsCOMPtr<nsIRunnable> event(aEvent);
+  return Dispatch(event.forget(), aFlags);
+}
+
+NS_IMETHODIMP
+AbstractThread::Dispatch(already_AddRefed<nsIRunnable> aEvent, uint32_t aFlags)
+{
+  Dispatch(Move(aEvent), DontAssertDispatchSuccess, NormalDispatch);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+AbstractThread::DelayedDispatch(already_AddRefed<nsIRunnable> aEvent,
+                                 uint32_t aDelayMs)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
 
 void
 AbstractThread::TailDispatchTasksFor(AbstractThread* aThread)
@@ -305,7 +348,8 @@ AbstractThread::CreateXPCOMThreadWrapper(nsIThread* aThread, bool aRequireTailDi
   // target thread. This ensures that sCurrentThreadTLS is as expected by
   // AbstractThread::GetCurrent() on the target thread.
   nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableFunction([wrapper]() { sCurrentThreadTLS.set(wrapper); });
+    NS_NewRunnableFunction("AbstractThread::CreateXPCOMThreadWrapper",
+                           [wrapper]() { sCurrentThreadTLS.set(wrapper); });
   aThread->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
   return wrapper.forget();
 }

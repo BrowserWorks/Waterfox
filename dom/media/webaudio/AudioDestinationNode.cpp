@@ -125,7 +125,8 @@ public:
   {
   public:
     OnCompleteTask(AudioContext* aAudioContext, AudioBuffer* aRenderedBuffer)
-      : mAudioContext(aAudioContext)
+      : Runnable("dom::OfflineDestinationNodeEngine::OnCompleteTask")
+      , mAudioContext(aAudioContext)
       , mRenderedBuffer(aRenderedBuffer)
     {}
 
@@ -167,8 +168,7 @@ public:
 
     aNode->ResolvePromise(renderedBuffer);
 
-    mAbstractMainThread->Dispatch(do_AddRef(new OnCompleteTask(context,
-                                                               renderedBuffer)));
+    context->Dispatch(do_AddRef(new OnCompleteTask(context, renderedBuffer)));
 
     context->OnStateChanged(nullptr, AudioContextState::Closed);
   }
@@ -204,9 +204,9 @@ private:
 class InputMutedRunnable final : public Runnable
 {
 public:
-  InputMutedRunnable(AudioNodeStream* aStream,
-                     bool aInputMuted)
-    : mStream(aStream)
+  InputMutedRunnable(AudioNodeStream* aStream, bool aInputMuted)
+    : Runnable("dom::InputMutedRunnable")
+    , mStream(aStream)
     , mInputMuted(aInputMuted)
   {
   }
@@ -260,9 +260,8 @@ public:
 
       RefPtr<InputMutedRunnable> runnable =
         new InputMutedRunnable(aStream, newInputMuted);
-      aStream->Graph()->
-        DispatchToMainThreadAfterStreamStateUpdate(mAbstractMainThread,
-                                                   runnable.forget());
+      aStream->Graph()->DispatchToMainThreadAfterStreamStateUpdate(
+        runnable.forget());
     }
   }
 
@@ -334,9 +333,12 @@ AudioDestinationNode::AudioDestinationNode(AudioContext* aContext,
   , mCaptured(false)
   , mAudible(AudioChannelService::AudibleState::eAudible)
 {
-  MediaStreamGraph* graph = aIsOffline ?
-                            MediaStreamGraph::CreateNonRealtimeInstance(aSampleRate) :
-                            MediaStreamGraph::GetInstance(MediaStreamGraph::AUDIO_THREAD_DRIVER, aChannel);
+  nsPIDOMWindowInner* window = aContext->GetParentObject();
+  MediaStreamGraph* graph =
+    aIsOffline
+      ? MediaStreamGraph::CreateNonRealtimeInstance(aSampleRate, window)
+      : MediaStreamGraph::GetInstance(
+          MediaStreamGraph::AUDIO_THREAD_DRIVER, aChannel, window);
   AudioNodeEngine* engine = aIsOffline ?
                             new OfflineDestinationNodeEngine(this, aNumberOfChannels,
                                                              aLength, aSampleRate) :
@@ -412,8 +414,10 @@ AudioDestinationNode::NotifyMainThreadStreamFinished()
   MOZ_ASSERT(mStream->IsFinished());
 
   if (mIsOffline) {
-    NS_DispatchToCurrentThread(NewRunnableMethod(this,
-                                                 &AudioDestinationNode::FireOfflineCompletionEvent));
+    NS_DispatchToCurrentThread(
+      NewRunnableMethod("dom::AudioDestinationNode::FireOfflineCompletionEvent",
+                        this,
+                        &AudioDestinationNode::FireOfflineCompletionEvent));
   }
 }
 

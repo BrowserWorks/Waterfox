@@ -5,17 +5,21 @@
 import re
 
 
-INTEGRATION_PROJECTS = set([
+INTEGRATION_PROJECTS = {
     'mozilla-inbound',
     'autoland',
-])
+}
 
-RELEASE_PROJECTS = set([
+TRUNK_PROJECTS = INTEGRATION_PROJECTS | {'mozilla-central', }
+
+RELEASE_PROJECTS = {
     'mozilla-central',
     'mozilla-aurora',
     'mozilla-beta',
     'mozilla-release',
-])
+}
+
+_OPTIONAL_ATTRIBUTES = ('nightly', 'signed')
 
 
 def attrmatch(attributes, **kwargs):
@@ -74,4 +78,22 @@ def match_run_on_projects(project, run_on_projects):
     if 'release' in run_on_projects:
         if project in RELEASE_PROJECTS:
             return True
+    if 'trunk' in run_on_projects:
+        if project in TRUNK_PROJECTS:
+            return True
+
     return project in run_on_projects
+
+
+def copy_attributes_from_dependent_job(dep_job):
+    attributes = {
+        'build_platform': dep_job.attributes.get('build_platform'),
+        'build_type': dep_job.attributes.get('build_type'),
+    }
+
+    attributes.update({
+        attr: dep_job.attributes[attr]
+        for attr in _OPTIONAL_ATTRIBUTES if attr in dep_job.attributes
+    })
+
+    return attributes

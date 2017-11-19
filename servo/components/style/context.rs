@@ -9,29 +9,36 @@ use animation::PropertyAnimation;
 use app_units::Au;
 use bloom::StyleBloom;
 use cache::LRUCache;
-use data::ElementData;
+use data::{EagerPseudoStyles, ElementData};
 use dom::{OpaqueNode, TNode, TElement, SendElement};
-use error_reporting::ParseErrorReporter;
+use euclid::ScaleFactor;
 use euclid::Size2D;
 use fnv::FnvHashMap;
 use font_metrics::FontMetricsProvider;
 #[cfg(feature = "gecko")] use gecko_bindings::structs;
 #[cfg(feature = "servo")] use parking_lot::RwLock;
-#[cfg(feature = "gecko")] use properties::ComputedValues;
-use selector_parser::SnapshotMap;
+use properties::ComputedValues;
+#[cfg(feature = "servo")] use properties::PropertyId;
+use rule_tree::StrongRuleNode;
+use selector_parser::{EAGER_PSEUDO_COUNT, SnapshotMap};
 use selectors::matching::ElementSelectorFlags;
+use servo_arc::Arc;
+#[cfg(feature = "servo")] use servo_atoms::Atom;
 use shared_lock::StylesheetGuards;
-use sharing::{ValidationData, StyleSharingCandidateCache};
+use sharing::StyleSharingCandidateCache;
 use std::fmt;
-use std::ops::Add;
+use std::ops;
 #[cfg(feature = "servo")] use std::sync::Mutex;
 #[cfg(feature = "servo")] use std::sync::mpsc::Sender;
-use stylearc::Arc;
+use style_traits::CSSPixel;
+use style_traits::DevicePixel;
+#[cfg(feature = "servo")] use style_traits::SpeculativePainter;
 use stylist::Stylist;
 use thread_state;
 use time;
 use timer::Timer;
-use traversal::{DomTraversal, TraversalFlags};
+use traversal::DomTraversal;
+use traversal_flags::TraversalFlags;
 
 pub use selectors::matching::QuirksMode;
 
@@ -59,15 +66,28 @@ pub struct StyleSystemOptions {
     pub disable_style_sharing_cache: bool,
     /// Whether we should dump statistics about the style system.
     pub dump_style_statistics: bool,
+    /// The minimum number of elements that must be traversed to trigger a dump
+    /// of style statistics.
+    pub style_statistics_threshold: usize,
 }
 
 #[cfg(feature = "gecko")]
-fn get_env(name: &str) -> bool {
+fn get_env_bool(name: &str) -> bool {
     use std::env;
     match env::var(name) {
         Ok(s) => !s.is_empty(),
         Err(_) => false,
     }
+}
+
+const DEFAULT_STATISTICS_THRESHOLD: usize = 50;
+
+#[cfg(feature = "gecko")]
+fn get_env_usize(name: &str) -> Option<usize> {
+    use std::env;
+    env::var(name).ok().map(|s| {
+        s.parse::<usize>().expect("Couldn't parse environmental variable as usize")
+    })
 }
 
 impl Default for StyleSystemOptions {
@@ -78,14 +98,17 @@ impl Default for StyleSystemOptions {
         StyleSystemOptions {
             disable_style_sharing_cache: opts::get().disable_share_style_cache,
             dump_style_statistics: opts::get().style_sharing_stats,
+            style_statistics_threshold: DEFAULT_STATISTICS_THRESHOLD,
         }
     }
 
     #[cfg(feature = "gecko")]
     fn default() -> Self {
         StyleSystemOptions {
-            disable_style_sharing_cache: get_env("DISABLE_STYLE_SHARING_CACHE"),
-            dump_style_statistics: get_env("DUMP_STYLE_STATISTICS"),
+            disable_style_sharing_cache: get_env_bool("DISABLE_STYLE_SHARING_CACHE"),
+            dump_style_statistics: get_env_bool("DUMP_STYLE_STATISTICS"),
+            style_statistics_threshold: get_env_usize("STYLE_STATISTICS_THRESHOLD")
+                                          .unwrap_or(DEFAULT_STATISTICS_THRESHOLD),
         }
     }
 }
@@ -98,14 +121,17 @@ pub struct SharedStyleContext<'a> {
     /// The CSS selector stylist.
     pub stylist: &'a Stylist,
 
+    /// Whether visited styles are enabled.
+    ///
+    /// They may be disabled when Gecko's pref layout.css.visited_links_enabled
+    /// is false, or when in private browsing mode.
+    pub visited_styles_enabled: bool,
+
     /// Configuration options.
     pub options: StyleSystemOptions,
 
     /// Guards for pre-acquired locks
     pub guards: StylesheetGuards<'a>,
-
-    ///The CSS error reporter for all CSS loaded in this layout thread
-    pub error_reporter: &'a ParseErrorReporter,
 
     /// The current timer for transitions and animations. This is needed to test
     /// them.
@@ -128,6 +154,10 @@ pub struct SharedStyleContext<'a> {
     #[cfg(feature = "servo")]
     pub expired_animations: Arc<RwLock<FnvHashMap<OpaqueNode, Vec<Animation>>>>,
 
+    /// Paint worklets
+    #[cfg(feature = "servo")]
+    pub registered_speculative_painters: &'a RegisteredSpeculativePainters,
+
     /// Data needed to create the thread-local style context from the shared one.
     #[cfg(feature = "servo")]
     pub local_context_creation_data: Mutex<ThreadLocalStyleContextCreationInfo>,
@@ -138,6 +168,115 @@ impl<'a> SharedStyleContext<'a> {
     /// Return a suitable viewport size in order to be used for viewport units.
     pub fn viewport_size(&self) -> Size2D<Au> {
         self.stylist.device().au_viewport_size()
+    }
+
+    /// The device pixel ratio
+    pub fn device_pixel_ratio(&self) -> ScaleFactor<f32, CSSPixel, DevicePixel> {
+        self.stylist.device().device_pixel_ratio()
+    }
+}
+
+/// The structure holds various intermediate inputs that are eventually used by
+/// by the cascade.
+///
+/// The matching and cascading process stores them in this format temporarily
+/// within the `CurrentElementInfo`. At the end of the cascade, they are folded
+/// down into the main `ComputedValues` to reduce memory usage per element while
+/// still remaining accessible.
+#[derive(Clone, Default)]
+pub struct CascadeInputs {
+    /// The rule node representing the ordered list of rules matched for this
+    /// node.
+    pub rules: Option<StrongRuleNode>,
+
+    /// The rule node representing the ordered list of rules matched for this
+    /// node if visited, only computed if there's a relevant link for this
+    /// element. A element's "relevant link" is the element being matched if it
+    /// is a link or the nearest ancestor link.
+    pub visited_rules: Option<StrongRuleNode>,
+}
+
+impl CascadeInputs {
+    /// Construct inputs from previous cascade results, if any.
+    pub fn new_from_style(style: &ComputedValues) -> Self {
+        CascadeInputs {
+            rules: style.rules.clone(),
+            visited_rules: style.get_visited_style().and_then(|v| v.rules.clone()),
+        }
+    }
+}
+
+// We manually implement Debug for CascadeInputs so that we can avoid the
+// verbose stringification of ComputedValues for normal logging.
+impl fmt::Debug for CascadeInputs {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "CascadeInputs {{ rules: {:?}, visited_rules: {:?}, .. }}",
+               self.rules, self.visited_rules)
+    }
+}
+
+/// A list of cascade inputs for eagerly-cascaded pseudo-elements.
+/// The list is stored inline.
+#[derive(Debug)]
+pub struct EagerPseudoCascadeInputs(Option<[Option<CascadeInputs>; EAGER_PSEUDO_COUNT]>);
+
+// Manually implement `Clone` here because the derived impl of `Clone` for
+// array types assumes the value inside is `Copy`.
+impl Clone for EagerPseudoCascadeInputs {
+    fn clone(&self) -> Self {
+        if self.0.is_none() {
+            return EagerPseudoCascadeInputs(None)
+        }
+        let self_inputs = self.0.as_ref().unwrap();
+        let mut inputs: [Option<CascadeInputs>; EAGER_PSEUDO_COUNT] = Default::default();
+        for i in 0..EAGER_PSEUDO_COUNT {
+            inputs[i] = self_inputs[i].clone();
+        }
+        EagerPseudoCascadeInputs(Some(inputs))
+    }
+}
+
+impl EagerPseudoCascadeInputs {
+    /// Construct inputs from previous cascade results, if any.
+    fn new_from_style(styles: &EagerPseudoStyles) -> Self {
+        EagerPseudoCascadeInputs(styles.as_optional_array().map(|styles| {
+            let mut inputs: [Option<CascadeInputs>; EAGER_PSEUDO_COUNT] = Default::default();
+            for i in 0..EAGER_PSEUDO_COUNT {
+                inputs[i] = styles[i].as_ref().map(|s| CascadeInputs::new_from_style(s));
+            }
+            inputs
+        }))
+    }
+
+    /// Returns the list of rules, if they exist.
+    pub fn into_array(self) -> Option<[Option<CascadeInputs>; EAGER_PSEUDO_COUNT]> {
+        self.0
+    }
+}
+
+/// The cascade inputs associated with a node, including those for any
+/// pseudo-elements.
+///
+/// The matching and cascading process stores them in this format temporarily
+/// within the `CurrentElementInfo`. At the end of the cascade, they are folded
+/// down into the main `ComputedValues` to reduce memory usage per element while
+/// still remaining accessible.
+#[derive(Clone, Debug)]
+pub struct ElementCascadeInputs {
+    /// The element's cascade inputs.
+    pub primary: CascadeInputs,
+    /// A list of the inputs for the element's eagerly-cascaded pseudo-elements.
+    pub pseudos: EagerPseudoCascadeInputs,
+}
+
+impl ElementCascadeInputs {
+    /// Construct inputs from previous cascade results, if any.
+    pub fn new_from_element_data(data: &ElementData) -> Self {
+        debug_assert!(data.has_styles());
+        ElementCascadeInputs {
+            primary: CascadeInputs::new_from_style(data.styles.primary()),
+            pseudos: EagerPseudoCascadeInputs::new_from_style(&data.styles.pseudos),
+        }
     }
 }
 
@@ -152,8 +291,6 @@ pub struct CurrentElementInfo {
     element: OpaqueNode,
     /// Whether the element is being styled for the first time.
     is_initial_style: bool,
-    /// Lazy cache of the different data used for style sharing.
-    pub validation_data: ValidationData,
     /// A Vec of possibly expired animations. Used only by Servo.
     #[allow(dead_code)]
     pub possibly_expired_animations: Vec<PropertyAnimation>,
@@ -186,10 +323,12 @@ pub struct TraversalStatistics {
     pub traversal_time_ms: f64,
     /// Whether this was a parallel traversal.
     pub is_parallel: Option<bool>,
+    /// Whether this is a "large" traversal.
+    pub is_large: Option<bool>,
 }
 
 /// Implementation of Add to aggregate statistics across different threads.
-impl<'a> Add for &'a TraversalStatistics {
+impl<'a> ops::Add for &'a TraversalStatistics {
     type Output = TraversalStatistics;
     fn add(self, other: Self) -> TraversalStatistics {
         debug_assert!(self.traversal_time_ms == 0.0 && other.traversal_time_ms == 0.0,
@@ -211,6 +350,7 @@ impl<'a> Add for &'a TraversalStatistics {
             stylist_rebuilds: 0,
             traversal_time_ms: 0.0,
             is_parallel: None,
+            is_large: None,
         }
     }
 }
@@ -220,22 +360,22 @@ impl<'a> Add for &'a TraversalStatistics {
 impl fmt::Display for TraversalStatistics {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         debug_assert!(self.traversal_time_ms != 0.0, "should have set traversal time");
-        try!(writeln!(f, "[PERF] perf block start"));
-        try!(writeln!(f, "[PERF],traversal,{}", if self.is_parallel.unwrap() {
+        writeln!(f, "[PERF] perf block start")?;
+        writeln!(f, "[PERF],traversal,{}", if self.is_parallel.unwrap() {
             "parallel"
         } else {
             "sequential"
-        }));
-        try!(writeln!(f, "[PERF],elements_traversed,{}", self.elements_traversed));
-        try!(writeln!(f, "[PERF],elements_styled,{}", self.elements_styled));
-        try!(writeln!(f, "[PERF],elements_matched,{}", self.elements_matched));
-        try!(writeln!(f, "[PERF],styles_shared,{}", self.styles_shared));
-        try!(writeln!(f, "[PERF],selectors,{}", self.selectors));
-        try!(writeln!(f, "[PERF],revalidation_selectors,{}", self.revalidation_selectors));
-        try!(writeln!(f, "[PERF],dependency_selectors,{}", self.dependency_selectors));
-        try!(writeln!(f, "[PERF],declarations,{}", self.declarations));
-        try!(writeln!(f, "[PERF],stylist_rebuilds,{}", self.stylist_rebuilds));
-        try!(writeln!(f, "[PERF],traversal_time_ms,{}", self.traversal_time_ms));
+        })?;
+        writeln!(f, "[PERF],elements_traversed,{}", self.elements_traversed)?;
+        writeln!(f, "[PERF],elements_styled,{}", self.elements_styled)?;
+        writeln!(f, "[PERF],elements_matched,{}", self.elements_matched)?;
+        writeln!(f, "[PERF],styles_shared,{}", self.styles_shared)?;
+        writeln!(f, "[PERF],selectors,{}", self.selectors)?;
+        writeln!(f, "[PERF],revalidation_selectors,{}", self.revalidation_selectors)?;
+        writeln!(f, "[PERF],dependency_selectors,{}", self.dependency_selectors)?;
+        writeln!(f, "[PERF],declarations,{}", self.declarations)?;
+        writeln!(f, "[PERF],stylist_rebuilds,{}", self.stylist_rebuilds)?;
+        writeln!(f, "[PERF],traversal_time_ms,{}", self.traversal_time_ms)?;
         writeln!(f, "[PERF] perf block end")
     }
 }
@@ -246,11 +386,15 @@ impl TraversalStatistics {
         where E: TElement,
               D: DomTraversal<E>,
     {
+        let threshold = traversal.shared_context().options.style_statistics_threshold;
+
         self.is_parallel = Some(traversal.is_parallel());
+        self.is_large = Some(self.elements_traversed as usize >= threshold);
         self.traversal_time_ms = (time::precise_time_s() - start) * 1000.0;
         self.selectors = traversal.shared_context().stylist.num_selectors() as u32;
         self.revalidation_selectors = traversal.shared_context().stylist.num_revalidation_selectors() as u32;
-        self.dependency_selectors = traversal.shared_context().stylist.num_dependencies() as u32;
+        self.dependency_selectors =
+            traversal.shared_context().stylist.invalidation_map().len() as u32;
         self.declarations = traversal.shared_context().stylist.num_declarations() as u32;
         self.stylist_rebuilds = traversal.shared_context().stylist.num_rebuilds() as u32;
     }
@@ -258,7 +402,7 @@ impl TraversalStatistics {
     /// Returns whether this traversal is 'large' in order to avoid console spam
     /// from lots of tiny traversals.
     pub fn is_large_traversal(&self) -> bool {
-        self.elements_traversed >= 50
+        self.is_large.unwrap()
     }
 }
 
@@ -383,6 +527,43 @@ impl<E: TElement> SelectorFlagsMap<E> {
     }
 }
 
+/// A list of SequentialTasks that get executed on Drop.
+pub struct SequentialTaskList<E>(Vec<SequentialTask<E>>)
+where
+    E: TElement;
+
+impl<E> ops::Deref for SequentialTaskList<E>
+where
+    E: TElement,
+{
+    type Target = Vec<SequentialTask<E>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<E> ops::DerefMut for SequentialTaskList<E>
+where
+    E: TElement,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<E> Drop for SequentialTaskList<E>
+where
+    E: TElement,
+{
+    fn drop(&mut self) {
+        debug_assert!(thread_state::get() == thread_state::LAYOUT);
+        for task in self.0.drain(..) {
+            task.execute()
+        }
+    }
+}
+
 /// A thread-local style context.
 ///
 /// This context contains data that needs to be used during restyling, but is
@@ -398,9 +579,13 @@ pub struct ThreadLocalStyleContext<E: TElement> {
     #[cfg(feature = "servo")]
     pub new_animations_sender: Sender<Animation>,
     /// A set of tasks to be run (on the parent thread) in sequential mode after
-    /// the rest of the styling is complete. This is useful for infrequently-needed
-    /// non-threadsafe operations.
-    pub tasks: Vec<SequentialTask<E>>,
+    /// the rest of the styling is complete. This is useful for
+    /// infrequently-needed non-threadsafe operations.
+    ///
+    /// It's important that goes after the style sharing cache and the bloom
+    /// filter, to ensure they're dropped before we execute the tasks, which
+    /// could create another ThreadLocalStyleContext for style computation.
+    pub tasks: SequentialTaskList<E>,
     /// ElementSelectorFlags that need to be applied after the traversal is
     /// complete. This map is used in cases where the matching algorithm needs
     /// to set flags on elements it doesn't have exclusive access to (i.e. other
@@ -423,7 +608,7 @@ impl<E: TElement> ThreadLocalStyleContext<E> {
             style_sharing_candidate_cache: StyleSharingCandidateCache::new(),
             bloom_filter: StyleBloom::new(),
             new_animations_sender: shared.local_context_creation_data.lock().unwrap().new_animations_sender.clone(),
-            tasks: Vec::new(),
+            tasks: SequentialTaskList(Vec::new()),
             selector_flags: SelectorFlagsMap::new(),
             statistics: TraversalStatistics::default(),
             current_element_info: None,
@@ -437,7 +622,7 @@ impl<E: TElement> ThreadLocalStyleContext<E> {
         ThreadLocalStyleContext {
             style_sharing_candidate_cache: StyleSharingCandidateCache::new(),
             bloom_filter: StyleBloom::new(),
-            tasks: Vec::new(),
+            tasks: SequentialTaskList(Vec::new()),
             selector_flags: SelectorFlagsMap::new(),
             statistics: TraversalStatistics::default(),
             current_element_info: None,
@@ -451,7 +636,6 @@ impl<E: TElement> ThreadLocalStyleContext<E> {
         self.current_element_info = Some(CurrentElementInfo {
             element: element.as_node().opaque(),
             is_initial_style: !data.has_styles(),
-            validation_data: ValidationData::default(),
             possibly_expired_animations: Vec::new(),
         });
     }
@@ -480,11 +664,6 @@ impl<E: TElement> Drop for ThreadLocalStyleContext<E> {
 
         // Apply any slow selector flags that need to be set on parents.
         self.selector_flags.apply_flags();
-
-        // Execute any enqueued sequential tasks.
-        for task in self.tasks.drain(..) {
-            task.execute();
-        }
     }
 }
 
@@ -504,4 +683,20 @@ pub enum ReflowGoal {
     ForDisplay,
     /// We're reflowing in order to satisfy a script query. No display list will be created.
     ForScriptQuery,
+}
+
+/// A registered painter
+#[cfg(feature = "servo")]
+pub trait RegisteredSpeculativePainter: SpeculativePainter {
+    /// The name it was registered with
+    fn name(&self) -> Atom;
+    /// The properties it was registered with
+    fn properties(&self) -> &FnvHashMap<Atom, PropertyId>;
+}
+
+/// A set of registered painters
+#[cfg(feature = "servo")]
+pub trait RegisteredSpeculativePainters: Sync {
+    /// Look up a speculative painter
+    fn get(&self, name: &Atom) -> Option<&RegisteredSpeculativePainter>;
 }

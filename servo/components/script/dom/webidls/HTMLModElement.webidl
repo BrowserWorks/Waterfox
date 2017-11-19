@@ -3,7 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlmodelement
+[HTMLConstructor]
 interface HTMLModElement : HTMLElement {
+  // [CEReactions]
   //         attribute DOMString cite;
+  // [CEReactions]
   //         attribute DOMString dateTime;
 };

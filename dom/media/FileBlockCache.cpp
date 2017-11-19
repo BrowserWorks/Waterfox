@@ -5,6 +5,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "FileBlockCache.h"
+#include "MediaCache.h"
+#include "MediaPrefs.h"
 #include "mozilla/SharedThreadPool.h"
 #include "VideoUtils.h"
 #include "prio.h"
@@ -33,7 +35,7 @@ CloseFD(PRFileDesc* aFD)
 void
 FileBlockCache::SetCacheFile(PRFileDesc* aFD)
 {
-  LOG("SetFD(aFD=%p) mIsOpen=%d", aFD, mIsOpen);
+  LOG("SetFD(aFD=%p) mThread=%p", aFD, mThread.get());
 
   if (!aFD) {
     // Failed to get a temporary file. Shutdown.
@@ -46,13 +48,17 @@ FileBlockCache::SetCacheFile(PRFileDesc* aFD)
   }
   {
     MutexAutoLock lock(mDataMutex);
-    if (mIsOpen) {
+    if (mThread) {
       // Still open, complete the initialization.
       mInitialized = true;
       if (mIsWriteScheduled) {
         // A write was scheduled while waiting for FD. We need to run/dispatch a
         // task to service the request.
-        mThread->Dispatch(this, NS_DISPATCH_NORMAL);
+        nsCOMPtr<nsIRunnable> event = mozilla::NewRunnableMethod(
+          "FileBlockCache::SetCacheFile -> PerformBlockIOs",
+          this,
+          &FileBlockCache::PerformBlockIOs);
+        mThread->Dispatch(event.forget(), NS_DISPATCH_NORMAL);
       }
       return;
     }
@@ -69,9 +75,18 @@ FileBlockCache::SetCacheFile(PRFileDesc* aFD)
 nsresult
 FileBlockCache::Init()
 {
+  MutexAutoLock mon(mDataMutex);
+  if (mThread) {
+    LOG("Init() again");
+    // Just discard pending changes, assume MediaCache won't read from
+    // blocks it hasn't written to.
+    mChangeIndexList.clear();
+    mBlockChanges.Clear();
+    return NS_OK;
+  }
+
   LOG("Init()");
 
-  MutexAutoLock mon(mDataMutex);
   nsresult rv = NS_NewNamedThread("FileBlockCache",
                                   getter_AddRefs(mThread),
                                   nullptr,
@@ -79,19 +94,21 @@ FileBlockCache::Init()
   if (NS_FAILED(rv)) {
     return rv;
   }
-  mIsOpen = true;
 
   if (XRE_IsParentProcess()) {
     RefPtr<FileBlockCache> self = this;
-    rv = mThread->Dispatch(NS_NewRunnableFunction([self] {
-      PRFileDesc* fd = nullptr;
-      nsresult rv = NS_OpenAnonymousTemporaryFile(&fd);
-      if (NS_SUCCEEDED(rv)) {
-        self->SetCacheFile(fd);
-      } else {
-        self->Close();
-      }
-    }), NS_DISPATCH_NORMAL);
+    rv = mThread->Dispatch(
+      NS_NewRunnableFunction("FileBlockCache::Init",
+                             [self] {
+                               PRFileDesc* fd = nullptr;
+                               nsresult rv = NS_OpenAnonymousTemporaryFile(&fd);
+                               if (NS_SUCCEEDED(rv)) {
+                                 self->SetCacheFile(fd);
+                               } else {
+                                 self->Close();
+                               }
+                             }),
+      NS_DISPATCH_NORMAL);
   } else {
     // We must request a temporary file descriptor from the parent process.
     RefPtr<FileBlockCache> self = this;
@@ -106,33 +123,56 @@ FileBlockCache::Init()
   return rv;
 }
 
+int32_t
+FileBlockCache::GetMaxBlocks() const
+{
+  // We look up the cache size every time. This means dynamic changes
+  // to the pref are applied.
+  const uint32_t cacheSizeKb =
+    std::min(MediaPrefs::MediaCacheSizeKb(), uint32_t(INT32_MAX) * 2);
+  // Ensure we can divide BLOCK_SIZE by 1024.
+  static_assert(MediaCacheStream::BLOCK_SIZE % 1024 == 0,
+                "BLOCK_SIZE should be a multiple of 1024");
+  // Ensure BLOCK_SIZE/1024 is at least 2.
+  static_assert(MediaCacheStream::BLOCK_SIZE / 1024 >= 2,
+                "BLOCK_SIZE / 1024 should be at least 2");
+  // Ensure we can convert BLOCK_SIZE/1024 to a uint32_t without truncation.
+  static_assert(MediaCacheStream::BLOCK_SIZE / 1024 <= int64_t(UINT32_MAX),
+                "BLOCK_SIZE / 1024 should be at most UINT32_MAX");
+  // Since BLOCK_SIZE is a strict multiple of 1024,
+  // cacheSizeKb * 1024 / BLOCK_SIZE == cacheSizeKb / (BLOCK_SIZE / 1024),
+  // but the latter formula avoids a potential overflow from `* 1024`.
+  // And because BLOCK_SIZE/1024 is at least 2, the maximum cache size
+  // INT32_MAX*2 will give a maxBlocks that can fit in an int32_t.
+  constexpr uint32_t blockSizeKb =
+    uint32_t(MediaCacheStream::BLOCK_SIZE / 1024);
+  const int32_t maxBlocks = int32_t(cacheSizeKb / blockSizeKb);
+  return std::max(maxBlocks, int32_t(1));
+}
+
 FileBlockCache::FileBlockCache()
-  : mFileMutex("MediaCache.Writer.IO.Mutex"),
-    mFD(nullptr),
-    mFDCurrentPos(0),
-    mDataMutex("MediaCache.Writer.Data.Mutex"),
-    mIsWriteScheduled(false),
-    mIsReading(false),
-    mIsOpen(false)
+  : mFileMutex("MediaCache.Writer.IO.Mutex")
+  , mFD(nullptr)
+  , mFDCurrentPos(0)
+  , mDataMutex("MediaCache.Writer.Data.Mutex")
+  , mIsWriteScheduled(false)
+  , mIsReading(false)
 {
 }
 
 FileBlockCache::~FileBlockCache()
 {
-  NS_ASSERTION(!mIsOpen, "Should Close() FileBlockCache before destroying");
+  Close();
 }
 
-void FileBlockCache::Close()
+void
+FileBlockCache::Close()
 {
   LOG("Close()");
 
   nsCOMPtr<nsIThread> thread;
   {
     MutexAutoLock mon(mDataMutex);
-    if (!mIsOpen) {
-      return;
-    }
-    mIsOpen = false;
     if (!mThread) {
       return;
     }
@@ -149,19 +189,27 @@ void FileBlockCache::Close()
   // Let the thread close the FD, and then trigger its own shutdown.
   // Note that mThread is now empty, so no other task will be posted there.
   // Also mThread and mFD are empty and therefore can be reused immediately.
-  nsresult rv = thread->Dispatch(NS_NewRunnableFunction([thread, fd] {
-    if (fd) {
-      CloseFD(fd);
-    }
-    // We must shut down the thread in another runnable. This is called
-    // while we're shutting down the media cache, and nsIThread::Shutdown()
-    // can cause events to run before it completes, which could end up
-    // opening more streams, while the media cache is shutting down and
-    // releasing memory etc!
-    nsCOMPtr<nsIRunnable> event = new ShutdownThreadEvent(thread);
-    SystemGroup::Dispatch(
-      "ShutdownThreadEvent", TaskCategory::Other, event.forget());
-  }), NS_DISPATCH_NORMAL);
+  nsresult rv = thread->Dispatch(
+    NS_NewRunnableFunction("FileBlockCache::Close",
+                           [thread, fd] {
+                             if (fd) {
+                               CloseFD(fd);
+                             }
+                             // We must shut down the thread in another
+                             // runnable. This is called
+                             // while we're shutting down the media cache, and
+                             // nsIThread::Shutdown()
+                             // can cause events to run before it completes,
+                             // which could end up
+                             // opening more streams, while the media cache is
+                             // shutting down and
+                             // releasing memory etc!
+                             nsCOMPtr<nsIRunnable> event =
+                               new ShutdownThreadEvent(thread);
+                             SystemGroup::Dispatch(TaskCategory::Other,
+                                                   event.forget());
+                           }),
+    NS_DISPATCH_NORMAL);
   NS_ENSURE_SUCCESS_VOID(rv);
 }
 
@@ -179,8 +227,9 @@ FileBlockCache::WriteBlock(uint32_t aBlockIndex,
 {
   MutexAutoLock mon(mDataMutex);
 
-  if (!mIsOpen)
+  if (!mThread) {
     return NS_ERROR_FAILURE;
+  }
 
   // Check if we've already got a pending write scheduled for this block.
   mBlockChanges.EnsureLengthAtLeast(aBlockIndex + 1);
@@ -206,7 +255,7 @@ FileBlockCache::WriteBlock(uint32_t aBlockIndex,
 void FileBlockCache::EnsureWriteScheduled()
 {
   mDataMutex.AssertCurrentThreadOwns();
-  MOZ_ASSERT(mIsOpen);
+  MOZ_ASSERT(mThread);
 
   if (mIsWriteScheduled || mIsReading) {
     return;
@@ -217,7 +266,11 @@ void FileBlockCache::EnsureWriteScheduled()
     // the write will be scheduled.
     return;
   }
-  mThread->Dispatch(this, NS_DISPATCH_NORMAL);
+  nsCOMPtr<nsIRunnable> event = mozilla::NewRunnableMethod(
+    "FileBlockCache::EnsureWriteScheduled -> PerformBlockIOs",
+    this,
+    &FileBlockCache::PerformBlockIOs);
+  mThread->Dispatch(event.forget(), NS_DISPATCH_NORMAL);
 }
 
 nsresult FileBlockCache::Seek(int64_t aOffset)
@@ -295,26 +348,26 @@ nsresult FileBlockCache::MoveBlockInFile(int32_t aSourceBlockIndex,
   return WriteBlockToFile(aDestBlockIndex, buf);
 }
 
-nsresult FileBlockCache::Run()
+void
+FileBlockCache::PerformBlockIOs()
 {
   NS_ASSERTION(!NS_IsMainThread(), "Don't call on main thread");
   MutexAutoLock mon(mDataMutex);
-  NS_ASSERTION(!mChangeIndexList.empty(), "Only dispatch when there's work to do");
   NS_ASSERTION(mIsWriteScheduled, "Should report write running or scheduled.");
 
-  LOG("Run() mFD=%p mIsOpen=%d", mFD, mIsOpen);
+  LOG("Run() mFD=%p mThread=%p", mFD, mThread.get());
 
   while (!mChangeIndexList.empty()) {
-    if (!mIsOpen) {
+    if (!mThread) {
       // We've been closed, abort, discarding unwritten changes.
       mIsWriteScheduled = false;
-      return NS_ERROR_FAILURE;
+      return;
     }
 
     if (mIsReading) {
       // We're trying to read; postpone all writes. (Reader will resume writes.)
       mIsWriteScheduled = false;
-      return NS_OK;
+      return;
     }
 
     // Process each pending change. We pop the index out of the change
@@ -339,7 +392,7 @@ nsresult FileBlockCache::Run()
       if (!mFD) {
         // We may be here if mFD has been reset because we're closing, so we
         // don't care anymore about writes.
-        return NS_OK;
+        return;
       }
       if (change->IsWrite()) {
         WriteBlockToFile(blockIndex, change->mData.get());
@@ -357,8 +410,6 @@ nsresult FileBlockCache::Run()
   }
 
   mIsWriteScheduled = false;
-
-  return NS_OK;
 }
 
 nsresult FileBlockCache::Read(int64_t aOffset,
@@ -368,8 +419,9 @@ nsresult FileBlockCache::Read(int64_t aOffset,
 {
   MutexAutoLock mon(mDataMutex);
 
-  if (!mIsOpen || (aOffset / BLOCK_SIZE) > INT32_MAX)
+  if (!mThread || (aOffset / BLOCK_SIZE) > INT32_MAX) {
     return NS_ERROR_FAILURE;
+  }
 
   mIsReading = true;
   auto exitRead = MakeScopeExit([&] {
@@ -437,8 +489,9 @@ nsresult FileBlockCache::MoveBlock(int32_t aSourceBlockIndex, int32_t aDestBlock
 {
   MutexAutoLock mon(mDataMutex);
 
-  if (!mIsOpen)
+  if (!mThread) {
     return NS_ERROR_FAILURE;
+  }
 
   mBlockChanges.EnsureLengthAtLeast(std::max(aSourceBlockIndex, aDestBlockIndex) + 1);
 

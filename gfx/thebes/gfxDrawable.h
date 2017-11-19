@@ -8,8 +8,10 @@
 
 #include "gfxRect.h"
 #include "gfxMatrix.h"
+#include "gfxTypes.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Types.h"
+#include "nsISupportsImpl.h"
 
 class gfxContext;
 class gfxPattern;
@@ -148,8 +150,9 @@ public:
 
 protected:
     already_AddRefed<gfxSurfaceDrawable>
-    MakeSurfaceDrawable(mozilla::gfx::SamplingFilter aSamplingFilter =
-                          mozilla::gfx::SamplingFilter::LINEAR);
+    MakeSurfaceDrawable(gfxContext* aContext,
+                        mozilla::gfx::SamplingFilter aSamplingFilter =
+                        mozilla::gfx::SamplingFilter::LINEAR);
 
     RefPtr<gfxDrawingCallback> mCallback;
     RefPtr<gfxSurfaceDrawable> mSurfaceDrawable;

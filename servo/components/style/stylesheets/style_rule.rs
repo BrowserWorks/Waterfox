@@ -8,10 +8,10 @@ use cssparser::SourceLocation;
 use properties::PropertyDeclarationBlock;
 use selector_parser::SelectorImpl;
 use selectors::SelectorList;
-use shared_lock::{DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
+use servo_arc::Arc;
+use shared_lock::{DeepCloneParams, DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
 use std::fmt;
 use style_traits::ToCss;
-use stylearc::Arc;
 use stylesheets::{MallocSizeOf, MallocSizeOfFn, MallocSizeOfWithGuard};
 
 /// A style rule, with selectors and declarations.
@@ -31,6 +31,7 @@ impl DeepCloneWithLock for StyleRule {
         &self,
         lock: &SharedRwLock,
         guard: &SharedRwLockReadGuard,
+        _params: &DeepCloneParams,
     ) -> StyleRule {
         StyleRule {
             selectors: self.selectors.clone(),

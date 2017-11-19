@@ -10,7 +10,7 @@
 #include "mozilla/Attributes.h"
 #include "nsCOMPtr.h"
 #include "nsIContent.h"
-#include "nsNCRFallbackEncoderWrapper.h"
+#include "mozilla/Encoding.h"
 #include "nsString.h"
 
 class nsIURI;
@@ -79,27 +79,6 @@ public:
                                         Directory* aDirectory) = 0;
 
   /**
-   * Reports whether the instance supports AddIsindex().
-   *
-   * @return true if supported.
-   */
-  virtual bool SupportsIsindexSubmission()
-  {
-    return false;
-  }
-
-  /**
-   * Adds an isindex value to the submission.
-   *
-   * @param aValue the field value
-   */
-  virtual nsresult AddIsindex(const nsAString& aValue)
-  {
-    NS_NOTREACHED("AddIsindex called when not supported");
-    return NS_ERROR_UNEXPECTED;
-  }
-
-  /**
    * Given a URI and the current submission, create the final URI and data
    * stream that will be submitted.  Subclasses *must* implement this.
    *
@@ -112,10 +91,7 @@ public:
   /**
    * Get the charset that will be used for submission.
    */
-  void GetCharset(nsACString& aCharset)
-  {
-    aCharset = mCharset;
-  }
+  void GetCharset(nsACString& aCharset) { mEncoding->Name(aCharset); }
 
   nsIContent* GetOriginatingElement() const
   {
@@ -126,19 +102,19 @@ protected:
   /**
    * Can only be constructed by subclasses.
    *
-   * @param aCharset the charset of the form as a string
+   * @param aEncoding the character encoding of the form
    * @param aOriginatingElement the originating element (can be null)
    */
-  HTMLFormSubmission(const nsACString& aCharset,
+  HTMLFormSubmission(mozilla::NotNull<const mozilla::Encoding*> aEncoding,
                      nsIContent* aOriginatingElement)
-    : mCharset(aCharset)
+    : mEncoding(aEncoding)
     , mOriginatingElement(aOriginatingElement)
   {
     MOZ_COUNT_CTOR(HTMLFormSubmission);
   }
 
-  // The name of the encoder charset
-  nsCString mCharset;
+  // The character encoding of this form submission
+  mozilla::NotNull<const mozilla::Encoding*> mEncoding;
 
   // Originating element.
   nsCOMPtr<nsIContent> mOriginatingElement;
@@ -147,7 +123,7 @@ protected:
 class EncodingFormSubmission : public HTMLFormSubmission
 {
 public:
-  EncodingFormSubmission(const nsACString& aCharset,
+  EncodingFormSubmission(mozilla::NotNull<const mozilla::Encoding*> aEncoding,
                          nsIContent* aOriginatingElement);
 
   virtual ~EncodingFormSubmission();
@@ -163,10 +139,6 @@ public:
    */
   nsresult EncodeVal(const nsAString& aStr, nsCString& aResult,
                      bool aHeaderEncode);
-
-private:
-  // The encoder that will encode Unicode names and values
-  nsNCRFallbackEncoderWrapper mEncoder;
 };
 
 /**
@@ -177,12 +149,12 @@ class FSMultipartFormData : public EncodingFormSubmission
 {
 public:
   /**
-   * @param aCharset the charset of the form as a string
+   * @param aEncoding the character encoding of the form
    */
-  FSMultipartFormData(const nsACString& aCharset,
+  FSMultipartFormData(mozilla::NotNull<const mozilla::Encoding*> aEncoding,
                       nsIContent* aOriginatingElement);
   ~FSMultipartFormData();
- 
+
   virtual nsresult
   AddNameValuePair(const nsAString& aName, const nsAString& aValue) override;
 

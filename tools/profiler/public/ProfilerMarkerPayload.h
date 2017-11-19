@@ -1,14 +1,16 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef PROFILER_MARKERS_H
-#define PROFILER_MARKERS_H
+#ifndef ProfilerMarkerPayload_h
+#define ProfilerMarkerPayload_h
 
-#include "mozilla/TimeStamp.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/TimeStamp.h"
+#include "mozilla/UniquePtrExtensions.h"
 
 #include "nsString.h"
 #include "GeckoProfiler.h"
@@ -25,34 +27,28 @@ class Layer;
 class SpliceableJSONWriter;
 class UniqueStacks;
 
-/**
- * This is an abstract object that can be implied to supply
- * data to be attached with a profiler marker. Most data inserted
- * into a profile is stored in a circular buffer. This buffer
- * typically wraps around and overwrites most entries. Because
- * of this, this structure is designed to defer the work of
- * prepare the payload only when 'preparePayload' is called.
- *
- * Note when implementing that this object is typically constructed
- * on a particular thread but 'preparePayload' and the destructor
- * is called from the main thread.
- */
+// This is an abstract class that can be implemented to supply data to be
+// attached with a profiler marker.
+//
+// When subclassing this, note that the destructor can be called on any thread,
+// i.e. not necessarily on the thread that created the object.
 class ProfilerMarkerPayload
 {
 public:
-  explicit ProfilerMarkerPayload(UniqueProfilerBacktrace aStack = nullptr);
+  explicit ProfilerMarkerPayload(UniqueProfilerBacktrace aStack = nullptr)
+    : mStack(Move(aStack))
+  {}
+
   ProfilerMarkerPayload(const mozilla::TimeStamp& aStartTime,
                         const mozilla::TimeStamp& aEndTime,
-                        UniqueProfilerBacktrace aStack = nullptr);
+                        UniqueProfilerBacktrace aStack = nullptr)
+    : mStartTime(aStartTime)
+    , mEndTime(aEndTime)
+    , mStack(Move(aStack))
+  {}
 
-  /**
-   * Called from the main thread
-   */
-  virtual ~ProfilerMarkerPayload();
+  virtual ~ProfilerMarkerPayload() {}
 
-  /**
-   * Called from the main thread
-   */
   virtual void StreamPayload(SpliceableJSONWriter& aWriter,
                              const mozilla::TimeStamp& aProcessStartTime,
                              UniqueStacks& aUniqueStacks) = 0;
@@ -60,52 +56,52 @@ public:
   mozilla::TimeStamp GetStartTime() const { return mStartTime; }
 
 protected:
-  /**
-   * Called from the main thread
-   */
-  void streamCommonProps(const char* aMarkerType,
+  void StreamCommonProps(const char* aMarkerType,
                          SpliceableJSONWriter& aWriter,
                          const mozilla::TimeStamp& aProcessStartTime,
                          UniqueStacks& aUniqueStacks);
 
-  void SetStack(UniqueProfilerBacktrace aStack) { mStack = mozilla::Move(aStack); }
+  void SetStack(UniqueProfilerBacktrace aStack)
+  {
+    mStack = mozilla::Move(aStack);
+  }
 
 private:
-  mozilla::TimeStamp  mStartTime;
-  mozilla::TimeStamp  mEndTime;
-  UniqueProfilerBacktrace  mStack;
+  mozilla::TimeStamp mStartTime;
+  mozilla::TimeStamp mEndTime;
+  UniqueProfilerBacktrace mStack;
 };
 
-class ProfilerMarkerTracing : public ProfilerMarkerPayload
+#define DECL_STREAM_PAYLOAD_BASE  \
+  virtual void StreamPayload(SpliceableJSONWriter& aWriter, \
+                             const mozilla::TimeStamp& aProcessStartTime, \
+                             UniqueStacks& aUniqueStacks) override
+
+// If the profiler is disabled then StreamPayload() will never be called.
+#ifdef MOZ_GECKO_PROFILER
+# define DECL_STREAM_PAYLOAD DECL_STREAM_PAYLOAD_BASE ;
+#else
+# define DECL_STREAM_PAYLOAD DECL_STREAM_PAYLOAD_BASE { MOZ_CRASH(); }
+#endif
+
+class TracingMarkerPayload : public ProfilerMarkerPayload
 {
 public:
-  ProfilerMarkerTracing(const char* aCategory, TracingKind aKind);
-  ProfilerMarkerTracing(const char* aCategory, TracingKind aKind,
-                        UniqueProfilerBacktrace aCause);
+  TracingMarkerPayload(const char* aCategory, TracingKind aKind,
+                       UniqueProfilerBacktrace aCause = nullptr)
+    : mCategory(aCategory)
+    , mKind(aKind)
+  {
+    if (aCause) {
+      SetStack(Move(aCause));
+    }
+  }
 
-  const char *GetCategory() const { return mCategory; }
-  TracingKind GetKind() const { return mKind; }
-
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   const char *mCategory;
   TracingKind mKind;
-};
-
-class ProfilerMarkerImagePayload : public ProfilerMarkerPayload
-{
-public:
-  explicit ProfilerMarkerImagePayload(gfxASurface *aImg);
-
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
-
-private:
-  RefPtr<gfxASurface> mImg;
 };
 
 class IOMarkerPayload : public ProfilerMarkerPayload
@@ -114,32 +110,36 @@ public:
   IOMarkerPayload(const char* aSource, const char* aFilename,
                   const mozilla::TimeStamp& aStartTime,
                   const mozilla::TimeStamp& aEndTime,
-                  UniqueProfilerBacktrace aStack);
-  ~IOMarkerPayload();
+                  UniqueProfilerBacktrace aStack)
+    : ProfilerMarkerPayload(aStartTime, aEndTime, Move(aStack))
+    , mSource(aSource)
+    , mFilename(aFilename ? strdup(aFilename) : nullptr)
+  {
+    MOZ_ASSERT(aSource);
+  }
 
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   const char* mSource;
-  char* mFilename;
+  mozilla::UniqueFreePtr<char> mFilename;
 };
 
 class DOMEventMarkerPayload : public ProfilerMarkerPayload
 {
 public:
-  DOMEventMarkerPayload(const nsAString& aType, uint16_t aPhase,
+  DOMEventMarkerPayload(const nsAString& aEventType, uint16_t aPhase,
                         const mozilla::TimeStamp& aStartTime,
-                        const mozilla::TimeStamp& aEndTime);
-  ~DOMEventMarkerPayload();
+                        const mozilla::TimeStamp& aEndTime)
+    : ProfilerMarkerPayload(aStartTime, aEndTime)
+    , mEventType(aEventType)
+    , mPhase(aPhase)
+  {}
 
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
-  nsString mType;
+  nsString mEventType;
   uint16_t mPhase;
 };
 
@@ -147,15 +147,21 @@ class UserTimingMarkerPayload : public ProfilerMarkerPayload
 {
 public:
   UserTimingMarkerPayload(const nsAString& aName,
-                          const mozilla::TimeStamp& aStartTime);
+                          const mozilla::TimeStamp& aStartTime)
+    : ProfilerMarkerPayload(aStartTime, aStartTime)
+    , mEntryType("mark")
+    , mName(aName)
+  {}
+
   UserTimingMarkerPayload(const nsAString& aName,
                           const mozilla::TimeStamp& aStartTime,
-                          const mozilla::TimeStamp& aEndTime);
-  ~UserTimingMarkerPayload();
+                          const mozilla::TimeStamp& aEndTime)
+    : ProfilerMarkerPayload(aStartTime, aEndTime)
+    , mEntryType("measure")
+    , mName(aName)
+  {}
 
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   // Either "mark" or "measure".
@@ -163,19 +169,20 @@ private:
   nsString mName;
 };
 
-/**
- * Contains the translation applied to a 2d layer so we can
- * track the layer position at each frame.
- */
-class LayerTranslationPayload : public ProfilerMarkerPayload
+// Contains the translation applied to a 2d layer so we can track the layer
+// position at each frame.
+class LayerTranslationMarkerPayload : public ProfilerMarkerPayload
 {
 public:
-  LayerTranslationPayload(mozilla::layers::Layer* aLayer,
-                          mozilla::gfx::Point aPoint);
+  LayerTranslationMarkerPayload(mozilla::layers::Layer* aLayer,
+                                mozilla::gfx::Point aPoint,
+                                mozilla::TimeStamp aStartTime)
+    : ProfilerMarkerPayload(aStartTime, aStartTime)
+    , mLayer(aLayer)
+    , mPoint(aPoint)
+  {}
 
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   mozilla::layers::Layer* mLayer;
@@ -184,36 +191,16 @@ private:
 
 #include "Units.h"    // For ScreenIntPoint
 
-/**
- * Tracks when touch events are processed by gecko, not when
- * the touch actually occured in gonk/android.
- */
-class TouchDataPayload : public ProfilerMarkerPayload
+// Tracks when a vsync occurs according to the HardwareComposer.
+class VsyncMarkerPayload : public ProfilerMarkerPayload
 {
 public:
-  explicit TouchDataPayload(const mozilla::ScreenIntPoint& aPoint);
-  virtual ~TouchDataPayload() {}
+  explicit VsyncMarkerPayload(mozilla::TimeStamp aVsyncTimestamp)
+    : ProfilerMarkerPayload(aVsyncTimestamp, aVsyncTimestamp)
+    , mVsyncTimestamp(aVsyncTimestamp)
+  {}
 
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
-
-private:
-  mozilla::ScreenIntPoint mPoint;
-};
-
-/**
- * Tracks when a vsync occurs according to the HardwareComposer.
- */
-class VsyncPayload : public ProfilerMarkerPayload
-{
-public:
-  explicit VsyncPayload(mozilla::TimeStamp aVsyncTimestamp);
-  virtual ~VsyncPayload() {}
-
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   mozilla::TimeStamp mVsyncTimestamp;
@@ -225,12 +212,15 @@ public:
   GPUMarkerPayload(const mozilla::TimeStamp& aCpuTimeStart,
                    const mozilla::TimeStamp& aCpuTimeEnd,
                    uint64_t aGpuTimeStart,
-                   uint64_t aGpuTimeEnd);
-  ~GPUMarkerPayload() {}
+                   uint64_t aGpuTimeEnd)
+    : ProfilerMarkerPayload(aCpuTimeStart, aCpuTimeEnd)
+    , mCpuTimeStart(aCpuTimeStart)
+    , mCpuTimeEnd(aCpuTimeEnd)
+    , mGpuTimeStart(aGpuTimeStart)
+    , mGpuTimeEnd(aGpuTimeEnd)
+  {}
 
-  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
-                             const mozilla::TimeStamp& aProcessStartTime,
-                             UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   mozilla::TimeStamp mCpuTimeStart;
@@ -245,15 +235,11 @@ public:
   GCSliceMarkerPayload(const mozilla::TimeStamp& aStartTime,
                        const mozilla::TimeStamp& aEndTime,
                        JS::UniqueChars&& aTimingJSON)
-   : ProfilerMarkerPayload(aStartTime, aEndTime, nullptr),
+   : ProfilerMarkerPayload(aStartTime, aEndTime),
      mTimingJSON(mozilla::Move(aTimingJSON))
   {}
 
-  virtual ~GCSliceMarkerPayload() {}
-
-  void StreamPayload(SpliceableJSONWriter& aWriter,
-                     const mozilla::TimeStamp& aProcessStartTime,
-                     UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   JS::UniqueChars mTimingJSON;
@@ -265,15 +251,11 @@ public:
   GCMajorMarkerPayload(const mozilla::TimeStamp& aStartTime,
                        const mozilla::TimeStamp& aEndTime,
                        JS::UniqueChars&& aTimingJSON)
-   : ProfilerMarkerPayload(aStartTime, aEndTime, nullptr),
+   : ProfilerMarkerPayload(aStartTime, aEndTime),
      mTimingJSON(mozilla::Move(aTimingJSON))
   {}
 
-  virtual ~GCMajorMarkerPayload() {}
-
-  void StreamPayload(SpliceableJSONWriter& aWriter,
-                     const mozilla::TimeStamp& aProcessStartTime,
-                     UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   JS::UniqueChars mTimingJSON;
@@ -285,19 +267,14 @@ public:
   GCMinorMarkerPayload(const mozilla::TimeStamp& aStartTime,
                        const mozilla::TimeStamp& aEndTime,
                        JS::UniqueChars&& aTimingData)
-   : ProfilerMarkerPayload(aStartTime, aEndTime, nullptr),
+   : ProfilerMarkerPayload(aStartTime, aEndTime),
      mTimingData(mozilla::Move(aTimingData))
   {}
 
-  virtual ~GCMinorMarkerPayload() {};
-
-  void StreamPayload(SpliceableJSONWriter& aWriter,
-                     const mozilla::TimeStamp& aProcessStartTime,
-                     UniqueStacks& aUniqueStacks) override;
+  DECL_STREAM_PAYLOAD
 
 private:
   JS::UniqueChars mTimingData;
 };
 
-
-#endif // PROFILER_MARKERS_H
+#endif // ProfilerMarkerPayload_h

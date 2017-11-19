@@ -153,19 +153,18 @@ DeadObjectProxy<CC>::className(JSContext* cx, HandleObject wrapper) const
 
 template <DeadProxyIsCallableIsConstructorOption CC>
 JSString*
-DeadObjectProxy<CC>::fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const
+DeadObjectProxy<CC>::fun_toString(JSContext* cx, HandleObject proxy, bool isToSource) const
 {
     ReportDead(cx);
     return nullptr;
 }
 
 template <DeadProxyIsCallableIsConstructorOption CC>
-bool
-DeadObjectProxy<CC>::regexp_toShared(JSContext* cx, HandleObject proxy,
-                                     MutableHandle<RegExpShared*> shared) const
+RegExpShared*
+DeadObjectProxy<CC>::regexp_toShared(JSContext* cx, HandleObject proxy) const
 {
     ReportDead(cx);
-    return false;
+    return nullptr;
 }
 
 template <>

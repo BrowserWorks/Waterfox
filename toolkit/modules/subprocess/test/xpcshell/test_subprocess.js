@@ -1,3 +1,4 @@
+/* eslint-disable mozilla/no-arbitrary-setTimeout */
 "use strict";
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
@@ -658,45 +659,57 @@ add_task(async function test_subprocess_arguments() {
 });
 
 
-// Windows XP can't handle launching Python with a partial environment.
-if (!AppConstants.isPlatformAndVersionAtMost("win", "5.2")) {
-  add_task(async function test_subprocess_environment() {
-    let proc = await Subprocess.call({
-      command: PYTHON,
-      arguments: ["-u", TEST_SCRIPT, "env", "PATH", "FOO"],
-      environment: {
-        FOO: "BAR",
-      },
+add_task(async function test_subprocess_environment() {
+  let environment =  {
+    FOO: "BAR",
+  };
+
+  // Our Windows environment can't handle launching python without
+  // PATH variables.
+  if (AppConstants.platform == "win") {
+    Object.assign(environment, {
+      PATH: env.get("PATH"),
+      PATHEXT: env.get("PATHEXT"),
     });
+  }
 
-    let path = await read(proc.stdout);
-    let foo = await read(proc.stdout);
+  env.set("BAR", "BAZ");
 
-    equal(path, "", "Got expected $PATH value");
-    equal(foo, "BAR", "Got expected $FOO value");
-
-    let {exitCode} = await proc.wait();
-
-    equal(exitCode, 0, "Got expected exit code");
+  let proc = await Subprocess.call({
+    command: PYTHON,
+    arguments: ["-u", TEST_SCRIPT, "env", "FOO", "BAR"],
+    environment,
   });
-}
+
+  let foo = await read(proc.stdout);
+  let bar = await read(proc.stdout);
+
+  equal(foo, "BAR", "Got expected $FOO value");
+  equal(bar, "", "Got expected $BAR value");
+
+  let {exitCode} = await proc.wait();
+
+  equal(exitCode, 0, "Got expected exit code");
+});
 
 
 add_task(async function test_subprocess_environmentAppend() {
+  env.set("VALUE_FROM_BASE_ENV", "untouched");
+
   let proc = await Subprocess.call({
     command: PYTHON,
-    arguments: ["-u", TEST_SCRIPT, "env", "PATH", "FOO"],
+    arguments: ["-u", TEST_SCRIPT, "env", "VALUE_FROM_BASE_ENV", "VALUE_APPENDED_ONCE"],
     environmentAppend: true,
     environment: {
-      FOO: "BAR",
+      VALUE_APPENDED_ONCE: "soon empty",
     },
   });
 
-  let path = await read(proc.stdout);
-  let foo = await read(proc.stdout);
+  let valueFromBaseEnv = await read(proc.stdout);
+  let valueAppendedOnce = await read(proc.stdout);
 
-  equal(path, env.get("PATH"), "Got expected $PATH value");
-  equal(foo, "BAR", "Got expected $FOO value");
+  equal(valueFromBaseEnv, "untouched", "Got expected $VALUE_FROM_BASE_ENV value");
+  equal(valueAppendedOnce, "soon empty", "Got expected $VALUE_APPENDED_ONCE value");
 
   let {exitCode} = await proc.wait();
 
@@ -704,15 +717,15 @@ add_task(async function test_subprocess_environmentAppend() {
 
   proc = await Subprocess.call({
     command: PYTHON,
-    arguments: ["-u", TEST_SCRIPT, "env", "PATH", "FOO"],
+    arguments: ["-u", TEST_SCRIPT, "env", "VALUE_FROM_BASE_ENV", "VALUE_APPENDED_ONCE"],
     environmentAppend: true,
   });
 
-  path = await read(proc.stdout);
-  foo = await read(proc.stdout);
+  valueFromBaseEnv = await read(proc.stdout);
+  valueAppendedOnce = await read(proc.stdout);
 
-  equal(path, env.get("PATH"), "Got expected $PATH value");
-  equal(foo, "", "Got expected $FOO value");
+  equal(valueFromBaseEnv, "untouched", "Got expected $VALUE_FROM_BASE_ENV value");
+  equal(valueAppendedOnce, "", "Got expected $VALUE_APPENDED_ONCE value");
 
   ({exitCode} = await proc.wait());
 

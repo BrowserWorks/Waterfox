@@ -120,7 +120,7 @@ CryptoWrapper.prototype = {
   ciphertextHMAC: function ciphertextHMAC(keyBundle) {
     let hasher = keyBundle.sha256HMACHasher;
     if (!hasher) {
-      throw "Cannot compute HMAC without an HMAC key.";
+      throw new Error("Cannot compute HMAC without an HMAC key.");
     }
 
     return Utils.bytesAsHex(Utils.digestUTF8(this.ciphertext, hasher));
@@ -150,7 +150,7 @@ CryptoWrapper.prototype = {
   // Optional key bundle.
   decrypt: function decrypt(keyBundle) {
     if (!this.ciphertext) {
-      throw "No ciphertext: nothing to decrypt?";
+      throw new Error("No ciphertext: nothing to decrypt?");
     }
 
     if (!keyBundle) {
@@ -173,18 +173,24 @@ CryptoWrapper.prototype = {
       this.cleartext = json_result;
       this.ciphertext = null;
     } else {
-      throw "Decryption failed: result is <" + json_result + ">, not an object.";
+      throw new Error(
+          `Decryption failed: result is <${json_result}>, not an object.`);
     }
 
     // Verify that the encrypted id matches the requested record's id.
     if (this.cleartext.id != this.id)
-      throw "Record id mismatch: " + this.cleartext.id + " != " + this.id;
+      throw new Error(
+          `Record id mismatch: ${this.cleartext.id} != ${this.id}`);
 
     return this.cleartext;
   },
 
+  cleartextToString() {
+    return JSON.stringify(this.cleartext);
+  },
+
   toString: function toString() {
-    let payload = this.deleted ? "DELETED" : JSON.stringify(this.cleartext);
+    let payload = this.deleted ? "DELETED" : this.cleartextToString();
 
     return "{ " +
       "id: " + this.id + "  " +
@@ -494,12 +500,12 @@ CollectionKeyManager.prototype = {
                    this.lastModified + ", input modified: " + modified + ".");
 
     if (!payload)
-      throw "No payload in CollectionKeyManager.setContents().";
+      throw new Error("No payload in CollectionKeyManager.setContents().");
 
     if (!payload.default) {
       this._log.warn("No downloaded default key: this should not occur.");
       this._log.warn("Not clearing local keys.");
-      throw "No default key in CollectionKeyManager.setContents(). Cannot proceed.";
+      throw new Error("No default key in CollectionKeyManager.setContents(). Cannot proceed.");
     }
 
     // Process the incoming default key.
@@ -564,7 +570,7 @@ CollectionKeyManager.prototype = {
     try {
       payload = storage_keys.decrypt(syncKeyBundle);
     } catch (ex) {
-      log.warn("Got exception \"" + ex + "\" decrypting storage keys with sync key.");
+      log.warn("Got exception decrypting storage keys with sync key.", ex);
       log.info("Aborting updateContents. Rethrowing.");
       throw ex;
     }
@@ -707,8 +713,7 @@ Collection.prototype = {
   async getBatched(batchSize = DEFAULT_DOWNLOAD_BATCH_SIZE) {
     let totalLimit = Number(this.limit) || Infinity;
     if (batchSize <= 0 || batchSize >= totalLimit) {
-      // Invalid batch sizes should arguably be an error, but they're easy to handle
-      return this.get();
+      throw new Error("Invalid batch size");
     }
 
     if (!this.full) {
@@ -716,13 +721,10 @@ Collection.prototype = {
     }
 
     // _onComplete and _onProgress are reset after each `get` by AsyncResource.
-    // We overwrite _onRecord to something that stores the data in an array
-    // until the end.
-    let { _onComplete, _onProgress, _onRecord } = this;
+    let { _onComplete, _onProgress } = this;
     let recordBuffer = [];
     let resp;
     try {
-      this._onRecord = r => recordBuffer.push(r);
       let lastModifiedTime;
       this.limit = batchSize;
 
@@ -736,7 +738,13 @@ Collection.prototype = {
         // Actually perform the request
         resp = await this.get();
         if (!resp.success) {
+          recordBuffer = [];
           break;
+        }
+        for (let json of resp.obj) {
+          let record = new this._recordObj();
+          record.deserialize(json);
+          recordBuffer.push(record);
         }
 
         // Initialize last modified, or check that something broken isn't happening.
@@ -759,54 +767,12 @@ Collection.prototype = {
       // handler so that we can more convincingly pretend to be a normal get()
       // call. Note: we're resetting these to the values they had before this
       // function was called.
-      this._onRecord = _onRecord;
       this._limit = totalLimit;
       this._offset = null;
       delete this._headers["x-if-unmodified-since"];
       this._rebuildURL();
     }
-    if (resp.success && Async.checkAppReady()) {
-      // call the original _onRecord (e.g. the user supplied record handler)
-      // for each record we've stored
-      for (let record of recordBuffer) {
-        this._onRecord(record);
-      }
-    }
-    return resp;
-  },
-
-  set recordHandler(onRecord) {
-    // Save this because onProgress is called with this as the ChannelListener
-    let coll = this;
-
-    // Switch to newline separated records for incremental parsing
-    coll.setHeader("Accept", "application/newlines");
-
-    this._onRecord = onRecord;
-
-    this._onProgress = function(httpChannel) {
-      let newline, length = 0, contentLength = "unknown";
-
-      try {
-          // Content-Length of the value of this response header
-          contentLength = httpChannel.getResponseHeader("Content-Length");
-      } catch (ex) { }
-
-      while ((newline = this._data.indexOf("\n")) > 0) {
-        // Split the json record from the rest of the data
-        let json = this._data.slice(0, newline);
-        this._data = this._data.slice(newline + 1);
-
-        length += json.length;
-        coll._log.trace("Record: Content-Length = " + contentLength +
-                        ", ByteCount = " + length);
-
-        // Deserialize a record from json and give it to the callback
-        let record = new coll._recordObj();
-        record.deserialize(json);
-        coll._onRecord(record);
-      }
-    };
+    return { response: resp, records: recordBuffer };
   },
 
   // This object only supports posting via the postQueue object.
@@ -914,7 +880,7 @@ function PostQueue(poster, timestamp, config, log, postCallback) {
 }
 
 PostQueue.prototype = {
-  enqueue(record) {
+  async enqueue(record) {
     // We want to ensure the record has a .toJSON() method defined - even
     // though JSON.stringify() would implicitly call it, the stringify might
     // still work even if it isn't defined, which isn't what we want.
@@ -951,7 +917,7 @@ PostQueue.prototype = {
       // Note that if a single record is too big for the batch or post, then
       // the batch may be empty, and so we don't flush in that case.
       if (this.numQueued) {
-        this.flush(batchSizeExceeded || singleRecordTooBig);
+        await this.flush(batchSizeExceeded || singleRecordTooBig);
       }
     }
     // Either a ',' or a '[' depending on whether this is the first record.
@@ -961,7 +927,7 @@ PostQueue.prototype = {
     return { enqueued: true };
   },
 
-  flush(finalBatchPost) {
+  async flush(finalBatchPost) {
     if (!this.queued) {
       // nothing queued - we can't be in a batch, and something has gone very
       // bad if we think we are.
@@ -997,14 +963,13 @@ PostQueue.prototype = {
     }
     this.queued = "";
     this.numQueued = 0;
-    let response = Async.promiseSpinningly(
-                    this.poster(queued, headers, batch, !!(finalBatchPost && this.batchID !== null)));
+    let response = await this.poster(queued, headers, batch, !!(finalBatchPost && this.batchID !== null));
 
     if (!response.success) {
       this.log.trace("Server error response during a batch", response);
       // not clear what we should do here - we expect the consumer of this to
       // abort by throwing in the postCallback below.
-      this.postCallback(response, !finalBatchPost);
+      await this.postCallback(response, !finalBatchPost);
       return;
     }
 
@@ -1012,7 +977,7 @@ PostQueue.prototype = {
       this.log.trace("Committed batch", this.batchID);
       this.batchID = undefined; // we are now in "first post for the batch" state.
       this.lastModified = response.headers["x-last-modified"];
-      this.postCallback(response, false);
+      await this.postCallback(response, false);
       return;
     }
 
@@ -1022,7 +987,7 @@ PostQueue.prototype = {
       }
       this.batchID = null; // no batch semantics are in place.
       this.lastModified = response.headers["x-last-modified"];
-      this.postCallback(response, false);
+      await this.postCallback(response, false);
       return;
     }
 
@@ -1049,6 +1014,6 @@ PostQueue.prototype = {
       throw new Error(`Invalid client/server batch state - client has ${this.batchID}, server has ${responseBatchID}`);
     }
 
-    this.postCallback(response, true);
+    await this.postCallback(response, true);
   },
 }

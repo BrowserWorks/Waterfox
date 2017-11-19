@@ -92,7 +92,7 @@ txExprLexer::nextIsOperatorToken(Token* aToken)
  * Parses the given string into a sequence of Tokens
  */
 nsresult
-txExprLexer::parse(const nsASingleFragmentString& aPattern)
+txExprLexer::parse(const nsAString& aPattern)
 {
   iterator start, end;
   start = aPattern.BeginReading(mPosition);
@@ -117,8 +117,8 @@ txExprLexer::parse(const nsASingleFragmentString& aPattern)
         return NS_ERROR_XPATH_INVALID_VAR_NAME;
       }
       defType = Token::VAR_REFERENCE;
-    } 
-    // just reuse the QName parsing, which will use defType 
+    }
+    // just reuse the QName parsing, which will use defType
     // the token to construct
 
     if (XMLUtils::isLetter(*mPosition)) {

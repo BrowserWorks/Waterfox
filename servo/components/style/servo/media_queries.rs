@@ -7,7 +7,7 @@
 use app_units::Au;
 use context::QuirksMode;
 use cssparser::{Parser, RGBA};
-use euclid::{Size2D, TypedSize2D};
+use euclid::{ScaleFactor, Size2D, TypedSize2D};
 use font_metrics::ServoMetricsProvider;
 use media_queries::MediaType;
 use parser::ParserContext;
@@ -16,7 +16,7 @@ use properties::longhands::font_size;
 use selectors::parser::SelectorParseError;
 use std::fmt;
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
-use style_traits::{CSSPixel, ToCss, ParseError};
+use style_traits::{CSSPixel, DevicePixel, ToCss, ParseError};
 use style_traits::viewport::ViewportConstraints;
 use values::computed::{self, ToComputedValue};
 use values::specified;
@@ -31,6 +31,8 @@ pub struct Device {
     media_type: MediaType,
     /// The current viewport size, in CSS pixels.
     viewport_size: TypedSize2D<f32, CSSPixel>,
+    /// The current device pixel ratio, from CSS pixels to device pixels.
+    device_pixel_ratio: ScaleFactor<f32, CSSPixel, DevicePixel>,
 
     /// The font size of the root element
     /// This is set when computing the style of the root
@@ -51,11 +53,13 @@ pub struct Device {
 impl Device {
     /// Trivially construct a new `Device`.
     pub fn new(media_type: MediaType,
-               viewport_size: TypedSize2D<f32, CSSPixel>)
+               viewport_size: TypedSize2D<f32, CSSPixel>,
+               device_pixel_ratio: ScaleFactor<f32, CSSPixel, DevicePixel>)
                -> Device {
         Device {
             media_type: media_type,
             viewport_size: viewport_size,
+            device_pixel_ratio: device_pixel_ratio,
             root_font_size: AtomicIsize::new(font_size::get_initial_value().0 as isize), // FIXME(bz): Seems dubious?
             used_root_font_size: AtomicBool::new(false),
         }
@@ -97,6 +101,11 @@ impl Device {
     #[inline]
     pub fn px_viewport_size(&self) -> TypedSize2D<f32, CSSPixel> {
         self.viewport_size
+    }
+
+    /// Returns the device pixel ratio.
+    pub fn device_pixel_ratio(&self) -> ScaleFactor<f32, CSSPixel, DevicePixel> {
+        self.device_pixel_ratio
     }
 
     /// Take into account a viewport rule taken from the stylesheets.
@@ -154,20 +163,20 @@ impl Expression {
     /// Only supports width and width ranges for now.
     pub fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                          -> Result<Self, ParseError<'i>> {
-        try!(input.expect_parenthesis_block());
+        input.expect_parenthesis_block()?;
         input.parse_nested_block(|input| {
-            let name = try!(input.expect_ident());
-            try!(input.expect_colon());
+            let name = input.expect_ident_cloned()?;
+            input.expect_colon()?;
             // TODO: Handle other media features
             Ok(Expression(match_ignore_ascii_case! { &name,
                 "min-width" => {
-                    ExpressionKind::Width(Range::Min(try!(specified::Length::parse_non_negative(context, input))))
+                    ExpressionKind::Width(Range::Min(specified::Length::parse_non_negative(context, input)?))
                 },
                 "max-width" => {
-                    ExpressionKind::Width(Range::Max(try!(specified::Length::parse_non_negative(context, input))))
+                    ExpressionKind::Width(Range::Max(specified::Length::parse_non_negative(context, input)?))
                 },
                 "width" => {
-                    ExpressionKind::Width(Range::Eq(try!(specified::Length::parse_non_negative(context, input))))
+                    ExpressionKind::Width(Range::Eq(specified::Length::parse_non_negative(context, input)?))
                 },
                 _ => return Err(SelectorParseError::UnexpectedIdent(name.clone()).into())
             }))
@@ -195,14 +204,14 @@ impl ToCss for Expression {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result
         where W: fmt::Write,
     {
-        try!(write!(dest, "("));
+        write!(dest, "(")?;
         let (mm, l) = match self.0 {
             ExpressionKind::Width(Range::Min(ref l)) => ("min-", l),
             ExpressionKind::Width(Range::Max(ref l)) => ("max-", l),
             ExpressionKind::Width(Range::Eq(ref l)) => ("", l),
         };
-        try!(write!(dest, "{}width: ", mm));
-        try!(l.to_css(dest));
+        write!(dest, "{}width: ", mm)?;
+        l.to_css(dest)?;
         write!(dest, ")")
     }
 }
@@ -229,10 +238,7 @@ impl Range<specified::Length> {
         // em units are relative to the initial font-size.
         let context = computed::Context {
             is_root_element: false,
-            device: device,
-            inherited_style: default_values,
-            layout_parent_style: default_values,
-            style: StyleBuilder::for_derived_style(default_values),
+            builder: StyleBuilder::for_derived_style(device, default_values, None, None),
             // Servo doesn't support font metrics
             // A real provider will be needed here once we do; since
             // ch units can exist in media queries.
@@ -240,6 +246,7 @@ impl Range<specified::Length> {
             in_media_query: true,
             cached_system_font: None,
             quirks_mode: quirks_mode,
+            for_smil_animation: false,
         };
 
         match *self {

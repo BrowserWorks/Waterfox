@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+FILES_PER_UNIFIED_FILE = 6
+
 with Files('*'):
     BUG_COMPONENT = ('Core', 'Audio/Video')
 
@@ -39,6 +41,7 @@ DIRS += [
     'ipc',
     'mediasink',
     'mediasource',
+    'mp3',
     'ogg',
     'platforms',
     'systemservices',
@@ -50,8 +53,8 @@ DIRS += [
     'webvtt',
 ]
 
-if CONFIG['MOZ_ANDROID_OMX']:
-    DIRS += ['android']
+if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
+    DIRS += ['hls']
 
 if CONFIG['MOZ_FMP4']:
     DIRS += ['fmp4']
@@ -74,6 +77,7 @@ if CONFIG['MOZ_WEBRTC']:
     WEBRTC_SIGNALLING_TEST_MANIFESTS += ['tests/mochitest/steeplechase_long/steeplechase_long.ini']
 
 XPIDL_SOURCES += [
+    'nsIAudioDeviceInfo.idl',
     'nsIDOMNavigatorUserMedia.idl',
     'nsIMediaManager.idl',
 ]
@@ -81,7 +85,6 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'dom_media'
 
 EXPORTS += [
-    'AbstractMediaDecoder.h',
     'ADTSDecoder.h',
     'ADTSDemuxer.h',
     'AudioBufferUtils.h',
@@ -95,6 +98,7 @@ EXPORTS += [
     'AudioStream.h',
     'Benchmark.h',
     'BufferMediaResource.h',
+    'ChannelMediaDecoder.h',
     'CubebUtils.h',
     'DecoderDoctorDiagnostics.h',
     'DecoderTraits.h',
@@ -110,7 +114,6 @@ EXPORTS += [
     'MediaDataDemuxer.h',
     'MediaDecoder.h',
     'MediaDecoderOwner.h',
-    'MediaDecoderReader.h',
     'MediaDecoderStateMachine.h',
     'MediaEventSource.h',
     'MediaFormatReader.h',
@@ -128,13 +131,12 @@ EXPORTS += [
     'MediaStatistics.h',
     'MediaStreamGraph.h',
     'MediaStreamListener.h',
+    'MediaStreamTypes.h',
     'MediaStreamVideoSink.h',
     'MediaTimer.h',
     'MediaTrack.h',
     'MediaTrackList.h',
-    'MP3Decoder.h',
-    'MP3Demuxer.h',
-    'MP3FrameParser.h',
+    'MemoryBlockCache.h',
     'nsIDocumentActivity.h',
     'PrincipalChangeObserver.h',
     'QueueObject.h',
@@ -172,6 +174,7 @@ IPDL_SOURCES += [
 ]
 
 EXPORTS.mozilla.dom += [
+    'AudioDeviceInfo.h',
     'AudioStreamTrack.h',
     'AudioTrack.h',
     'AudioTrackList.h',
@@ -199,6 +202,7 @@ UNIFIED_SOURCES += [
     'AudioChannelFormat.cpp',
     'AudioCompactor.cpp',
     'AudioConverter.cpp',
+    'AudioDeviceInfo.cpp',
     'AudioSegment.cpp',
     'AudioStream.cpp',
     'AudioStreamTrack.cpp',
@@ -206,6 +210,7 @@ UNIFIED_SOURCES += [
     'AudioTrackList.cpp',
     'Benchmark.cpp',
     'CanvasCaptureMediaStream.cpp',
+    'ChannelMediaDecoder.cpp',
     'CubebUtils.cpp',
     'DecoderDoctorDiagnostics.cpp',
     'DOMMediaStream.cpp',
@@ -218,8 +223,6 @@ UNIFIED_SOURCES += [
     'MediaContainerType.cpp',
     'MediaData.cpp',
     'MediaDecoder.cpp',
-    'MediaDecoderReader.cpp',
-    'MediaDecoderReaderWrapper.cpp',
     'MediaDecoderStateMachine.cpp',
     'MediaDeviceInfo.cpp',
     'MediaDevices.cpp',
@@ -239,10 +242,9 @@ UNIFIED_SOURCES += [
     'MediaTimer.cpp',
     'MediaTrack.cpp',
     'MediaTrackList.cpp',
-    'MP3Decoder.cpp',
-    'MP3Demuxer.cpp',
-    'MP3FrameParser.cpp',
+    'MemoryBlockCache.cpp',
     'QueueObject.cpp',
+    'ReaderProxy.cpp',
     'SeekJob.cpp',
     'StreamTracks.cpp',
     'TextTrack.cpp',
@@ -263,7 +265,15 @@ UNIFIED_SOURCES += [
 ]
 
 if CONFIG['OS_TARGET'] == 'WINNT':
-  SOURCES += [ 'ThreadPoolCOMListener.cpp' ]
+  EXPORTS.mozilla.audio += [
+      'AudioNotificationReceiver.h',
+      'AudioNotificationSender.h',
+  ]
+  SOURCES += [
+      'AudioNotificationReceiver.cpp',
+      'AudioNotificationSender.cpp',
+      'ThreadPoolCOMListener.cpp',
+  ]
 
 # DecoderTraits.cpp needs to be built separately because of Mac OS X headers.
 SOURCES += [
@@ -312,6 +322,9 @@ if CONFIG['ANDROID_VERSION'] > '15':
 
 if CONFIG['MOZ_GONK_MEDIACODEC']:
     DEFINES['MOZ_GONK_MEDIACODEC'] = True
+
+if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
+    DEFINES['MOZ_ANDROID_HLS_SUPPORT'] = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

@@ -49,10 +49,10 @@ function loadContentWindow(webNavigation, uri) {
   });
 }
 
-add_task(function* test_snapshot() {
+add_task(async function test_snapshot() {
   let windowlessBrowser = Services.appShell.createWindowlessBrowser(false);
   let webNavigation = windowlessBrowser.QueryInterface(Ci.nsIWebNavigation);
-  let contentWindow = yield loadContentWindow(webNavigation, HEADLESS_URL);
+  let contentWindow = await loadContentWindow(webNavigation, HEADLESS_URL);
   const contentWidth = 400;
   const contentHeight = 300;
   // Verify dimensions.
@@ -92,11 +92,43 @@ add_task(function* test_snapshot() {
   webNavigation.close();
 });
 
-// Ensure keydown events are triggered on the windowless browser.
-add_task(function* test_keydown() {
+add_task(function* test_snapshot_widget_layers() {
   let windowlessBrowser = Services.appShell.createWindowlessBrowser(false);
   let webNavigation = windowlessBrowser.QueryInterface(Ci.nsIWebNavigation);
   let contentWindow = yield loadContentWindow(webNavigation, HEADLESS_URL);
+  const contentWidth = 1;
+  const contentHeight = 2;
+  // Verify dimensions.
+  contentWindow.resizeTo(contentWidth, contentHeight);
+  equal(contentWindow.innerWidth, contentWidth);
+  equal(contentWindow.innerHeight, contentHeight);
+
+  // Snapshot the test page.
+  let canvas = contentWindow.document.createElementNS('http://www.w3.org/1999/xhtml', 'html:canvas');
+  let context = canvas.getContext('2d');
+  let width = contentWindow.innerWidth;
+  let height = contentWindow.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+  context.drawWindow(
+    contentWindow,
+    0,
+    0,
+    width,
+    height,
+    'rgb(255, 255, 255)',
+    context.DRAWWINDOW_DRAW_CARET | context.DRAWWINDOW_DRAW_VIEW | context.DRAWWINDOW_USE_WIDGET_LAYERS
+  );
+  ok(true, "Snapshot with widget layers didn't crash.");
+
+  webNavigation.close();
+});
+
+// Ensure keydown events are triggered on the windowless browser.
+add_task(async function test_keydown() {
+  let windowlessBrowser = Services.appShell.createWindowlessBrowser(false);
+  let webNavigation = windowlessBrowser.QueryInterface(Ci.nsIWebNavigation);
+  let contentWindow = await loadContentWindow(webNavigation, HEADLESS_URL);
 
   let utils = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils);
@@ -107,7 +139,7 @@ add_task(function* test_keydown() {
   })
   utils.sendKeyEvent("keydown", 65, 65, 0);
 
-  yield keydown;
+  await keydown;
   ok(true, "Send keydown didn't crash");
 
   webNavigation.close();
@@ -115,10 +147,10 @@ add_task(function* test_keydown() {
 
 // Test dragging the mouse on a button to ensure the creation of the drag
 // service doesn't crash in headless.
-add_task(function* test_mouse_drag() {
+add_task(async function test_mouse_drag() {
   let windowlessBrowser = Services.appShell.createWindowlessBrowser(false);
   let webNavigation = windowlessBrowser.QueryInterface(Ci.nsIWebNavigation);
-  let contentWindow = yield loadContentWindow(webNavigation, HEADLESS_BUTTON_URL);
+  let contentWindow = await loadContentWindow(webNavigation, HEADLESS_BUTTON_URL);
   contentWindow.resizeTo(400, 400);
 
   let target = contentWindow.document.getElementById('btn');
@@ -132,7 +164,7 @@ add_task(function* test_mouse_drag() {
   utils.sendMouseEvent("mousemove", left, top, 0, 1, 0, false, 0, 0);
   // Wait for a turn of the event loop since the synthetic mouse event
   // that creates the drag service is processed during the refresh driver.
-  yield new Promise((r) => {do_execute_soon(r)});
+  await new Promise((r) => {do_execute_soon(r)});
   utils.sendMouseEvent("mouseup", left, top, 0, 1, 0, false, 0, 0);
 
   ok(true, "Send mouse event didn't crash");

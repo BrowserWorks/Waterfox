@@ -35,7 +35,7 @@ GetUiThread()
 static bool
 IsOnUiThread()
 {
-  return NS_GetCurrentThread() == GetUiThread();
+  return GetUiThread()->SerialEventTarget()->IsOnCurrentThread();
 }
 
 namespace mozilla {
@@ -48,7 +48,11 @@ UiCompositorControllerChild::CreateForSameProcess(const int64_t& aRootLayerTreeI
 {
   RefPtr<UiCompositorControllerChild> child = new UiCompositorControllerChild(0);
   child->mParent = new UiCompositorControllerParent(aRootLayerTreeId);
-  GetUiThread()->Dispatch(NewRunnableMethod(child, &UiCompositorControllerChild::OpenForSameProcess), nsIThread::DISPATCH_NORMAL);
+  GetUiThread()->Dispatch(
+    NewRunnableMethod("layers::UiCompositorControllerChild::OpenForSameProcess",
+                      child,
+                      &UiCompositorControllerChild::OpenForSameProcess),
+    nsIThread::DISPATCH_NORMAL);
   return child;
 }
 
@@ -58,8 +62,12 @@ UiCompositorControllerChild::CreateForGPUProcess(const uint64_t& aProcessToken,
 {
   RefPtr<UiCompositorControllerChild> child = new UiCompositorControllerChild(aProcessToken);
 
-  RefPtr<nsIRunnable> task = NewRunnableMethod<Endpoint<PUiCompositorControllerChild>&&>(
-    child, &UiCompositorControllerChild::OpenForGPUProcess, Move(aEndpoint));
+  RefPtr<nsIRunnable> task =
+    NewRunnableMethod<Endpoint<PUiCompositorControllerChild>&&>(
+      "layers::UiCompositorControllerChild::OpenForGPUProcess",
+      child,
+      &UiCompositorControllerChild::OpenForGPUProcess,
+      Move(aEndpoint));
 
   GetUiThread()->Dispatch(task.forget(), nsIThread::DISPATCH_NORMAL);
   return child;
@@ -186,7 +194,11 @@ void
 UiCompositorControllerChild::Destroy()
 {
   if (!IsOnUiThread()) {
-    GetUiThread()->Dispatch(NewRunnableMethod(this, &UiCompositorControllerChild::Destroy), nsIThread::DISPATCH_NORMAL);
+    GetUiThread()->Dispatch(
+      NewRunnableMethod("layers::UiCompositorControllerChild::Destroy",
+                        this,
+                        &UiCompositorControllerChild::Destroy),
+      nsIThread::DISPATCH_SYNC);
     return;
   }
 
@@ -263,11 +275,11 @@ UiCompositorControllerChild::RecvToolbarAnimatorMessageFromCompositor(const int3
 }
 
 mozilla::ipc::IPCResult
-UiCompositorControllerChild::RecvRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom, const CSSRect& aPage)
+UiCompositorControllerChild::RecvRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom)
 {
 #if defined(MOZ_WIDGET_ANDROID)
   if (mWidget) {
-    mWidget->UpdateRootFrameMetrics(aScrollOffset, aZoom, aPage);
+    mWidget->UpdateRootFrameMetrics(aScrollOffset, aZoom);
   }
 #endif // defined(MOZ_WIDGET_ANDROID)
 

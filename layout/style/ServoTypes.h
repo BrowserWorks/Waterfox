@@ -9,6 +9,10 @@
 
 #include "mozilla/TypedEnumBits.h"
 
+#define STYLE_STRUCT(name_, checkdata_cb_) struct nsStyle##name_;
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+
 /*
  * Type definitions used to interact with Servo. This gets included by nsINode,
  * so don't add significant include dependencies to this file.
@@ -45,33 +49,34 @@ enum class LazyComputeBehavior {
   Assert,
 };
 
-// Indicates whether the Servo style system should perform normal processing or
-// whether it should only process unstyled children of the root and their
-// descendants.
-enum class TraversalRootBehavior {
-  Normal,
-  UnstyledChildrenOnly,
+// Various flags for the servo traversal.
+enum class ServoTraversalFlags : uint32_t {
+  Empty = 0,
+  // Perform animation processing but not regular styling.
+  AnimationOnly = 1 << 0,
+  // Traverses as normal mode but tries to update all CSS animations.
+  ForCSSRuleChanges = 1 << 1,
+  // Traverse only unstyled children of the root (and their descendants).
+  UnstyledChildrenOnly = 1 << 2,
+  // A forgetful traversal ignores the previous state of the frame tree, and
+  // thus does not compute damage or maintain other state describing the styles
+  // pre-traversal. A forgetful traversal is usually the right thing if you
+  // aren't going to do a post-traversal.
+  Forgetful = 1 << 3,
+  // Actively seeks out and clears change hints that may have been posted into
+  // the tree. Nonsensical without also passing Forgetful.
+  AggressivelyForgetful = 1 << 4,
+  // Clears the dirty descendants bit in the subtree.
+  ClearDirtyDescendants = 1 << 5,
+  // Clears the animation-only dirty descendants bit in the subtree.
+  ClearAnimationOnlyDirtyDescendants = 1 << 6,
+  // Flush throttled animations. By default, we only update throttled animations
+  // when we have other non-throttled work to do. With this flag, we
+  // unconditionally tick and process them.
+  FlushThrottledAnimations = 1 << 7,
 };
 
-// Indicates whether the Servo style system should perform normal processing,
-// animation-only processing (so we can flush any throttled animation styles),
-// or whether it should traverse in a mode that doesn't generate any change
-// hints, which is what's required when handling frame reconstruction.
-// The change hints in this case are unneeded, since the old frames have
-// already been destroyed.
-// Indicates how the Servo style system should perform.
-enum class TraversalRestyleBehavior {
-  // Normal processing.
-  Normal,
-  // Traverses in a mode that doesn't generate any change hints, which is what's
-  // required when handling frame reconstruction.  The change hints in this case
-  // are unneeded, since the old frames have already been destroyed.
-  ForReconstruct,
-  // Processes animation-only restyle.
-  ForAnimationOnly,
-  // Traverses as normal mode but tries to update all CSS animations.
-  ForCSSRuleChanges,
-};
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(ServoTraversalFlags)
 
 // Indicates which rules should be included when performing selecting matching
 // on an element.  DefaultOnly is used to exclude all rules except for those
@@ -120,6 +125,139 @@ enum class InheritTarget {
   PlaceholderFrame,
 };
 
+struct ServoWritingMode {
+  uint8_t mBits;
+};
+
+// Don't attempt to read from this
+// (see comment on ServoFontComputationData
+enum ServoKeywordSize {
+  Empty, // when the Option is None
+  XXSmall,
+  XSmall,
+  Small,
+  Medium,
+  Large,
+  XLarge,
+  XXLarge,
+  XXXLarge,
+};
+
+// Don't attempt to read from this. We can't
+// always guarantee that the interior representation
+// of this is correct (the mKeyword field may have a different padding),
+// but the entire struct should
+// have the same size and alignment as the Rust version.
+// Ensure layout tests get run if touching either side.
+struct ServoFontComputationData {
+  ServoKeywordSize mKeyword;
+  float/*32_t*/ mRatio;
+
+  static_assert(sizeof(float) == 4, "float should be 32 bit");
+};
+
+struct ServoCustomPropertiesMap {
+  uintptr_t mPtr;
+};
+
+struct ServoRuleNode {
+  uintptr_t mPtr;
+};
+
+
+class ServoStyleContext;
+
+struct ServoVisitedStyle {
+  // This is actually a strong reference
+  // but ServoComputedData's destructor is
+  // managed by the Rust code so we just use a
+  // regular pointer
+  ServoStyleContext* mPtr;
+};
+
+template <typename T>
+struct ServoRawOffsetArc {
+  // Again, a strong reference, but
+  // managed by the Rust code
+  T* mPtr;
+};
+
+struct ServoComputedValueFlags {
+  uint8_t mFlags;
+};
+
+#define STYLE_STRUCT(name_, checkdata_cb_) struct Gecko##name_;
+#define STYLE_STRUCT_LIST_IGNORE_VARIABLES
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+#undef STYLE_STRUCT_LIST_IGNORE_VARIABLES
+
 } // namespace mozilla
+
+class ServoComputedData;
+
+struct ServoComputedDataForgotten
+{
+  // Make sure you manually mem::forget the backing ServoComputedData
+  // after calling this
+  explicit ServoComputedDataForgotten(const ServoComputedData* aValue) : mPtr(aValue) {}
+  const ServoComputedData* mPtr;
+};
+
+/**
+ * We want C++ to be able to read the style struct fields of ComputedValues
+ * so we define this type on the C++ side and use the bindgenned version
+ * on the Rust side.
+ */
+class ServoComputedData
+{
+  friend class mozilla::ServoStyleContext;
+
+public:
+  // Constructs via memcpy.  Will not move out of aValue.
+  explicit ServoComputedData(const ServoComputedDataForgotten aValue);
+
+#define STYLE_STRUCT(name_, checkdata_cb_)                 \
+  mozilla::ServoRawOffsetArc<mozilla::Gecko##name_> name_; \
+  inline const nsStyle##name_* GetStyle##name_() const;
+  #define STYLE_STRUCT_LIST_IGNORE_VARIABLES
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+#undef STYLE_STRUCT_LIST_IGNORE_VARIABLES
+  const nsStyleVariables* GetStyleVariables() const;
+
+private:
+  mozilla::ServoCustomPropertiesMap custom_properties;
+  mozilla::ServoWritingMode writing_mode;
+  mozilla::ServoComputedValueFlags flags;
+  /// The rule node representing the ordered list of rules matched for this
+  /// node.  Can be None for default values and text nodes.  This is
+  /// essentially an optimization to avoid referencing the root rule node.
+  mozilla::ServoRuleNode rules;
+  /// The element's computed values if visited, only computed if there's a
+  /// relevant link for this element. A element's "relevant link" is the
+  /// element being matched if it is a link or the nearest ancestor link.
+  mozilla::ServoVisitedStyle visited_style;
+
+  // this is the last member because most of the other members
+  // are pointer sized. This makes it easier to deal with the
+  // alignment of the fields when replacing things via bindgen
+  //
+  // This is opaque, please don't read from it from C++
+  // (see comment on ServoFontComputationData)
+  mozilla::ServoFontComputationData font_computation_data;
+
+  // C++ just sees this struct as a bucket of bits, and will
+  // do the wrong thing if we let it use the default copy ctor/assignment
+  // operator. Remove them so that there is no footgun.
+  //
+  // We remove the move ctor/assignment operator as well, because
+  // moves in C++ don't prevent destructors from being called,
+  // which will lead to double frees.
+  ServoComputedData& operator=(const ServoComputedData&) = delete;
+  ServoComputedData(const ServoComputedData&) = delete;
+  ServoComputedData&& operator=(const ServoComputedData&&) = delete;
+  ServoComputedData(const ServoComputedData&&) = delete;
+};
 
 #endif // mozilla_ServoTypes_h

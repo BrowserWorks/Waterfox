@@ -37,6 +37,7 @@ const STATE_TRAVERSED = nsIAccessibleStates.STATE_TRAVERSED;
 const STATE_UNAVAILABLE = nsIAccessibleStates.STATE_UNAVAILABLE;
 
 const EXT_STATE_ACTIVE = nsIAccessibleStates.EXT_STATE_ACTIVE;
+const EXT_STATE_CURRENT = nsIAccessibleStates.EXT_STATE_CURRENT;
 const EXT_STATE_DEFUNCT = nsIAccessibleStates.EXT_STATE_DEFUNCT;
 const EXT_STATE_EDITABLE = nsIAccessibleStates.EXT_STATE_EDITABLE;
 const EXT_STATE_ENABLED = nsIAccessibleStates.EXT_STATE_ENABLED;
@@ -187,7 +188,7 @@ function testStatesInSubtree(aAccOrElmOrID, aState, aExtraState, aAbsentState)
   var children = null;
   try {
     children = acc.children;
-  } catch(e) {}
+  } catch (e) {}
   ok(children, "Could not get children for " + aAccOrElmOrID +"!");
 
   if (children) {

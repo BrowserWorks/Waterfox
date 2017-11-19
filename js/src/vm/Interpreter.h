@@ -30,7 +30,7 @@ BoxNonStrictThis(JSContext* cx, HandleValue thisv, MutableHandleValue vp);
 extern bool
 GetFunctionThis(JSContext* cx, AbstractFramePtr frame, MutableHandleValue res);
 
-extern bool
+extern void
 GetNonSyntacticGlobalThis(JSContext* cx, HandleObject envChain, MutableHandleValue res);
 
 /*
@@ -439,6 +439,9 @@ SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index, HandleValue
 
 bool
 SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index, HandleValue value,
+                 HandleValue receiver, bool strict);
+bool
+SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index, HandleValue value,
                  HandleValue receiver, bool strict, HandleScript script, jsbytecode* pc);
 
 bool
@@ -572,6 +575,9 @@ bool
 ThrowUninitializedThis(JSContext* cx, AbstractFramePtr frame);
 
 bool
+ThrowInitializedThis(JSContext* cx, AbstractFramePtr frame);
+
+bool
 DefaultClassConstructor(JSContext* cx, unsigned argc, Value* vp);
 
 bool
@@ -585,6 +591,19 @@ ObjectWithProtoOperation(JSContext* cx, HandleValue proto);
 
 JSObject*
 FunWithProtoOperation(JSContext* cx, HandleFunction fun, HandleObject parent, HandleObject proto);
+
+JSFunction*
+MakeDefaultConstructor(JSContext* cx, HandleScript script, jsbytecode* pc, HandleObject proto);
+
+JSObject*
+HomeObjectSuperBase(JSContext* cx, HandleObject homeObj);
+
+JSObject*
+SuperFunOperation(JSContext* cx, HandleObject callee);
+
+bool
+SetPropertySuper(JSContext* cx, HandleObject obj, HandleValue receiver,
+                 HandlePropertyName id, HandleValue rval, bool strict);
 
 }  /* namespace js */
 

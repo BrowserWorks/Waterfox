@@ -118,6 +118,8 @@ protected:
   void DoFailedAsyncOpen(const nsresult& statusCode);
   void DoDeleteSelf();
 
+  void SetupNeckoTarget() override;
+
   friend class FTPStartRequestEvent;
   friend class FTPDataAvailableEvent;
   friend class MaybeDivertOnDataFTPEvent;
@@ -126,11 +128,9 @@ protected:
   friend class FTPFailedAsyncOpenEvent;
   friend class FTPFlushedForDiversionEvent;
   friend class FTPDeleteSelfEvent;
+  friend class NeckoTargetChannelEvent<FTPChannelChild>;
 
 private:
-  // Get event target for processing network events.
-  already_AddRefed<nsIEventTarget> GetNeckoTarget();
-
   nsCOMPtr<nsIInputStream> mUploadStream;
 
   bool mIPCOpen;
@@ -158,11 +158,6 @@ private:
   // Set if SendSuspend is called. Determines if SendResume is needed when
   // diverting callbacks to parent.
   bool mSuspendSent;
-
-  // EventTarget for labeling networking events.
-  nsCOMPtr<nsIEventTarget> mNeckoTarget;
-
-  void EnsureNeckoTarget();
 };
 
 inline bool

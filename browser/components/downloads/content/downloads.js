@@ -66,8 +66,6 @@ var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "DownloadsCommon",
-                                  "resource:///modules/DownloadsCommon.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadsViewUI",
                                   "resource:///modules/DownloadsViewUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
@@ -84,7 +82,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Services",
 /**
  * Main entry point for the downloads panel interface.
  */
-const DownloadsPanel = {
+var DownloadsPanel = {
   // Initialization and termination
 
   /**
@@ -577,7 +575,7 @@ XPCOMUtils.defineConstant(this, "DownloadsPanel", DownloadsPanel);
  * Allows loading the downloads panel and the status indicator interfaces on
  * demand, to improve startup performance.
  */
-const DownloadsOverlayLoader = {
+var DownloadsOverlayLoader = {
   /**
    * We cannot load two overlays at the same time, thus we use a queue of
    * pending load requests.
@@ -657,7 +655,7 @@ XPCOMUtils.defineConstant(this, "DownloadsOverlayLoader", DownloadsOverlayLoader
  * download state and real-time data.  In addition, handles part of the user
  * interaction events raised by the downloads list widget.
  */
-const DownloadsView = {
+var DownloadsView = {
   // Functions handling download items in the list
 
   /**
@@ -739,16 +737,16 @@ const DownloadsView = {
   /**
    * Called before multiple downloads are about to be loaded.
    */
-  onDataLoadStarting() {
-    DownloadsCommon.log("onDataLoadStarting called for DownloadsView.");
+  onDownloadBatchStarting() {
+    DownloadsCommon.log("onDownloadBatchStarting called for DownloadsView.");
     this.loading = true;
   },
 
   /**
    * Called after data loading finished.
    */
-  onDataLoadCompleted() {
-    DownloadsCommon.log("onDataLoadCompleted called for DownloadsView.");
+  onDownloadBatchEnded() {
+    DownloadsCommon.log("onDownloadBatchEnded called for DownloadsView.");
 
     this.loading = false;
 
@@ -767,33 +765,17 @@ const DownloadsView = {
    *
    * @param aDownload
    *        Download object that was just added.
-   * @param aNewest
-   *        When true, indicates that this item is the most recent and should be
-   *        added in the topmost position.  This happens when a new download is
-   *        started.  When false, indicates that the item is the least recent
-   *        and should be appended.  The latter generally happens during the
-   *        asynchronous data load.
    */
-  onDownloadAdded(download, aNewest) {
-    DownloadsCommon.log("A new download data item was added - aNewest =",
-                        aNewest);
+  onDownloadAdded(download) {
+    DownloadsCommon.log("A new download data item was added");
 
-    if (aNewest) {
-      this._downloads.unshift(download);
-    } else {
-      this._downloads.push(download);
-    }
+    this._downloads.unshift(download);
 
-    let itemsNowOverflow = this._downloads.length > this.kItemCountLimit;
-    if (aNewest || !itemsNowOverflow) {
-      // The newly added item is visible in the panel and we must add the
-      // corresponding element.  This is either because it is the first item, or
-      // because it was added at the bottom but the list still doesn't overflow.
-      this._addViewItem(download, aNewest);
-    }
-    if (aNewest && itemsNowOverflow) {
-      // If the list overflows, remove the last item from the panel to make room
-      // for the new one that we just added at the top.
+    // The newly added item is visible in the panel and we must add the
+    // corresponding element. If the list overflows, remove the last item from
+    // the panel to make room for the new one that we just added at the top.
+    this._addViewItem(download, true);
+    if (this._downloads.length > this.kItemCountLimit) {
       this._removeViewItem(this._downloads[this.kItemCountLimit]);
     }
 
@@ -801,13 +783,6 @@ const DownloadsView = {
     // every item, because the interface won't be visible until load finishes.
     if (!this.loading) {
       this._itemCountChanged();
-    }
-  },
-
-  onDownloadStateChanged(download) {
-    let viewItem = this._visibleViewItems.get(download);
-    if (viewItem) {
-      viewItem.onStateChanged();
     }
   },
 
@@ -1069,6 +1044,7 @@ XPCOMUtils.defineConstant(this, "DownloadsView", DownloadsView);
  */
 function DownloadsViewItem(download, aElement) {
   this.download = download;
+  this.downloadState = DownloadsCommon.stateOfDownload(download);
   this.element = aElement;
   this.element._shell = this;
 
@@ -1086,11 +1062,12 @@ DownloadsViewItem.prototype = {
    */
   _element: null,
 
-  onStateChanged() {
-    this._updateState();
-  },
-
   onChanged() {
+    let newState = DownloadsCommon.stateOfDownload(this.download);
+    if (this.downloadState != newState) {
+      this.downloadState = newState;
+      this._updateState();
+    }
     this._updateProgress();
   },
 
@@ -1210,7 +1187,7 @@ DownloadsViewItem.prototype = {
  * widget, in particular the "commands" that apply to multiple items, and
  * dispatches the commands that apply to individual items.
  */
-const DownloadsViewController = {
+var DownloadsViewController = {
   // Initialization and termination
 
   initialize() {
@@ -1313,7 +1290,7 @@ XPCOMUtils.defineConstant(this, "DownloadsViewController", DownloadsViewControll
  * Manages the summary at the bottom of the downloads panel list if the number
  * of items in the list exceeds the panels limit.
  */
-const DownloadsSummary = {
+var DownloadsSummary = {
 
   /**
    * Sets the active state of the summary. When active, the summary subscribes
@@ -1497,7 +1474,7 @@ XPCOMUtils.defineConstant(this, "DownloadsSummary", DownloadsSummary);
  * Manages events sent to to the footer vbox, which contains both the
  * DownloadsSummary as well as the "Show All Downloads" button.
  */
-const DownloadsFooter = {
+var DownloadsFooter = {
 
   /**
    * Focuses the appropriate element within the footer. If the summary
@@ -1551,7 +1528,7 @@ XPCOMUtils.defineConstant(this, "DownloadsFooter", DownloadsFooter);
 /**
  * Manages the blocked subview that slides in when you click a blocked download.
  */
-const DownloadsBlockedSubview = {
+var DownloadsBlockedSubview = {
 
   get subview() {
     let subview = document.getElementById("downloadsPanel-blockedSubview");

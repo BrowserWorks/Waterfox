@@ -78,11 +78,13 @@ const TESTCASES = [
   },
   {
     description: "skipEmptyFields should also skip white-space only fields",
+    /* eslint-disable no-tabs */
     document: `<input id="pw-space" type=password value=" ">
                <input id="pw-tab" type=password value="	">
                <input id="pw-newline" type=password form="form1" value="
 ">
       <form id="form1"></form>`,
+    /* eslint-disable no-tabs */
     returnedFieldIDsByFormLike: [[], []],
     skipEmptyFields: true,
   },
@@ -115,7 +117,7 @@ for (let tc of TESTCASES) {
 
   (function() {
     let testcase = tc;
-    add_task(function*() {
+    add_task(async function() {
       do_print("Starting testcase: " + testcase.description);
       let document = MockDocument.createTestDocument("http://localhost:8080/test/",
                                                      testcase.document);

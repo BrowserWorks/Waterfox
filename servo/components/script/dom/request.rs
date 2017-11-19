@@ -55,14 +55,11 @@ pub struct Request {
 
 impl Request {
     fn new_inherited(global: &GlobalScope,
-                     url: ServoUrl,
-                     is_service_worker_global_scope: bool) -> Request {
+                     url: ServoUrl) -> Request {
         Request {
             reflector_: Reflector::new(),
             request: DOMRefCell::new(
-                net_request_from_global(global,
-                                        url,
-                                        is_service_worker_global_scope)),
+                net_request_from_global(global, url)),
             body_used: Cell::new(false),
             headers: Default::default(),
             mime_type: DOMRefCell::new("".to_string().into_bytes()),
@@ -71,11 +68,9 @@ impl Request {
     }
 
     pub fn new(global: &GlobalScope,
-               url: ServoUrl,
-               is_service_worker_global_scope: bool) -> Root<Request> {
+               url: ServoUrl) -> Root<Request> {
         reflect_dom_object(box Request::new_inherited(global,
-                                                      url,
-                                                      is_service_worker_global_scope),
+                                                      url),
                            global, RequestBinding::Wrap)
     }
 
@@ -111,9 +106,7 @@ impl Request {
                     return Err(Error::Type("Url includes credentials".to_string()))
                 }
                 // Step 5.4
-                temporary_request = net_request_from_global(global,
-                                                            url,
-                                                            false);
+                temporary_request = net_request_from_global(global, url);
                 // Step 5.5
                 fallback_mode = Some(NetTraitsRequestMode::CorsMode);
                 // Step 5.6
@@ -152,9 +145,7 @@ impl Request {
 
         // Step 12
         let mut request: NetTraitsRequest;
-        request = net_request_from_global(global,
-                                          temporary_request.current_url(),
-                                          false);
+        request = net_request_from_global(global, temporary_request.current_url());
         request.method = temporary_request.method;
         request.headers = temporary_request.headers.clone();
         request.unsafe_request = true;
@@ -293,9 +284,7 @@ impl Request {
         }
 
         // Step 26
-        let r = Request::from_net_request(global,
-                                          false,
-                                          request);
+        let r = Request::from_net_request(global, request);
         r.headers.or_init(|| Headers::for_request(&r.global()));
 
         // Step 27
@@ -308,12 +297,12 @@ impl Request {
                     headers_copy = Root::from_ref(&*init_headers);
                 }
                 &HeadersInit::ByteStringSequenceSequence(ref init_sequence) => {
-                    try!(headers_copy.fill(Some(
-                        HeadersInit::ByteStringSequenceSequence(init_sequence.clone()))));
+                    headers_copy.fill(Some(
+                        HeadersInit::ByteStringSequenceSequence(init_sequence.clone())))?;
                 },
-                &HeadersInit::ByteStringMozMap(ref init_map) => {
-                    try!(headers_copy.fill(Some(
-                        HeadersInit::ByteStringMozMap(init_map.clone()))));
+                &HeadersInit::StringByteStringRecord(ref init_map) => {
+                    headers_copy.fill(Some(
+                        HeadersInit::StringByteStringRecord(init_map.clone())))?;
                 },
             }
         }
@@ -351,10 +340,10 @@ impl Request {
                 // but an input with headers is given, set request's
                 // headers as the input's Headers.
                 if let RequestInfo::Request(ref input_request) = input {
-                    try!(r.Headers().fill(Some(HeadersInit::Headers(input_request.Headers()))));
+                    r.Headers().fill(Some(HeadersInit::Headers(input_request.Headers())))?;
                 }
             },
-            Some(HeadersInit::Headers(_)) => try!(r.Headers().fill(Some(HeadersInit::Headers(headers_copy)))),
+            Some(HeadersInit::Headers(_)) => r.Headers().fill(Some(HeadersInit::Headers(headers_copy)))?,
             _ => {},
         }
 
@@ -391,8 +380,8 @@ impl Request {
             // Step 34.3
             if let Some(contents) = content_type {
                 if !r.Headers().Has(ByteString::new(b"Content-Type".to_vec())).unwrap() {
-                    try!(r.Headers().Append(ByteString::new(b"Content-Type".to_vec()),
-                                            ByteString::new(contents.as_bytes().to_vec())));
+                    r.Headers().Append(ByteString::new(b"Content-Type".to_vec()),
+                                            ByteString::new(contents.as_bytes().to_vec()))?;
                 }
             }
         }
@@ -421,11 +410,9 @@ impl Request {
 
 impl Request {
     fn from_net_request(global: &GlobalScope,
-                        is_service_worker_global_scope: bool,
                         net_request: NetTraitsRequest) -> Root<Request> {
         let r = Request::new(global,
-                             net_request.current_url(),
-                             is_service_worker_global_scope);
+                             net_request.current_url());
         *r.request.borrow_mut() = net_request;
         r
     }
@@ -433,11 +420,10 @@ impl Request {
     fn clone_from(r: &Request) -> Fallible<Root<Request>> {
         let req = r.request.borrow();
         let url = req.url();
-        let is_service_worker_global_scope = req.is_service_worker_global_scope;
         let body_used = r.body_used.get();
         let mime_type = r.mime_type.borrow().clone();
         let headers_guard = r.Headers().get_guard();
-        let r_clone = Request::new(&r.global(), url, is_service_worker_global_scope);
+        let r_clone = Request::new(&r.global(), url);
         r_clone.request.borrow_mut().pipeline_id = req.pipeline_id;
         {
             let mut borrowed_r_request = r_clone.request.borrow_mut();
@@ -446,7 +432,7 @@ impl Request {
         *r_clone.request.borrow_mut() = req.clone();
         r_clone.body_used.set(body_used);
         *r_clone.mime_type.borrow_mut() = mime_type;
-        try!(r_clone.Headers().fill(Some(HeadersInit::Headers(r.Headers()))));
+        r_clone.Headers().fill(Some(HeadersInit::Headers(r.Headers())))?;
         r_clone.Headers().set_guard(headers_guard);
         Ok(r_clone)
     }
@@ -457,13 +443,11 @@ impl Request {
 }
 
 fn net_request_from_global(global: &GlobalScope,
-                           url: ServoUrl,
-                           is_service_worker_global_scope: bool) -> NetTraitsRequest {
+                           url: ServoUrl) -> NetTraitsRequest {
     let origin = Origin::Origin(global.get_url().origin());
     let pipeline_id = global.pipeline_id();
     NetTraitsRequest::new(url,
                           Some(origin),
-                          is_service_worker_global_scope,
                           Some(pipeline_id))
 }
 
@@ -880,8 +864,8 @@ impl Clone for HeadersInit {
             HeadersInit::Headers(h.clone()),
         &HeadersInit::ByteStringSequenceSequence(ref b) =>
             HeadersInit::ByteStringSequenceSequence(b.clone()),
-        &HeadersInit::ByteStringMozMap(ref m) =>
-            HeadersInit::ByteStringMozMap(m.clone()),
+        &HeadersInit::StringByteStringRecord(ref m) =>
+            HeadersInit::StringByteStringRecord(m.clone()),
         }
     }
 }

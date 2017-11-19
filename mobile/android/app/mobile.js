@@ -414,16 +414,14 @@ pref("ui.bookmark.mobilefolder.enabled", true);
 pref("ui.bookmark.mobilefolder.enabled", false);
 #endif
 
-#ifdef RELEASE_OR_BETA
-// MMA is disabled in shipping Beta and Release builds.
-pref("mma.enabled", false);
-#elif MOZ_UPDATE_CHANNEL == nightly
-// Enabled in shipping Nightly builds.
+#if MOZ_UPDATE_CHANNEL == nightly
+pref("mma.enabled", true);
+#elif MOZ_UPDATE_CHANNEL == beta
 pref("mma.enabled", true);
 #else
-// And enabled in local developer builds.
 pref("mma.enabled", true);
 #endif
+
 
 pref("ui.touch.radius.enabled", false);
 pref("ui.touch.radius.leftmm", 3);
@@ -449,14 +447,8 @@ pref("browser.ui.scroll-toolbar-threshold", 10);
 pref("browser.ui.selection.distance", 250);
 
 // plugins
-pref("plugin.disable", false);
+pref("plugin.disable", true);
 pref("dom.ipc.plugins.enabled", false);
-
-// This pref isn't actually used anymore, but we're leaving this here to avoid changing
-// the default so that we can migrate a user-set pref. See bug 885357.
-pref("plugins.click_to_play", true);
-// The default value for nsIPluginTag.enabledState (STATE_CLICKTOPLAY = 1)
-pref("plugin.default.state", 1);
 
 // product URLs
 // The breakpad report server to link to in about:crashes
@@ -570,6 +562,8 @@ pref("apz.fling_friction", "0.004");
 pref("apz.fling_stopped_threshold", "0.0");
 pref("apz.max_velocity_inches_per_ms", "0.07");
 pref("apz.overscroll.enabled", true);
+pref("apz.second_tap_tolerance", "0.3");
+pref("apz.touch_move_tolerance", "0.03");
 pref("apz.touch_start_tolerance", "0.06");
 
 pref("layers.progressive-paint", true);
@@ -631,6 +625,10 @@ pref("media.mediadrm-widevinecdm.visible", true);
 #ifdef NIGHTLY_BUILD
 // Enable EME (Encrypted Media Extensions)
 pref("media.eme.enabled", true);
+#endif
+
+#ifdef NIGHTLY_BUILD
+pref("media.hls.enabled", true);
 #endif
 
 // Whether to suspend decoding of videos in background tabs.
@@ -917,6 +915,7 @@ pref("dom.presentation.receiver.enabled", true); // enable 1-UA mode
 
 pref("dom.audiochannel.audioCompeting", true);
 pref("dom.audiochannel.mediaControl", true);
+pref("media.block-autoplay-until-in-foreground", false);
 
 // Space separated list of URLS that are allowed to send objects (instead of
 // only strings) through webchannels. This list is duplicated in browser/app/profile/firefox.js

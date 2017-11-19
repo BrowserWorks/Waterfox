@@ -36,7 +36,6 @@
 #include "nsIObserverService.h"
 #include "nsIObserver.h"
 #include "mozilla/Services.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Sprintf.h"
 #include "nsProxyRelease.h"
 #include "nsThread.h"
@@ -208,8 +207,10 @@ debug_printf(const char *format, ...)
   }
 }
 
-DataChannelConnection::DataChannelConnection(DataConnectionListener *listener) :
-   mLock("netwerk::sctp::DataChannelConnection")
+DataChannelConnection::DataChannelConnection(DataConnectionListener *listener,
+                                             nsIEventTarget *aTarget)
+  : NeckoTargetHolder(aTarget)
+  , mLock("netwerk::sctp::DataChannelConnection")
 {
   mState = CLOSED;
   mSocket = nullptr;
@@ -235,15 +236,16 @@ DataChannelConnection::~DataChannelConnection()
     ASSERT_WEBRTC(NS_IsMainThread());
     if (mTransportFlow) {
       ASSERT_WEBRTC(mSTS);
-      NS_ProxyRelease(mSTS, mTransportFlow.forget());
+      NS_ProxyRelease(
+        "DataChannelConnection::mTransportFlow", mSTS, mTransportFlow.forget());
     }
 
     if (mInternalIOThread) {
       // Avoid spinning the event thread from here (which if we're mainthread
       // is in the event loop already)
-      NS_DispatchToMainThread(WrapRunnable(nsCOMPtr<nsIThread>(mInternalIOThread),
-                                           &nsIThread::Shutdown),
-                              NS_DISPATCH_NORMAL);
+      nsCOMPtr<nsIRunnable> r = WrapRunnable(nsCOMPtr<nsIThread>(mInternalIOThread),
+                                             &nsIThread::Shutdown);
+      Dispatch(r.forget());
     }
   } else {
     // on STS, safe to call shutdown
@@ -599,10 +601,9 @@ DataChannelConnection::CompleteConnect(TransportFlow *flow, TransportLayer::Stat
     }
   }
   // Note: currently this doesn't actually notify the application
-  NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                      DataChannelOnMessageAvailable::ON_CONNECTION,
-                                      this)));
-  return;
+  Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+             DataChannelOnMessageAvailable::ON_CONNECTION,
+             this)));
 }
 
 // Process any pending Opens
@@ -759,9 +760,9 @@ DataChannelConnection::Listen(unsigned short port)
   // Notify Connection open
   // XXX We need to make sure connection sticks around until the message is delivered
   LOG(("%s: sending ON_CONNECTION for %p", __FUNCTION__, this));
-  NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                            DataChannelOnMessageAvailable::ON_CONNECTION,
-                            this, (DataChannel *) nullptr)));
+  Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+             DataChannelOnMessageAvailable::ON_CONNECTION,
+             this, (DataChannel *) nullptr)));
   return true;
 }
 
@@ -838,9 +839,9 @@ DataChannelConnection::Connect(const char *addr, unsigned short port)
   // Notify Connection open
   // XXX We need to make sure connection sticks around until the message is delivered
   LOG(("%s: sending ON_CONNECTION for %p", __FUNCTION__, this));
-  NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                            DataChannelOnMessageAvailable::ON_CONNECTION,
-                            this, (DataChannel *) nullptr)));
+  Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+             DataChannelOnMessageAvailable::ON_CONNECTION,
+             this, (DataChannel *) nullptr)));
   return true;
 }
 #endif
@@ -1038,9 +1039,9 @@ DataChannelConnection::SendDeferredMessages()
         channel->mState = OPEN;
         channel->mReady = true;
         LOG(("%s: sending ON_CHANNEL_OPEN for %p", __FUNCTION__, channel.get()));
-        NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                  DataChannelOnMessageAvailable::ON_CHANNEL_OPEN, this,
-                                  channel)));
+        Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+                   DataChannelOnMessageAvailable::ON_CHANNEL_OPEN, this,
+                   channel)));
       } else {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
           still_blocked = true;
@@ -1049,9 +1050,9 @@ DataChannelConnection::SendDeferredMessages()
           mStreams[channel->mStream] = nullptr;
           channel->mState = CLOSED;
           // Don't need to reset; we didn't open it
-          NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                    DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
-                                    channel)));
+          Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+                     DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
+                     channel)));
         }
       }
     }
@@ -1102,13 +1103,13 @@ DataChannelConnection::SendDeferredMessages()
           if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // leave queued for resend
             failed_send = true;
-            LOG(("queue full again when resending %" PRIuSIZE " bytes (%d)", len, result));
+            LOG(("queue full again when resending %zu bytes (%d)", len, result));
           } else {
             LOG(("error %d re-sending string", errno));
             failed_send = true;
           }
         } else {
-          LOG(("Resent buffer of %" PRIuSIZE " bytes (%d)", len, result));
+          LOG(("Resent buffer of %zu bytes (%d)", len, result));
           // In theory this could underflow if >4GB was buffered and re
           // truncated in GetBufferedAmount(), but this won't cause any problems.
           buffered_amount -= channel->mBufferedData[0]->mLength;
@@ -1117,9 +1118,9 @@ DataChannelConnection::SendDeferredMessages()
           if (was_over_threshold && buffered_amount < threshold) {
             LOG(("%s: sending BUFFER_LOW_THRESHOLD for %s/%s: %u", __FUNCTION__,
                  channel->mLabel.get(), channel->mProtocol.get(), channel->mStream));
-            NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                                DataChannelOnMessageAvailable::BUFFER_LOW_THRESHOLD,
-                                                this, channel)));
+            Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+                       DataChannelOnMessageAvailable::BUFFER_LOW_THRESHOLD,
+                       this, channel)));
             was_over_threshold = false;
           }
           if (buffered_amount == 0) {
@@ -1127,9 +1128,9 @@ DataChannelConnection::SendDeferredMessages()
             // available for GC
             LOG(("%s: sending NO_LONGER_BUFFERED for %s/%s: %u", __FUNCTION__,
                  channel->mLabel.get(), channel->mProtocol.get(), channel->mStream));
-            NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                                DataChannelOnMessageAvailable::NO_LONGER_BUFFERED,
-                                                this, channel)));
+            Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+                       DataChannelOnMessageAvailable::NO_LONGER_BUFFERED,
+                       this, channel)));
           }
         }
       }
@@ -1158,13 +1159,13 @@ DataChannelConnection::HandleOpenRequestMessage(const struct rtcweb_datachannel_
   mLock.AssertCurrentThreadOwns();
 
   if (length != (sizeof(*req) - 1) + ntohs(req->label_length) + ntohs(req->protocol_length)) {
-    LOG(("%s: Inconsistent length: %" PRIuSIZE ", should be %" PRIuSIZE, __FUNCTION__, length,
+    LOG(("%s: Inconsistent length: %zu, should be %zu", __FUNCTION__, length,
          (sizeof(*req) - 1) + ntohs(req->label_length) + ntohs(req->protocol_length)));
     if (length < (sizeof(*req) - 1) + ntohs(req->label_length) + ntohs(req->protocol_length))
       return;
   }
 
-  LOG(("%s: length %" PRIuSIZE ", sizeof(*req) = %" PRIuSIZE, __FUNCTION__, length, sizeof(*req)));
+  LOG(("%s: length %zu, sizeof(*req) = %zu", __FUNCTION__, length, sizeof(*req)));
 
   switch (req->channel_type) {
     case DATA_CHANNEL_RELIABLE:
@@ -1208,7 +1209,7 @@ DataChannelConnection::HandleOpenRequestMessage(const struct rtcweb_datachannel_
     return;
   }
   if (stream >= mStreams.Length()) {
-    LOG(("%s: stream %u out of bounds (%" PRIuSIZE ")", __FUNCTION__, stream, mStreams.Length()));
+    LOG(("%s: stream %u out of bounds (%zu)", __FUNCTION__, stream, mStreams.Length()));
     return;
   }
 
@@ -1230,9 +1231,9 @@ DataChannelConnection::HandleOpenRequestMessage(const struct rtcweb_datachannel_
 
   LOG(("%s: sending ON_CHANNEL_CREATED for %s/%s: %u (state %u)", __FUNCTION__,
        channel->mLabel.get(), channel->mProtocol.get(), stream, channel->mState));
-  NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                            DataChannelOnMessageAvailable::ON_CHANNEL_CREATED,
-                            this, channel)));
+  Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+             DataChannelOnMessageAvailable::ON_CHANNEL_CREATED,
+             this, channel)));
 
   LOG(("%s: deferring sending ON_CHANNEL_OPEN for %p", __FUNCTION__, channel.get()));
 
@@ -1294,7 +1295,7 @@ void
 DataChannelConnection::HandleUnknownMessage(uint32_t ppid, size_t length, uint16_t stream)
 {
   /* XXX: Send an error message? */
-  LOG(("unknown DataChannel message received: %u, len %" PRIuSIZE " on stream %d", ppid, length, stream));
+  LOG(("unknown DataChannel message received: %u, len %zu on stream %d", ppid, length, stream));
   // XXX Log to JS error console if possible
 }
 
@@ -1324,7 +1325,7 @@ DataChannelConnection::HandleDataMessage(uint32_t ppid,
 
     // Since this is rare and non-performance, keep a single list of queued
     // data messages to deliver once the channel opens.
-    LOG(("Queuing data for stream %u, length %" PRIuSIZE, stream, length));
+    LOG(("Queuing data for stream %u, length %zu", stream, length));
     // Copies data
     mQueuedData.AppendElement(new QueuedDataMessage(stream, ppid, data, length));
     return;
@@ -1351,13 +1352,13 @@ DataChannelConnection::HandleDataMessage(uint32_t ppid,
       case DATA_CHANNEL_PPID_DOMSTRING:
       case DATA_CHANNEL_PPID_BINARY:
         channel->mRecvBuffer += recvData;
-        LOG(("DataChannel: Partial %s message of length %" PRIuSIZE " (total %u) on channel id %u",
+        LOG(("DataChannel: Partial %s message of length %zu (total %u) on channel id %u",
              is_binary ? "binary" : "string", length, channel->mRecvBuffer.Length(),
              channel->mStream));
         return; // Not ready to notify application
 
       case DATA_CHANNEL_PPID_DOMSTRING_LAST:
-        LOG(("DataChannel: String message received of length %" PRIuSIZE " on channel %u",
+        LOG(("DataChannel: String message received of length %zu on channel %u",
              length, channel->mStream));
         if (!channel->mRecvBuffer.IsEmpty()) {
           channel->mRecvBuffer += recvData;
@@ -1375,7 +1376,7 @@ DataChannelConnection::HandleDataMessage(uint32_t ppid,
         break;
 
       case DATA_CHANNEL_PPID_BINARY_LAST:
-        LOG(("DataChannel: Received binary message of length %" PRIuSIZE " on channel id %u",
+        LOG(("DataChannel: Received binary message of length %zu on channel id %u",
              length, channel->mStream));
         if (!channel->mRecvBuffer.IsEmpty()) {
           channel->mRecvBuffer += recvData;
@@ -1441,7 +1442,7 @@ DataChannelConnection::HandleMessage(const void *buffer, size_t length, uint32_t
       HandleDataMessage(ppid, buffer, length, stream);
       break;
     default:
-      LOG(("Message of length %" PRIuSIZE ", PPID %u on stream %u received.",
+      LOG(("Message of length %zu, PPID %u on stream %u received.",
            length, ppid, stream));
       break;
   }
@@ -1461,9 +1462,9 @@ DataChannelConnection::HandleAssociationChangeEvent(const struct sctp_assoc_chan
 
       SetEvenOdd();
 
-      NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                DataChannelOnMessageAvailable::ON_CONNECTION,
-                                this)));
+      Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+                 DataChannelOnMessageAvailable::ON_CONNECTION,
+                 this)));
       LOG(("DTLS connect() succeeded!  Entering connected mode"));
 
       // Open any streams pending...
@@ -1478,18 +1479,18 @@ DataChannelConnection::HandleAssociationChangeEvent(const struct sctp_assoc_chan
   case SCTP_COMM_LOST:
     LOG(("Association change: SCTP_COMM_LOST"));
     // This association is toast, so also close all the channels -- from mainthread!
-    NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                              DataChannelOnMessageAvailable::ON_DISCONNECTED,
-                              this)));
+    Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+               DataChannelOnMessageAvailable::ON_DISCONNECTED,
+               this)));
     break;
   case SCTP_RESTART:
     LOG(("Association change: SCTP_RESTART"));
     break;
   case SCTP_SHUTDOWN_COMP:
     LOG(("Association change: SCTP_SHUTDOWN_COMP"));
-    NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                              DataChannelOnMessageAvailable::ON_DISCONNECTED,
-                              this)));
+    Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+               DataChannelOnMessageAvailable::ON_DISCONNECTED,
+               this)));
     break;
   case SCTP_CANT_STR_ASSOC:
     LOG(("Association change: SCTP_CANT_STR_ASSOC"));
@@ -1651,7 +1652,7 @@ DataChannelConnection::ClearResets()
 {
   // Clear all pending resets
   if (!mStreamsResetting.IsEmpty()) {
-    LOG(("Clearing resets for %" PRIuSIZE " streams", mStreamsResetting.Length()));
+    LOG(("Clearing resets for %zu streams", mStreamsResetting.Length()));
   }
 
   for (uint32_t i = 0; i < mStreamsResetting.Length(); ++i) {
@@ -1689,7 +1690,7 @@ DataChannelConnection::SendOutgoingStreamReset()
   uint32_t i;
   size_t len;
 
-  LOG(("Connection %p: Sending outgoing stream reset for %" PRIuSIZE " streams",
+  LOG(("Connection %p: Sending outgoing stream reset for %zu streams",
        (void *) this, mStreamsResetting.Length()));
   mLock.AssertCurrentThreadOwns();
   if (mStreamsResetting.IsEmpty()) {
@@ -1767,7 +1768,7 @@ DataChannelConnection::HandleStreamResetEvent(const struct sctp_stream_reset_eve
 
   // Process any pending resets now:
   if (!mStreamsResetting.IsEmpty()) {
-    LOG(("Sending %" PRIuSIZE " pending resets", mStreamsResetting.Length()));
+    LOG(("Sending %zu pending resets", mStreamsResetting.Length()));
     SendOutgoingStreamReset();
   }
 }
@@ -1779,7 +1780,7 @@ DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_e
   RefPtr<DataChannel> channel;
 
   if (strchg->strchange_flags == SCTP_STREAM_CHANGE_DENIED) {
-    LOG(("*** Failed increasing number of streams from %" PRIuSIZE " (%u/%u)",
+    LOG(("*** Failed increasing number of streams from %zu (%u/%u)",
          mStreams.Length(),
          strchg->strchange_instrms,
          strchg->strchange_outstrms));
@@ -1787,7 +1788,7 @@ DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_e
     return;
   }
   if (strchg->strchange_instrms > mStreams.Length()) {
-    LOG(("Other side increased streams from %" PRIuSIZE " to %u",
+    LOG(("Other side increased streams from %zu to %u",
          mStreams.Length(), strchg->strchange_instrms));
   }
   if (strchg->strchange_outstrms > mStreams.Length() ||
@@ -1800,7 +1801,7 @@ DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_e
          strchg->strchange_instrms));
     // make sure both are the same length
     mStreams.AppendElements(new_len - old_len);
-    LOG(("New length = %" PRIuSIZE " (was %d)", mStreams.Length(), old_len));
+    LOG(("New length = %zu (was %d)", mStreams.Length(), old_len));
     for (size_t i = old_len; i < mStreams.Length(); ++i) {
       mStreams[i] = nullptr;
     }
@@ -1811,13 +1812,13 @@ DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_e
     // Make sure we request enough streams if there's a big jump in streams
     // Could make a more complex API for OpenXxxFinish() and avoid this loop
     size_t num_needed = mPending.GetSize();
-    LOG(("%" PRIuSIZE " of %d new streams already needed", num_needed,
+    LOG(("%zu of %d new streams already needed", num_needed,
          new_len - old_len));
     num_needed -= (new_len - old_len); // number we added
     if (num_needed > 0) {
       if (num_needed < 16)
         num_needed = 16;
-      LOG(("Not enough new streams, asking for %" PRIuSIZE " more", num_needed));
+      LOG(("Not enough new streams, asking for %zu more", num_needed));
       RequestMoreStreams(num_needed);
     } else if (strchg->strchange_outstrms < strchg->strchange_instrms) {
       LOG(("Requesting %d output streams to match partner",
@@ -1840,9 +1841,9 @@ DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_e
           (strchg->strchange_flags & SCTP_STREAM_CHANGE_FAILED)) {
         /* XXX: Signal to the other end. */
         channel->mState = CLOSED;
-        NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                  DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
-                                  channel)));
+        Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+                   DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
+                   channel)));
         // maybe fire onError (bug 843625)
       } else {
         stream = FindFreeStream();
@@ -2126,9 +2127,9 @@ DataChannelConnection::OpenFinish(already_AddRefed<DataChannel>&& aChannel)
       if (channel->mFlags & DATA_CHANNEL_FLAGS_FINISH_OPEN) {
         // We already returned the channel to the app.
         NS_ERROR("Failed to send open request");
-        NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                            DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
-                                            channel)));
+        Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+                   DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
+                   channel)));
       }
       // If we haven't returned the channel yet, it will get destroyed when we exit
       // this function.
@@ -2145,9 +2146,9 @@ DataChannelConnection::OpenFinish(already_AddRefed<DataChannel>&& aChannel)
   channel->mReady = true;
   // FIX?  Move into DOMDataChannel?  I don't think we can send it yet here
   LOG(("%s: sending ON_CHANNEL_OPEN for %p", __FUNCTION__, channel.get()));
-  NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                            DataChannelOnMessageAvailable::ON_CHANNEL_OPEN, this,
-                            channel)));
+  Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+             DataChannelOnMessageAvailable::ON_CHANNEL_OPEN, this,
+             channel)));
 
   return channel.forget();
 
@@ -2156,9 +2157,9 @@ request_error_cleanup:
   if (channel->mFlags & DATA_CHANNEL_FLAGS_FINISH_OPEN) {
     // We already returned the channel to the app.
     NS_ERROR("Failed to request more streams");
-    NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                              DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
-                              channel)));
+    Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
+               DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
+               channel)));
     return channel.forget();
   }
   // we'll be destroying the channel, but it never really got set up
@@ -2226,7 +2227,7 @@ DataChannelConnection::SendMsgInternal(DataChannel *channel, const char *data,
                            nullptr, 0,
                            (void *)&spa, (socklen_t)sizeof(struct sctp_sendv_spa),
                            SCTP_SENDV_SPA, 0);
-    LOG(("Sent buffer (len=%" PRIuSIZE "), result=%d", length, result));
+    LOG(("Sent buffer (len=%zu), result=%d", length, result));
   } else {
     // Fake EAGAIN if we're already buffering data
     result = -1;
@@ -2239,7 +2240,7 @@ DataChannelConnection::SendMsgInternal(DataChannel *channel, const char *data,
       auto *buffered = new BufferedMsg(spa, data, length); // infallible malloc
       channel->mBufferedData.AppendElement(buffered); // owned by mBufferedData array
       channel->mFlags |= DATA_CHANNEL_FLAGS_SEND_DATA;
-      LOG(("Queued %" PRIuSIZE " buffers (len=%" PRIuSIZE ")",
+      LOG(("Queued %zu buffers (len=%zu)",
            channel->mBufferedData.Length(), length));
       return 0;
     }
@@ -2273,19 +2274,19 @@ DataChannelConnection::SendBinary(DataChannel *channel, const char *data,
       !(channel->mFlags & DATA_CHANNEL_FLAGS_OUT_OF_ORDER_ALLOWED)) {
     int32_t sent=0;
     uint32_t origlen = len;
-    LOG(("Sending binary message length %" PRIuSIZE " in chunks", len));
+    LOG(("Sending binary message length %zu in chunks", len));
     // XXX check flags for out-of-order, or force in-order for large binary messages
     while (len > 0) {
       size_t sendlen = std::min<size_t>(len, DATA_CHANNEL_MAX_BINARY_FRAGMENT);
       uint32_t ppid;
       len -= sendlen;
       ppid = len > 0 ? ppid_partial : ppid_final;
-      LOG(("Send chunk of %" PRIuSIZE " bytes, ppid %u", sendlen, ppid));
+      LOG(("Send chunk of %zu bytes, ppid %u", sendlen, ppid));
       // Note that these might end up being deferred and queued.
       sent += SendMsgInternal(channel, data, sendlen, ppid);
       data += sendlen;
     }
-    LOG(("Sent %d buffers for %u bytes, %d sent immediately, %" PRIuSIZE " buffers queued",
+    LOG(("Sent %d buffers for %u bytes, %d sent immediately, %zu buffers queued",
          (origlen+DATA_CHANNEL_MAX_BINARY_FRAGMENT-1)/DATA_CHANNEL_MAX_BINARY_FRAGMENT,
          origlen, sent,
          channel->mBufferedData.Length()));
@@ -2300,11 +2301,13 @@ DataChannelConnection::SendBinary(DataChannel *channel, const char *data,
 
 class ReadBlobRunnable : public Runnable {
 public:
-  ReadBlobRunnable(DataChannelConnection* aConnection, uint16_t aStream,
-    nsIInputStream* aBlob) :
-    mConnection(aConnection),
-    mStream(aStream),
-    mBlob(aBlob)
+  ReadBlobRunnable(DataChannelConnection* aConnection,
+                   uint16_t aStream,
+                   nsIInputStream* aBlob)
+    : Runnable("ReadBlobRunnable")
+    , mConnection(aConnection)
+    , mStream(aStream)
+    , mBlob(aBlob)
   {}
 
   NS_IMETHOD Run() override {
@@ -2347,10 +2350,14 @@ DataChannelConnection::SendBlob(uint16_t stream, nsIInputStream *aBlob)
 class DataChannelBlobSendRunnable : public Runnable
 {
 public:
-  DataChannelBlobSendRunnable(already_AddRefed<DataChannelConnection>& aConnection,
-                              uint16_t aStream)
-    : mConnection(aConnection)
-    , mStream(aStream) {}
+  DataChannelBlobSendRunnable(
+    already_AddRefed<DataChannelConnection>& aConnection,
+    uint16_t aStream)
+    : Runnable("DataChannelBlobSendRunnable")
+    , mConnection(aConnection)
+    , mStream(aStream)
+  {
+  }
 
   ~DataChannelBlobSendRunnable() override
   {
@@ -2397,8 +2404,6 @@ DataChannelConnection::ReadBlob(already_AddRefed<DataChannelConnection> aThis,
   // For now as a hack, send as a single blast of queued packets which may
   // be deferred until buffer space is available.
   uint64_t len;
-  nsCOMPtr<nsIThread> mainThread;
-  NS_GetMainThread(getter_AddRefs(mainThread));
 
   // Must not let Dispatching it cause the DataChannelConnection to get
   // released on the wrong thread.  Using WrapRunnable(RefPtr<DataChannelConnection>(aThis),...
@@ -2412,11 +2417,12 @@ DataChannelConnection::ReadBlob(already_AddRefed<DataChannelConnection> aThis,
     // Bug 966602:  Doesn't return an error to the caller via onerror.
     // We must release DataChannelConnection on MainThread to avoid issues (bug 876167)
     // aThis is now owned by the runnable; release it there
-    NS_ProxyRelease(mainThread, runnable.forget());
+    NS_ReleaseOnMainThreadSystemGroup(
+      "DataChannelBlobSendRunnable", runnable.forget());
     return;
   }
   aBlob->Close();
-  NS_DispatchToMainThread(runnable, NS_DISPATCH_NORMAL);
+  Dispatch(runnable.forget());
 }
 
 void
@@ -2569,9 +2575,10 @@ DataChannel::StreamClosedLocked()
                 !mConnection->FindChannelByStream(mStream));
   mStream = INVALID_STREAM;
   mState = CLOSED;
-  NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                                      DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED,
-                                      mConnection, this)));
+  mMainThreadEventTarget->Dispatch(
+    do_AddRef(new DataChannelOnMessageAvailable(
+                DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED,
+                mConnection, this)));
   // We leave mConnection live until the DOM releases us, to avoid races
 }
 
@@ -2601,13 +2608,14 @@ DataChannel::AppReady()
   mReady = true;
   if (mState == WAITING_TO_OPEN) {
     mState = OPEN;
-    NS_DispatchToMainThread(do_AddRef(new DataChannelOnMessageAvailable(
-                              DataChannelOnMessageAvailable::ON_CHANNEL_OPEN, mConnection,
-                              this)));
+    mMainThreadEventTarget->Dispatch(
+      do_AddRef(new DataChannelOnMessageAvailable(
+                  DataChannelOnMessageAvailable::ON_CHANNEL_OPEN, mConnection,
+                  this)));
     for (uint32_t i = 0; i < mQueuedMessages.Length(); ++i) {
       nsCOMPtr<nsIRunnable> runnable = mQueuedMessages[i];
       MOZ_ASSERT(runnable);
-      NS_DispatchToMainThread(runnable);
+      mMainThreadEventTarget->Dispatch(runnable.forget());
     }
   } else {
     NS_ASSERTION(mQueuedMessages.IsEmpty(), "Shouldn't have queued messages if not WAITING_TO_OPEN");
@@ -2660,7 +2668,8 @@ DataChannel::SendOrQueue(DataChannelOnMessageAvailable *aMessage)
       (mState == CONNECTING || mState == WAITING_TO_OPEN)) {
     mQueuedMessages.AppendElement(aMessage);
   } else {
-    NS_DispatchToMainThread(aMessage);
+    nsCOMPtr<nsIRunnable> runnable = aMessage;
+    mMainThreadEventTarget->Dispatch(runnable.forget());
   }
 }
 

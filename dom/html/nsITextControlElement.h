@@ -11,7 +11,6 @@
 #include "nsCOMPtr.h"
 class nsIContent;
 class nsAString;
-class nsIEditor;
 class nsISelectionController;
 class nsFrameSelection;
 class nsTextControlFrame;
@@ -19,6 +18,7 @@ class nsTextControlFrame;
 namespace mozilla {
 
 class ErrorResult;
+class TextEditor;
 
 namespace dom {
 class Element;
@@ -109,7 +109,7 @@ public:
    * The return value is null if the control does not support an editor
    * (for example, if it is a checkbox.)
    */
-  NS_IMETHOD_(nsIEditor*) GetTextEditor() = 0;
+  NS_IMETHOD_(mozilla::TextEditor*) GetTextEditor() = 0;
 
   /**
    * Get the selection controller object associated with the text editor.
@@ -220,7 +220,7 @@ public:
   static const int32_t DEFAULT_ROWS_TEXTAREA = 2;
   static const int32_t DEFAULT_UNDO_CAP = 1000;
 
-  // wrap can be one of these three values.  
+  // wrap can be one of these three values.
   typedef enum {
     eHTMLTextWrap_Off     = 1,    // "off"
     eHTMLTextWrap_Hard    = 2,    // "hard"

@@ -16,7 +16,7 @@
  *  synthesizeNativeKey
  *  synthesizeMouseExpectEvent
  *  synthesizeKeyExpectEvent
- *  synthesizeNativeClick
+ *  synthesizeNativeOSXClick
  *
  *  When adding methods to this file, please add a performance test for it.
  */
@@ -631,6 +631,31 @@ function sendWheelAndPaint(aTarget, aOffsetX, aOffsetY, aEvent, aCallback, aWind
   // the other wheel events, including legacy events.
   SpecialPowers.addSystemEventListener(aWindow, "wheel", onwheel);
   synthesizeWheel(aTarget, aOffsetX, aOffsetY, aEvent, aWindow);
+}
+
+function synthesizeNativeTapAtCenter(aTarget, aLongTap = false, aCallback = null, aWindow = window) {
+  let rect = aTarget.getBoundingClientRect();
+  return synthesizeNativeTap(aTarget, rect.width / 2, rect.height / 2, aLongTap, aCallback, aWindow);
+}
+
+function synthesizeNativeTap(aTarget, aOffsetX, aOffsetY, aLongTap = false, aCallback = null, aWindow = window) {
+  let utils = _getDOMWindowUtils(aWindow);
+  if (!utils)
+    return;
+
+  let scale = utils.screenPixelsPerCSSPixel;
+  let rect = aTarget.getBoundingClientRect();
+  let x = (aWindow.mozInnerScreenX + rect.left + aOffsetX) * scale;
+  let y = (aWindow.mozInnerScreenY + rect.top + aOffsetY) * scale;
+
+  let observer = {
+    observe: (subject, topic, data) => {
+      if (aCallback && topic == "mouseevent") {
+        aCallback(data);
+      }
+    }
+  };
+  utils.sendNativeTouchTap(x, y, aLongTap, observer);
 }
 
 function synthesizeNativeMouseMove(aTarget, aOffsetX, aOffsetY, aCallback, aWindow = window) {

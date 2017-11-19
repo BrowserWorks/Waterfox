@@ -431,8 +431,8 @@ IndexedDatabaseManager::Init()
                                        kPrefMaxSerilizedMsgSize);
 
 #ifdef ENABLE_INTL_API
-  const nsAdoptingCString& acceptLang =
-    Preferences::GetLocalizedCString("intl.accept_languages");
+  nsAutoCString acceptLang;
+  Preferences::GetLocalizedCString("intl.accept_languages", acceptLang);
 
   // Split values on commas.
   nsCCharSeparatedTokenizer langTokenizer(acceptLang, ',');
@@ -1107,7 +1107,8 @@ IndexedDatabaseManager::GetLocale()
 
 NS_IMPL_ADDREF(IndexedDatabaseManager)
 NS_IMPL_RELEASE_WITH_DESTROY(IndexedDatabaseManager, Destroy())
-NS_IMPL_QUERY_INTERFACE(IndexedDatabaseManager, nsIObserver, nsITimerCallback)
+NS_IMPL_QUERY_INTERFACE(IndexedDatabaseManager, nsIObserver, nsITimerCallback,
+                        nsINamed)
 
 NS_IMETHODIMP
 IndexedDatabaseManager::Observe(nsISupports* aSubject, const char* aTopic,
@@ -1160,6 +1161,13 @@ IndexedDatabaseManager::Notify(nsITimer* aTimer)
 
   mPendingDeleteInfos.Clear();
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+IndexedDatabaseManager::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("IndexedDatabaseManager");
   return NS_OK;
 }
 

@@ -6,6 +6,10 @@ from marionette_driver.errors import SessionNotCreatedException
 
 from marionette_harness import MarionetteTestCase
 
+# Unlike python 3, python 2 doesn't have a proper implementation of realpath or
+# samefile for Windows. However this function, which does exactly what we want,
+# was added to python 2 to fix an issue with tcl installations and symlinks.
+from FixTk import convert_path
 
 class TestCapabilities(MarionetteTestCase):
 
@@ -13,8 +17,13 @@ class TestCapabilities(MarionetteTestCase):
         super(TestCapabilities, self).setUp()
         self.caps = self.marionette.session_capabilities
         with self.marionette.using_context("chrome"):
-            self.appinfo = self.marionette.execute_script(
-                "return Services.appinfo")
+            self.appinfo = self.marionette.execute_script("""
+                return {
+                  name: Services.appinfo.name,
+                  version: Services.appinfo.version,
+                  processID: Services.appinfo.processID,
+                }
+                """)
             self.os_name = self.marionette.execute_script(
                 "return Services.sysinfo.getProperty('name')").lower()
             self.os_version = self.marionette.execute_script(
@@ -51,9 +60,9 @@ class TestCapabilities(MarionetteTestCase):
             if self.caps["browserName"] == "fennec":
                 current_profile = self.marionette.instance.runner.device.app_ctx.remote_profile
             else:
-                current_profile = self.marionette.instance.runner.profile.profile
-            self.assertEqual(self.caps["moz:profile"], current_profile)
-            self.assertEqual(self.marionette.profile, current_profile)
+                current_profile = convert_path(self.marionette.instance.runner.profile.profile)
+            self.assertEqual(convert_path(str(self.caps["moz:profile"])), current_profile)
+            self.assertEqual(convert_path(str(self.marionette.profile)), current_profile)
 
         self.assertIn("moz:accessibilityChecks", self.caps)
         self.assertFalse(self.caps["moz:accessibilityChecks"])

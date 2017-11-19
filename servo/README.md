@@ -52,7 +52,7 @@ If you've already partially compiled servo but forgot to do this step, run `./ma
 #### On Debian-based Linuxes
 
 ``` sh
-sudo apt install git curl freeglut3-dev autoconf \
+sudo apt install git curl freeglut3-dev autoconf libx11-dev \
     libfreetype6-dev libgl1-mesa-dri libglib2.0-dev xorg-dev \
     gperf g++ build-essential cmake virtualenv python-pip \
     libssl1.0-dev libbz2-dev libosmesa6-dev libxmu6 libxmu-dev \
@@ -110,7 +110,7 @@ pip install virtualenv
 3. Install Git for Windows (https://git-scm.com/download/win). DO allow it to add git.exe to the PATH (default
 settings for the installer are fine).
 
-4. Install Visual Studio 2015 Community Edition (https://www.visualstudio.com/). You MUST add "Visual C++" to the
+4. Install Visual Studio Community 2017 (https://www.visualstudio.com/). You MUST add "Visual C++" to the
 list of installed components. It is not on by default.
 
 #### Cross-compilation for Android

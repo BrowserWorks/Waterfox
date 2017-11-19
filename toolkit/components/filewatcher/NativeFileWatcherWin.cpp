@@ -37,7 +37,8 @@ public:
    */
   WatchedErrorEvent(const nsMainThreadPtrHandle<nsINativeFileWatcherErrorCallback>& aOnError,
                     const nsresult& anError, const DWORD& osError)
-    : mOnError(aOnError)
+    : Runnable("WatchedErrorEvent")
+    , mOnError(aOnError)
     , mError(anError)
   {
     MOZ_ASSERT(!NS_IsMainThread());
@@ -75,7 +76,8 @@ public:
    */
   WatchedSuccessEvent(const nsMainThreadPtrHandle<nsINativeFileWatcherSuccessCallback>& aOnSuccess,
                       const nsAString& aResourcePath)
-    : mOnSuccess(aOnSuccess)
+    : Runnable("WatchedSuccessEvent")
+    , mOnSuccess(aOnSuccess)
     , mResourcePath(aResourcePath)
   {
     MOZ_ASSERT(!NS_IsMainThread());
@@ -112,7 +114,8 @@ public:
    */
   WatchedChangeEvent(const nsMainThreadPtrHandle<nsINativeFileWatcherCallback>& aOnChange,
                      const nsAString& aChangedResource)
-    : mOnChange(aOnChange)
+    : Runnable("WatchedChangeEvent")
+    , mOnChange(aOnChange)
     , mChangedResource(aChangedResource)
   {
     MOZ_ASSERT(!NS_IsMainThread());
@@ -228,7 +231,8 @@ class NativeWatcherIOShutdownTask : public Runnable
 {
 public:
   NativeWatcherIOShutdownTask()
-    : mWorkerThread(do_GetCurrentThread())
+    : Runnable("NativeWatcherIOShutdownTask")
+    , mWorkerThread(do_GetCurrentThread())
   {
     MOZ_ASSERT(!NS_IsMainThread());
   }
@@ -259,7 +263,8 @@ class NativeFileWatcherIOTask : public Runnable
 {
 public:
   explicit NativeFileWatcherIOTask(HANDLE aIOCompletionPort)
-    : mIOCompletionPort(aIOCompletionPort)
+    : Runnable("NativeFileWatcherIOTask")
+    , mIOCompletionPort(aIOCompletionPort)
     , mShuttingDown(false)
   {
   }
@@ -1301,13 +1306,16 @@ NativeFileWatcherService::AddPath(const nsAString& aPathToWatch,
   }
 
   nsMainThreadPtrHandle<nsINativeFileWatcherCallback> changeCallbackHandle(
-    new nsMainThreadPtrHolder<nsINativeFileWatcherCallback>(aOnChange));
+    new nsMainThreadPtrHolder<nsINativeFileWatcherCallback>(
+      "nsINativeFileWatcherCallback", aOnChange));
 
   nsMainThreadPtrHandle<nsINativeFileWatcherErrorCallback> errorCallbackHandle(
-    new nsMainThreadPtrHolder<nsINativeFileWatcherErrorCallback>(aOnError));
+    new nsMainThreadPtrHolder<nsINativeFileWatcherErrorCallback>(
+      "nsINativeFileWatcherErrorCallback", aOnError));
 
   nsMainThreadPtrHandle<nsINativeFileWatcherSuccessCallback> successCallbackHandle(
-    new nsMainThreadPtrHolder<nsINativeFileWatcherSuccessCallback>(aOnSuccess));
+    new nsMainThreadPtrHolder<nsINativeFileWatcherSuccessCallback>(
+      "nsINativeFileWatcherSuccessCallback", aOnSuccess));
 
   // Wrap the path and the callbacks in order to pass them using NewRunnableMethod.
   UniquePtr<PathRunnablesParametersWrapper> wrappedCallbacks(
@@ -1321,6 +1329,7 @@ NativeFileWatcherService::AddPath(const nsAString& aPathToWatch,
   nsresult rv =
     mIOThread->Dispatch(
       NewRunnableMethod<PathRunnablesParametersWrapper*>(
+        "NativeFileWatcherIOTask::AddPathRunnableMethod",
         static_cast<NativeFileWatcherIOTask*>(mWorkerIORunnable.get()),
         &NativeFileWatcherIOTask::AddPathRunnableMethod,
         wrappedCallbacks.get()),
@@ -1371,13 +1380,16 @@ NativeFileWatcherService::RemovePath(const nsAString& aPathToRemove,
   }
 
   nsMainThreadPtrHandle<nsINativeFileWatcherCallback> changeCallbackHandle(
-    new nsMainThreadPtrHolder<nsINativeFileWatcherCallback>(aOnChange));
+    new nsMainThreadPtrHolder<nsINativeFileWatcherCallback>(
+      "nsINativeFileWatcherCallback", aOnChange));
 
   nsMainThreadPtrHandle<nsINativeFileWatcherErrorCallback> errorCallbackHandle(
-    new nsMainThreadPtrHolder<nsINativeFileWatcherErrorCallback>(aOnError));
+    new nsMainThreadPtrHolder<nsINativeFileWatcherErrorCallback>(
+      "nsINativeFileWatcherErrorCallback", aOnError));
 
   nsMainThreadPtrHandle<nsINativeFileWatcherSuccessCallback> successCallbackHandle(
-    new nsMainThreadPtrHolder<nsINativeFileWatcherSuccessCallback>(aOnSuccess));
+    new nsMainThreadPtrHolder<nsINativeFileWatcherSuccessCallback>(
+      "nsINativeFileWatcherSuccessCallback", aOnSuccess));
 
   // Wrap the path and the callbacks in order to pass them using NewRunnableMethod.
   UniquePtr<PathRunnablesParametersWrapper> wrappedCallbacks(
@@ -1391,6 +1403,7 @@ NativeFileWatcherService::RemovePath(const nsAString& aPathToRemove,
   nsresult rv =
     mIOThread->Dispatch(
       NewRunnableMethod<PathRunnablesParametersWrapper*>(
+        "NativeFileWatcherIOTask::RemovePathRunnableMethod",
         static_cast<NativeFileWatcherIOTask*>(mWorkerIORunnable.get()),
         &NativeFileWatcherIOTask::RemovePathRunnableMethod,
         wrappedCallbacks.get()),
@@ -1440,6 +1453,7 @@ NativeFileWatcherService::Uninit()
   nsresult rv =
     ioThread->Dispatch(
       NewRunnableMethod(
+        "NativeFileWatcherIOTask::DeactivateRunnableMethod",
         static_cast<NativeFileWatcherIOTask*>(mWorkerIORunnable.get()),
         &NativeFileWatcherIOTask::DeactivateRunnableMethod),
       nsIEventTarget::DISPATCH_NORMAL);

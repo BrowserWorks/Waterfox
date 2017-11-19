@@ -32,7 +32,7 @@ WeakMapBase::WeakMapBase(JSObject* memOf, Zone* zone)
 
 WeakMapBase::~WeakMapBase()
 {
-    MOZ_ASSERT(CurrentThreadIsGCSweeping());
+    MOZ_ASSERT(CurrentThreadIsGCSweeping() || CurrentThreadCanAccessZone(zone_));
 }
 
 void
@@ -139,7 +139,7 @@ ObjectValueMap::findZoneEdges()
     JS::AutoSuppressGCAnalysis nogc;
     for (Range r = all(); !r.empty(); r.popFront()) {
         JSObject* key = r.front().key();
-        if (key->asTenured().isMarked(BLACK) && !key->asTenured().isMarked(GRAY))
+        if (key->asTenured().isMarkedBlack())
             continue;
         JSObject* delegate = getDelegate(key);
         if (!delegate)
@@ -197,7 +197,6 @@ ObjectWeakMap::clear()
 void
 ObjectWeakMap::trace(JSTracer* trc)
 {
-    MOZ_ASSERT(map.initialized());
     map.trace(trc);
 }
 

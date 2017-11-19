@@ -41,16 +41,8 @@ typedef struct _nsCocoaWindowList {
   NSColor* mActiveTitlebarColor;
   NSColor* mInactiveTitlebarColor;
 
-  // Shadow
-  BOOL mScheduledShadowInvalidation;
-
   // Invalidation disabling
   BOOL mDisabledNeedsDisplay;
-
-  // DPI cache. Getting the physical screen size (CGDisplayScreenSize)
-  // is ridiculously slow, so we cache it in the toplevel window for all
-  // descendants to use.
-  float mDPI;
 
   NSTrackingArea* mTrackingArea;
 
@@ -69,9 +61,6 @@ typedef struct _nsCocoaWindowList {
 - (void)setTitlebarColor:(NSColor*)aColor forActiveWindow:(BOOL)aActive;
 - (NSColor*)titlebarColorForActiveWindow:(BOOL)aActive;
 
-- (void)deferredInvalidateShadow;
-- (void)invalidateShadow;
-- (float)getDPI;
 
 - (void)mouseEntered:(NSEvent*)aEvent;
 - (void)mouseExited:(NSEvent*)aEvent;
@@ -211,7 +200,7 @@ typedef struct _nsCocoaWindowList {
 - (void)restoreBackgroundColor;
 @end
 
-class nsCocoaWindow : public nsBaseWidget, public nsPIWidgetCocoa
+class nsCocoaWindow final : public nsBaseWidget, public nsPIWidgetCocoa
 {
 private:
   typedef nsBaseWidget Inherited;
@@ -258,6 +247,7 @@ public:
     virtual void            SetSizeConstraints(const SizeConstraints& aConstraints) override;
     virtual void            Move(double aX, double aY) override;
     virtual void            SetSizeMode(nsSizeMode aMode) override;
+    virtual void            SuppressAnimation(bool aSuppress) override;
     virtual void            HideWindowChrome(bool aShouldHide) override;
 
     void EnteredFullScreen(bool aFullScreen, bool aNativeMode = true);
@@ -315,6 +305,8 @@ public:
     virtual nsTransparencyMode GetTransparencyMode() override;
     virtual void SetTransparencyMode(nsTransparencyMode aMode) override;
     virtual void SetWindowShadowStyle(int32_t aStyle) override;
+    virtual void SetWindowOpacity(float aOpacity) override;
+    virtual void SetWindowTransform(const mozilla::gfx::Matrix& aTransform) override;
     virtual void SetShowsToolbarButton(bool aShow) override;
     virtual void SetShowsFullScreenButton(bool aShow) override;
     virtual void SetWindowAnimationType(WindowAnimationType aType) override;
@@ -330,6 +322,7 @@ public:
                                                 nsIObserver* aObserver) override;
 
     void DispatchSizeModeEvent();
+    void DispatchOcclusionEvent();
 
     // be notified that a some form of drag event needs to go into Gecko
     virtual bool DragEvent(unsigned int aMessage, mozilla::gfx::Point aMouseGlobal, UInt16 aKeyModifiers);
@@ -352,6 +345,8 @@ public:
                    nsTArray<mozilla::CommandInt>& aCommands) override;
 
     void SetPopupWindowLevel();
+
+    bool InFullScreenMode() const { return mInFullScreenMode; }
 
 protected:
   virtual ~nsCocoaWindow();
@@ -416,9 +411,11 @@ protected:
 
   bool                 mInReportMoveEvent; // true if in a call to ReportMoveEvent().
   bool                 mInResize; // true if in a call to DoResize().
+  bool                 mWindowTransformIsIdentity;
 
   int32_t              mNumModalDescendents;
   InputContext         mInputContext;
+  NSWindowAnimationBehavior mWindowAnimationBehavior;
 };
 
 #endif // nsCocoaWindow_h_

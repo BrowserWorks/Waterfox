@@ -7,6 +7,7 @@
 
 #include "nsICacheStorageService.h"
 #include "nsIMemoryReporter.h"
+#include "nsINamed.h"
 #include "nsITimer.h"
 #include "nsICacheTesting.h"
 
@@ -68,6 +69,7 @@ class CacheStorageService final : public nsICacheStorageService
                                 , public nsIMemoryReporter
                                 , public nsITimerCallback
                                 , public nsICacheTesting
+                                , public nsINamed
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -75,6 +77,7 @@ public:
   NS_DECL_NSIMEMORYREPORTER
   NS_DECL_NSITIMERCALLBACK
   NS_DECL_NSICACHETESTING
+  NS_DECL_NSINAMED
 
   CacheStorageService();
 
@@ -294,12 +297,12 @@ private:
   void PurgeOverMemoryLimit();
 
 private:
-  nsresult DoomStorageEntries(nsCSubstring const& aContextKey,
+  nsresult DoomStorageEntries(const nsACString& aContextKey,
                               nsILoadContextInfo* aContext,
                               bool aDiskStorage,
                               bool aPin,
                               nsICacheEntryDoomCallback* aCallback);
-  nsresult AddStorageEntry(nsCSubstring const& aContextKey,
+  nsresult AddStorageEntry(const nsACString& aContextKey,
                            const nsACString & aURI,
                            const nsACString & aIdExtension,
                            bool aWriteToDisk,
@@ -365,7 +368,11 @@ private:
   {
   public:
     PurgeFromMemoryRunnable(CacheStorageService* aService, uint32_t aWhat)
-      : mService(aService), mWhat(aWhat) { }
+      : Runnable("net::CacheStorageService::PurgeFromMemoryRunnable")
+      , mService(aService)
+      , mWhat(aWhat)
+    {
+    }
 
   private:
     virtual ~PurgeFromMemoryRunnable() { }
@@ -386,7 +393,12 @@ private:
   class IOThreadSuspender : public Runnable
   {
   public:
-    IOThreadSuspender() : mMon("IOThreadSuspender"), mSignaled(false) { }
+    IOThreadSuspender()
+      : Runnable("net::CacheStorageService::IOThreadSuspender")
+      , mMon("IOThreadSuspender")
+      , mSignaled(false)
+    {
+    }
     void Notify();
   private:
     virtual ~IOThreadSuspender() { }
@@ -400,16 +412,15 @@ private:
 };
 
 template<class T>
-void ProxyRelease(nsCOMPtr<T> &object, nsIThread* thread)
+void ProxyRelease(const char* aName, nsCOMPtr<T> &object, nsIEventTarget* target)
 {
-  NS_ProxyRelease(thread, object.forget());
+  NS_ProxyRelease(aName, target, object.forget());
 }
 
 template<class T>
-void ProxyReleaseMainThread(nsCOMPtr<T> &object)
+void ProxyReleaseMainThread(const char* aName, nsCOMPtr<T> &object)
 {
-  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-  ProxyRelease(object, mainThread);
+  ProxyRelease(aName, object, GetMainThreadEventTarget());
 }
 
 } // namespace net

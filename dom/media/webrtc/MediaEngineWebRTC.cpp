@@ -41,6 +41,7 @@ nsTArray<nsCString>* AudioInputCubeb::mDeviceNames;
 cubeb_device_collection AudioInputCubeb::mDevices = { nullptr, 0 };
 bool AudioInputCubeb::mAnyInUse = false;
 StaticMutex AudioInputCubeb::sMutex;
+uint32_t AudioInputCubeb::sUserChannelCount = 0;
 
 // AudioDeviceID is an annoying opaque value that's really a string
 // pointer, and is freed when the cubeb_device_collection is destroyed
@@ -110,8 +111,6 @@ MediaEngineWebRTC::MediaEngineWebRTC(MediaEnginePrefs &aPrefs)
     mVoiceEngine(nullptr),
     mAudioInput(nullptr),
     mFullDuplex(aPrefs.mFullDuplex),
-    mExtendedFilter(aPrefs.mExtendedFilter),
-    mDelayAgnostic(aPrefs.mDelayAgnostic),
     mHasTabVideoSource(false)
 {
   nsCOMPtr<nsIComponentRegistrar> compMgr;
@@ -119,8 +118,6 @@ MediaEngineWebRTC::MediaEngineWebRTC(MediaEnginePrefs &aPrefs)
   if (compMgr) {
     compMgr->IsContractIDRegistered(NS_TABSOURCESERVICE_CONTRACTID, &mHasTabVideoSource);
   }
-  // XXX
-  gFarendObserver = new AudioOutputObserver();
 
   camera::GetChildAndCall(
     &camera::CamerasChild::AddDeviceChangeCallback,
@@ -297,10 +294,7 @@ MediaEngineWebRTC::EnumerateAudioDevices(dom::MediaSourceEnum aMediaSource,
 #endif
 
   if (!mVoiceEngine) {
-    mConfig.Set<webrtc::ExtendedFilter>(new webrtc::ExtendedFilter(mExtendedFilter));
-    mConfig.Set<webrtc::DelayAgnostic>(new webrtc::DelayAgnostic(mDelayAgnostic));
-
-    mVoiceEngine = webrtc::VoiceEngine::Create(mConfig);
+    mVoiceEngine = webrtc::VoiceEngine::Create(/*mConfig*/);
     if (!mVoiceEngine) {
       return;
     }
@@ -331,7 +325,7 @@ MediaEngineWebRTC::EnumerateAudioDevices(dom::MediaSourceEnum aMediaSource,
   int nDevices = 0;
   mAudioInput->GetNumOfRecordingDevices(nDevices);
   int i;
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_WIDGET_ANDROID)
   i = 0; // Bug 1037025 - let the OS handle defaulting for now on android/b2g
 #else
   // -1 is "default communications device" depending on OS in webrtc.org code

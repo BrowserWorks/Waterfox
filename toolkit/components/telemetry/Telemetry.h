@@ -46,13 +46,6 @@ enum TimerResolution {
 };
 
 /**
- * Create and destroy the underlying base::StatisticsRecorder singleton.
- * Creation has to be done very early in the startup sequence.
- */
-void CreateStatisticsRecorder();
-void DestroyStatisticsRecorder();
-
-/**
  * Initialize the Telemetry service on the main thread at startup.
  */
 void Init();
@@ -113,6 +106,23 @@ void AccumulateCategorical(E enumValue) {
 };
 
 /**
+ * Adds sample to a keyed categorical histogram defined in TelemetryHistogramEnums.h
+ * This is the typesafe - and preferred - way to use the keyed categorical histograms
+ * by passing values from the corresponding Telemetry::LABELS_* enum.
+ *
+ * @param key - the string key
+ * @param enumValue - Label value from one of the Telemetry::LABELS_* enums.
+ */
+template<class E>
+void AccumulateCategoricalKeyed(const nsCString& key, E enumValue) {
+  static_assert(IsCategoricalLabelEnum<E>::value,
+                "Only categorical label enum types are supported.");
+  Accumulate(static_cast<HistogramID>(CategoricalLabelId<E>::value),
+             key,
+             static_cast<uint32_t>(enumValue));
+};
+
+/**
  * Adds sample to a categorical histogram defined in TelemetryHistogramEnums.h
  * This string will be matched against the labels defined in Histograms.json.
  * If the string does not match a label defined for the histogram, nothing will
@@ -133,7 +143,7 @@ void AccumulateCategorical(HistogramID id, const nsCString& label);
 void AccumulateTimeDelta(HistogramID id, TimeStamp start, TimeStamp end = TimeStamp::Now());
 
 /**
- * Enable/disable recording for this histogram at runtime.
+ * Enable/disable recording for this histogram in this process at runtime.
  * Recording is enabled by default, unless listed at kRecordingInitiallyDisabledIDs[].
  * id must be a valid telemetry enum, otherwise an assertion is triggered.
  *
@@ -343,7 +353,7 @@ class ThreadHangStats;
  *               will be moved and aStats should be treated as
  *               invalid after this function returns
  */
-void RecordThreadHangStats(ThreadHangStats& aStats);
+void RecordThreadHangStats(ThreadHangStats&& aStats);
 
 /**
  * Record a failed attempt at locking the user's profile.

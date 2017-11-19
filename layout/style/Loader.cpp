@@ -73,8 +73,7 @@
 #include "nsIContentSecurityPolicy.h"
 #include "mozilla/dom/SRICheck.h"
 
-#include "mozilla/dom/EncodingUtils.h"
-using mozilla::dom::EncodingUtils;
+#include "mozilla/Encoding.h"
 
 using namespace mozilla::dom;
 
@@ -127,7 +126,7 @@ protected:
 public:
   // Data for loading a sheet linked from a document
   SheetLoadData(Loader* aLoader,
-                const nsSubstring& aTitle,
+                const nsAString& aTitle,
                 nsIURI* aURI,
                 StyleSheet* aSheet,
                 nsIStyleSheetLinkingElement* aOwningElement,
@@ -303,7 +302,7 @@ NS_IMPL_ISUPPORTS(SheetLoadData, nsIUnicharStreamLoaderObserver, nsIRunnable,
                   nsIThreadObserver)
 
 SheetLoadData::SheetLoadData(Loader* aLoader,
-                             const nsSubstring& aTitle,
+                             const nsAString& aTitle,
                              nsIURI* aURI,
                              StyleSheet* aSheet,
                              nsIStyleSheetLinkingElement* aOwningElement,
@@ -420,7 +419,7 @@ SheetLoadData::Run()
 }
 
 NS_IMETHODIMP
-SheetLoadData::OnDispatchedEvent(nsIThreadInternal* aThread)
+SheetLoadData::OnDispatchedEvent()
 {
   return NS_OK;
 }
@@ -676,9 +675,12 @@ SheetLoadData::OnDetermineCharset(nsIUnicharStreamLoader* aLoader,
 
   aCharset.Truncate();
 
-  if (nsContentUtils::CheckForBOM((const unsigned char*)aSegment.BeginReading(),
-                                  aSegment.Length(),
-                                  aCharset)) {
+  const Encoding* encoding;
+  size_t bomLength;
+  Tie(encoding, bomLength) = Encoding::ForBOM(aSegment);
+  Unused << bomLength;
+  if (encoding) {
+    encoding->Name(aCharset);
     // aCharset is now either "UTF-16BE", "UTF-16BE" or "UTF-8"
     // which will swallow the BOM.
     mCharset.Assign(aCharset);
@@ -691,7 +693,9 @@ SheetLoadData::OnDetermineCharset(nsIUnicharStreamLoader* aLoader,
   aLoader->GetChannel(getter_AddRefs(channel));
   if (channel) {
     channel->GetContentCharset(specified);
-    if (EncodingUtils::FindEncodingForLabel(specified, aCharset)) {
+    encoding = Encoding::ForLabel(specified);
+    if (encoding) {
+      encoding->Name(aCharset);
       mCharset.Assign(aCharset);
       LOG(("  Setting from HTTP to: %s", PromiseFlatCString(aCharset).get()));
       return NS_OK;
@@ -701,13 +705,11 @@ SheetLoadData::OnDetermineCharset(nsIUnicharStreamLoader* aLoader,
   if (GetCharsetFromData(aSegment.BeginReading(),
                          aSegment.Length(),
                          specified)) {
-    if (EncodingUtils::FindEncodingForLabel(specified, aCharset)) {
-      // FindEncodingForLabel currently never returns UTF-16LE but will
-      // probably change to never return UTF-16 instead, so check both here
-      // to avoid relying on the exact behavior.
-      if (aCharset.EqualsLiteral("UTF-16") ||
-          aCharset.EqualsLiteral("UTF-16BE") ||
-          aCharset.EqualsLiteral("UTF-16LE")) {
+    encoding = Encoding::ForLabel(specified);
+    if (encoding) {
+      encoding->Name(aCharset);
+      if (encoding == UTF_16BE_ENCODING ||
+          encoding == UTF_16LE_ENCODING) {
         // Be consistent with HTML <meta> handling in face of impossibility.
         // When the @charset rule itself evidently was not UTF-16-encoded,
         // it saying UTF-16 has to be a lie.
@@ -725,7 +727,9 @@ SheetLoadData::OnDetermineCharset(nsIUnicharStreamLoader* aLoader,
   if (mOwningElement) {
     nsAutoString specified16;
     mOwningElement->GetCharset(specified16);
-    if (EncodingUtils::FindEncodingForLabel(specified16, aCharset)) {
+    encoding = Encoding::ForLabel(specified16);
+    if (encoding) {
+      encoding->Name(aCharset);
       mCharset.Assign(aCharset);
       LOG(("  Setting from charset attribute to: %s",
           PromiseFlatCString(aCharset).get()));
@@ -735,7 +739,9 @@ SheetLoadData::OnDetermineCharset(nsIUnicharStreamLoader* aLoader,
 
   // In the preload case, the value of the charset attribute on <link> comes
   // in via mCharsetHint instead.
-  if (EncodingUtils::FindEncodingForLabel(mCharsetHint, aCharset)) {
+  encoding = Encoding::ForLabel(mCharsetHint);
+  if (encoding) {
+    encoding->Name(aCharset);
     mCharset.Assign(aCharset);
       LOG(("  Setting from charset attribute (preload case) to: %s",
           PromiseFlatCString(aCharset).get()));
@@ -755,8 +761,8 @@ SheetLoadData::OnDetermineCharset(nsIUnicharStreamLoader* aLoader,
 
   if (mLoader->mDocument) {
     // no useful data on charset.  Try the document charset.
-    aCharset = mLoader->mDocument->GetDocumentCharacterSet();
-    MOZ_ASSERT(!aCharset.IsEmpty());
+    auto encoding = mLoader->mDocument->GetDocumentCharacterSet();
+    encoding->Name(aCharset);
     mCharset.Assign(aCharset);
     LOG(("  Setting from document to: %s", PromiseFlatCString(aCharset).get()));
     return NS_OK;
@@ -885,6 +891,11 @@ SheetLoadData::OnStreamComplete(nsIUnicharStreamLoader* aLoader,
       mLoader->SheetComplete(this, NS_ERROR_NOT_AVAILABLE);
       return NS_OK;
     }
+
+    nsAutoCString sourceMapURL;
+    if (nsContentUtils::GetSourceMapURL(httpChannel, sourceMapURL)) {
+      mSheet->SetSourceMapURL(NS_ConvertUTF8toUTF16(sourceMapURL));
+    }
   }
 
   nsAutoCString contentType;
@@ -922,9 +933,9 @@ SheetLoadData::OnStreamComplete(nsIUnicharStreamLoader* aLoader,
       errorFlag = nsIScriptError::errorFlag;
     }
 
-    const nsAFlatString& specUTF16 =
+    const nsString& specUTF16 =
       NS_ConvertUTF8toUTF16(channelURI->GetSpecOrDefault());
-    const nsAFlatString& ctypeUTF16 = NS_ConvertASCIItoUTF16(contentType);
+    const nsString& ctypeUTF16 = NS_ConvertASCIItoUTF16(contentType);
     const char16_t *strings[] = { specUTF16.get(), ctypeUTF16.get() };
 
     nsCOMPtr<nsIURI> referrer = GetReferrerURI();
@@ -1067,8 +1078,7 @@ Loader::CheckContentPolicy(nsIPrincipal* aSourcePrincipal,
                                           NS_LITERAL_CSTRING("text/css"),
                                           nullptr,  //extra param
                                           &shouldLoad,
-                                          nsContentUtils::GetContentPolicy(),
-                                          nsContentUtils::GetSecurityManager());
+                                          nsContentUtils::GetContentPolicy());
    if (NS_FAILED(rv) || NS_CP_REJECTED(shouldLoad)) {
      return NS_ERROR_CONTENT_BLOCKED;
    }
@@ -1279,8 +1289,8 @@ Loader::CreateSheet(nsIURI* aURI,
  */
 void
 Loader::PrepareSheet(StyleSheet* aSheet,
-                     const nsSubstring& aTitle,
-                     const nsSubstring& aMediaString,
+                     const nsAString& aTitle,
+                     const nsAString& aMediaString,
                      MediaList* aMediaList,
                      Element* aScopeElement,
                      bool aIsAlternate)
@@ -1404,23 +1414,18 @@ Loader::InsertSheetInDoc(StyleSheet* aSheet,
 nsresult
 Loader::InsertChildSheet(StyleSheet* aSheet,
                          StyleSheet* aParentSheet,
-                         ImportRule* aGeckoParentRule,
-                         const RawServoStyleSheet* aServoChildSheet)
+                         ImportRule* aGeckoParentRule)
 {
   LOG(("css::Loader::InsertChildSheet"));
   MOZ_ASSERT(aSheet, "Nothing to insert");
   MOZ_ASSERT(aParentSheet, "Need a parent to insert into");
-  MOZ_ASSERT(!aSheet->IsGecko() || (aGeckoParentRule && !aServoChildSheet));
-  MOZ_ASSERT(!aSheet->IsServo() || (aServoChildSheet && !aGeckoParentRule));
+  MOZ_ASSERT(aSheet->IsGecko() == !!aGeckoParentRule);
+
   // child sheets should always start out enabled, even if they got
   // cloned off of top-level sheets which were disabled
   aSheet->SetEnabled(true);
-  if (aSheet->IsGecko()) {
+  if (aGeckoParentRule) {
     aGeckoParentRule->SetSheet(aSheet->AsGecko()); // This sets the ownerRule on the sheet
-  } else {
-    if (!aSheet->AsServo()->RawSheet()) {
-      aSheet->AsServo()->SetSheetForImport(aServoChildSheet);
-    }
   }
   aParentSheet->PrependStyleSheet(aSheet);
 
@@ -1819,10 +1824,6 @@ Loader::SheetComplete(SheetLoadData* aLoadData, nsresult aStatus)
 {
   LOG(("css::Loader::SheetComplete"));
 
-  if (aLoadData->mSheet->IsServo() && NS_FAILED(aStatus)) {
-    aLoadData->mSheet->AsServo()->LoadFailed();
-  }
-
   // 8 is probably big enough for all our common cases.  It's not likely that
   // imports will nest more than 8 deep, and multiple sheets with the same URI
   // are rare.
@@ -2198,15 +2199,12 @@ Loader::LoadChildSheet(StyleSheet* aParentSheet,
                        nsIURI* aURL,
                        dom::MediaList* aMedia,
                        ImportRule* aGeckoParentRule,
-                       const RawServoStyleSheet* aServoChildSheet,
                        LoaderReusableStyleSheets* aReusableSheets)
 {
   LOG(("css::Loader::LoadChildSheet"));
   NS_PRECONDITION(aURL, "Must have a URI to load");
   NS_PRECONDITION(aParentSheet, "Must have a parent sheet");
-
-  MOZ_ASSERT(!aParentSheet->IsGecko() || (aGeckoParentRule && !aServoChildSheet));
-  MOZ_ASSERT(!aParentSheet->IsServo() || (aServoChildSheet && !aGeckoParentRule));
+  MOZ_ASSERT(aParentSheet->IsGecko() == !!aGeckoParentRule);
 
   if (!mEnabled) {
     LOG_WARN(("  Not enabled"));
@@ -2219,11 +2217,7 @@ Loader::LoadChildSheet(StyleSheet* aParentSheet,
 
   // check for an associated document: if none, don't bother walking up the
   // parent sheets
-  //
-  // FIXME(emilio): Figure out whether this walk up is necessary (try seems
-  // green without it), and fix the parenting of stylesheets in the servo case
-  // if that's the case.
-  if (aParentSheet->GetAssociatedDocument() && aParentSheet->IsGecko()) {
+  if (aParentSheet->GetAssociatedDocument()) {
     StyleSheet* topSheet = aParentSheet;
     while (StyleSheet* parent = topSheet->GetParentSheet()) {
       topSheet = parent;
@@ -2275,7 +2269,7 @@ Loader::LoadChildSheet(StyleSheet* aParentSheet,
     state = eSheetComplete;
   } else {
     bool isAlternate;
-    const nsSubstring& empty = EmptyString();
+    const nsAString& empty = EmptyString();
     // For now, use CORS_NONE for child sheets
     rv = CreateSheet(aURL, nullptr, principal,
                      aParentSheet->ParsingMode(),
@@ -2288,8 +2282,7 @@ Loader::LoadChildSheet(StyleSheet* aParentSheet,
     PrepareSheet(sheet, empty, empty, aMedia, nullptr, isAlternate);
   }
 
-  rv = InsertChildSheet(sheet, aParentSheet, aGeckoParentRule,
-                        aServoChildSheet);
+  rv = InsertChildSheet(sheet, aParentSheet, aGeckoParentRule);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (state == eSheetComplete) {
@@ -2415,7 +2408,7 @@ Loader::InternalLoadNonDocumentSheet(nsIURI* aURL,
   bool isAlternate;
   RefPtr<StyleSheet> sheet;
   bool syncLoad = (aObserver == nullptr);
-  const nsSubstring& empty = EmptyString();
+  const nsAString& empty = EmptyString();
 
   rv = CreateSheet(aURL, nullptr, aOriginPrincipal, aParsingMode,
                    aCORSMode, aReferrerPolicy, aIntegrity, syncLoad,
@@ -2483,14 +2476,11 @@ Loader::PostLoadEvent(nsIURI* aURI,
   nsresult rv;
   RefPtr<SheetLoadData> runnable(evt);
   if (mDocument) {
-    rv = mDocument->Dispatch("SheetLoadData", TaskCategory::Other,
-                             runnable.forget());
+    rv = mDocument->Dispatch(TaskCategory::Other, runnable.forget());
   } else if (mDocGroup) {
-    rv = mDocGroup->Dispatch("SheetLoadData", TaskCategory::Other,
-                             runnable.forget());
+    rv = mDocGroup->Dispatch(TaskCategory::Other, runnable.forget());
   } else {
-    rv = SystemGroup::Dispatch("SheetLoadData", TaskCategory::Other,
-                               runnable.forget());
+    rv = SystemGroup::Dispatch(TaskCategory::Other, runnable.forget());
   }
 
   if (NS_FAILED(rv)) {

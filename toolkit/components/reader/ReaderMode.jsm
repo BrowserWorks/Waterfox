@@ -63,18 +63,10 @@ this.ReaderMode = {
     return this.isEnabledForParseOnLoad = this._getStateForParseOnLoad();
   },
 
-  get isOnLowMemoryPlatform() {
-    let memory = Cc["@mozilla.org/xpcom/memory-service;1"].getService(Ci.nsIMemory);
-    delete this.isOnLowMemoryPlatform;
-    return this.isOnLowMemoryPlatform = memory.isLowMemoryPlatform();
-  },
-
   _getStateForParseOnLoad() {
     let isEnabled = Services.prefs.getBoolPref("reader.parse-on-load.enabled");
     let isForceEnabled = Services.prefs.getBoolPref("reader.parse-on-load.force-enabled");
-    // For low-memory devices, don't allow reader mode since it takes up a lot of memory.
-    // See https://bugzilla.mozilla.org/show_bug.cgi?id=792603 for details.
-    return isForceEnabled || (isEnabled && !this.isOnLowMemoryPlatform);
+    return isForceEnabled || isEnabled;
   },
 
   observe(aMessage, aTopic, aData) {
@@ -224,13 +216,13 @@ this.ReaderMode = {
    * @return {Promise}
    * @resolves JS object representing the article, or null if no article is found.
    */
-  async parseDocument(doc) {
+  parseDocument(doc) {
     if (!this._shouldCheckUri(doc.documentURIObject) || !this._shouldCheckUri(doc.baseURIObject, true)) {
       this.log("Reader mode disabled for URI");
       return null;
     }
 
-    return await this._readerParse(doc);
+    return this._readerParse(doc);
   },
 
   /**
@@ -247,7 +239,7 @@ this.ReaderMode = {
       return null;
     }
 
-    return await this._readerParse(doc);
+    return this._readerParse(doc);
   },
 
   _downloadDocument(url) {

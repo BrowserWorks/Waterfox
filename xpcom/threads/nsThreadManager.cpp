@@ -11,6 +11,7 @@
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
 #include "mozilla/AbstractThread.h"
+#include "mozilla/SystemGroup.h"
 #include "mozilla/ThreadLocal.h"
 #ifdef MOZ_CANARY
 #include <fcntl.h>
@@ -263,7 +264,7 @@ nsThreadManager::NewNamedThread(const nsACString& aName,
                                 nsIThread** aResult)
 {
   // Note: can be called from arbitrary threads
-  
+
   // No new threads during Shutdown
   if (NS_WARN_IF(!mInitialized)) {
     return NS_ERROR_NOT_INITIALIZED;
@@ -327,7 +328,7 @@ NS_IMETHODIMP
 nsThreadManager::GetCurrentThread(nsIThread** aResult)
 {
   // Keep this functioning during Shutdown
-  if (NS_WARN_IF(!mMainThread)) {
+  if (!mMainThread) {
     return NS_ERROR_NOT_INITIALIZED;
   }
   *aResult = GetCurrentThread();
@@ -339,11 +340,48 @@ nsThreadManager::GetCurrentThread(nsIThread** aResult)
 }
 
 NS_IMETHODIMP
-nsThreadManager::GetIsMainThread(bool* aResult)
+nsThreadManager::SpinEventLoopUntil(nsINestedEventLoopCondition* aCondition)
 {
-  // This method may be called post-Shutdown
+  nsCOMPtr<nsINestedEventLoopCondition> condition(aCondition);
+  nsresult rv = NS_OK;
 
-  *aResult = (PR_GetCurrentThread() == mMainPRThread);
+  if (!mozilla::SpinEventLoopUntil([&]() -> bool {
+        bool isDone = false;
+        rv = condition->IsDone(&isDone);
+        // JS failure should be unusual, but we need to stop and propagate
+        // the error back to the caller.
+        if (NS_FAILED(rv)) {
+          return true;
+        }
+
+        return isDone;
+      })) {
+    // We stopped early for some reason, which is unexpected.
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  // If we exited when the condition told us to, we need to return whether
+  // the condition encountered failure when executing.
+  return rv;
+}
+
+NS_IMETHODIMP
+nsThreadManager::SpinEventLoopUntilEmpty()
+{
+  nsIThread* thread = NS_GetCurrentThread();
+
+  while (NS_HasPendingEvents(thread)) {
+    (void)NS_ProcessNextEvent(thread, false);
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsThreadManager::GetSystemGroupEventTarget(nsIEventTarget** aTarget)
+{
+  nsCOMPtr<nsIEventTarget> target = SystemGroup::EventTargetFor(TaskCategory::Other);
+  target.forget(aTarget);
   return NS_OK;
 }
 
@@ -366,4 +404,19 @@ nsThreadManager::DispatchToMainThread(nsIRunnable *aEvent)
   }
 
   return mMainThread->DispatchFromScript(aEvent, 0);
+}
+
+NS_IMETHODIMP
+nsThreadManager::IdleDispatchToMainThread(nsIRunnable *aEvent, uint32_t aTimeout)
+{
+  // Note: C++ callers should instead use NS_IdleDispatchToThread or
+  // NS_IdleDispatchToCurrentThread.
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsCOMPtr<nsIRunnable> event(aEvent);
+  if (aTimeout) {
+    return NS_IdleDispatchToThread(event.forget(), aTimeout, mMainThread);
+  }
+
+  return NS_IdleDispatchToThread(event.forget(), mMainThread);
 }

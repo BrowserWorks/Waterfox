@@ -21,6 +21,7 @@ DIRS += [
     'apppicker',
     'asyncshutdown',
     'browser',
+    'cloudstorage',
     'commandlines',
     'contentprefs',
     'contextualidentity',
@@ -113,3 +114,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
         'nsDefaultCLH.js',
         'nsDefaultCLH.manifest',
     ]
+
+if CONFIG['NIGHTLY_BUILD'] and CONFIG['MOZ_BUILD_APP'] == 'browser':
+    DIRS += ['payments']

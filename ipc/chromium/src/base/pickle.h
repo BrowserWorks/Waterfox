@@ -17,18 +17,14 @@
 #include "mozilla/BufferList.h"
 #include "mozilla/mozalloc.h"
 #include "mozilla/TimeStamp.h"
-
 #ifdef FUZZING
 #include "base/singleton.h"
 #include "mozilla/ipc/Faulty.h"
 #endif
-
-#if !defined(RELEASE_OR_BETA) || defined(DEBUG)
+#if (!defined(RELEASE_OR_BETA) && !defined(FUZZING)) || defined(DEBUG)
 #define MOZ_PICKLE_SENTINEL_CHECKING
 #endif
-
 class Pickle;
-
 class PickleIterator {
 public:
   explicit PickleIterator(const Pickle& pickle);
@@ -69,7 +65,7 @@ class Pickle {
   // Initialize a Pickle object with the specified header size in bytes, which
   // must be greater-than-or-equal-to sizeof(Pickle::Header).  The header size
   // will be rounded up to ensure that the header size is 32bit-aligned.
-  explicit Pickle(uint32_t header_size);
+  explicit Pickle(uint32_t header_size, size_t segment_capacity = 0);
 
   Pickle(uint32_t header_size, const char* data, uint32_t length);
 

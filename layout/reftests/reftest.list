@@ -106,6 +106,9 @@ include css-ruby/reftest.list
 # css required
 include css-required/reftest.list
 
+# css shapes
+include css-shapes/reftest.list
+
 # css optional
 include css-optional/reftest.list
 
@@ -207,6 +210,9 @@ include font-matching/reftest.list
 
 # forms
 include forms/reftest.list
+
+# frameset
+include frameset/reftest.list
 
 # gfx
 include ../../gfx/tests/reftest/reftest.list

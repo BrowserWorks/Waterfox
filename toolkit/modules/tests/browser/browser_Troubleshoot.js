@@ -144,6 +144,15 @@ const SNAPSHOT_SCHEMA = {
         maxContentProcesses: {
           type: "number",
         },
+        styloBuild: {
+          type: "boolean",
+        },
+        styloDefault: {
+          type: "boolean",
+        },
+        styloResult: {
+          type: "boolean",
+        },
         keyGoogleFound: {
           type: "boolean",
         },
@@ -258,8 +267,8 @@ const SNAPSHOT_SCHEMA = {
         windowLayerManagerRemote: {
           type: "boolean",
         },
-        currentAudioBackend: {
-          type: "string",
+        windowUsingAdvancedLayers: {
+          type: "boolean",
         },
         numAcceleratedWindowsMessage: {
           type: "array",
@@ -383,6 +392,158 @@ const SNAPSHOT_SCHEMA = {
         },
       },
     },
+    media: {
+      required: true,
+      type: "object",
+      properties: {
+        currentAudioBackend: {
+          required: true,
+          type: "string",
+        },
+        currentMaxAudioChannels: {
+          required: true,
+          type: "number",
+        },
+        currentPreferredChannelLayout: {
+          required: true,
+          type: "string",
+        },
+        currentPreferredSampleRate: {
+          required: true,
+          type: "number",
+        },
+        audioOutputDevices: {
+          required: true,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {
+                required: true,
+                type: "string",
+              },
+              groupId: {
+                required: true,
+                type: "string",
+              },
+              vendor: {
+                required: true,
+                type: "string",
+              },
+              type: {
+                required: true,
+                type: "number",
+              },
+              state: {
+                required: true,
+                type: "number",
+              },
+              preferred: {
+                required: true,
+                type: "number",
+              },
+              supportedFormat: {
+                required: true,
+                type: "number",
+              },
+              defaultFormat: {
+                required: true,
+                type: "number",
+              },
+              maxChannels: {
+                required: true,
+                type: "number",
+              },
+              defaultRate: {
+                required: true,
+                type: "number",
+              },
+              maxRate: {
+                required: true,
+                type: "number",
+              },
+              minRate: {
+                required: true,
+                type: "number",
+              },
+              maxLatency: {
+                required: true,
+                type: "number",
+              },
+              minLatency: {
+                required: true,
+                type: "number",
+              }
+            },
+          },
+        },
+        audioInputDevices: {
+          required: true,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {
+                required: true,
+                type: "string",
+              },
+              groupId: {
+                required: true,
+                type: "string",
+              },
+              vendor: {
+                required: true,
+                type: "string",
+              },
+              type: {
+                required: true,
+                type: "number",
+              },
+              state: {
+                required: true,
+                type: "number",
+              },
+              preferred: {
+                required: true,
+                type: "number",
+              },
+              supportedFormat: {
+                required: true,
+                type: "number",
+              },
+              defaultFormat: {
+                required: true,
+                type: "number",
+              },
+              maxChannels: {
+                required: true,
+                type: "number",
+              },
+              defaultRate: {
+                required: true,
+                type: "number",
+              },
+              maxRate: {
+                required: true,
+                type: "number",
+              },
+              minRate: {
+                required: true,
+                type: "number",
+              },
+              maxLatency: {
+                required: true,
+                type: "number",
+              },
+              minLatency: {
+                required: true,
+                type: "number",
+              }
+            },
+          },
+        },
+      },
+    },
     javaScript: {
       required: true,
       type: "object",
@@ -402,6 +563,9 @@ const SNAPSHOT_SCHEMA = {
         },
         forceDisabled: {
           type: "number",
+        },
+        handlerUsed: {
+          type: "boolean",
         },
       },
     },
@@ -530,42 +694,42 @@ const SNAPSHOT_SCHEMA = {
           required: AppConstants.MOZ_CONTENT_SANDBOX,
           type: "number"
         },
-	syscallLog: {
-	  required: AppConstants.platform == "linux",
-	  type: "array",
-	  items: {
-	    type: "object",
-	    properties: {
-	      index: {
-		required: true,
-		type: "number",
-	      },
-	      pid: {
-		required: true,
-		type: "number",
-	      },
-	      tid: {
-		required: true,
-		type: "number",
-	      },
-	      procType: {
-		required: true,
-		type: "string",
-	      },
-	      syscall: {
-		required: true,
-		type: "number",
-	      },
-	      args: {
-		required: true,
-		type: "array",
-		items: {
-		  type: "string",
-		},
-	      },
-	    },
-	  },
-	},
+        syscallLog: {
+          required: AppConstants.platform == "linux",
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              index: {
+                required: true,
+                type: "number",
+              },
+              pid: {
+                required: true,
+                type: "number",
+              },
+              tid: {
+                required: true,
+                type: "number",
+              },
+              procType: {
+                required: true,
+                type: "string",
+              },
+              syscall: {
+                required: true,
+                type: "number",
+              },
+              args: {
+                required: true,
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+            },
+          },
+        },
       },
     },
   },

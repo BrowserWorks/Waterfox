@@ -49,6 +49,17 @@
     }
   },
   {
+    "namespace": "privacy.services",
+    "description": "Use the <code>browser.privacy</code> API to control usage of the features in the browser that can affect a user's privacy.",
+    "permissions": ["privacy"],
+    "properties": {
+      "passwordSavingEnabled": {
+        "$ref": "types.Setting",
+        "description": "If enabled, the password manager will ask if you want to save passwords. This preference's value is a boolean, defaulting to <code>true</code>."
+      }
+    }
+  },
+  {
     "namespace": "privacy.websites",
     "description": "Use the <code>browser.privacy</code> API to control usage of the features in the browser that can affect a user's privacy.",
     "permissions": ["privacy"],
@@ -64,8 +75,7 @@
       },
       "referrersEnabled": {
         "$ref": "types.Setting",
-        "description": "If enabled, the browser sends <code>referer</code> headers with your requests. Yes, the name of this preference doesn't match the misspelled header. No, we're not going to change it. The value of this preference is of type boolean, and the default value is <code>true</code>.",
-        "unsupported": true
+        "description": "If enabled, the browser sends <code>referer</code> headers with your requests. Yes, the name of this preference doesn't match the misspelled header. No, we're not going to change it. The value of this preference is of type boolean, and the default value is <code>true</code>."
       },
       "protectedContentEnabled": {
         "$ref": "types.Setting",

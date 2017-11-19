@@ -3,7 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmllielement
+[HTMLConstructor]
 interface HTMLLIElement : HTMLElement {
+  [CEReactions]
   attribute long value;
 
   // also has obsolete members
@@ -11,5 +13,6 @@ interface HTMLLIElement : HTMLElement {
 
 // https://html.spec.whatwg.org/multipage/#HTMLLIElement-partial
 partial interface HTMLLIElement {
+  // [CEReactions]
   //         attribute DOMString type;
 };

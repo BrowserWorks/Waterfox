@@ -5,6 +5,7 @@
 
 #include "nsMathMLContainerFrame.h"
 
+#include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "nsLayoutUtils.h"
@@ -12,7 +13,6 @@
 #include "nsIPresShell.h"
 #include "nsStyleContext.h"
 #include "nsNameSpaceManager.h"
-#include "nsRenderingContext.h"
 #include "nsIDOMMutationEvent.h"
 #include "nsGkAtoms.h"
 #include "nsDisplayList.h"
@@ -82,12 +82,12 @@ public:
 #endif
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("MathMLError", TYPE_MATHML_ERROR)
 };
 
 void nsDisplayMathMLError::Paint(nsDisplayListBuilder* aBuilder,
-                                 nsRenderingContext* aCtx)
+                                 gfxContext* aCtx)
 {
   // Set color and font ...
   RefPtr<nsFontMetrics> fm =
@@ -102,7 +102,7 @@ void nsDisplayMathMLError::Paint(nsDisplayListBuilder* aBuilder,
   ColorPattern red(ToDeviceColor(Color(1.f, 0.f, 0.f, 1.f)));
   drawTarget->FillRect(rect, red);
 
-  aCtx->ThebesContext()->SetColor(Color(1.f, 1.f, 1.f));
+  aCtx->SetColor(Color(1.f, 1.f, 1.f));
   nscoord ascent = fm->MaxAscent();
   NS_NAMED_LITERAL_STRING(errorMsg, "invalid-markup");
   nsLayoutUtils::DrawUniDirString(errorMsg.get(), uint32_t(errorMsg.Length()),
@@ -349,7 +349,7 @@ nsMathMLContainerFrame::Stretch(DrawTarget*          aDrawTarget,
         // store the updated metrics
         SaveReflowAndBoundingMetricsFor(baseFrame, childSize,
                                         childSize.mBoundingMetrics);
-        
+
         // Remember the siblings which were _deferred_.
         // Now that this embellished child may have changed, we need to
         // fire the stretch on its siblings using our updated size
@@ -370,7 +370,7 @@ nsMathMLContainerFrame::Stretch(DrawTarget*          aDrawTarget,
               mathMLFrame = do_QueryFrame(childFrame);
               if (mathMLFrame) {
                 // retrieve the metrics that was stored at the previous pass
-                GetReflowAndBoundingMetricsFor(childFrame, 
+                GetReflowAndBoundingMetricsFor(childFrame,
                   childSize, childSize.mBoundingMetrics);
                 // do the stretching...
                 mathMLFrame->Stretch(aDrawTarget, stretchDir,
@@ -823,7 +823,7 @@ nsMathMLContainerFrame::ReflowChild(nsIFrame*                aChildFrame,
   // Having foreign/hybrid children, e.g., from html markups, is not defined by
   // the MathML spec. But it can happen in practice, e.g., <html:img> allows us
   // to do some cool demos... or we may have a child that is an nsInlineFrame
-  // from a generated content such as :before { content: open-quote } or 
+  // from a generated content such as :before { content: open-quote } or
   // :after { content: close-quote }. Unfortunately, the other frames out-there
   // may expect their own invariants that are not met when we mix things.
   // Hence we do not claim their support, but we will nevertheless attempt to keep
@@ -834,7 +834,7 @@ nsMathMLContainerFrame::ReflowChild(nsIFrame*                aChildFrame,
   nsInlineFrame* inlineFrame = do_QueryFrame(aChildFrame);
   NS_ASSERTION(!inlineFrame, "Inline frames should be wrapped in blocks");
 #endif
-  
+
   nsContainerFrame::
          ReflowChild(aChildFrame, aPresContext, aDesiredSize, aReflowInput,
                      0, 0, NS_FRAME_NO_MOVE_FRAME, aStatus);
@@ -912,8 +912,8 @@ nsMathMLContainerFrame::Reflow(nsPresContext*           aPresContext,
 
     // get the stretchy direction
     nsStretchDirection stretchDir =
-      NS_MATHML_WILL_STRETCH_ALL_CHILDREN_VERTICALLY(mPresentationData.flags) 
-      ? NS_STRETCH_DIRECTION_VERTICAL 
+      NS_MATHML_WILL_STRETCH_ALL_CHILDREN_VERTICALLY(mPresentationData.flags)
+      ? NS_STRETCH_DIRECTION_VERTICAL
       : NS_STRETCH_DIRECTION_HORIZONTAL;
 
     // what size should we use to stretch our stretchy children
@@ -962,7 +962,7 @@ nsMathMLContainerFrame::MarkIntrinsicISizesDirty()
 }
 
 void
-nsMathMLContainerFrame::UpdateIntrinsicWidth(nsRenderingContext* aRenderingContext)
+nsMathMLContainerFrame::UpdateIntrinsicWidth(gfxContext* aRenderingContext)
 {
   if (mIntrinsicWidth == NS_INTRINSIC_WIDTH_UNKNOWN) {
     ReflowOutput desiredSize(GetWritingMode());
@@ -976,7 +976,7 @@ nsMathMLContainerFrame::UpdateIntrinsicWidth(nsRenderingContext* aRenderingConte
 }
 
 /* virtual */ nscoord
-nsMathMLContainerFrame::GetMinISize(nsRenderingContext* aRenderingContext)
+nsMathMLContainerFrame::GetMinISize(gfxContext* aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -986,7 +986,7 @@ nsMathMLContainerFrame::GetMinISize(nsRenderingContext* aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsMathMLContainerFrame::GetPrefISize(nsRenderingContext* aRenderingContext)
+nsMathMLContainerFrame::GetPrefISize(gfxContext* aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -996,7 +996,7 @@ nsMathMLContainerFrame::GetPrefISize(nsRenderingContext* aRenderingContext)
 }
 
 /* virtual */ void
-nsMathMLContainerFrame::GetIntrinsicISizeMetrics(nsRenderingContext* aRenderingContext,
+nsMathMLContainerFrame::GetIntrinsicISizeMetrics(gfxContext* aRenderingContext,
                                                  ReflowOutput& aDesiredSize)
 {
   // Get child widths
@@ -1053,7 +1053,7 @@ nsMathMLContainerFrame::MeasureForWidth(DrawTarget* aDrawTarget,
 
 
 // see spacing table in Chapter 18, TeXBook (p.170)
-// Our table isn't quite identical to TeX because operators have 
+// Our table isn't quite identical to TeX because operators have
 // built-in values for lspace & rspace in the Operator Dictionary.
 static int32_t kInterFrameSpacingTable[eMathMLFrameType_COUNT][eMathMLFrameType_COUNT] =
 {
@@ -1083,7 +1083,7 @@ static int32_t kInterFrameSpacingTable[eMathMLFrameType_COUNT][eMathMLFrameType_
       : space_ & 0x0F;                                                  \
   }                                                                     \
 
-// This function computes the inter-space between two frames. However, 
+// This function computes the inter-space between two frames. However,
 // since invisible operators need special treatment, the inter-space may
 // be delayed when an invisible operator is encountered. In this case,
 // the function will carry the inter-space forward until it is determined
@@ -1252,7 +1252,7 @@ private:
       }
     }
     // add left correction -- this fixes the problem of the italic 'f'
-    // e.g., <mo>q</mo> <mi>f</mi> <mo>I</mo> 
+    // e.g., <mo>q</mo> <mi>f</mi> <mo>I</mo>
     mX += leftCorrection;
     mItalicCorrection = rightCorrection;
   }
@@ -1449,7 +1449,7 @@ nsMathMLContainerFrame::TransmitAutomaticDataForMrowLikeElement()
   nsIFrame *childFrame, *baseFrame;
   bool embellishedOpFound = false;
   nsEmbellishData embellishData;
-  
+
   for (childFrame = PrincipalChildList().FirstChild();
        childFrame;
        childFrame = childFrame->GetNextSibling()) {
@@ -1524,7 +1524,7 @@ nsresult
 nsMathMLContainerFrame::ReportParseError(const char16_t* aAttribute,
                                          const char16_t* aValue)
 {
-  const char16_t* argv[] = 
+  const char16_t* argv[] =
     { aValue, aAttribute, mContent->NodeInfo()->NameAtom()->GetUTF16String() };
   return ReportErrorToConsole("AttributeParsingError", argv, 3);
 }

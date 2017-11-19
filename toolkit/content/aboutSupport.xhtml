@@ -230,10 +230,19 @@
 
           <tr id="contentprocesses-row">
             <th class="column">
-              Web Content Processes
+              &aboutSupport.appBasicsProcessCount;
             </th>
 
             <td id="contentprocesses-box">
+            </td>
+          </tr>
+
+          <tr>
+            <th class="column">
+              Stylo
+            </th>
+
+            <td id="stylo-box">
             </td>
           </tr>
 
@@ -435,6 +444,91 @@
       <!-- - - - - - - - - - - - - - - - - - - - - -->
 
       <h2 class="major-section">
+        &aboutSupport.mediaTitle;
+      </h2>
+      <table>
+        <tbody id="media-info-tbody">
+        </tbody>
+
+        <tbody id="media-output-devices-tbody">
+          <tr>
+            <th colspan="10" class="title-column">
+              &aboutSupport.mediaOutputDevicesTitle;
+            </th>
+          </tr>
+          <tr>
+            <th>
+              &aboutSupport.mediaDeviceName;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceGroup;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceVendor;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceState;
+            </th>
+            <th>
+              &aboutSupport.mediaDevicePreferred;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceFormat;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceChannels;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceRate;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceLatency;
+            </th>
+          </tr>
+        </tbody>
+
+        <tbody id="media-input-devices-tbody">
+          <tr>
+            <th colspan="10" class="title-column">
+              &aboutSupport.mediaInputDevicesTitle;
+            </th>
+          </tr>
+          <tr>
+            <th>
+              &aboutSupport.mediaDeviceName;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceGroup;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceVendor;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceState;
+            </th>
+            <th>
+              &aboutSupport.mediaDevicePreferred;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceFormat;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceChannels;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceRate;
+            </th>
+            <th>
+              &aboutSupport.mediaDeviceLatency;
+            </th>
+          </tr>
+        </tbody>
+
+      </table>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - -->
+
+      <h2 class="major-section">
         &aboutSupport.modifiedKeyPrefsTitle;
       </h2>
 
@@ -479,6 +573,7 @@
         </tbody>
       </table>
 
+#ifndef ANDROID
       <!-- - - - - - - - - - - - - - - - - - - - - -->
 
       <h2 class="major-section">
@@ -499,6 +594,7 @@
           </td>
         </tr>
       </table>
+#endif
 
       <!-- - - - - - - - - - - - - - - - - - - - - -->
       <h2 class="major-section">
@@ -541,6 +637,16 @@
             <td id="a11y-force-disabled">
             </td>
           </tr>
+#if defined(XP_WIN)
+          <tr>
+            <th class="column">
+              &aboutSupport.a11yHandlerUsed;
+            </th>
+
+            <td id="a11y-handler-used">
+            </td>
+          </tr>
+#endif
         </tbody>
       </table>
 

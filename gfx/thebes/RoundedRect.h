@@ -3,7 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#ifndef ROUNDED_RECT_H
+#define ROUNDED_RECT_H
+
 #include "gfxRect.h"
+#include "gfxTypes.h"
 #include "mozilla/gfx/PathHelpers.h"
 
 namespace mozilla {
@@ -49,3 +53,5 @@ struct RoundedRect {
 };
 
 } // namespace mozilla
+
+#endif

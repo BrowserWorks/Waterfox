@@ -327,8 +327,19 @@ public:
     SectionInfo getInfo() { return info; }
 
     void shrink(unsigned int newsize) {
-        if (newsize < shdr.sh_size)
+        if (newsize < shdr.sh_size) {
             shdr.sh_size = newsize;
+            markDirty();
+        }
+    }
+
+    void grow(unsigned int newsize) {
+        if (newsize > shdr.sh_size) {
+            data = static_cast<char*>(realloc(data, newsize));
+            memset(data + shdr.sh_size, 0, newsize - shdr.sh_size);
+            shdr.sh_size = newsize;
+            markDirty();
+        }
     }
 
     unsigned int getOffset();
@@ -558,6 +569,9 @@ public:
 
 class Elf_Rel: public serializable<Elf_Rel_Traits> {
 public:
+    Elf_Rel()
+    : serializable<Elf_Rel_Traits>() {};
+
     Elf_Rel(std::ifstream &file, char ei_class, char ei_data)
     : serializable<Elf_Rel_Traits>(file, ei_class, ei_data) {};
 
@@ -568,6 +582,9 @@ public:
 
 class Elf_Rela: public serializable<Elf_Rela_Traits> {
 public:
+    Elf_Rela()
+    : serializable<Elf_Rela_Traits>() {};
+
     Elf_Rela(std::ifstream &file, char ei_class, char ei_data)
     : serializable<Elf_Rela_Traits>(file, ei_class, ei_data) {};
 

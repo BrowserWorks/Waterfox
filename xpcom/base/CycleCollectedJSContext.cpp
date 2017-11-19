@@ -46,10 +46,6 @@
 #include "nsThreadUtils.h"
 #include "xpcpublic.h"
 
-#ifdef MOZ_GECKO_PROFILER
-#include "ProfilerMarkerPayload.h"
-#endif
-
 using namespace mozilla;
 using namespace mozilla::dom;
 
@@ -190,9 +186,12 @@ CycleCollectedJSContext::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 class PromiseJobRunnable final : public Runnable
 {
 public:
-  PromiseJobRunnable(JS::HandleObject aCallback, JS::HandleObject aAllocationSite,
+  PromiseJobRunnable(JS::HandleObject aCallback,
+                     JS::HandleObject aAllocationSite,
                      nsIGlobalObject* aIncumbentGlobal)
-    : mCallback(new PromiseJobCallback(aCallback, aAllocationSite, aIncumbentGlobal))
+    : Runnable("PromiseJobRunnable")
+    , mCallback(
+        new PromiseJobCallback(aCallback, aAllocationSite, aIncumbentGlobal))
   {
   }
 

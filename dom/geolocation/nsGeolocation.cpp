@@ -21,6 +21,7 @@
 #include "nsDOMClassInfoID.h"
 #include "nsGlobalWindow.h"
 #include "nsIDocument.h"
+#include "nsINamed.h"
 #include "nsIObserverService.h"
 #include "nsIScriptError.h"
 #include "nsPIDOMWindow.h"
@@ -32,10 +33,6 @@ class nsIPrincipal;
 
 #ifdef MOZ_WIDGET_ANDROID
 #include "AndroidLocationProvider.h"
-#endif
-
-#ifdef MOZ_WIDGET_GONK
-#include "GonkGPSGeolocationProvider.h"
 #endif
 
 #ifdef MOZ_GPSD
@@ -100,6 +97,7 @@ class nsGeolocationRequest final
   virtual ~nsGeolocationRequest();
 
   class TimerCallbackHolder final : public nsITimerCallback
+                                  , public nsINamed
   {
   public:
     NS_DECL_ISUPPORTS
@@ -108,6 +106,12 @@ class nsGeolocationRequest final
     explicit TimerCallbackHolder(nsGeolocationRequest* aRequest)
       : mRequest(aRequest)
     {}
+
+    NS_IMETHOD GetName(nsACString& aName) override
+    {
+      aName.AssignLiteral("nsGeolocationRequest::TimerCallbackHolder");
+      return NS_OK;
+    }
 
   private:
     ~TimerCallbackHolder() = default;
@@ -147,7 +151,8 @@ class RequestPromptEvent : public Runnable
 {
 public:
   RequestPromptEvent(nsGeolocationRequest* aRequest, nsWeakPtr aWindow)
-    : mRequest(aRequest)
+    : mozilla::Runnable("RequestPromptEvent")
+    , mRequest(aRequest)
     , mWindow(aWindow)
   {
   }
@@ -168,8 +173,9 @@ class RequestAllowEvent : public Runnable
 {
 public:
   RequestAllowEvent(int allow, nsGeolocationRequest* request)
-    : mAllow(allow),
-      mRequest(request)
+    : mozilla::Runnable("RequestAllowEvent")
+    , mAllow(allow)
+    , mRequest(request)
   {
   }
 
@@ -192,8 +198,9 @@ class RequestSendLocationEvent : public Runnable
 public:
   RequestSendLocationEvent(nsIDOMGeoPosition* aPosition,
                            nsGeolocationRequest* aRequest)
-    : mPosition(aPosition),
-      mRequest(aRequest)
+    : mozilla::Runnable("RequestSendLocationEvent")
+    , mPosition(aPosition)
+    , mRequest(aRequest)
   {
   }
 
@@ -638,7 +645,9 @@ nsGeolocationRequest::Shutdown()
 // nsGeolocationRequest::TimerCallbackHolder
 ////////////////////////////////////////////////////
 
-NS_IMPL_ISUPPORTS(nsGeolocationRequest::TimerCallbackHolder, nsISupports, nsITimerCallback)
+NS_IMPL_ISUPPORTS(nsGeolocationRequest::TimerCallbackHolder,
+                  nsITimerCallback,
+                  nsINamed)
 
 NS_IMETHODIMP
 nsGeolocationRequest::TimerCallbackHolder::Notify(nsITimer*)
@@ -1247,7 +1256,8 @@ Geolocation::GetCurrentPosition(GeoPositionCallback callback,
                              Move(options), static_cast<uint8_t>(mProtocolType),
                              false);
 
-  if (!sGeoEnabled || ShouldBlockInsecureRequests()) {
+  if (!sGeoEnabled || ShouldBlockInsecureRequests() ||
+      nsContentUtils::ResistFingerprinting(aCallerType)) {
     nsCOMPtr<nsIRunnable> ev = new RequestAllowEvent(false, request);
     NS_DispatchToMainThread(ev);
     return NS_OK;
@@ -1333,7 +1343,8 @@ Geolocation::WatchPosition(GeoPositionCallback aCallback,
                              Move(aOptions),
                              static_cast<uint8_t>(mProtocolType), true, *aRv);
 
-  if (!sGeoEnabled || ShouldBlockInsecureRequests()) {
+  if (!sGeoEnabled || ShouldBlockInsecureRequests() ||
+      nsContentUtils::ResistFingerprinting(aCallerType)) {
     nsCOMPtr<nsIRunnable> ev = new RequestAllowEvent(false, request);
     NS_DispatchToMainThread(ev);
     return NS_OK;

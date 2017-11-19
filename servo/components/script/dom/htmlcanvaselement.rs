@@ -26,7 +26,7 @@ use dom::node::{Node, window_from_node};
 use dom::virtualmethods::VirtualMethods;
 use dom::webglrenderingcontext::{LayoutCanvasWebGLRenderingContextHelpers, WebGLRenderingContext};
 use dom_struct::dom_struct;
-use euclid::size::Size2D;
+use euclid::Size2D;
 use html5ever::{LocalName, Prefix};
 use image::ColorType;
 use image::png::PNGEncoder;
@@ -297,9 +297,9 @@ impl HTMLCanvasElementMethods for HTMLCanvasElement {
         // Step 3.
         let raw_data = match *self.context.borrow() {
             Some(CanvasContext::Context2d(ref context)) => {
-                let image_data = try!(context.GetImageData(Finite::wrap(0f64), Finite::wrap(0f64),
+                let image_data = context.GetImageData(Finite::wrap(0f64), Finite::wrap(0f64),
                                                            Finite::wrap(self.Width() as f64),
-                                                           Finite::wrap(self.Height() as f64)));
+                                                           Finite::wrap(self.Height() as f64))?;
                 image_data.get_data_array()
             }
             None => {

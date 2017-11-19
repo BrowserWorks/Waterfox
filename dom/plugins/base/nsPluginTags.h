@@ -130,13 +130,12 @@ public:
               nsTArray<nsCString> aMimeTypes,
               nsTArray<nsCString> aMimeDescriptions,
               nsTArray<nsCString> aExtensions,
-              bool aIsJavaPlugin,
               bool aIsFlashPlugin,
-              bool aSupportsAsyncInit,
               bool aSupportsAsyncRender,
               int64_t aLastModifiedTime,
               bool aFromExtension,
-              int32_t aSandboxLevel);
+              int32_t aSandboxLevel,
+              uint16_t aBlocklistState);
 
   void TryUnloadPlugin(bool inShutdown);
 
@@ -150,6 +149,7 @@ public:
 
   PluginState GetPluginState();
   void SetPluginState(PluginState state);
+  void SetBlocklistState(uint16_t aBlocklistState);
 
   bool HasSameNameAndMimes(const nsPluginTag *aPluginTag) const;
   const nsCString& GetNiceFileName() override;
@@ -167,9 +167,7 @@ public:
 
   PRLibrary     *mLibrary;
   RefPtr<nsNPAPIPlugin> mPlugin;
-  bool          mIsJavaPlugin;
   bool          mIsFlashPlugin;
-  bool          mSupportsAsyncInit;
   bool          mSupportsAsyncRender;
   nsCString     mFullPath; // UTF-8
   int64_t       mLastModifiedTime;

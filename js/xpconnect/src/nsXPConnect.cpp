@@ -184,7 +184,7 @@ xpc::ErrorBase::Init(JSErrorBase* aReport)
     if (!aReport->filename)
         mFileName.SetIsVoid(true);
     else
-        mFileName.AssignWithConversion(aReport->filename);
+        CopyASCIItoUTF16(aReport->filename, mFileName);
 
     mLineNumber = aReport->lineno;
     mColumn = aReport->column;
@@ -833,15 +833,6 @@ nsXPConnect::GetCurrentJSStack(nsIStackFrame * *aCurrentJSStack)
     nsCOMPtr<nsIStackFrame> currentStack = dom::GetCurrentJSStack();
     currentStack.forget(aCurrentJSStack);
 
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-nsXPConnect::GetCurrentNativeCallContext(nsAXPCNativeCallContext * *aCurrentNativeCallContext)
-{
-    MOZ_ASSERT(aCurrentNativeCallContext, "bad param");
-
-    *aCurrentNativeCallContext = XPCJSContext::Get()->GetCallContext();
     return NS_OK;
 }
 

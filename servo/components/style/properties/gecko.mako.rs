@@ -11,7 +11,7 @@
 <%namespace name="helpers" file="/helpers.mako.rs" />
 
 use app_units::Au;
-use custom_properties::ComputedValuesMap;
+use custom_properties::CustomPropertiesMap;
 use gecko_bindings::bindings;
 % for style_struct in data.style_structs:
 use gecko_bindings::structs::${style_struct.gecko_ffi_name};
@@ -19,13 +19,11 @@ use gecko_bindings::bindings::Gecko_Construct_Default_${style_struct.gecko_ffi_n
 use gecko_bindings::bindings::Gecko_CopyConstruct_${style_struct.gecko_ffi_name};
 use gecko_bindings::bindings::Gecko_Destroy_${style_struct.gecko_ffi_name};
 % endfor
-use gecko_bindings::bindings::Gecko_Construct_nsStyleVariables;
 use gecko_bindings::bindings::Gecko_CopyCounterStyle;
 use gecko_bindings::bindings::Gecko_CopyCursorArrayFrom;
 use gecko_bindings::bindings::Gecko_CopyFontFamilyFrom;
 use gecko_bindings::bindings::Gecko_CopyImageValueFrom;
 use gecko_bindings::bindings::Gecko_CopyListStyleImageFrom;
-use gecko_bindings::bindings::Gecko_Destroy_nsStyleVariables;
 use gecko_bindings::bindings::Gecko_EnsureImageLayersLength;
 use gecko_bindings::bindings::Gecko_FontFamilyList_AppendGeneric;
 use gecko_bindings::bindings::Gecko_FontFamilyList_AppendNamed;
@@ -39,14 +37,14 @@ use gecko_bindings::bindings::Gecko_nsStyleFont_CopyLangFrom;
 use gecko_bindings::bindings::Gecko_SetListStyleImageNone;
 use gecko_bindings::bindings::Gecko_SetListStyleImageImageValue;
 use gecko_bindings::bindings::Gecko_SetNullImageValue;
-use gecko_bindings::bindings::ServoComputedValuesBorrowedOrNull;
 use gecko_bindings::bindings::{Gecko_ResetFilters, Gecko_CopyFiltersFrom};
 use gecko_bindings::bindings::RawGeckoPresContextBorrowed;
 use gecko_bindings::structs;
 use gecko_bindings::structs::nsCSSPropertyID;
-use gecko_bindings::structs::nsStyleVariables;
+use gecko_bindings::structs::mozilla::CSSPseudoElementType;
+use gecko_bindings::structs::mozilla::CSSPseudoElementType_InheritingAnonBox;
+use gecko_bindings::structs::root::NS_STYLE_CONTEXT_TYPE_SHIFT;
 use gecko_bindings::sugar::ns_style_coord::{CoordDataValue, CoordData, CoordDataMut};
-use gecko_bindings::sugar::ownership::HasArcFFI;
 use gecko::values::convert_nscolor_to_rgba;
 use gecko::values::convert_rgba_to_nscolor;
 use gecko::values::GeckoStyleCoordConvertible;
@@ -54,17 +52,18 @@ use gecko::values::round_border_to_device_pixels;
 use logical_geometry::WritingMode;
 use media_queries::Device;
 use properties::animated_properties::TransitionProperty;
-use properties::longhands;
-use properties:: FontComputationData;
-use properties::{Importance, LonghandId};
+use properties::computed_value_flags::ComputedValueFlags;
+use properties::{longhands, FontComputationData, Importance, LonghandId};
 use properties::{PropertyDeclaration, PropertyDeclarationBlock, PropertyDeclarationId};
-use std::fmt::{self, Debug};
-use std::mem::{forget, transmute, zeroed};
-use std::ptr;
-use stylearc::Arc;
-use std::cmp;
-use values::computed::{Shadow, ToComputedValue};
-use values::{Either, Auto, KeyframesName};
+use rule_tree::StrongRuleNode;
+use selector_parser::PseudoElement;
+use servo_arc::{Arc, RawOffsetArc};
+use std::mem::{forget, uninitialized, transmute, zeroed};
+use std::{cmp, ops, ptr};
+use values::{self, Auto, CustomIdent, Either, KeyframesName};
+use values::computed::ToComputedValue;
+use values::computed::effects::{BoxShadow, Filter, SimpleShadow};
+use values::computed::length::Percentage;
 use computed_values::border_style;
 
 pub mod style_structs {
@@ -73,56 +72,194 @@ pub mod style_structs {
     % endfor
 }
 
+/// FIXME(emilio): This is completely duplicated with the other properties code.
+pub type ComputedValuesInner = ::gecko_bindings::structs::ServoComputedData;
 
-#[derive(Clone, Debug)]
-pub struct ComputedValues {
-    % for style_struct in data.style_structs:
-    ${style_struct.ident}: Arc<style_structs::${style_struct.name}>,
-    % endfor
-
-    custom_properties: Option<Arc<ComputedValuesMap>>,
-    pub writing_mode: WritingMode,
-    pub font_computation_data: FontComputationData,
-
-    /// The element's computed values if visited, only computed if there's a
-    /// relevant link for this element. A element's "relevant link" is the
-    /// element being matched if it is a link or the nearest ancestor link.
-    visited_style: Option<Arc<ComputedValues>>,
-}
+#[derive(Debug)]
+#[repr(C)]
+pub struct ComputedValues(::gecko_bindings::structs::mozilla::ServoStyleContext);
 
 impl ComputedValues {
-    pub fn new(custom_properties: Option<Arc<ComputedValuesMap>>,
+    pub fn new(
+        device: &Device,
+        parent: Option<<&ComputedValues>,
+        pseudo: Option<<&PseudoElement>,
+        custom_properties: Option<Arc<CustomPropertiesMap>>,
+        writing_mode: WritingMode,
+        font_size_keyword: Option<(longhands::font_size::KeywordSize, f32)>,
+        flags: ComputedValueFlags,
+        rules: Option<StrongRuleNode>,
+        visited_style: Option<Arc<ComputedValues>>,
+        % for style_struct in data.style_structs:
+        ${style_struct.ident}: Arc<style_structs::${style_struct.name}>,
+        % endfor
+    ) -> Arc<Self> {
+        ComputedValuesInner::new(
+            custom_properties,
+            writing_mode,
+            font_size_keyword,
+            flags,
+            rules,
+            visited_style,
+            % for style_struct in data.style_structs:
+            ${style_struct.ident},
+            % endfor
+        ).to_outer(
+            device.pres_context(),
+            parent,
+            pseudo.map(|p| p.pseudo_info())
+        )
+    }
+
+    pub fn default_values(pres_context: RawGeckoPresContextBorrowed) -> Arc<Self> {
+        ComputedValuesInner::new(
+            /* custom_properties = */ None,
+            /* writing_mode = */ WritingMode::empty(), // FIXME(bz): This seems dubious
+            FontComputationData::default_font_size_keyword(),
+            ComputedValueFlags::empty(),
+            /* rules = */ None,
+            /* visited_style = */ None,
+            % for style_struct in data.style_structs:
+            style_structs::${style_struct.name}::default(pres_context),
+            % endfor
+        ).to_outer(pres_context, None, None)
+    }
+
+    pub fn pseudo(&self) -> Option<PseudoElement> {
+        use string_cache::Atom;
+
+        let atom = (self.0)._base.mPseudoTag.raw::<structs::nsIAtom>();
+        if atom.is_null() {
+            return None;
+        }
+
+        let atom = Atom::from(atom);
+        PseudoElement::from_atom(&atom)
+    }
+
+    fn get_pseudo_type(&self) -> CSSPseudoElementType {
+        let bits = (self.0)._base.mBits;
+        let our_type = bits >> NS_STYLE_CONTEXT_TYPE_SHIFT;
+        unsafe { transmute(our_type as u8) }
+    }
+
+    pub fn is_anon_box(&self) -> bool {
+        let our_type = self.get_pseudo_type();
+        return our_type == CSSPseudoElementType_InheritingAnonBox ||
+               our_type == CSSPseudoElementType::NonInheritingAnonBox;
+    }
+}
+
+impl Drop for ComputedValues {
+    fn drop(&mut self) {
+        unsafe {
+            bindings::Gecko_ServoStyleContext_Destroy(&mut self.0);
+        }
+    }
+}
+
+unsafe impl Sync for ComputedValues {}
+unsafe impl Send for ComputedValues {}
+
+impl Clone for ComputedValues {
+    fn clone(&self) -> Self {
+        unreachable!()
+    }
+}
+
+impl Clone for ComputedValuesInner {
+    fn clone(&self) -> Self {
+        ComputedValuesInner {
+            % for style_struct in data.style_structs:
+                ${style_struct.gecko_name}: self.${style_struct.gecko_name}.clone(),
+            % endfor
+            custom_properties: self.custom_properties.clone(),
+            writing_mode: self.writing_mode.clone(),
+            font_computation_data: self.font_computation_data.clone(),
+            flags: self.flags.clone(),
+            rules: self.rules.clone(),
+            visited_style: self.visited_style.clone(),
+        }
+    }
+}
+
+type PseudoInfo = (*mut structs::nsIAtom, structs::CSSPseudoElementType);
+type ParentStyleContextInfo<'a> = Option< &'a ComputedValues>;
+
+impl ComputedValuesInner {
+    pub fn new(custom_properties: Option<Arc<CustomPropertiesMap>>,
                writing_mode: WritingMode,
                font_size_keyword: Option<(longhands::font_size::KeywordSize, f32)>,
+               flags: ComputedValueFlags,
+               rules: Option<StrongRuleNode>,
                visited_style: Option<Arc<ComputedValues>>,
                % for style_struct in data.style_structs:
                ${style_struct.ident}: Arc<style_structs::${style_struct.name}>,
                % endfor
     ) -> Self {
-        ComputedValues {
+        ComputedValuesInner {
             custom_properties: custom_properties,
             writing_mode: writing_mode,
             font_computation_data: FontComputationData::new(font_size_keyword),
-            visited_style: visited_style,
+            rules: rules,
+            visited_style: visited_style.map(|x| Arc::into_raw_offset(x)),
+            flags: flags,
             % for style_struct in data.style_structs:
-            ${style_struct.ident}: ${style_struct.ident},
+            ${style_struct.gecko_name}: Arc::into_raw_offset(${style_struct.ident}),
             % endfor
         }
     }
 
-    pub fn default_values(pres_context: RawGeckoPresContextBorrowed) -> Arc<Self> {
-        Arc::new(ComputedValues {
-            custom_properties: None,
-            writing_mode: WritingMode::empty(), // FIXME(bz): This seems dubious
-            font_computation_data: FontComputationData::default_values(),
-            visited_style: None,
-            % for style_struct in data.style_structs:
-                ${style_struct.ident}: style_structs::${style_struct.name}::default(pres_context),
-            % endfor
-        })
+    fn to_outer(
+        self,
+        pres_context: RawGeckoPresContextBorrowed,
+        parent: ParentStyleContextInfo,
+        info: Option<PseudoInfo>
+    ) -> Arc<ComputedValues> {
+        let (tag, ty) = if let Some(info) = info {
+            info
+        } else {
+            (ptr::null_mut(), structs::CSSPseudoElementType::NotPseudo)
+        };
+
+        unsafe { self.to_outer_helper(pres_context, parent, ty, tag) }
     }
 
+    unsafe fn to_outer_helper(
+        self,
+        pres_context: bindings::RawGeckoPresContextBorrowed,
+        parent: ParentStyleContextInfo,
+        pseudo_ty: structs::CSSPseudoElementType,
+        pseudo_tag: *mut structs::nsIAtom
+    ) -> Arc<ComputedValues> {
+        let arc = unsafe {
+            let arc: Arc<ComputedValues> = Arc::new(uninitialized());
+            bindings::Gecko_ServoStyleContext_Init(&arc.0 as *const _ as *mut _,
+                                                   parent, pres_context,
+                                                   &self, pseudo_ty, pseudo_tag);
+            // We're simulating a move by having C++ do a memcpy and then forgetting
+            // it on this end.
+            forget(self);
+            arc
+        };
+        arc
+    }
+}
 
+impl ops::Deref for ComputedValues {
+    type Target = ComputedValuesInner;
+    fn deref(&self) -> &ComputedValuesInner {
+        &self.0.mSource
+    }
+}
+
+impl ops::DerefMut for ComputedValues {
+    fn deref_mut(&mut self) -> &mut ComputedValuesInner {
+        &mut self.0.mSource
+    }
+}
+
+impl ComputedValuesInner {
     #[inline]
     pub fn is_display_contents(&self) -> bool {
         self.get_box().clone_display() == longhands::display::computed_value::T::contents
@@ -138,41 +275,56 @@ impl ComputedValues {
     % for style_struct in data.style_structs:
     #[inline]
     pub fn clone_${style_struct.name_lower}(&self) -> Arc<style_structs::${style_struct.name}> {
-        self.${style_struct.ident}.clone()
+        Arc::from_raw_offset(self.${style_struct.gecko_name}.clone())
     }
     #[inline]
     pub fn get_${style_struct.name_lower}(&self) -> &style_structs::${style_struct.name} {
-        &self.${style_struct.ident}
+        &self.${style_struct.gecko_name}
     }
 
-    pub fn ${style_struct.name_lower}_arc(&self) -> &Arc<style_structs::${style_struct.name}> {
-        &self.${style_struct.ident}
+
+    pub fn ${style_struct.name_lower}_arc(&self) -> &RawOffsetArc<style_structs::${style_struct.name}> {
+        &self.${style_struct.gecko_name}
     }
 
     #[inline]
     pub fn mutate_${style_struct.name_lower}(&mut self) -> &mut style_structs::${style_struct.name} {
-        Arc::make_mut(&mut self.${style_struct.ident})
+        RawOffsetArc::make_mut(&mut self.${style_struct.gecko_name})
     }
     % endfor
 
-    /// Gets a reference to the visited computed values, if any.
-    pub fn get_visited_style(&self) -> Option<<&Arc<ComputedValues>> {
-        self.visited_style.as_ref()
+    /// Gets a reference to the rule node. Panic if no rule node exists.
+    pub fn rules(&self) -> &StrongRuleNode {
+        self.rules.as_ref().unwrap()
     }
 
-    /// Gets a reference to the visited computed values. Panic if the element
-    /// does not have visited computed values.
-    pub fn visited_style(&self) -> &Arc<ComputedValues> {
+    /// Whether there is a visited style.
+    pub fn has_visited_style(&self) -> bool {
+        self.visited_style.is_some()
+    }
+
+    /// Gets a reference to the visited style, if any.
+    pub fn get_visited_style(&self) -> Option< & ComputedValues> {
+        self.visited_style.as_ref().map(|x| &**x)
+    }
+
+    /// Gets a reference to the visited style. Panic if no visited style exists.
+    pub fn visited_style(&self) -> &ComputedValues {
         self.get_visited_style().unwrap()
     }
 
-    /// Clone the visited computed values Arc.  Used for inheriting parent styles
-    /// in StyleBuilder::for_inheritance.
+    /// Clone the visited style.  Used for inheriting parent styles in
+    /// StyleBuilder::for_inheritance.
     pub fn clone_visited_style(&self) -> Option<Arc<ComputedValues>> {
-        self.visited_style.clone()
+        self.visited_style.as_ref().map(|x| x.clone_arc())
     }
 
-    pub fn custom_properties(&self) -> Option<Arc<ComputedValuesMap>> {
+    /// Gets a reference to the custom properties map (if one exists).
+    pub fn get_custom_properties(&self) -> Option<<&::custom_properties::CustomPropertiesMap> {
+        self.custom_properties.as_ref().map(|x| &**x)
+    }
+
+    pub fn custom_properties(&self) -> Option<Arc<CustomPropertiesMap>> {
         self.custom_properties.clone()
     }
 
@@ -213,9 +365,7 @@ impl ComputedValues {
 }
 
 <%def name="declare_style_struct(style_struct)">
-pub struct ${style_struct.gecko_struct_name} {
-    gecko: ${style_struct.gecko_ffi_name},
-}
+pub use ::gecko_bindings::structs::mozilla::Gecko${style_struct.gecko_name} as ${style_struct.gecko_struct_name};
 impl ${style_struct.gecko_struct_name} {
     pub fn gecko(&self) -> &${style_struct.gecko_ffi_name} {
         &self.gecko
@@ -240,10 +390,18 @@ impl ${style_struct.gecko_struct_name} {
     }
 </%def>
 
-<%def name="impl_simple_copy(ident, gecko_ffi_name, *kwargs)">
+<%def name="impl_simple_copy(ident, gecko_ffi_name, on_set=None, *kwargs)">
     #[allow(non_snake_case)]
     pub fn copy_${ident}_from(&mut self, other: &Self) {
         self.gecko.${gecko_ffi_name} = other.gecko.${gecko_ffi_name};
+        % if on_set:
+        self.${on_set}();
+        % endif
+    }
+
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
     }
 </%def>
 
@@ -251,6 +409,11 @@ impl ${style_struct.gecko_struct_name} {
     #[allow(non_snake_case)]
     pub fn copy_${ident}_from(&mut self, other: &Self) {
         self.gecko.${gecko_ffi_name}.copy_from(&other.gecko.${gecko_ffi_name});
+    }
+
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
     }
 </%def>
 
@@ -329,6 +492,11 @@ def set_gecko_property(ffi_name, expr):
         let color = ${get_gecko_property(gecko_ffi_name, self_param = "other")};
         ${set_gecko_property(gecko_ffi_name, "color")};
     }
+
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
+    }
 </%def>
 
 <%def name="impl_color_clone(ident, gecko_ffi_name)">
@@ -340,7 +508,7 @@ def set_gecko_property(ffi_name, expr):
 
 <%def name="impl_keyword(ident, gecko_ffi_name, keyword, need_clone, cast_type='u8', **kwargs)">
 <%call expr="impl_keyword_setter(ident, gecko_ffi_name, keyword, cast_type, **kwargs)"></%call>
-<%call expr="impl_simple_copy(ident, gecko_ffi_name)"></%call>
+<%call expr="impl_simple_copy(ident, gecko_ffi_name, **kwargs)"></%call>
 %if need_clone:
 <%call expr="impl_keyword_clone(ident, gecko_ffi_name, keyword, cast_type)"></%call>
 % endif
@@ -458,8 +626,14 @@ def set_gecko_property(ffi_name, expr):
     }
 
     #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
+    }
+
+    #[allow(non_snake_case)]
     pub fn clone_${ident}(&self) -> longhands::${ident}::computed_value::T {
         use values::generics::{SVGPaint, SVGPaintKind};
+        use values::specified::url::SpecifiedUrl;
         use self::structs::nsStyleSVGPaintType;
         use self::structs::nsStyleSVGFallbackType;
         let ref paint = ${get_gecko_property(gecko_ffi_name)};
@@ -473,8 +647,13 @@ def set_gecko_property(ffi_name, expr):
             nsStyleSVGPaintType::eStyleSVGPaintType_ContextFill => SVGPaintKind::ContextFill,
             nsStyleSVGPaintType::eStyleSVGPaintType_ContextStroke => SVGPaintKind::ContextStroke,
             nsStyleSVGPaintType::eStyleSVGPaintType_Server => {
-                // FIXME (bug 1353966) this should animate
-                SVGPaintKind::None
+                unsafe {
+                    SVGPaintKind::PaintServer(
+                        SpecifiedUrl::from_url_value_data(
+                            &(**paint.mPaint.mPaintServer.as_ref())._base
+                        ).unwrap()
+                    )
+                }
             }
             nsStyleSVGPaintType::eStyleSVGPaintType_Color => {
                 unsafe { SVGPaintKind::Color(convert_nscolor_to_rgba(*paint.mPaint.mColor.as_ref())) }
@@ -514,10 +693,18 @@ def set_gecko_property(ffi_name, expr):
         //
         // In practice, this means that we may have an incorrect value here, but
         // we'll adjust that properly in the style fixup phase.
+        //
+        // FIXME(emilio): We could clean this up a bit special-casing the reset_
+        // function below.
         self.gecko.${gecko_ffi_name} = other.gecko.${inherit_from};
         % else:
         self.gecko.${gecko_ffi_name} = other.gecko.${gecko_ffi_name};
         % endif
+    }
+
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
     }
 
 %if need_clone:
@@ -536,6 +723,10 @@ def set_gecko_property(ffi_name, expr):
     #[allow(non_snake_case)]
     pub fn copy_${ident}_from(&mut self, other: &Self) {
         self.gecko.${gecko_ffi_name}.data_at_mut(${index}).copy_from(&other.gecko.${gecko_ffi_name}.data_at(${index}));
+    }
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
     }
     % if need_clone:
         #[allow(non_snake_case)]
@@ -556,6 +747,10 @@ def set_gecko_property(ffi_name, expr):
     pub fn copy_${ident}_from(&mut self, other: &Self) {
         self.gecko.${gecko_ffi_name}.copy_from(&other.gecko.${gecko_ffi_name});
     }
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
+    }
     % if need_clone:
         #[allow(non_snake_case)]
         pub fn clone_${ident}(&self) -> longhands::${ident}::computed_value::T {
@@ -564,6 +759,40 @@ def set_gecko_property(ffi_name, expr):
                 .expect("clone for ${ident} failed")
         }
     % endif
+</%def>
+
+<%def name="impl_style_sides(ident)">
+    <% gecko_ffi_name = "m" + to_camel_case(ident) %>
+
+    #[allow(non_snake_case)]
+    pub fn set_${ident}(&mut self, v: longhands::${ident}::computed_value::T) {
+        v.to_gecko_rect(&mut self.gecko.${gecko_ffi_name});
+    }
+
+    <%self:copy_sides_style_coord ident="${ident}"></%self:copy_sides_style_coord>
+
+    #[allow(non_snake_case)]
+    pub fn clone_${ident}(&self) -> longhands::${ident}::computed_value::T {
+        longhands::${ident}::computed_value::T::from_gecko_rect(&self.gecko.${gecko_ffi_name})
+            .expect("clone for ${ident} failed")
+    }
+</%def>
+
+<%def name="copy_sides_style_coord(ident)">
+    <% gecko_ffi_name = "m" + to_camel_case(ident) %>
+    #[allow(non_snake_case)]
+    pub fn copy_${ident}_from(&mut self, other: &Self) {
+        % for side in SIDES:
+            self.gecko.${gecko_ffi_name}.data_at_mut(${side.index})
+                .copy_from(&other.gecko.${gecko_ffi_name}.data_at(${side.index}));
+        % endfor
+        ${ caller.body() }
+    }
+
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
+    }
 </%def>
 
 <%def name="impl_corner_style_coord(ident, gecko_ffi_name, x_index, y_index, need_clone)">
@@ -578,6 +807,10 @@ def set_gecko_property(ffi_name, expr):
                   .copy_from(&other.gecko.${gecko_ffi_name}.data_at(${x_index}));
         self.gecko.${gecko_ffi_name}.data_at_mut(${y_index})
                   .copy_from(&other.gecko.${gecko_ffi_name}.data_at(${y_index}));
+    }
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
     }
     % if need_clone:
         #[allow(non_snake_case)]
@@ -623,8 +856,25 @@ def set_gecko_property(ffi_name, expr):
             self.gecko.${gecko_ffi_name}.set(&other.gecko.${gecko_ffi_name});
         }
     }
+    #[allow(non_snake_case)]
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
+    }
     % if need_clone:
-        <% raise Exception("Do not know how to handle clone ") %>
+        pub fn clone_${ident}(&self) -> longhands::${ident}::computed_value::T {
+            use values::specified::url::SpecifiedUrl;
+            use values::None_;
+
+            if self.gecko.${gecko_ffi_name}.mRawPtr.is_null() {
+                Either::Second(None_)
+            } else {
+                unsafe {
+                    let ref gecko_url_value = *self.gecko.${gecko_ffi_name}.mRawPtr;
+                    Either::First(SpecifiedUrl::from_url_value_data(&gecko_url_value._base)
+                            .expect("${gecko_ffi_name} could not convert to SpecifiedUrl"))
+                }
+            }
+        }
     % endif
 </%def>
 
@@ -664,20 +914,6 @@ impl Clone for ${style_struct.gecko_struct_name} {
     }
 }
 
-// FIXME(bholley): Make bindgen generate Debug for all types.
-%if style_struct.gecko_ffi_name in ("nsStyle" + x for x in "Border Display List Background Font SVGReset".split()):
-impl Debug for ${style_struct.gecko_struct_name} {
-    // FIXME(bholley): Generate this.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Gecko style struct: ${style_struct.gecko_struct_name}")
-    }
-}
-%else:
-impl Debug for ${style_struct.gecko_struct_name} {
-    // FIXME(bholley): Generate this.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.gecko.fmt(f) }
-}
-%endif
 </%def>
 
 <%def name="impl_simple_type_with_conversion(ident, gecko_ffi_name=None)">
@@ -801,6 +1037,10 @@ impl ${style_struct.gecko_struct_name} {
     #[allow(non_snake_case)]
     pub fn copy_${longhand.ident}_from(&mut self, _: &Self) {
         warn!("stylo: Unimplemented property setter: ${longhand.name}");
+    }
+    #[allow(non_snake_case)]
+    pub fn reset_${longhand.ident}(&mut self, other: &Self) {
+        self.copy_${longhand.ident}_from(other)
     }
     % if longhand.need_clone:
     #[allow(non_snake_case)]
@@ -976,6 +1216,35 @@ fn static_assert() {
                                                 structs::Side::eSide${to_camel_case(side.ident)});
         }
     }
+
+    #[allow(non_snake_case)]
+    pub fn reset__moz_border_${side.ident}_colors(&mut self, other: &Self) {
+        self.copy__moz_border_${side.ident}_colors_from(other)
+    }
+
+    #[allow(non_snake_case)]
+    pub fn clone__moz_border_${side.ident}_colors(&self)
+                                                  -> longhands::_moz_border_${side.ident}_colors::computed_value::T {
+        use self::longhands::_moz_border_${side.ident}_colors::computed_value::T;
+
+        let mut gecko_colors =
+            unsafe { bindings::Gecko_GetMozBorderColors(&self.gecko,
+                                                        structs::Side::eSide${to_camel_case(side.ident)}) };
+
+        if gecko_colors.is_null() {
+            return T(None);
+        }
+
+        let mut colors = Vec::new();
+        loop {
+            unsafe {
+                colors.push(convert_nscolor_to_rgba((*gecko_colors).mColor));
+                if (*gecko_colors).mNext.is_null() { break; }
+                gecko_colors = (*gecko_colors).mNext;
+            }
+        }
+        T(Some(colors))
+    }
     % endfor
 
     % for corner in CORNERS:
@@ -993,7 +1262,7 @@ fn static_assert() {
         }
 
         if let Either::Second(image) = image {
-            self.gecko.mBorderImageSource.set(image, &mut false)
+            self.gecko.mBorderImageSource.set(image);
         }
     }
 
@@ -1004,18 +1273,20 @@ fn static_assert() {
         }
     }
 
-    pub fn set_border_image_outset(&mut self, v: longhands::border_image_outset::computed_value::T) {
-        % for side in SIDES:
-        v.${side.index}.to_gecko_style_coord(&mut self.gecko.mBorderImageOutset.data_at_mut(${side.index}));
-        % endfor
+    pub fn reset_border_image_source(&mut self, other: &Self) {
+        self.copy_border_image_source_from(other)
     }
 
-    pub fn copy_border_image_outset_from(&mut self, other: &Self) {
-        % for side in SIDES:
-            self.gecko.mBorderImageOutset.data_at_mut(${side.index})
-                .copy_from(&other.gecko.mBorderImageOutset.data_at(${side.index}));
-        % endfor
+    pub fn clone_border_image_source(&self) -> longhands::border_image_source::computed_value::T {
+        use values::None_;
+
+        match unsafe { self.gecko.mBorderImageSource.into_image() } {
+            Some(image) => Either::Second(image),
+            None => Either::First(None_),
+        }
     }
+
+    <% impl_style_sides("border_image_outset") %>
 
     <%
     border_image_repeat_keywords = ["Stretch", "Repeat", "Round", "Space"]
@@ -1041,6 +1312,10 @@ fn static_assert() {
         self.gecko.mBorderImageRepeatV = other.gecko.mBorderImageRepeatV;
     }
 
+    pub fn reset_border_image_repeat(&mut self, other: &Self) {
+        self.copy_border_image_repeat_from(other)
+    }
+
     pub fn clone_border_image_repeat(&self) -> longhands::border_image_repeat::computed_value::T {
         use properties::longhands::border_image_repeat::computed_value::RepeatKeyword;
         use gecko_bindings::structs;
@@ -1056,37 +1331,12 @@ fn static_assert() {
         longhands::border_image_repeat::computed_value::T(servo_h, servo_v)
     }
 
-    pub fn set_border_image_width(&mut self, v: longhands::border_image_width::computed_value::T) {
-        use values::generics::border::BorderImageSideWidth;
-
-        % for side in SIDES:
-        match v.${side.index} {
-            BorderImageSideWidth::Auto => {
-                self.gecko.mBorderImageWidth.data_at_mut(${side.index}).set_value(CoordDataValue::Auto)
-            },
-            BorderImageSideWidth::Length(l) => {
-                l.to_gecko_style_coord(&mut self.gecko.mBorderImageWidth.data_at_mut(${side.index}))
-            },
-            BorderImageSideWidth::Number(n) => {
-                self.gecko.mBorderImageWidth.data_at_mut(${side.index}).set_value(CoordDataValue::Factor(n))
-            },
-        }
-        % endfor
-    }
-
-    pub fn copy_border_image_width_from(&mut self, other: &Self) {
-        % for side in SIDES:
-            self.gecko.mBorderImageWidth.data_at_mut(${side.index})
-                .copy_from(&other.gecko.mBorderImageWidth.data_at(${side.index}));
-        % endfor
-    }
+    <% impl_style_sides("border_image_width") %>
 
     pub fn set_border_image_slice(&mut self, v: longhands::border_image_slice::computed_value::T) {
         use gecko_bindings::structs::{NS_STYLE_BORDER_IMAGE_SLICE_NOFILL, NS_STYLE_BORDER_IMAGE_SLICE_FILL};
 
-        % for side in SIDES:
-        v.offsets.${side.index}.to_gecko_style_coord(&mut self.gecko.mBorderImageSlice.data_at_mut(${side.index}));
-        % endfor
+        v.offsets.to_gecko_rect(&mut self.gecko.mBorderImageSlice);
 
         let fill = if v.fill {
             NS_STYLE_BORDER_IMAGE_SLICE_FILL
@@ -1096,12 +1346,21 @@ fn static_assert() {
         self.gecko.mBorderImageFill = fill as u8;
     }
 
-    pub fn copy_border_image_slice_from(&mut self, other: &Self) {
-        for i in 0..4 {
-            self.gecko.mBorderImageSlice.data_at_mut(i)
-                .copy_from(&other.gecko.mBorderImageSlice.data_at(i));
-        }
+    <%self:copy_sides_style_coord ident="border_image_slice">
         self.gecko.mBorderImageFill = other.gecko.mBorderImageFill;
+    </%self:copy_sides_style_coord>
+
+    pub fn clone_border_image_slice(&self) -> longhands::border_image_slice::computed_value::T {
+        use gecko_bindings::structs::NS_STYLE_BORDER_IMAGE_SLICE_FILL;
+        use values::computed::{BorderImageSlice, NumberOrPercentage};
+        type NumberOrPercentageRect = ::values::generics::rect::Rect<NumberOrPercentage>;
+
+        BorderImageSlice {
+            offsets:
+                NumberOrPercentageRect::from_gecko_rect(&self.gecko.mBorderImageSlice)
+                    .expect("mBorderImageSlice[${side}] could not convert to NumberOrPercentageRect"),
+            fill: self.gecko.mBorderImageFill as u32 == NS_STYLE_BORDER_IMAGE_SLICE_FILL
+        }
     }
 </%self:impl_trait>
 
@@ -1159,6 +1418,10 @@ fn static_assert() {
         }
     }
 
+    pub fn reset_z_index(&mut self, other: &Self) {
+        self.copy_z_index_from(other)
+    }
+
     pub fn clone_z_index(&self) -> longhands::z_index::computed_value::T {
         return match self.gecko.mZIndex.as_value() {
             CoordDataValue::Integer(n) => Either::First(n),
@@ -1173,8 +1436,35 @@ fn static_assert() {
     % for kind in ["align", "justify"]:
     ${impl_simple_type_with_conversion(kind + "_content")}
     ${impl_simple_type_with_conversion(kind + "_self")}
-    ${impl_simple_type_with_conversion(kind + "_items")}
     % endfor
+    ${impl_simple_type_with_conversion("align_items")}
+
+    pub fn set_justify_items(&mut self, v: longhands::justify_items::computed_value::T) {
+        self.gecko.mSpecifiedJustifyItems = v.specified.into();
+        self.set_computed_justify_items(v.computed);
+    }
+
+    pub fn set_computed_justify_items(&mut self, v: values::specified::JustifyItems) {
+        debug_assert!(v.0 != ::values::specified::align::ALIGN_AUTO);
+        self.gecko.mJustifyItems = v.into();
+    }
+
+    pub fn reset_justify_items(&mut self, reset_style: &Self) {
+        self.gecko.mJustifyItems = reset_style.gecko.mJustifyItems;
+        self.gecko.mSpecifiedJustifyItems = reset_style.gecko.mSpecifiedJustifyItems;
+    }
+
+    pub fn copy_justify_items_from(&mut self, other: &Self) {
+        self.gecko.mJustifyItems = other.gecko.mJustifyItems;
+        self.gecko.mSpecifiedJustifyItems = other.gecko.mJustifyItems;
+    }
+
+    pub fn clone_justify_items(&self) -> longhands::justify_items::computed_value::T {
+        longhands::justify_items::computed_value::T {
+            computed: self.gecko.mJustifyItems.into(),
+            specified: self.gecko.mSpecifiedJustifyItems.into(),
+        }
+    }
 
     pub fn set_order(&mut self, v: longhands::order::computed_value::T) {
         self.gecko.mOrder = v;
@@ -1190,13 +1480,14 @@ fn static_assert() {
     pub fn set_${value.name}(&mut self, v: longhands::${value.name}::computed_value::T) {
         use gecko_bindings::structs::{nsStyleGridLine_kMinLine, nsStyleGridLine_kMaxLine};
 
-        let ident = v.ident.unwrap_or(String::new());
-        self.gecko.${value.gecko}.mLineName.assign_utf8(&ident);
+        let ident = v.ident.as_ref().map_or(&[] as &[_], |ident| ident.0.as_slice());
+        self.gecko.${value.gecko}.mLineName.assign(ident);
         self.gecko.${value.gecko}.mHasSpan = v.is_span;
-        self.gecko.${value.gecko}.mInteger = v.line_num.map(|i| {
+        if let Some(integer) = v.line_num {
             // clamping the integer between a range
-            cmp::max(nsStyleGridLine_kMinLine, cmp::min(i.value(), nsStyleGridLine_kMaxLine))
-        }).unwrap_or(0);
+            self.gecko.${value.gecko}.mInteger = cmp::max(nsStyleGridLine_kMinLine,
+                cmp::min(integer.value(), nsStyleGridLine_kMaxLine));
+        }
     }
 
     pub fn copy_${value.name}_from(&mut self, other: &Self) {
@@ -1204,30 +1495,42 @@ fn static_assert() {
         self.gecko.${value.gecko}.mInteger = other.gecko.${value.gecko}.mInteger;
         self.gecko.${value.gecko}.mLineName.assign(&*other.gecko.${value.gecko}.mLineName);
     }
+
+    pub fn reset_${value.name}(&mut self, other: &Self) {
+        self.copy_${value.name}_from(other)
+    }
+
+    pub fn clone_${value.name}(&self) -> longhands::${value.name}::computed_value::T {
+        use gecko_bindings::structs::{nsStyleGridLine_kMinLine, nsStyleGridLine_kMaxLine};
+        use string_cache::Atom;
+        use values::specified::Integer;
+
+        longhands::${value.name}::computed_value::T {
+            is_span: self.gecko.${value.gecko}.mHasSpan,
+            ident: {
+                let name = self.gecko.${value.gecko}.mLineName.to_string();
+                if name.len() == 0 {
+                    None
+                } else {
+                    Some(CustomIdent(Atom::from(name)))
+                }
+            },
+            line_num:
+                if self.gecko.${value.gecko}.mInteger == 0 {
+                    None
+                } else {
+                    debug_assert!(nsStyleGridLine_kMinLine <= self.gecko.${value.gecko}.mInteger);
+                    debug_assert!(self.gecko.${value.gecko}.mInteger <= nsStyleGridLine_kMaxLine);
+                    Some(Integer::new(self.gecko.${value.gecko}.mInteger))
+                },
+        }
+    }
     % endfor
 
     % for kind in ["rows", "columns"]:
     pub fn set_grid_auto_${kind}(&mut self, v: longhands::grid_auto_${kind}::computed_value::T) {
-        use values::generics::grid::TrackSize;
-
-        match v {
-            TrackSize::FitContent(lop) => {
-                // Gecko sets min value to None and max value to the actual value in fit-content
-                // https://dxr.mozilla.org/mozilla-central/rev/0eef1d5/layout/style/nsRuleNode.cpp#8221
-                self.gecko.mGridAuto${kind.title()}Min.set_value(CoordDataValue::None);
-                lop.to_gecko_style_coord(&mut self.gecko.mGridAuto${kind.title()}Max);
-            },
-            TrackSize::Breadth(breadth) => {
-                // Set the value to both fields if there's one breadth value
-                // https://dxr.mozilla.org/mozilla-central/rev/0eef1d5/layout/style/nsRuleNode.cpp#8230
-                breadth.to_gecko_style_coord(&mut self.gecko.mGridAuto${kind.title()}Min);
-                breadth.to_gecko_style_coord(&mut self.gecko.mGridAuto${kind.title()}Max);
-            },
-            TrackSize::MinMax(min, max) => {
-                min.to_gecko_style_coord(&mut self.gecko.mGridAuto${kind.title()}Min);
-                max.to_gecko_style_coord(&mut self.gecko.mGridAuto${kind.title()}Max);
-            },
-        }
+        v.to_gecko_style_coords(&mut self.gecko.mGridAuto${kind.title()}Min,
+                                &mut self.gecko.mGridAuto${kind.title()}Max)
     }
 
     pub fn copy_grid_auto_${kind}_from(&mut self, other: &Self) {
@@ -1235,60 +1538,44 @@ fn static_assert() {
         self.gecko.mGridAuto${kind.title()}Max.copy_from(&other.gecko.mGridAuto${kind.title()}Max);
     }
 
+    pub fn reset_grid_auto_${kind}(&mut self, other: &Self) {
+        self.copy_grid_auto_${kind}_from(other)
+    }
+
+    pub fn clone_grid_auto_${kind}(&self) -> longhands::grid_auto_${kind}::computed_value::T {
+        ::values::generics::grid::TrackSize::from_gecko_style_coords(&self.gecko.mGridAuto${kind.title()}Min,
+                                                                     &self.gecko.mGridAuto${kind.title()}Max)
+    }
+
     pub fn set_grid_template_${kind}(&mut self, v: longhands::grid_template_${kind}::computed_value::T) {
         <% self_grid = "self.gecko.mGridTemplate%s" % kind.title() %>
-        use gecko::values::GeckoStyleCoordConvertible;
         use gecko_bindings::structs::{nsTArray, nsStyleGridLine_kMaxLine};
-        use nsstring::{nsCString, nsStringRepr};
+        use nsstring::nsStringRepr;
         use std::usize;
+        use values::CustomIdent;
         use values::generics::grid::TrackListType::Auto;
-        use values::generics::grid::{RepeatCount, TrackSize};
+        use values::generics::grid::{GridTemplateComponent, RepeatCount};
 
         #[inline]
-        fn set_bitfield(bitfield: &mut u8, pos: u8, val: bool) {
-            let mask = 1 << (pos - 1);
-            *bitfield &= !mask;
-            *bitfield |= (val as u8) << (pos - 1);
-        }
-
-        #[inline]
-        fn set_line_names(servo_names: &[String], gecko_names: &mut nsTArray<nsStringRepr>) {
+        fn set_line_names(servo_names: &[CustomIdent], gecko_names: &mut nsTArray<nsStringRepr>) {
             unsafe {
                 bindings::Gecko_ResizeTArrayForStrings(gecko_names, servo_names.len() as u32);
             }
 
             for (servo_name, gecko_name) in servo_names.iter().zip(gecko_names.iter_mut()) {
-                gecko_name.assign_utf8(&nsCString::from(&*servo_name));
-            }
-        }
-
-        fn set_track_size<G, T>(value: TrackSize<T>, gecko_min: &mut G, gecko_max: &mut G)
-            where G: CoordDataMut, T: GeckoStyleCoordConvertible
-        {
-            match value {
-                TrackSize::FitContent(lop) => {
-                    gecko_min.set_value(CoordDataValue::None);
-                    lop.to_gecko_style_coord(gecko_max);
-                },
-                TrackSize::Breadth(breadth) => {
-                    breadth.to_gecko_style_coord(gecko_min);
-                    breadth.to_gecko_style_coord(gecko_max);
-                },
-                TrackSize::MinMax(min, max) => {
-                    min.to_gecko_style_coord(gecko_min);
-                    max.to_gecko_style_coord(gecko_max);
-                },
+                gecko_name.assign(servo_name.0.as_slice());
             }
         }
 
         // Set defaults
         ${self_grid}.mRepeatAutoIndex = -1;
-        set_bitfield(&mut ${self_grid}._bitfield_1, 1, false);   // mIsAutoFill
-        set_bitfield(&mut ${self_grid}._bitfield_1, 2, false);   // mIsSubgrid
-        // FIXME: mIsSubgrid is false only for <none>, but we don't support subgrid name lists at the moment.
+        ${self_grid}.set_mIsAutoFill(false);
+        ${self_grid}.set_mIsSubgrid(false);
+
+        let max_lines = nsStyleGridLine_kMaxLine as usize - 1;      // for accounting the final <line-names>
 
         match v {
-            Either::First(track) => {
+            GridTemplateComponent::TrackList(track) => {
                 let mut auto_idx = usize::MAX;
                 let mut auto_track_size = None;
                 if let Auto(idx) = track.list_type {
@@ -1296,7 +1583,7 @@ fn static_assert() {
                     let auto_repeat = track.auto_repeat.as_ref().expect("expected <auto-track-repeat> value");
 
                     if auto_repeat.count == RepeatCount::AutoFill {
-                        set_bitfield(&mut ${self_grid}._bitfield_1, 1, true);
+                        ${self_grid}.set_mIsAutoFill(true);
                     }
 
                     ${self_grid}.mRepeatAutoIndex = idx as i16;
@@ -1319,7 +1606,6 @@ fn static_assert() {
                     num_values += 1;
                 }
 
-                let max_lines = nsStyleGridLine_kMaxLine as usize - 1;      // for accounting the final <line-names>
                 num_values = cmp::min(num_values, max_lines);
                 unsafe {
                     bindings::Gecko_SetStyleGridTemplateArrayLengths(&mut ${self_grid}, num_values as u32);
@@ -1334,25 +1620,54 @@ fn static_assert() {
                     let name_list = line_names.next().expect("expected line-names");
                     set_line_names(&name_list, &mut ${self_grid}.mLineNameLists[i]);
                     if i == auto_idx {
-                        set_track_size(auto_track_size.take().expect("expected <track-size> for <auto-track-repeat>"),
-                                       gecko_min, gecko_max);
+                        let track_size = auto_track_size.take().expect("expected <track-size> for <auto-track-repeat>");
+                        track_size.to_gecko_style_coords(gecko_min, gecko_max);
                         continue
                     }
 
                     let track_size = values_iter.next().expect("expected <track-size> value");
-                    set_track_size(track_size, gecko_min, gecko_max);
+                    track_size.to_gecko_style_coords(gecko_min, gecko_max);
                 }
 
                 let final_names = line_names.next().unwrap();
                 set_line_names(&final_names, ${self_grid}.mLineNameLists.last_mut().unwrap());
             },
-            Either::Second(_none) => {
+            GridTemplateComponent::None => {
                 unsafe {
                     bindings::Gecko_SetStyleGridTemplateArrayLengths(&mut ${self_grid}, 0);
                     bindings::Gecko_ResizeTArrayForStrings(
                         &mut ${self_grid}.mRepeatAutoLineNameListBefore, 0);
                     bindings::Gecko_ResizeTArrayForStrings(
                         &mut ${self_grid}.mRepeatAutoLineNameListAfter, 0);
+                }
+            },
+            GridTemplateComponent::Subgrid(list) => {
+                ${self_grid}.set_mIsSubgrid(true);
+                let names_length = match list.fill_idx {
+                    Some(_) => list.names.len() - 1,
+                    None => list.names.len(),
+                };
+                let num_values = cmp::min(names_length, max_lines + 1);
+
+                unsafe {
+                    bindings::Gecko_SetStyleGridTemplateArrayLengths(&mut ${self_grid}, 0);
+                    bindings::Gecko_SetGridTemplateLineNamesLength(&mut ${self_grid}, num_values as u32);
+                    bindings::Gecko_ResizeTArrayForStrings(
+                        &mut ${self_grid}.mRepeatAutoLineNameListBefore, 0);
+                    bindings::Gecko_ResizeTArrayForStrings(
+                        &mut ${self_grid}.mRepeatAutoLineNameListAfter, 0);
+                }
+
+                let mut names = list.names.into_vec();
+                if let Some(idx) = list.fill_idx {
+                    ${self_grid}.set_mIsAutoFill(true);
+                    ${self_grid}.mRepeatAutoIndex = idx as i16;
+                    set_line_names(&names.swap_remove(idx as usize),
+                                   &mut ${self_grid}.mRepeatAutoLineNameListBefore);
+                }
+
+                for (servo_names, gecko_names) in names.iter().zip(${self_grid}.mLineNameLists.iter_mut()) {
+                    set_line_names(servo_names, gecko_names);
                 }
             },
         }
@@ -1363,6 +1678,10 @@ fn static_assert() {
             bindings::Gecko_CopyStyleGridTemplateValues(&mut ${self_grid},
                                                         &other.gecko.mGridTemplate${kind.title()});
         }
+    }
+
+    pub fn reset_grid_template_${kind}(&mut self, other: &Self) {
+        self.copy_grid_template_${kind}_from(other)
     }
     % endfor
 
@@ -1403,6 +1722,10 @@ fn static_assert() {
     pub fn copy_grid_template_areas_from(&mut self, other: &Self) {
         unsafe { self.gecko.mGridTemplateAreas.set(&other.gecko.mGridTemplateAreas) }
     }
+
+    pub fn reset_grid_template_areas(&mut self, other: &Self) {
+        self.copy_grid_template_areas_from(other)
+    }
 </%self:impl_trait>
 
 <% skip_outline_longhands = " ".join("outline-style outline-width".split() +
@@ -1428,13 +1751,18 @@ fn static_assert() {
 
         // NB: This is needed to correctly handling the initial value of
         // outline-width when outline-style changes, see the
-        // update_border_${side} comment for more details.
+        // update_border_${side.ident} comment for more details.
         self.gecko.mActualOutlineWidth = self.gecko.mOutlineWidth;
     }
 
     #[allow(non_snake_case)]
     pub fn copy_outline_style_from(&mut self, other: &Self) {
         self.gecko.mOutlineStyle = other.gecko.mOutlineStyle;
+    }
+
+    #[allow(non_snake_case)]
+    pub fn reset_outline_style(&mut self, other: &Self) {
+        self.copy_outline_style_from(other)
     }
 
     #[allow(non_snake_case)]
@@ -1500,7 +1828,7 @@ fn static_assert() {
         };
     }
 
-    pub fn copy_font_feature_settings_from(&mut self, other: &Self ) {
+    pub fn copy_font_feature_settings_from(&mut self, other: &Self) {
         let current_settings = &mut self.gecko.mFont.fontFeatureSettings;
         let feature_settings = &other.gecko.mFont.fontFeatureSettings;
         let settings_length = feature_settings.len() as u32;
@@ -1511,6 +1839,27 @@ fn static_assert() {
         for (current, feature) in current_settings.iter_mut().zip(feature_settings.iter()) {
             current.mTag = feature.mTag;
             current.mValue = feature.mValue;
+        }
+    }
+
+    pub fn reset_font_feature_settings(&mut self, other: &Self) {
+        self.copy_font_feature_settings_from(other)
+    }
+
+    pub fn clone_font_feature_settings(&self) -> longhands::font_feature_settings::computed_value::T {
+        use values::generics::{FontSettings, FontSettingTag, FontSettingTagInt} ;
+
+        if self.gecko.mFont.fontFeatureSettings.len() == 0 {
+            FontSettings::Normal
+        } else {
+            FontSettings::Tag(
+                self.gecko.mFont.fontFeatureSettings.iter().map(|gecko_font_feature_setting| {
+                    FontSettingTag {
+                        tag: gecko_font_feature_setting.mTag,
+                        value: FontSettingTagInt(gecko_font_feature_setting.mValue),
+                    }
+                }).collect()
+            )
         }
     }
 
@@ -1548,9 +1897,13 @@ fn static_assert() {
         }
     }
 
+    pub fn reset_font_variation_settings(&mut self, other: &Self) {
+        self.copy_font_variation_settings_from(other)
+    }
+
     pub fn fixup_none_generic(&mut self, device: &Device) {
         unsafe {
-            bindings::Gecko_nsStyleFont_FixupNoneGeneric(&mut self.gecko, &*device.pres_context)
+            bindings::Gecko_nsStyleFont_FixupNoneGeneric(&mut self.gecko, device.pres_context())
         }
     }
 
@@ -1591,6 +1944,38 @@ fn static_assert() {
         self.gecko.mGenericID = other.gecko.mGenericID;
     }
 
+    pub fn reset_font_family(&mut self, other: &Self) {
+        self.copy_font_family_from(other)
+    }
+
+    pub fn clone_font_family(&self) -> longhands::font_family::computed_value::T {
+        use properties::longhands::font_family::computed_value::{FontFamily, FamilyName};
+        use gecko_bindings::structs::FontFamilyType;
+        use gecko_string_cache::Atom;
+
+        ::properties::longhands::font_family::computed_value::T(
+            self.gecko.mFont.fontlist.mFontlist.iter().map(|gecko_font_family_name| {
+                match gecko_font_family_name.mType {
+                    FontFamilyType::eFamily_serif => FontFamily::Generic(atom!("serif")),
+                    FontFamilyType::eFamily_sans_serif => FontFamily::Generic(atom!("sans-serif")),
+                    FontFamilyType::eFamily_monospace => FontFamily::Generic(atom!("monospace")),
+                    FontFamilyType::eFamily_cursive => FontFamily::Generic(atom!("cursive")),
+                    FontFamilyType::eFamily_fantasy => FontFamily::Generic(atom!("fantasy")),
+                    FontFamilyType::eFamily_moz_fixed => FontFamily::Generic(Atom::from("-moz-fixed")),
+                    FontFamilyType::eFamily_named => FontFamily::FamilyName(FamilyName {
+                        name: (&*gecko_font_family_name.mName).into(),
+                        quoted: false
+                    }),
+                    FontFamilyType::eFamily_named_quoted => FontFamily::FamilyName(FamilyName {
+                        name: (&*gecko_font_family_name.mName).into(),
+                        quoted: true
+                    }),
+                    x => panic!("Found unexpected font FontFamilyType: {:?}", x),
+                }
+            }).collect()
+        )
+    }
+
     // FIXME(bholley): Gecko has two different sizes, one of which (mSize) is the
     // actual computed size, and the other of which (mFont.size) is the 'display
     // size' which takes font zooming into account. We don't handle font zooming yet.
@@ -1620,7 +2005,7 @@ fn static_assert() {
     }
 
     pub fn fixup_font_min_size(&mut self, device: &Device) {
-        unsafe { bindings::Gecko_nsStyleFont_FixupMinFontSize(&mut self.gecko, &*device.pres_context) }
+        unsafe { bindings::Gecko_nsStyleFont_FixupMinFontSize(&mut self.gecko, device.pres_context()) }
     }
 
     pub fn apply_unconstrained_font_size(&mut self, v: Au) {
@@ -1777,15 +2162,13 @@ fn static_assert() {
     }
 
     pub fn set_font_weight(&mut self, v: longhands::font_weight::computed_value::T) {
-        self.gecko.mFont.weight = v as u16;
+        self.gecko.mFont.weight = v.0;
     }
     ${impl_simple_copy('font_weight', 'mFont.weight')}
 
     pub fn clone_font_weight(&self) -> longhands::font_weight::computed_value::T {
-        debug_assert!(self.gecko.mFont.weight >= 100);
-        debug_assert!(self.gecko.mFont.weight <= 900);
-        debug_assert!(self.gecko.mFont.weight % 10 == 0);
-        unsafe { transmute(self.gecko.mFont.weight) }
+        debug_assert!(self.gecko.mFont.weight <= ::std::u16::MAX);
+        longhands::font_weight::computed_value::T(self.gecko.mFont.weight)
     }
 
     ${impl_simple_type_with_conversion("font_synthesis", "mFont.synthesis")}
@@ -1800,6 +2183,10 @@ fn static_assert() {
 
     pub fn copy_font_size_adjust_from(&mut self, other: &Self) {
         self.gecko.mFont.sizeAdjust = other.gecko.mFont.sizeAdjust;
+    }
+
+    pub fn reset_font_size_adjust(&mut self, other: &Self) {
+        self.copy_font_size_adjust_from(other)
     }
 
     pub fn clone_font_size_adjust(&self) -> longhands::font_size_adjust::computed_value::T {
@@ -1823,17 +2210,124 @@ fn static_assert() {
         }
     }
 
+    #[allow(non_snake_case)]
+    pub fn reset__x_lang(&mut self, other: &Self) {
+        self.copy__x_lang_from(other)
+    }
+
     <% impl_simple_type_with_conversion("font_language_override", "mFont.languageOverride") %>
 
     pub fn set_font_variant_alternates(&mut self, v: longhands::font_variant_alternates::computed_value::T) {
-        self.gecko.mFont.variantAlternates = v.to_gecko_keyword()
+        use gecko_bindings::bindings::{Gecko_ClearAlternateValues, Gecko_AppendAlternateValues};
+        % for value in "normal swash stylistic ornaments annotation styleset character_variant historical".split():
+            use gecko_bindings::structs::NS_FONT_VARIANT_ALTERNATES_${value.upper()};
+        % endfor
+        use self::longhands::font_variant_alternates::VariantAlternates;
+
+        unsafe {
+            Gecko_ClearAlternateValues(&mut self.gecko.mFont, v.len());
+        }
+
+        if v.0.is_empty() {
+            self.gecko.mFont.variantAlternates = NS_FONT_VARIANT_ALTERNATES_NORMAL as u16;
+        }
+
+        for val in v.0.iter() {
+            match *val {
+                % for value in "Swash Stylistic Ornaments Annotation".split():
+                    VariantAlternates::${value}(ref ident) => {
+                        self.gecko.mFont.variantAlternates |= NS_FONT_VARIANT_ALTERNATES_${value.upper()} as u16;
+                        unsafe {
+                            Gecko_AppendAlternateValues(&mut self.gecko.mFont,
+                                                        NS_FONT_VARIANT_ALTERNATES_${value.upper()},
+                                                        ident.0.as_ptr());
+                        }
+                    },
+                % endfor
+                % for value in "styleset character_variant".split():
+                    VariantAlternates::${to_camel_case(value)}(ref slice) => {
+                        self.gecko.mFont.variantAlternates |= NS_FONT_VARIANT_ALTERNATES_${value.upper()} as u16;
+                        for ident in slice.iter() {
+                            unsafe {
+                                Gecko_AppendAlternateValues(&mut self.gecko.mFont,
+                                                            NS_FONT_VARIANT_ALTERNATES_${value.upper()},
+                                                            ident.0.as_ptr());
+                            }
+                        }
+                    },
+                % endfor
+                VariantAlternates::HistoricalForms => {
+                    self.gecko.mFont.variantAlternates |= NS_FONT_VARIANT_ALTERNATES_HISTORICAL as u16;
+                }
+            }
+        }
     }
 
     #[allow(non_snake_case)]
     pub fn copy_font_variant_alternates_from(&mut self, other: &Self) {
+        use gecko_bindings::bindings::Gecko_CopyAlternateValuesFrom;
+
         self.gecko.mFont.variantAlternates = other.gecko.mFont.variantAlternates;
-        // FIXME: Copy alternateValues as well.
-        // self.gecko.mFont.alternateValues = other.gecko.mFont.alternateValues;
+        unsafe {
+            Gecko_CopyAlternateValuesFrom(&mut self.gecko.mFont, &other.gecko.mFont);
+        }
+    }
+
+    pub fn reset_font_variant_alternates(&mut self, other: &Self) {
+        self.copy_font_variant_alternates_from(other)
+    }
+
+    pub fn clone_font_variant_alternates(&self) -> longhands::font_variant_alternates::computed_value::T {
+        use Atom;
+        % for value in "normal swash stylistic ornaments annotation styleset character_variant historical".split():
+            use gecko_bindings::structs::NS_FONT_VARIANT_ALTERNATES_${value.upper()};
+        % endfor
+        use properties::longhands::font_variant_alternates::VariantAlternates;
+        use properties::longhands::font_variant_alternates::VariantAlternatesList;
+        use values::CustomIdent;
+
+        if self.gecko.mFont.variantAlternates == NS_FONT_VARIANT_ALTERNATES_NORMAL as u16 {
+            return VariantAlternatesList(vec![].into_boxed_slice());
+        }
+
+        let mut alternates = Vec::with_capacity(self.gecko.mFont.alternateValues.len());
+        if self.gecko.mFont.variantAlternates & (NS_FONT_VARIANT_ALTERNATES_HISTORICAL as u16) != 0 {
+            alternates.push(VariantAlternates::HistoricalForms);
+        }
+
+        <%
+            property_need_ident_list = "styleset character_variant".split()
+        %>
+        % for value in property_need_ident_list:
+            let mut ${value}_list = Vec::new();
+        % endfor
+
+        for gecko_alternate_value in self.gecko.mFont.alternateValues.iter() {
+            let ident = Atom::from(gecko_alternate_value.value.to_string());
+            match gecko_alternate_value.alternate {
+                % for value in "Swash Stylistic Ornaments Annotation".split():
+                    NS_FONT_VARIANT_ALTERNATES_${value.upper()} => {
+                        alternates.push(VariantAlternates::${value}(CustomIdent(ident)));
+                    },
+                % endfor
+                % for value in property_need_ident_list:
+                    NS_FONT_VARIANT_ALTERNATES_${value.upper()} => {
+                        ${value}_list.push(CustomIdent(ident));
+                    },
+                % endfor
+                x => {
+                    panic!("Found unexpected value for font-variant-alternates: {:?}", x);
+                }
+            }
+        }
+
+        % for value in property_need_ident_list:
+            if !${value}_list.is_empty() {
+                alternates.push(VariantAlternates::${to_camel_case(value)}(${value}_list.into_boxed_slice()));
+            }
+        % endfor
+
+        VariantAlternatesList(alternates.into_boxed_slice())
     }
 
     ${impl_simple_type_with_conversion("font_variant_ligatures", "mFont.variantLigatures")}
@@ -1869,6 +2363,11 @@ fn static_assert() {
         for (index, gecko) in self.gecko.m${type.capitalize()}s.iter_mut().enumerate().take(count as usize) {
             gecko.m${gecko_ffi_name} = other.gecko.m${type.capitalize()}s[index].m${gecko_ffi_name};
         }
+    }
+
+    #[allow(non_snake_case)]
+    pub fn reset_${type}_${ident}(&mut self, other: &Self) {
+        self.copy_${type}_${ident}_from(other)
     }
 </%def>
 
@@ -2059,6 +2558,10 @@ fn static_assert() {
         self.gecko.mOriginalDisplay = other.gecko.mDisplay;
     }
 
+    pub fn reset_display(&mut self, other: &Self) {
+        self.copy_display_from(other)
+    }
+
     <%call expr="impl_keyword_clone('display', 'mDisplay', display_keyword)"></%call>
 
     <% overflow_x = data.longhands_by_name["overflow-x"] %>
@@ -2148,16 +2651,8 @@ fn static_assert() {
     }
     % endfor
 
-    % for axis in ["x", "y"]:
-        pub fn set_scroll_snap_points_${axis}(&mut self, v: longhands::scroll_snap_points_${axis}::computed_value::T) {
-            match v.repeated() {
-                None => self.gecko.mScrollSnapPoints${axis.upper()}.set_value(CoordDataValue::None),
-                Some(l) => l.to_gecko_style_coord(&mut self.gecko.mScrollSnapPoints${axis.upper()}),
-            };
-        }
-
-        ${impl_coord_copy('scroll_snap_points_' + axis, 'mScrollSnapPoints' + axis.upper())}
-    % endfor
+    ${impl_style_coord("scroll_snap_points_x", "mScrollSnapPointsX", True)}
+    ${impl_style_coord("scroll_snap_points_y", "mScrollSnapPointsY", True)}
 
     pub fn set_scroll_snap_coordinate<I>(&mut self, v: I)
         where I: IntoIterator<Item = longhands::scroll_snap_coordinate::computed_value::single_value::T>,
@@ -2185,6 +2680,10 @@ fn static_assert() {
                                .zip(other.gecko.mScrollSnapCoordinate.iter()) {
             *this = *that;
         }
+    }
+
+    pub fn reset_scroll_snap_coordinate(&mut self, other: &Self) {
+        self.copy_scroll_snap_coordinate_from(other)
     }
 
     pub fn clone_scroll_snap_coordinate(&self) -> longhands::scroll_snap_coordinate::computed_value::T {
@@ -2310,6 +2809,10 @@ fn static_assert() {
         unsafe { self.gecko.mSpecifiedTransform.set(&other.gecko.mSpecifiedTransform); }
     }
 
+    pub fn reset_transform(&mut self, other: &Self) {
+        self.copy_transform_from(other)
+    }
+
     <%def name="computed_operation_arm(name, keyword, items)">
         <%
             # %s is substituted with the call to GetArrayItem.
@@ -2430,8 +2933,8 @@ fn static_assert() {
             self.gecko.mTransitionPropertyCount = v.len() as u32;
             for (servo, gecko) in v.zip(self.gecko.mTransitions.iter_mut()) {
                 match servo {
-                    TransitionProperty::Unsupported(ref atom) => unsafe {
-                        Gecko_StyleTransition_SetUnsupportedProperty(gecko, atom.as_ptr())
+                    TransitionProperty::Unsupported(ref ident) => unsafe {
+                        Gecko_StyleTransition_SetUnsupportedProperty(gecko, ident.0.as_ptr())
                     },
                     _ => gecko.mProperty = (&servo).into(),
                 }
@@ -2466,11 +2969,11 @@ fn static_assert() {
         if property == eCSSProperty_UNKNOWN || property == eCSSPropertyExtra_variable {
             let atom = self.gecko.mTransitions[index].mUnknownProperty.raw::<nsIAtom>();
             debug_assert!(!atom.is_null());
-            TransitionProperty::Unsupported(atom.into())
+            TransitionProperty::Unsupported(CustomIdent(atom.into()))
         } else if property == eCSSPropertyExtra_no_properties {
             // Actually, we don't expect TransitionProperty::Unsupported also represents "none",
             // but if the caller wants to convert it, it is fine. Please use it carefully.
-            TransitionProperty::Unsupported(atom!("none"))
+            TransitionProperty::Unsupported(CustomIdent(atom!("none")))
         } else {
             property.into()
         }
@@ -2499,6 +3002,11 @@ fn static_assert() {
             }
         }
     }
+
+    pub fn reset_transition_property(&mut self, other: &Self) {
+        self.copy_transition_property_from(other)
+    }
+
     ${impl_transition_count('property', 'Property')}
 
     pub fn animations_equals(&self, other: &Self) -> bool {
@@ -2531,7 +3039,7 @@ fn static_assert() {
         if atom.is_empty() {
             AnimationName(None)
         } else {
-            AnimationName(Some(KeyframesName::from_ident(atom.to_string())))
+            AnimationName(Some(KeyframesName::from_ident(&atom.to_string())))
         }
     }
     pub fn copy_animation_name_from(&mut self, other: &Self) {
@@ -2546,6 +3054,11 @@ fn static_assert() {
             animation.mName.assign(&*other.gecko.mAnimations[index].mName);
         }
     }
+
+    pub fn reset_animation_name(&mut self, other: &Self) {
+        self.copy_animation_name_from(other)
+    }
+
     ${impl_animation_count('name', 'Name')}
 
     ${impl_animation_time_value('delay', 'Delay')}
@@ -2609,6 +3122,10 @@ fn static_assert() {
         self.gecko.mPerspectiveOrigin[1].copy_from(&other.gecko.mPerspectiveOrigin[1]);
     }
 
+    pub fn reset_perspective_origin(&mut self, other: &Self) {
+        self.copy_perspective_origin_from(other)
+    }
+
     pub fn clone_perspective_origin(&self) -> longhands::perspective_origin::computed_value::T {
         use properties::longhands::perspective_origin::computed_value::T;
         use values::computed::LengthOrPercentage;
@@ -2630,6 +3147,10 @@ fn static_assert() {
         self.gecko.mTransformOrigin[0].copy_from(&other.gecko.mTransformOrigin[0]);
         self.gecko.mTransformOrigin[1].copy_from(&other.gecko.mTransformOrigin[1]);
         self.gecko.mTransformOrigin[2].copy_from(&other.gecko.mTransformOrigin[2]);
+    }
+
+    pub fn reset_transform_origin(&mut self, other: &Self) {
+        self.copy_transform_origin_from(other)
     }
 
     pub fn clone_transform_origin(&self) -> longhands::transform_origin::computed_value::T {
@@ -2683,19 +3204,19 @@ fn static_assert() {
                 }
 
                 for feature in features.iter() {
-                    if feature == &atom!("scroll-position") {
+                    if feature.0 == atom!("scroll-position") {
                         self.gecko.mWillChangeBitField |= NS_STYLE_WILL_CHANGE_SCROLL as u8;
-                    } else if feature == &atom!("opacity") {
+                    } else if feature.0 == atom!("opacity") {
                         self.gecko.mWillChangeBitField |= NS_STYLE_WILL_CHANGE_OPACITY as u8;
-                    } else if feature == &atom!("transform") {
+                    } else if feature.0 == atom!("transform") {
                         self.gecko.mWillChangeBitField |= NS_STYLE_WILL_CHANGE_TRANSFORM as u8;
                     }
 
                     unsafe {
-                        Gecko_AppendWillChange(&mut self.gecko, feature.as_ptr());
+                        Gecko_AppendWillChange(&mut self.gecko, feature.0.as_ptr());
                     }
 
-                    if let Ok(prop_id) = PropertyId::parse(feature.to_string().into()) {
+                    if let Ok(prop_id) = PropertyId::parse(&feature.0.to_string()) {
                         match prop_id.as_shorthand() {
                             Ok(shorthand) => {
                                 for longhand in shorthand.longhands() {
@@ -2728,6 +3249,29 @@ fn static_assert() {
         self.gecko.mWillChangeBitField = other.gecko.mWillChangeBitField;
         unsafe {
             Gecko_CopyWillChangeFrom(&mut self.gecko, &other.gecko as *const _ as *mut _);
+        }
+    }
+
+    pub fn reset_will_change(&mut self, other: &Self) {
+        self.copy_will_change_from(other)
+    }
+
+    pub fn clone_will_change(&self) -> longhands::will_change::computed_value::T {
+        use properties::longhands::will_change::computed_value::T;
+        use gecko_bindings::structs::nsIAtom;
+        use gecko_string_cache::Atom;
+        use values::CustomIdent;
+
+        if self.gecko.mWillChange.mBuffer.len() == 0 {
+            T::Auto
+        } else {
+            T::AnimateableFeatures(
+                self.gecko.mWillChange.mBuffer.iter().map(|gecko_atom| {
+                    CustomIdent(
+                        unsafe { Atom::from_addrefed(*gecko_atom as *mut nsIAtom) }
+                    )
+                }).collect()
+            )
         }
     }
 
@@ -2845,6 +3389,10 @@ fn static_assert() {
         }
         self.gecko.${layers_field_name}.${field_name}Count = count;
     }
+
+    pub fn reset_${shorthand}_${name}(&mut self, other: &Self) {
+        self.copy_${shorthand}_${name}_from(other)
+    }
 </%def>
 
 <%def name="impl_simple_image_array_property(name, shorthand, layer_field_name, field_name, struct_name)">
@@ -2947,6 +3495,30 @@ fn static_assert() {
         }
     </%self:simple_image_array_property>
 
+    pub fn clone_${shorthand}_repeat(&self) -> longhands::${shorthand}_repeat::computed_value::T {
+        use properties::longhands::${shorthand}_repeat::single_value::computed_value::T;
+        use properties::longhands::${shorthand}_repeat::single_value::computed_value::RepeatKeyword;
+        use gecko_bindings::structs::StyleImageLayerRepeat;
+
+        fn to_servo(repeat: StyleImageLayerRepeat) -> RepeatKeyword {
+            match repeat {
+                StyleImageLayerRepeat::Repeat => RepeatKeyword::Repeat,
+                StyleImageLayerRepeat::Space => RepeatKeyword::Space,
+                StyleImageLayerRepeat::Round => RepeatKeyword::Round,
+                StyleImageLayerRepeat::NoRepeat => RepeatKeyword::NoRepeat,
+                x => panic!("Found unexpected value in style struct for ${shorthand}_repeat property: {:?}", x),
+            }
+        }
+
+        longhands::${shorthand}_repeat::computed_value::T (
+            self.gecko.${image_layers_field}.mLayers.iter()
+                .take(self.gecko.${image_layers_field}.mRepeatCount as usize)
+                .map(|ref layer| {
+                    T(to_servo(layer.mRepeat.mXRepeat), to_servo(layer.mRepeat.mYRepeat))
+                }).collect()
+        )
+    }
+
     <% impl_simple_image_array_property("clip", shorthand, image_layers_field, "mClip", struct_name) %>
     <% impl_simple_image_array_property("origin", shorthand, image_layers_field, "mOrigin", struct_name) %>
 
@@ -2969,6 +3541,10 @@ fn static_assert() {
                 = other.mPosition.m${orientation.upper()}Position;
         }
         self.gecko.${image_layers_field}.mPosition${orientation.upper()}Count = count;
+    }
+
+    pub fn reset_${shorthand}_position_${orientation}(&mut self, other: &Self) {
+        self.copy_${shorthand}_position_${orientation}_from(other)
     }
 
     pub fn clone_${shorthand}_position_${orientation}(&self)
@@ -3060,7 +3636,7 @@ fn static_assert() {
                 LengthOrPercentageOrAuto::Auto
             } else {
                 debug_assert!(ty == DimensionType::eLengthPercentage as u8);
-                LengthOrPercentageOrAuto::Calc(value.into())
+                value.into()
             }
         }
 
@@ -3082,7 +3658,6 @@ fn static_assert() {
         )
     }
 
-
     pub fn copy_${shorthand}_image_from(&mut self, other: &Self) {
         use gecko_bindings::structs::nsStyleImageLayers_LayerType as LayerType;
         unsafe {
@@ -3102,8 +3677,12 @@ fn static_assert() {
         }
     }
 
+    pub fn reset_${shorthand}_image(&mut self, other: &Self) {
+        self.copy_${shorthand}_image_from(other)
+    }
+
     #[allow(unused_variables)]
-    pub fn set_${shorthand}_image<I>(&mut self, images: I, cacheable: &mut bool)
+    pub fn set_${shorthand}_image<I>(&mut self, images: I)
         where I: IntoIterator<Item = longhands::${shorthand}_image::computed_value::single_value::T>,
               I::IntoIter: ExactSizeIterator
     {
@@ -3126,9 +3705,24 @@ fn static_assert() {
         for (image, geckoimage) in images.zip(self.gecko.${image_layers_field}
                                                   .mLayers.iter_mut()) {
             if let Either::Second(image) = image {
-                geckoimage.mImage.set(image, cacheable)
+                geckoimage.mImage.set(image)
             }
         }
+    }
+
+    pub fn clone_${shorthand}_image(&self) -> longhands::${shorthand}_image::computed_value::T {
+        use values::None_;
+
+        longhands::${shorthand}_image::computed_value::T(
+            self.gecko.${image_layers_field}.mLayers.iter()
+                .take(self.gecko.${image_layers_field}.mImageCount as usize)
+                .map(|ref layer| {
+                    match unsafe { layer.mImage.into_image() } {
+                        Some(image) => Either::Second(image),
+                        None => Either::First(None_),
+                    }
+            }).collect()
+        )
     }
 
     <%
@@ -3202,12 +3796,34 @@ fn static_assert() {
         unsafe { Gecko_CopyListStyleImageFrom(&mut self.gecko, &other.gecko); }
     }
 
-    pub fn set_list_style_type(&mut self, v: longhands::list_style_type::computed_value::T) {
+    pub fn reset_list_style_image(&mut self, other: &Self) {
+        self.copy_list_style_image_from(other)
+    }
+
+    pub fn clone_list_style_image(&self) -> longhands::list_style_image::computed_value::T {
+        use values::specified::url::SpecifiedUrl;
+        use values::{Either, None_};
+
+        longhands::list_style_image::computed_value::T(
+            match self.gecko.mListStyleImage.mRawPtr.is_null() {
+                true => Either::Second(None_),
+                false => {
+                    unsafe {
+                        let ref gecko_image_request = *self.gecko.mListStyleImage.mRawPtr;
+                        Either::First(SpecifiedUrl::from_image_request(gecko_image_request)
+                                      .expect("mListStyleImage could not convert to SpecifiedUrl"))
+                    }
+                }
+            }
+        )
+    }
+
+    pub fn set_list_style_type(&mut self, v: longhands::list_style_type::computed_value::T, device: &Device) {
         use gecko_bindings::bindings::Gecko_SetCounterStyleToString;
         use nsstring::{nsACString, nsCString};
         use self::longhands::list_style_type::computed_value::T;
         match v {
-            T::CounterStyle(s) => s.to_gecko_value(&mut self.gecko.mCounterStyle),
+            T::CounterStyle(s) => s.to_gecko_value(&mut self.gecko.mCounterStyle, device),
             T::String(s) => unsafe {
                 Gecko_SetCounterStyleToString(&mut self.gecko.mCounterStyle,
                                               &nsCString::from(s) as &nsACString)
@@ -3219,6 +3835,10 @@ fn static_assert() {
         unsafe {
             Gecko_CopyCounterStyle(&mut self.gecko.mCounterStyle, &other.gecko.mCounterStyle);
         }
+    }
+
+    pub fn reset_list_style_type(&mut self, other: &Self) {
+        self.copy_list_style_type_from(other)
     }
 
     pub fn set_quotes(&mut self, other: longhands::quotes::computed_value::T) {
@@ -3239,6 +3859,21 @@ fn static_assert() {
 
     pub fn copy_quotes_from(&mut self, other: &Self) {
         unsafe { self.gecko.mQuotes.set(&other.gecko.mQuotes); }
+    }
+
+    pub fn reset_quotes(&mut self, other: &Self) {
+        self.copy_quotes_from(other)
+    }
+
+    pub fn clone_quotes(&self) -> longhands::quotes::computed_value::T {
+        unsafe {
+            let ref gecko_quote_values = *self.gecko.mQuotes.mRawPtr;
+            longhands::quotes::computed_value::T(
+                gecko_quote_values.mQuotePairs.iter().map(|gecko_pair| {
+                    (gecko_pair.first.to_string(), gecko_pair.second.to_string())
+                }).collect()
+            )
+        }
     }
 
     #[allow(non_snake_case)]
@@ -3315,13 +3950,13 @@ fn static_assert() {
 <%self:impl_trait style_struct_name="Effects"
                   skip_longhands="box-shadow clip filter">
     pub fn set_box_shadow<I>(&mut self, v: I)
-        where I: IntoIterator<Item = Shadow>,
+        where I: IntoIterator<Item = BoxShadow>,
               I::IntoIter: ExactSizeIterator
     {
         let v = v.into_iter();
         self.gecko.mBoxShadow.replace_with_new(v.len() as u32);
         for (servo, gecko_shadow) in v.zip(self.gecko.mBoxShadow.iter_mut()) {
-            gecko_shadow.set_from_shadow(servo);
+            gecko_shadow.set_from_box_shadow(servo);
         }
     }
 
@@ -3329,8 +3964,12 @@ fn static_assert() {
         self.gecko.mBoxShadow.copy_from(&other.gecko.mBoxShadow);
     }
 
+    pub fn reset_box_shadow(&mut self, other: &Self) {
+        self.copy_box_shadow_from(other)
+    }
+
     pub fn clone_box_shadow(&self) -> longhands::box_shadow::computed_value::T {
-        let buf = self.gecko.mBoxShadow.iter().map(|v| v.to_shadow()).collect();
+        let buf = self.gecko.mBoxShadow.iter().map(|v| v.to_box_shadow()).collect();
         longhands::box_shadow::computed_value::T(buf)
     }
 
@@ -3361,14 +4000,14 @@ fn static_assert() {
                 }
 
                 if let Some(bottom) = rect.bottom {
-                    self.gecko.mClip.height = bottom.0 - self.gecko.mClip.y;
+                    self.gecko.mClip.height = (bottom - Au(self.gecko.mClip.y)).0;
                 } else {
                     self.gecko.mClip.height = 1 << 30; // NS_MAXSIZE
                     self.gecko.mClipFlags |= NS_STYLE_CLIP_BOTTOM_AUTO as u8;
                 }
 
                 if let Some(right) = rect.right {
-                    self.gecko.mClip.width = right.0 - self.gecko.mClip.x;
+                    self.gecko.mClip.width = (right - Au(self.gecko.mClip.x)).0;
                 } else {
                     self.gecko.mClip.width = 1 << 30; // NS_MAXSIZE
                     self.gecko.mClipFlags |= NS_STYLE_CLIP_RIGHT_AUTO as u8;
@@ -3387,6 +4026,10 @@ fn static_assert() {
     pub fn copy_clip_from(&mut self, other: &Self) {
         self.gecko.mClip = other.gecko.mClip;
         self.gecko.mClipFlags = other.gecko.mClipFlags;
+    }
+
+    pub fn reset_clip(&mut self, other: &Self) {
+        self.copy_clip_from(other)
     }
 
     pub fn clone_clip(&self) -> longhands::clip::computed_value::T {
@@ -3433,8 +4076,21 @@ fn static_assert() {
         }
     }
 
-    pub fn set_filter(&mut self, v: longhands::filter::computed_value::T) {
-        use properties::longhands::filter::computed_value::Filter::*;
+    <%
+    # This array is several filter function which has percentage or
+    # number value for function of clone / set.
+    # The setting / cloning process of other function(e.g. Blur / HueRotate) is
+    # different from these function. So this array don't include such function.
+    FILTER_FUNCTIONS = [ 'Brightness', 'Contrast', 'Grayscale', 'Invert',
+                         'Opacity', 'Saturate', 'Sepia' ]
+     %>
+
+    pub fn set_filter<I>(&mut self, v: I)
+    where
+        I: IntoIterator<Item = Filter>,
+        I::IntoIter: ExactSizeIterator,
+    {
+        use values::generics::effects::Filter::*;
         use gecko_bindings::structs::nsCSSShadowArray;
         use gecko_bindings::structs::nsStyleFilter;
         use gecko_bindings::structs::NS_STYLE_FILTER_BLUR;
@@ -3453,41 +4109,27 @@ fn static_assert() {
             gecko_filter.mFilterParameter.set_value(value);
         }
 
+        let v = v.into_iter();
         unsafe {
-            Gecko_ResetFilters(&mut self.gecko, v.filters.len());
+            Gecko_ResetFilters(&mut self.gecko, v.len());
         }
-        debug_assert!(v.filters.len() == self.gecko.mFilters.len());
+        debug_assert_eq!(v.len(), self.gecko.mFilters.len());
 
-        for (servo, gecko_filter) in v.filters.into_iter().zip(self.gecko.mFilters.iter_mut()) {
-            //TODO: URL, drop-shadow
+        for (servo, gecko_filter) in v.zip(self.gecko.mFilters.iter_mut()) {
             match servo {
-                Blur(len)          => fill_filter(NS_STYLE_FILTER_BLUR,
-                                                  CoordDataValue::Coord(len.0),
-                                                  gecko_filter),
-                Brightness(factor) => fill_filter(NS_STYLE_FILTER_BRIGHTNESS,
-                                                  CoordDataValue::Factor(factor),
-                                                  gecko_filter),
-                Contrast(factor)   => fill_filter(NS_STYLE_FILTER_CONTRAST,
-                                                  CoordDataValue::Factor(factor),
-                                                  gecko_filter),
-                Grayscale(factor)  => fill_filter(NS_STYLE_FILTER_GRAYSCALE,
-                                                  CoordDataValue::Factor(factor),
-                                                  gecko_filter),
-                HueRotate(angle)   => fill_filter(NS_STYLE_FILTER_HUE_ROTATE,
-                                                  CoordDataValue::from(angle),
-                                                  gecko_filter),
-                Invert(factor)     => fill_filter(NS_STYLE_FILTER_INVERT,
-                                                  CoordDataValue::Factor(factor),
-                                                  gecko_filter),
-                Opacity(factor)    => fill_filter(NS_STYLE_FILTER_OPACITY,
-                                                  CoordDataValue::Factor(factor),
-                                                  gecko_filter),
-                Saturate(factor)   => fill_filter(NS_STYLE_FILTER_SATURATE,
-                                                  CoordDataValue::Factor(factor),
-                                                  gecko_filter),
-                Sepia(factor)      => fill_filter(NS_STYLE_FILTER_SEPIA,
-                                                  CoordDataValue::Factor(factor),
-                                                  gecko_filter),
+                % for func in FILTER_FUNCTIONS:
+                ${func}(factor) => fill_filter(NS_STYLE_FILTER_${func.upper()},
+                                               CoordDataValue::Factor(factor),
+                                               gecko_filter),
+                % endfor
+                Blur(length) => fill_filter(NS_STYLE_FILTER_BLUR,
+                                            CoordDataValue::Coord(length.0),
+                                            gecko_filter),
+
+                HueRotate(angle) => fill_filter(NS_STYLE_FILTER_HUE_ROTATE,
+                                                CoordDataValue::from(angle),
+                                                gecko_filter),
+
                 DropShadow(shadow) => {
                     gecko_filter.mType = NS_STYLE_FILTER_DROP_SHADOW;
 
@@ -3502,13 +4144,13 @@ fn static_assert() {
                     }
 
                     let mut gecko_shadow = init_shadow(gecko_filter);
-                    gecko_shadow.mArray[0].set_from_shadow(shadow);
-                }
+                    gecko_shadow.mArray[0].set_from_simple_shadow(shadow);
+                },
                 Url(ref url) => {
                     unsafe {
                         bindings::Gecko_nsStyleFilter_SetURLValue(gecko_filter, url.for_ffi());
                     }
-                }
+                },
             }
         }
     }
@@ -3518,6 +4160,65 @@ fn static_assert() {
             Gecko_CopyFiltersFrom(&other.gecko as *const _ as *mut _, &mut self.gecko);
         }
     }
+
+    pub fn reset_filter(&mut self, other: &Self) {
+        self.copy_filter_from(other)
+    }
+
+    pub fn clone_filter(&self) -> longhands::filter::computed_value::T {
+        use values::generics::effects::Filter;
+        use values::specified::url::SpecifiedUrl;
+        use gecko_bindings::structs::NS_STYLE_FILTER_BLUR;
+        use gecko_bindings::structs::NS_STYLE_FILTER_BRIGHTNESS;
+        use gecko_bindings::structs::NS_STYLE_FILTER_CONTRAST;
+        use gecko_bindings::structs::NS_STYLE_FILTER_GRAYSCALE;
+        use gecko_bindings::structs::NS_STYLE_FILTER_INVERT;
+        use gecko_bindings::structs::NS_STYLE_FILTER_OPACITY;
+        use gecko_bindings::structs::NS_STYLE_FILTER_SATURATE;
+        use gecko_bindings::structs::NS_STYLE_FILTER_SEPIA;
+        use gecko_bindings::structs::NS_STYLE_FILTER_HUE_ROTATE;
+        use gecko_bindings::structs::NS_STYLE_FILTER_DROP_SHADOW;
+        use gecko_bindings::structs::NS_STYLE_FILTER_URL;
+
+        let mut filters = Vec::new();
+        for filter in self.gecko.mFilters.iter(){
+            match filter.mType {
+                % for func in FILTER_FUNCTIONS:
+                NS_STYLE_FILTER_${func.upper()} => {
+                    filters.push(Filter::${func}(
+                        GeckoStyleCoordConvertible::from_gecko_style_coord(
+                            &filter.mFilterParameter).unwrap()));
+                },
+                % endfor
+                NS_STYLE_FILTER_BLUR => {
+                    filters.push(Filter::Blur(Au::from_gecko_style_coord(
+                        &filter.mFilterParameter).unwrap()));
+                },
+                NS_STYLE_FILTER_HUE_ROTATE => {
+                    filters.push(Filter::HueRotate(
+                        GeckoStyleCoordConvertible::from_gecko_style_coord(
+                            &filter.mFilterParameter).unwrap()));
+                },
+                NS_STYLE_FILTER_DROP_SHADOW => {
+                    filters.push(unsafe {
+                        Filter::DropShadow(
+                            (**filter.__bindgen_anon_1.mDropShadow.as_ref()).mArray[0].to_simple_shadow(),
+                        )
+                    });
+                },
+                NS_STYLE_FILTER_URL => {
+                    filters.push(unsafe {
+                        Filter::Url(
+                            SpecifiedUrl::from_url_value_data(&(**filter.__bindgen_anon_1.mURL.as_ref())._base).unwrap()
+                        )
+                    });
+                }
+                _ => {},
+            }
+        }
+        longhands::filter::computed_value::T(filters)
+    }
+
 </%self:impl_trait>
 
 <%self:impl_trait style_struct_name="InheritedBox"
@@ -3534,9 +4235,9 @@ fn static_assert() {
                     bindings::Gecko_SetImageOrientationAsFromImage(&mut self.gecko);
                 }
             },
-            T::AngleWithFlipped(ref angle, flipped) => {
+            T::AngleWithFlipped(ref orientation, flipped) => {
                 unsafe {
-                    bindings::Gecko_SetImageOrientation(&mut self.gecko, angle.radians() as f64, flipped);
+                    bindings::Gecko_SetImageOrientation(&mut self.gecko, *orientation as u8, flipped);
                 }
             }
         }
@@ -3546,6 +4247,10 @@ fn static_assert() {
         unsafe {
             bindings::Gecko_CopyImageOrientationFrom(&mut self.gecko, &other.gecko);
         }
+    }
+
+    pub fn reset_image_orientation(&mut self, other: &Self) {
+        self.copy_image_orientation_from(other)
     }
 </%self:impl_trait>
 
@@ -3560,6 +4265,10 @@ fn static_assert() {
     pub fn copy_border_spacing_from(&mut self, other: &Self) {
         self.gecko.mBorderSpacingCol = other.gecko.mBorderSpacingCol;
         self.gecko.mBorderSpacingRow = other.gecko.mBorderSpacingRow;
+    }
+
+    pub fn reset_border_spacing(&mut self, other: &Self) {
+        self.copy_border_spacing_from(other)
     }
 
     pub fn clone_border_spacing(&self) -> longhands::border_spacing::computed_value::T {
@@ -3582,13 +4291,13 @@ fn static_assert() {
     ${impl_keyword_clone('text_align', 'mTextAlign', text_align_keyword)}
 
     pub fn set_text_shadow<I>(&mut self, v: I)
-        where I: IntoIterator<Item = Shadow>,
+        where I: IntoIterator<Item = SimpleShadow>,
               I::IntoIter: ExactSizeIterator
     {
         let v = v.into_iter();
         self.gecko.mTextShadow.replace_with_new(v.len() as u32);
         for (servo, gecko_shadow) in v.zip(self.gecko.mTextShadow.iter_mut()) {
-            gecko_shadow.set_from_shadow(servo);
+            gecko_shadow.set_from_simple_shadow(servo);
         }
     }
 
@@ -3596,8 +4305,12 @@ fn static_assert() {
         self.gecko.mTextShadow.copy_from(&other.gecko.mTextShadow);
     }
 
+    pub fn reset_text_shadow(&mut self, other: &Self) {
+        self.copy_text_shadow_from(other)
+    }
+
     pub fn clone_text_shadow(&self) -> longhands::text_shadow::computed_value::T {
-        let buf = self.gecko.mTextShadow.iter().map(|v| v.to_shadow()).collect();
+        let buf = self.gecko.mTextShadow.iter().map(|v| v.to_simple_shadow()).collect();
         longhands::text_shadow::computed_value::T(buf)
     }
 
@@ -3722,6 +4435,37 @@ fn static_assert() {
         self.gecko.mTextEmphasisStyle = other.gecko.mTextEmphasisStyle;
     }
 
+    pub fn reset_text_emphasis_style(&mut self, other: &Self) {
+        self.copy_text_emphasis_style_from(other)
+    }
+
+    pub fn clone_text_emphasis_style(&self) -> longhands::text_emphasis_style::computed_value::T {
+        use properties::longhands::text_emphasis_style::computed_value::{T, KeywordValue};
+        use properties::longhands::text_emphasis_style::ShapeKeyword;
+
+        if self.gecko.mTextEmphasisStyle == structs::NS_STYLE_TEXT_EMPHASIS_STYLE_NONE as u8 {
+            return T::None;
+        } else if self.gecko.mTextEmphasisStyle == structs::NS_STYLE_TEXT_EMPHASIS_STYLE_STRING as u8 {
+            return T::String(self.gecko.mTextEmphasisStyleString.to_string());
+        }
+
+        let fill = self.gecko.mTextEmphasisStyle & structs::NS_STYLE_TEXT_EMPHASIS_STYLE_OPEN as u8 == 0;
+        let shape =
+            match self.gecko.mTextEmphasisStyle as u32 & !structs::NS_STYLE_TEXT_EMPHASIS_STYLE_OPEN {
+                structs::NS_STYLE_TEXT_EMPHASIS_STYLE_DOT => ShapeKeyword::Dot,
+                structs::NS_STYLE_TEXT_EMPHASIS_STYLE_CIRCLE => ShapeKeyword::Circle,
+                structs::NS_STYLE_TEXT_EMPHASIS_STYLE_DOUBLE_CIRCLE => ShapeKeyword::DoubleCircle,
+                structs::NS_STYLE_TEXT_EMPHASIS_STYLE_TRIANGLE => ShapeKeyword::Triangle,
+                structs::NS_STYLE_TEXT_EMPHASIS_STYLE_SESAME => ShapeKeyword::Sesame,
+                x => panic!("Unexpected value in style struct for text-emphasis-style property: {:?}", x)
+            };
+
+        T::Keyword(KeywordValue {
+            fill: fill,
+            shape: shape
+        })
+    }
+
     <%call expr="impl_app_units('_webkit_text_stroke_width', 'mWebkitTextStrokeWidth', need_clone=True)"></%call>
 
     #[allow(non_snake_case)]
@@ -3770,6 +4514,7 @@ fn static_assert() {
         clear_if_string(&mut self.gecko.mTextOverflow.mLeft);
         clear_if_string(&mut self.gecko.mTextOverflow.mRight);
     }
+
     pub fn set_text_overflow(&mut self, v: longhands::text_overflow::computed_value::T) {
         use gecko_bindings::structs::nsStyleTextOverflowSide;
         use properties::longhands::text_overflow::Side;
@@ -3807,6 +4552,30 @@ fn static_assert() {
         self.gecko.mTextOverflow.mLogicalDirections = other.gecko.mTextOverflow.mLogicalDirections;
     }
 
+    pub fn reset_text_overflow(&mut self, other: &Self) {
+        self.copy_text_overflow_from(other)
+    }
+
+    pub fn clone_text_overflow(&self) -> longhands::text_overflow::computed_value::T {
+        use gecko_bindings::structs::nsStyleTextOverflowSide;
+        use properties::longhands::text_overflow::Side;
+
+        fn to_servo(side: &nsStyleTextOverflowSide) -> Side {
+            match side.mType as u32 {
+                structs::NS_STYLE_TEXT_OVERFLOW_CLIP => Side::Clip,
+                structs::NS_STYLE_TEXT_OVERFLOW_ELLIPSIS => Side::Ellipsis,
+                structs::NS_STYLE_TEXT_OVERFLOW_STRING => Side::String(side.mString.to_string().into_boxed_str()),
+                x => panic!("Found unexpected value in style struct for text_overflow property: {:?}", x),
+            }
+        }
+
+        longhands::text_overflow::computed_value::T {
+            first: to_servo(&self.gecko.mTextOverflow.mLeft),
+            second: to_servo(&self.gecko.mTextOverflow.mRight),
+            sides_are_logical: self.gecko.mTextOverflow.mLogicalDirections
+        }
+    }
+
     pub fn set_initial_letter(&mut self, v: longhands::initial_letter::computed_value::T) {
         use values::generics::text::InitialLetter;
         match v {
@@ -3828,6 +4597,10 @@ fn static_assert() {
     pub fn copy_initial_letter_from(&mut self, other: &Self) {
         self.gecko.mInitialLetterSize = other.gecko.mInitialLetterSize;
         self.gecko.mInitialLetterSink = other.gecko.mInitialLetterSink;
+    }
+
+    pub fn reset_initial_letter(&mut self, other: &Self) {
+        self.copy_initial_letter_from(other)
     }
 
     pub fn clone_initial_letter(&self) -> longhands::initial_letter::computed_value::T {
@@ -3967,6 +4740,10 @@ fn static_assert() {
             Gecko_CopyShapeSourceFrom(&mut self.gecko.${gecko_ffi_name}, &other.gecko.${gecko_ffi_name});
         }
     }
+
+    pub fn reset_${ident}(&mut self, other: &Self) {
+        self.copy_${ident}_from(other)
+    }
 </%def>
 
 <% skip_svg_longhands = """
@@ -4034,18 +4811,21 @@ clip-path
         }
     }
 
+    pub fn reset_stroke_dasharray(&mut self, other: &Self) {
+        self.copy_stroke_dasharray_from(other)
+    }
+
     pub fn clone_stroke_dasharray(&self) -> longhands::stroke_dasharray::computed_value::T {
-        use smallvec::SmallVec;
         use values::computed::LengthOrPercentage;
 
-        let mut vec = SmallVec::new();
+        let mut vec = vec![];
         for gecko in self.gecko.mStrokeDasharray.iter() {
             match gecko.as_value() {
                 CoordDataValue::Factor(number) => vec.push(Either::First(number)),
                 CoordDataValue::Coord(coord) =>
                     vec.push(Either::Second(LengthOrPercentage::Length(Au(coord)))),
                 CoordDataValue::Percent(p) =>
-                    vec.push(Either::Second(LengthOrPercentage::Percentage(p))),
+                    vec.push(Either::Second(LengthOrPercentage::Percentage(Percentage(p)))),
                 CoordDataValue::Calc(calc) =>
                     vec.push(Either::Second(LengthOrPercentage::Calc(calc.into()))),
                 _ => unreachable!(),
@@ -4068,7 +4848,7 @@ clip-path
         match self.gecko.mStrokeDashoffset.as_value() {
             CoordDataValue::Factor(number) => Either::First(number),
             CoordDataValue::Coord(coord) => Either::Second(LengthOrPercentage::Length(Au(coord))),
-            CoordDataValue::Percent(p) => Either::Second(LengthOrPercentage::Percentage(p)),
+            CoordDataValue::Percent(p) => Either::Second(LengthOrPercentage::Percentage(Percentage(p))),
             CoordDataValue::Calc(calc) => Either::Second(LengthOrPercentage::Calc(calc.into())),
             _ => unreachable!(),
         }
@@ -4088,7 +4868,7 @@ clip-path
         match self.gecko.mStrokeWidth.as_value() {
             CoordDataValue::Factor(number) => Either::First(number),
             CoordDataValue::Coord(coord) => Either::Second(LengthOrPercentage::Length(Au(coord))),
-            CoordDataValue::Percent(p) => Either::Second(LengthOrPercentage::Percentage(p)),
+            CoordDataValue::Percent(p) => Either::Second(LengthOrPercentage::Percentage(Percentage(p))),
             CoordDataValue::Calc(calc) => Either::Second(LengthOrPercentage::Calc(calc.into())),
             _ => unreachable!(),
         }
@@ -4110,6 +4890,10 @@ clip-path
                 self.gecko.mContextPropsBits |= structs::NS_STYLE_CONTEXT_PROPERTY_FILL as u8;
             } else if servo.0 == atom!("stroke") {
                 self.gecko.mContextPropsBits |= structs::NS_STYLE_CONTEXT_PROPERTY_STROKE as u8;
+            } else if servo.0 == atom!("fill-opacity") {
+                self.gecko.mContextPropsBits |= structs::NS_STYLE_CONTEXT_PROPERTY_FILL_OPACITY as u8;
+            } else if servo.0 == atom!("stroke-opacity") {
+                self.gecko.mContextPropsBits |= structs::NS_STYLE_CONTEXT_PROPERTY_STROKE_OPACITY as u8;
             }
             unsafe { gecko.set_raw_from_addrefed::<structs::nsIAtom>(servo.0.into_addrefed()) }
         }
@@ -4120,6 +4904,11 @@ clip-path
         unsafe {
             bindings::Gecko_nsStyleSVG_CopyContextProperties(&mut self.gecko, &other.gecko);
         }
+    }
+
+    #[allow(non_snake_case)]
+    pub fn reset__moz_context_properties(&mut self, other: &Self) {
+        self.copy__moz_context_properties_from(other)
     }
 </%self:impl_trait>
 
@@ -4152,7 +4941,7 @@ clip-path
                 Cursor::Pointer => structs::NS_STYLE_CURSOR_POINTER,
                 Cursor::ContextMenu => structs::NS_STYLE_CURSOR_CONTEXT_MENU,
                 Cursor::Help => structs::NS_STYLE_CURSOR_HELP,
-                Cursor::Progress => structs::NS_STYLE_CURSOR_DEFAULT, // Gecko doesn't support "progress" yet
+                Cursor::Progress => structs::NS_STYLE_CURSOR_SPINNING,
                 Cursor::Wait => structs::NS_STYLE_CURSOR_WAIT,
                 Cursor::Cell => structs::NS_STYLE_CURSOR_CELL,
                 Cursor::Crosshair => structs::NS_STYLE_CURSOR_CROSSHAIR,
@@ -4203,6 +4992,17 @@ clip-path
             // background-image to a url() value, since only properties in reset structs
             // are re-used from the applicable declaration cache, and the Pointing struct
             // is an inherited struct.
+
+            match v.images[i].hotspot {
+                Some((x, y)) => {
+                    self.gecko.mCursorImages[i].mHaveHotspot = true;
+                    self.gecko.mCursorImages[i].mHotspotX = x;
+                    self.gecko.mCursorImages[i].mHotspotY = y;
+                },
+                _ => {
+                    self.gecko.mCursorImages[i].mHaveHotspot = false;
+                }
+            }
         }
     }
 
@@ -4211,6 +5011,75 @@ clip-path
         unsafe {
             Gecko_CopyCursorArrayFrom(&mut self.gecko, &other.gecko);
         }
+    }
+
+    pub fn reset_cursor(&mut self, other: &Self) {
+        self.copy_cursor_from(other)
+    }
+
+    pub fn clone_cursor(&self) -> longhands::cursor::computed_value::T {
+        use properties::longhands::cursor::computed_value::{Keyword, Image};
+        use style_traits::cursor::Cursor;
+        use values::specified::url::SpecifiedUrl;
+
+        let keyword = match self.gecko.mCursor as u32 {
+            structs::NS_STYLE_CURSOR_AUTO => Keyword::Auto,
+            structs::NS_STYLE_CURSOR_NONE => Keyword::Cursor(Cursor::None),
+            structs::NS_STYLE_CURSOR_DEFAULT => Keyword::Cursor(Cursor::Default),
+            structs::NS_STYLE_CURSOR_POINTER => Keyword::Cursor(Cursor::Pointer),
+            structs::NS_STYLE_CURSOR_CONTEXT_MENU => Keyword::Cursor(Cursor::ContextMenu),
+            structs::NS_STYLE_CURSOR_HELP => Keyword::Cursor(Cursor::Help),
+            structs::NS_STYLE_CURSOR_SPINNING => Keyword::Cursor(Cursor::Progress),
+            structs::NS_STYLE_CURSOR_WAIT => Keyword::Cursor(Cursor::Wait),
+            structs::NS_STYLE_CURSOR_CELL => Keyword::Cursor(Cursor::Cell),
+            structs::NS_STYLE_CURSOR_CROSSHAIR => Keyword::Cursor(Cursor::Crosshair),
+            structs::NS_STYLE_CURSOR_TEXT => Keyword::Cursor(Cursor::Text),
+            structs::NS_STYLE_CURSOR_VERTICAL_TEXT => Keyword::Cursor(Cursor::VerticalText),
+            structs::NS_STYLE_CURSOR_ALIAS => Keyword::Cursor(Cursor::Alias),
+            structs::NS_STYLE_CURSOR_COPY => Keyword::Cursor(Cursor::Copy),
+            structs::NS_STYLE_CURSOR_MOVE => Keyword::Cursor(Cursor::Move),
+            structs::NS_STYLE_CURSOR_NO_DROP => Keyword::Cursor(Cursor::NoDrop),
+            structs::NS_STYLE_CURSOR_NOT_ALLOWED => Keyword::Cursor(Cursor::NotAllowed),
+            structs::NS_STYLE_CURSOR_GRAB => Keyword::Cursor(Cursor::Grab),
+            structs::NS_STYLE_CURSOR_GRABBING => Keyword::Cursor(Cursor::Grabbing),
+            structs::NS_STYLE_CURSOR_E_RESIZE => Keyword::Cursor(Cursor::EResize),
+            structs::NS_STYLE_CURSOR_N_RESIZE => Keyword::Cursor(Cursor::NResize),
+            structs::NS_STYLE_CURSOR_NE_RESIZE => Keyword::Cursor(Cursor::NeResize),
+            structs::NS_STYLE_CURSOR_NW_RESIZE => Keyword::Cursor(Cursor::NwResize),
+            structs::NS_STYLE_CURSOR_S_RESIZE => Keyword::Cursor(Cursor::SResize),
+            structs::NS_STYLE_CURSOR_SE_RESIZE => Keyword::Cursor(Cursor::SeResize),
+            structs::NS_STYLE_CURSOR_SW_RESIZE => Keyword::Cursor(Cursor::SwResize),
+            structs::NS_STYLE_CURSOR_W_RESIZE => Keyword::Cursor(Cursor::WResize),
+            structs::NS_STYLE_CURSOR_EW_RESIZE => Keyword::Cursor(Cursor::EwResize),
+            structs::NS_STYLE_CURSOR_NS_RESIZE => Keyword::Cursor(Cursor::NsResize),
+            structs::NS_STYLE_CURSOR_NESW_RESIZE => Keyword::Cursor(Cursor::NeswResize),
+            structs::NS_STYLE_CURSOR_NWSE_RESIZE => Keyword::Cursor(Cursor::NwseResize),
+            structs::NS_STYLE_CURSOR_COL_RESIZE => Keyword::Cursor(Cursor::ColResize),
+            structs::NS_STYLE_CURSOR_ROW_RESIZE => Keyword::Cursor(Cursor::RowResize),
+            structs::NS_STYLE_CURSOR_ALL_SCROLL => Keyword::Cursor(Cursor::AllScroll),
+            structs::NS_STYLE_CURSOR_ZOOM_IN => Keyword::Cursor(Cursor::ZoomIn),
+            structs::NS_STYLE_CURSOR_ZOOM_OUT => Keyword::Cursor(Cursor::ZoomOut),
+            x => panic!("Found unexpected value in style struct for cursor property: {:?}", x),
+        };
+
+        let images = self.gecko.mCursorImages.iter().map(|gecko_cursor_image| {
+            let url = unsafe {
+                let gecko_image_request = gecko_cursor_image.mImage.mRawPtr.as_ref().unwrap();
+                SpecifiedUrl::from_image_request(&gecko_image_request)
+                    .expect("mCursorImages.mImage could not convert to SpecifiedUrl")
+            };
+
+            let hotspot =
+                if gecko_cursor_image.mHaveHotspot {
+                    Some((gecko_cursor_image.mHotspotX, gecko_cursor_image.mHotspotY))
+                } else {
+                    None
+                };
+
+            Image { url, hotspot }
+        }).collect();
+
+        longhands::cursor::computed_value::T { images, keyword }
     }
 
     <%call expr="impl_color('caret_color', 'mCaretColor', need_clone=True)"></%call>
@@ -4254,7 +5123,7 @@ clip-path
         self.gecko.mContents.is_empty()
     }
 
-    pub fn set_content(&mut self, v: longhands::content::computed_value::T) {
+    pub fn set_content(&mut self, v: longhands::content::computed_value::T, device: &Device) {
         use properties::longhands::content::computed_value::T;
         use properties::longhands::content::computed_value::ContentItem;
         use values::generics::CounterStyleOrNone;
@@ -4275,7 +5144,8 @@ clip-path
 
         fn set_counter_function(data: &mut nsStyleContentData,
                                 content_type: nsStyleContentType,
-                                name: &str, sep: &str, style: CounterStyleOrNone) {
+                                name: &str, sep: &str,
+                                style: CounterStyleOrNone, device: &Device) {
             debug_assert!(content_type == eStyleContentType_Counter ||
                           content_type == eStyleContentType_Counters);
             let counter_func = unsafe {
@@ -4285,7 +5155,7 @@ clip-path
             if content_type == eStyleContentType_Counters {
                 counter_func.mSeparator.assign_utf8(sep);
             }
-            style.to_gecko_value(&mut counter_func.mCounterStyle);
+            style.to_gecko_value(&mut counter_func.mCounterStyle, device);
         }
 
         match v {
@@ -4349,11 +5219,11 @@ clip-path
                             => self.gecko.mContents[i].mType = eStyleContentType_NoCloseQuote,
                         ContentItem::Counter(name, style) => {
                             set_counter_function(&mut self.gecko.mContents[i],
-                                                 eStyleContentType_Counter, &name, "", style);
+                                                 eStyleContentType_Counter, &name, "", style, device);
                         }
                         ContentItem::Counters(name, sep, style) => {
                             set_counter_function(&mut self.gecko.mContents[i],
-                                                 eStyleContentType_Counters, &name, &sep, style);
+                                                 eStyleContentType_Counters, &name, &sep, style, device);
                         }
                         ContentItem::Url(ref url) => {
                             unsafe {
@@ -4374,6 +5244,10 @@ clip-path
         }
     }
 
+    pub fn reset_content(&mut self, other: &Self) {
+        self.copy_content_from(other)
+    }
+
     % for counter_property in ["Increment", "Reset"]:
         pub fn set_counter_${counter_property.lower()}(&mut self, v: longhands::counter_increment::computed_value::T) {
             unsafe {
@@ -4390,6 +5264,21 @@ clip-path
             unsafe {
                 bindings::Gecko_CopyCounter${counter_property}sFrom(&mut self.gecko, &other.gecko)
             }
+        }
+
+        pub fn reset_counter_${counter_property.lower()}(&mut self, other: &Self) {
+            self.copy_counter_${counter_property.lower()}_from(other)
+        }
+
+        pub fn clone_counter_${counter_property.lower()}(&self) -> longhands::counter_increment::computed_value::T {
+            use values::CustomIdent;
+            use gecko_string_cache::Atom;
+
+            longhands::counter_increment::computed_value::T(
+                self.gecko.m${counter_property}s.iter().map(|ref gecko_counter| {
+                    (CustomIdent(Atom::from(gecko_counter.mCounter.to_string())), gecko_counter.mValue)
+                }).collect()
+            )
         }
     % endfor
 </%self:impl_trait>
@@ -4413,44 +5302,10 @@ clip-path
     }
 </%self:impl_trait>
 
-<%def name="define_ffi_struct_accessor(style_struct)">
-#[no_mangle]
-#[allow(non_snake_case, unused_variables)]
-pub unsafe extern "C" fn Servo_GetStyle${style_struct.gecko_name}(computed_values:
-        ServoComputedValuesBorrowedOrNull) -> *const ${style_struct.gecko_ffi_name} {
-    ComputedValues::arc_from_borrowed(&computed_values).unwrap().get_${style_struct.name_lower}().get_gecko()
-        as *const ${style_struct.gecko_ffi_name}
-}
-</%def>
-
 % for style_struct in data.style_structs:
 ${declare_style_struct(style_struct)}
 ${impl_style_struct(style_struct)}
 % if not style_struct.name in data.manual_style_structs:
 <%self:raw_impl_trait style_struct="${style_struct}"></%self:raw_impl_trait>
 % endif
-${define_ffi_struct_accessor(style_struct)}
 % endfor
-
-// This is only accessed from the Gecko main thread.
-static mut EMPTY_VARIABLES_STRUCT: Option<nsStyleVariables> = None;
-
-#[no_mangle]
-#[allow(non_snake_case)]
-pub unsafe extern "C" fn Servo_GetStyleVariables(_cv: ServoComputedValuesBorrowedOrNull)
-                                                 -> *const nsStyleVariables {
-    EMPTY_VARIABLES_STRUCT.as_ref().unwrap()
-}
-
-pub fn initialize() {
-    unsafe {
-        EMPTY_VARIABLES_STRUCT = Some(zeroed());
-        Gecko_Construct_nsStyleVariables(EMPTY_VARIABLES_STRUCT.as_mut().unwrap());
-    }
-}
-
-pub fn shutdown() {
-    unsafe {
-        EMPTY_VARIABLES_STRUCT.take().as_mut().map(|v| Gecko_Destroy_nsStyleVariables(v));
-    }
-}

@@ -30,7 +30,7 @@ class Proxy
                                Handle<JS::PropertyDescriptor> desc, ObjectOpResult& result);
     static bool ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdVector& props);
     static bool delete_(JSContext* cx, HandleObject proxy, HandleId id, ObjectOpResult& result);
-    static bool enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp);
+    static JSObject* enumerate(JSContext* cx, HandleObject proxy);
     static bool isExtensible(JSContext* cx, HandleObject proxy, bool* extensible);
     static bool preventExtensions(JSContext* cx, HandleObject proxy, ObjectOpResult& result);
     static bool getPrototype(JSContext* cx, HandleObject proxy, MutableHandleObject protop);
@@ -59,9 +59,8 @@ class Proxy
     static bool getBuiltinClass(JSContext* cx, HandleObject proxy, ESClass* cls);
     static bool isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer);
     static const char* className(JSContext* cx, HandleObject proxy);
-    static JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent);
-    static bool regexp_toShared(JSContext* cx, HandleObject proxy,
-                                MutableHandle<RegExpShared*> shared);
+    static JSString* fun_toString(JSContext* cx, HandleObject proxy, bool isToSource);
+    static RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy);
     static bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp);
 
     static bool watch(JSContext* cx, HandleObject proxy, HandleId id, HandleObject callable);

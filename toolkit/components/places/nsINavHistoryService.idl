@@ -253,28 +253,6 @@ interface nsINavHistoryContainerResultNode : nsINavHistoryResultNode
    * container.
    */
   unsigned long getChildIndex(in nsINavHistoryResultNode aNode);
-
-  /**
-   * Look for a node in the container by some of its details.  Does not search
-   * closed containers.
-   *
-   * @param aURI
-   *        the node's uri attribute value
-   * @param aTime
-   *        the node's time attribute value.
-   * @param aItemId
-   *        the node's itemId attribute value.
-   * @param aRecursive
-   *        whether or not to search recursively.
-   *
-   * @throws NS_ERROR_NOT_AVAILABLE if this container is closed.
-   * @return a result node that matches the given details if any, null
-   *         otherwise.
-   */
-  nsINavHistoryResultNode findNodeByDetails(in AUTF8String aURIString,
-                                            in PRTime aTime,
-                                            in long long aItemId,
-                                            in boolean aRecursive);
 };
 
 
@@ -1287,19 +1265,24 @@ interface nsINavHistoryService : nsISupports
   const unsigned short DATABASE_STATUS_OK = 0;
 
   /**
-   * Set when database did not exist and we created a new one
+   * Set when database did not exist and we created a new one.
    */
   const unsigned short DATABASE_STATUS_CREATE = 1;
 
   /**
-   * Set when database was corrupt and we replaced it
+   * Set when database was corrupt and we replaced it with a new one.
    */
   const unsigned short DATABASE_STATUS_CORRUPT = 2;
 
   /**
-   * Set when database schema has been upgraded
+   * Set when database schema has been upgraded.
    */
   const unsigned short DATABASE_STATUS_UPGRADED = 3;
+
+  /**
+   * Set when database couldn't be opened.
+   */
+  const unsigned short DATABASE_STATUS_LOCKED = 4;
 
   /**
    * Returns the current database status

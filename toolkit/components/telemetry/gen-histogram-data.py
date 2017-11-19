@@ -20,7 +20,7 @@ def print_array_entry(output, histogram, name_index, exp_index, label_index, lab
     cpp_guard = histogram.cpp_guard()
     if cpp_guard:
         print("#if defined(%s)" % cpp_guard, file=output)
-    print("  { %s, %s, %s, %s, %d, %d, %s, %d, %d, %s },"
+    print("  { %s, %s, %s, %s, %d, %d, %s, %d, %d, %s, %s },"
           % (histogram.low(),
              histogram.high(),
              histogram.n_buckets(),
@@ -30,6 +30,7 @@ def print_array_entry(output, histogram, name_index, exp_index, label_index, lab
              histogram.dataset(),
              label_index,
              label_count,
+             " | ".join(histogram.record_in_processes_enum()),
              "true" if histogram.keyed() else "false"), file=output)
     if cpp_guard:
         print("#endif", file=output)
@@ -40,7 +41,7 @@ def write_histogram_table(output, histograms):
     label_table = []
     label_count = 0
 
-    print("const HistogramInfo gHistograms[] = {", file=output)
+    print("constexpr HistogramInfo gHistogramInfos[] = {", file=output)
     for histogram in histograms:
         name_index = string_table.stringIndex(histogram.name())
         exp_index = string_table.stringIndex(histogram.expiration())
@@ -191,6 +192,7 @@ def main(output, *filenames):
     write_histogram_table(output, histograms)
     write_histogram_static_asserts(output, histograms)
     write_debug_histogram_ranges(output, histograms)
+
 
 if __name__ == '__main__':
     main(sys.stdout, *sys.argv[1:])

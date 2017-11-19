@@ -71,12 +71,12 @@ AutoCompleteInput.prototype = {
   }
 }
 
-function ensure_results(uris, searchTerm) {
-  PlacesTestUtils.promiseAsyncUpdates()
-                 .then(() => ensure_results_internal(uris, searchTerm));
+async function ensure_results(uris, searchTerm) {
+  await PlacesTestUtils.promiseAsyncUpdates()
+  await ensure_results_internal(uris, searchTerm);
 }
 
-function ensure_results_internal(uris, searchTerm) {
+async function ensure_results_internal(uris, searchTerm) {
   var controller = Components.classes["@mozilla.org/autocomplete/controller;1"].
                    getService(Components.interfaces.nsIAutoCompleteController);
 
@@ -92,30 +92,28 @@ function ensure_results_internal(uris, searchTerm) {
     do_check_eq(numSearchesStarted, 1);
   };
 
-  input.onSearchComplete = function() {
-    do_check_eq(numSearchesStarted, 1);
-    do_check_eq(controller.searchStatus,
-                Ci.nsIAutoCompleteController.STATUS_COMPLETE_MATCH);
-    do_check_eq(controller.matchCount, uris.length);
-    for (var i = 0; i < controller.matchCount; i++) {
-      do_check_eq(controller.getValueAt(i), uris[i].spec);
-    }
+  let promise = new Promise(resolve => {
+    input.onSearchComplete = function() {
+      do_check_eq(numSearchesStarted, 1);
+      do_check_eq(controller.searchStatus,
+                  Ci.nsIAutoCompleteController.STATUS_COMPLETE_MATCH);
+      do_check_eq(controller.matchCount, uris.length);
+      for (var i = 0; i < controller.matchCount; i++) {
+        do_check_eq(controller.getValueAt(i), uris[i].spec);
+      }
 
-    deferEnsureResults.resolve();
-  };
+      resolve();
+    };
+  });
 
   controller.startSearch(searchTerm);
+  await promise;
 }
 
 // Get history service
 try {
-  var histsvc = Cc["@mozilla.org/browser/nav-history-service;1"].
-                getService(Ci.nsINavHistoryService);
-  var bhist = histsvc.QueryInterface(Ci.nsIBrowserHistory);
   var tagssvc = Cc["@mozilla.org/browser/tagging-service;1"].
                 getService(Ci.nsITaggingService);
-  var bmksvc = Cc["@mozilla.org/browser/nav-bookmarks-service;1"].
-                getService(Ci.nsINavBookmarksService);
 } catch (ex) {
   do_throw("Could not get history service\n");
 }
@@ -129,13 +127,20 @@ async function task_setCountDate(aURI, aCount, aDate) {
   await PlacesTestUtils.addVisits(visits);
 }
 
-function setBookmark(aURI) {
-  bmksvc.insertBookmark(bmksvc.bookmarksMenuFolder, aURI, -1, "bleh");
+async function setBookmark(aURI) {
+  await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    url: aURI,
+    title: "bleh"
+  });
 }
 
-function tagURI(aURI, aTags) {
-  bmksvc.insertBookmark(bmksvc.unfiledBookmarksFolder, aURI,
-                        bmksvc.DEFAULT_INDEX, "bleh");
+async function tagURI(aURI, aTags) {
+  await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+    url: aURI,
+    title: "bleh",
+  });
   tagssvc.tagURI(aURI, aTags);
 }
 
@@ -158,29 +163,29 @@ async function() {
   print("TEST-INFO | Test 0: same count, different date");
   await task_setCountDate(uri1, c1, d1);
   await task_setCountDate(uri2, c1, d2);
-  tagURI(uri1, ["site"]);
-  ensure_results([uri1, uri2], "");
+  await tagURI(uri1, ["site"]);
+  await ensure_results([uri1, uri2], "");
 },
 async function() {
   print("TEST-INFO | Test 1: same count, different date");
   await task_setCountDate(uri1, c1, d2);
   await task_setCountDate(uri2, c1, d1);
-  tagURI(uri1, ["site"]);
-  ensure_results([uri2, uri1], "");
+  await tagURI(uri1, ["site"]);
+  await ensure_results([uri2, uri1], "");
 },
 async function() {
   print("TEST-INFO | Test 2: different count, same date");
   await task_setCountDate(uri1, c1, d1);
   await task_setCountDate(uri2, c2, d1);
-  tagURI(uri1, ["site"]);
-  ensure_results([uri1, uri2], "");
+  await tagURI(uri1, ["site"]);
+  await ensure_results([uri1, uri2], "");
 },
 async function() {
   print("TEST-INFO | Test 3: different count, same date");
   await task_setCountDate(uri1, c2, d1);
   await task_setCountDate(uri2, c1, d1);
-  tagURI(uri1, ["site"]);
-  ensure_results([uri2, uri1], "");
+  await tagURI(uri1, ["site"]);
+  await ensure_results([uri2, uri1], "");
 },
 
 // test things with a search term
@@ -188,81 +193,75 @@ async function() {
   print("TEST-INFO | Test 4: same count, different date");
   await task_setCountDate(uri1, c1, d1);
   await task_setCountDate(uri2, c1, d2);
-  tagURI(uri1, ["site"]);
-  ensure_results([uri1, uri2], "site");
+  await tagURI(uri1, ["site"]);
+  await ensure_results([uri1, uri2], "site");
 },
 async function() {
   print("TEST-INFO | Test 5: same count, different date");
   await task_setCountDate(uri1, c1, d2);
   await task_setCountDate(uri2, c1, d1);
-  tagURI(uri1, ["site"]);
-  ensure_results([uri2, uri1], "site");
+  await tagURI(uri1, ["site"]);
+  await ensure_results([uri2, uri1], "site");
 },
 async function() {
   print("TEST-INFO | Test 6: different count, same date");
   await task_setCountDate(uri1, c1, d1);
   await task_setCountDate(uri2, c2, d1);
-  tagURI(uri1, ["site"]);
-  ensure_results([uri1, uri2], "site");
+  await tagURI(uri1, ["site"]);
+  await ensure_results([uri1, uri2], "site");
 },
 async function() {
   print("TEST-INFO | Test 7: different count, same date");
   await task_setCountDate(uri1, c2, d1);
   await task_setCountDate(uri2, c1, d1);
-  tagURI(uri1, ["site"]);
-  ensure_results([uri2, uri1], "site");
+  await tagURI(uri1, ["site"]);
+  await ensure_results([uri2, uri1], "site");
 },
 // There are multiple tests for 8, hence the multiple functions
 // Bug 426166 section
-function() {
+async function() {
   print("TEST-INFO | Test 8.1a: same count, same date");
-  setBookmark(uri3);
-  setBookmark(uri4);
-  ensure_results([uri4, uri3], "a");
+  await setBookmark(uri3);
+  await setBookmark(uri4);
+  await ensure_results([uri4, uri3], "a");
 },
-function() {
+async function() {
   print("TEST-INFO | Test 8.1b: same count, same date");
-  setBookmark(uri3);
-  setBookmark(uri4);
-  ensure_results([uri4, uri3], "aa");
+  await setBookmark(uri3);
+  await setBookmark(uri4);
+  await ensure_results([uri4, uri3], "aa");
 },
-function() {
+async function() {
   print("TEST-INFO | Test 8.2: same count, same date");
-  setBookmark(uri3);
-  setBookmark(uri4);
-  ensure_results([uri4, uri3], "aaa");
+  await setBookmark(uri3);
+  await setBookmark(uri4);
+  await ensure_results([uri4, uri3], "aaa");
 },
-function() {
+async function() {
   print("TEST-INFO | Test 8.3: same count, same date");
-  setBookmark(uri3);
-  setBookmark(uri4);
-  ensure_results([uri4, uri3], "aaaa");
+  await setBookmark(uri3);
+  await setBookmark(uri4);
+  await ensure_results([uri4, uri3], "aaaa");
 },
-function() {
+async function() {
   print("TEST-INFO | Test 8.4: same count, same date");
-  setBookmark(uri3);
-  setBookmark(uri4);
-  ensure_results([uri4, uri3], "aaa");
+  await setBookmark(uri3);
+  await setBookmark(uri4);
+  await ensure_results([uri4, uri3], "aaa");
 },
-function() {
+async function() {
   print("TEST-INFO | Test 8.5: same count, same date");
-  setBookmark(uri3);
-  setBookmark(uri4);
-  ensure_results([uri4, uri3], "aa");
+  await setBookmark(uri3);
+  await setBookmark(uri4);
+  await ensure_results([uri4, uri3], "aa");
 },
-function() {
+async function() {
   print("TEST-INFO | Test 8.6: same count, same date");
-  setBookmark(uri3);
-  setBookmark(uri4);
-  ensure_results([uri4, uri3], "a");
+  await setBookmark(uri3);
+  await setBookmark(uri4);
+  await ensure_results([uri4, uri3], "a");
 }
 ];
-
-/**
- * This deferred object contains a promise that is resolved when the
- * ensure_results_internal function has finished its execution.
- */
-var deferEnsureResults;
 
 add_task(async function test_frecency() {
   // Disable autoFill for this test.
@@ -279,9 +278,7 @@ add_task(async function test_frecency() {
     await PlacesUtils.bookmarks.eraseEverything();
     await PlacesTestUtils.clearHistory();
 
-    deferEnsureResults = Promise.defer();
     await test();
-    await deferEnsureResults.promise;
   }
   for (let type of ["history", "bookmark", "openpage"]) {
     prefs.clearUserPref("browser.urlbar.suggest." + type);

@@ -129,9 +129,11 @@ Service::CollectReports(nsIHandleReportCallback *aHandleReport,
       RefPtr<Connection> &conn = connections[i];
 
       // Someone may have closed the Connection, in which case we skip it.
-      bool isReady;
-      (void)conn->GetConnectionReady(&isReady);
-      if (!isReady) {
+      // Note that we have consumers of the synchronous API that are off the
+      // main-thread, like the DOM Cache and IndexedDB, and as such we must be
+      // sure that we have a connection.
+      MutexAutoLock lockedAsyncScope(conn->sharedAsyncExecutionMutex);
+      if (!conn->connectionReady()) {
           continue;
       }
 
@@ -286,8 +288,7 @@ Service::~Service()
   if (rc != SQLITE_OK)
     NS_WARNING("sqlite3 did not shutdown cleanly.");
 
-  DebugOnly<bool> shutdownObserved = !sXPConnect;
-  NS_ASSERTION(shutdownObserved, "Shutdown was not observed!");
+  shutdown(); // To release sXPConnect.
 
   gService = nullptr;
   delete mSqliteVFS;
@@ -320,7 +321,8 @@ Service::unregisterConnection(Connection *aConnection)
         // Ensure the connection is released on its opening thread.  Note, we
         // must use .forget().take() so that we can manually cast to an
         // unambiguous nsISupports type.
-        NS_ProxyRelease(thread, mConnections[i].forget());
+        NS_ProxyRelease(
+          "storage::Service::mConnections", thread, mConnections[i].forget());
 
         mConnections.RemoveElementAt(i);
         return;
@@ -348,6 +350,8 @@ Service::minimizeMemory()
 
   for (uint32_t i = 0; i < connections.Length(); i++) {
     RefPtr<Connection> conn = connections[i];
+    // For non-main-thread owning/opening threads, we may be racing against them
+    // closing their connection or their thread.  That's okay, see below.
     if (!conn->connectionReady())
       continue;
 
@@ -365,15 +369,26 @@ Service::minimizeMemory()
       MOZ_ASSERT(NS_SUCCEEDED(rv), "Should have purged sqlite caches");
     } else if (NS_SUCCEEDED(conn->threadOpenedOn->IsOnCurrentThread(&onOpenedThread)) &&
                onOpenedThread) {
-      // We are on the opener thread, so we can just proceed.
-      conn->ExecuteSimpleSQL(shrinkPragma);
+      if (conn->isAsyncExecutionThreadAvailable()) {
+        nsCOMPtr<mozIStoragePendingStatement> ps;
+        DebugOnly<nsresult> rv =
+          conn->ExecuteSimpleSQLAsync(shrinkPragma, nullptr, getter_AddRefs(ps));
+        MOZ_ASSERT(NS_SUCCEEDED(rv), "Should have purged sqlite caches");
+      } else {
+        conn->ExecuteSimpleSQL(shrinkPragma);
+      }
     } else {
       // We are on the wrong thread, the query should be executed on the
       // opener thread, so we must dispatch to it.
+      // It's possible the connection is already closed or will be closed by the
+      // time our runnable runs.  ExecuteSimpleSQL will safely return with a
+      // failure in that case.  If the thread is shutting down or shut down, the
+      // dispatch will fail and that's okay.
       nsCOMPtr<nsIRunnable> event =
         NewRunnableMethod<const nsCString>(
+          "Connection::ExecuteSimpleSQL",
           conn, &Connection::ExecuteSimpleSQL, shrinkPragma);
-      conn->threadOpenedOn->Dispatch(event, NS_DISPATCH_NORMAL);
+      Unused << conn->threadOpenedOn->Dispatch(event, NS_DISPATCH_NORMAL);
     }
   }
 }
@@ -662,7 +677,8 @@ public:
                     nsIFile* aStorageFile,
                     int32_t aGrowthIncrement,
                     mozIStorageCompletionCallback* aCallback)
-    : mConnection(aConnection)
+    : Runnable("storage::AsyncInitDatabase")
+    , mConnection(aConnection)
     , mStorageFile(aStorageFile)
     , mGrowthIncrement(aGrowthIncrement)
     , mCallback(aCallback)
@@ -673,17 +689,8 @@ public:
   NS_IMETHOD Run() override
   {
     MOZ_ASSERT(!NS_IsMainThread());
-    nsresult rv = mStorageFile ? mConnection->initialize(mStorageFile)
-                               : mConnection->initialize();
+    nsresult rv = mConnection->initializeOnAsyncThread(mStorageFile);
     if (NS_FAILED(rv)) {
-      nsCOMPtr<nsIRunnable> closeRunnable =
-        NewRunnableMethod<mozIStorageCompletionCallback*>(
-          mConnection.get(),
-          &Connection::AsyncClose,
-          nullptr);
-      MOZ_ASSERT(closeRunnable);
-      MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(closeRunnable));
-
       return DispatchResult(rv, nullptr);
     }
 
@@ -707,13 +714,16 @@ private:
 
   ~AsyncInitDatabase()
   {
-    NS_ReleaseOnMainThread(mStorageFile.forget());
-    NS_ReleaseOnMainThread(mConnection.forget());
+    NS_ReleaseOnMainThreadSystemGroup(
+      "AsyncInitDatabase::mStorageFile", mStorageFile.forget());
+    NS_ReleaseOnMainThreadSystemGroup(
+      "AsyncInitDatabase::mConnection", mConnection.forget());
 
     // Generally, the callback will be released by CallbackComplete.
     // However, if for some reason Run() is not executed, we still
     // need to ensure that it is released here.
-    NS_ReleaseOnMainThread(mCallback.forget());
+    NS_ReleaseOnMainThreadSystemGroup(
+      "AsyncInitDatabase::mCallback", mCallback.forget());
   }
 
   RefPtr<Connection> mConnection;
@@ -924,6 +934,13 @@ Service::Observe(nsISupports *, const char *aTopic, const char16_t *)
   } else if (strcmp(aTopic, "xpcom-shutdown") == 0) {
     shutdown();
   } else if (strcmp(aTopic, "xpcom-shutdown-threads") == 0) {
+    // The Service is kept alive by our strong observer references and
+    // references held by Connection instances.  Since we're about to remove the
+    // former and then wait for the latter ones to go away, it behooves us to
+    // hold a strong reference to ourselves so our calls to getConnections() do
+    // not happen on a deleted object.
+    RefPtr<Service> kungFuDeathGrip = this;
+
     nsCOMPtr<nsIObserverService> os =
       mozilla::services::GetObserverService();
 
@@ -932,17 +949,16 @@ Service::Observe(nsISupports *, const char *aTopic, const char16_t *)
     }
 
     SpinEventLoopUntil([&]() -> bool {
-        // We must wait until all connections are closed.
-        nsTArray<RefPtr<Connection>> connections;
-        getConnections(connections);
-        for (auto& conn : connections) {
-          if (conn->isClosing()) {
-            return false;
-          }
+      // We must wait until all the closing connections are closed.
+      nsTArray<RefPtr<Connection>> connections;
+      getConnections(connections);
+      for (auto& conn : connections) {
+        if (conn->isClosing()) {
+          return false;
         }
-
-        return true;
-      });
+      }
+      return true;
+    });
 
     if (gShutdownChecks == SCM_CRASH) {
       nsTArray<RefPtr<Connection> > connections;

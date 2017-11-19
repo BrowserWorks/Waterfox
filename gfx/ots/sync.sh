@@ -20,6 +20,11 @@ echo "Updating include..."
 rm -rf include/
 cp -r $1/include .
 
+echo "Updating tests..."
+rm -rf tests/*
+mkdir -p tests
+cp -r $1/tests/*.cc tests
+
 echo "Updating README.mozilla..."
 REVISION=`cd $1; git log | head -1 | sed "s/commit //"`
 VERSION=`cd $1; git describe | cut -d '-' -f 1 | sed 's/v//'`
@@ -28,3 +33,6 @@ mv README.tmp README.mozilla
 
 echo "Applying ots-visibility.patch..."
 patch -p3 < ots-visibility.patch
+
+echo "Applying ots-config.patch..."
+patch -p3 < ots-config.patch

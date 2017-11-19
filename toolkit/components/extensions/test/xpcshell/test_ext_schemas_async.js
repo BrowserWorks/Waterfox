@@ -8,6 +8,14 @@ let {BaseContext, LocalAPIImplementation} = ExtensionCommon;
 let schemaJson = [
   {
     namespace: "testnamespace",
+    types: [{
+      id: "Widget",
+      type: "object",
+      properties: {
+        size: {type: "integer"},
+        colour: {type: "string", optional: true},
+      },
+    }],
     functions: [{
       name: "one_required",
       type: "function",
@@ -43,6 +51,18 @@ let schemaJson = [
         type: "function",
         parameters: [],
         optional: true,
+      }],
+    }, {
+      name: "async_result",
+      type: "function",
+      async: "callback",
+      parameters: [{
+        name: "callback",
+        type: "function",
+        parameters: [{
+          name: "widget",
+          $ref: "Widget",
+        }],
       }],
     }],
   },
@@ -147,11 +167,41 @@ add_task(async function testParameterValidation() {
   }
 });
 
+add_task(async function testCheckAsyncResults() {
+  await Schemas.load("data:," + JSON.stringify(schemaJson));
+
+  const complete = generateAPIs({}, {
+    async_result: async () => ({size: 5, colour: "green"}),
+  });
+
+  const optional = generateAPIs({}, {
+    async_result: async () => ({size: 6}),
+  });
+
+  const invalid = generateAPIs({}, {
+    async_result: async () => ({}),
+  });
+
+  deepEqual(await complete.async_result(), {size: 5, colour: "green"});
+
+  deepEqual(await optional.async_result(), {size: 6},
+            "Missing optional properties is allowed");
+
+  if (AppConstants.DEBUG) {
+    await Assert.rejects(invalid.async_result(),
+          `Type error for widget value (Property "size" is required)`,
+          "Should throw for invalid callback argument in DEBUG builds");
+  } else {
+    deepEqual(await invalid.async_result(), {},
+              "Invalid callback argument doesn't throw in release builds");
+  }
+});
+
 add_task(async function testAsyncResults() {
   await Schemas.load("data:," + JSON.stringify(schemaJson));
-  async function runWithCallback(func) {
+  function runWithCallback(func) {
     do_print(`Calling testnamespace.${func.name}, expecting callback with result`);
-    return await new Promise(resolve => {
+    return new Promise(resolve => {
       let result = "uninitialized value";
       let returnValue = func(reply => {
         result = reply;
@@ -164,9 +214,9 @@ add_task(async function testAsyncResults() {
     });
   }
 
-  async function runFailCallback(func) {
+  function runFailCallback(func) {
     do_print(`Calling testnamespace.${func.name}, expecting callback with error`);
-    return await new Promise(resolve => {
+    return new Promise(resolve => {
       func(reply => {
         do_check_eq(reply, undefined);
         resolve(context.lastError.message); // eslint-disable-line no-undef

@@ -35,14 +35,16 @@ PostMessageEvent::PostMessageEvent(nsGlobalWindow* aSource,
                                    nsIPrincipal* aProvidedPrincipal,
                                    nsIDocument* aSourceDocument,
                                    bool aTrustedCaller)
-: StructuredCloneHolder(CloningSupported, TransferringSupported,
-                        StructuredCloneScope::SameProcessSameThread),
-  mSource(aSource),
-  mCallerOrigin(aCallerOrigin),
-  mTargetWindow(aTargetWindow),
-  mProvidedPrincipal(aProvidedPrincipal),
-  mSourceDocument(aSourceDocument),
-  mTrustedCaller(aTrustedCaller)
+  : Runnable("dom::PostMessageEvent")
+  , StructuredCloneHolder(CloningSupported,
+                          TransferringSupported,
+                          StructuredCloneScope::SameProcessSameThread)
+  , mSource(aSource)
+  , mCallerOrigin(aCallerOrigin)
+  , mTargetWindow(aTargetWindow)
+  , mProvidedPrincipal(aProvidedPrincipal)
+  , mSourceDocument(aSourceDocument)
+  , mTrustedCaller(aTrustedCaller)
 {
 }
 
@@ -106,10 +108,22 @@ PostMessageEvent::Run()
     //       now.  Long-term, we want HTML5 to address this so that we can
     //       be compliant while being safer.
     if (!targetPrin->Equals(mProvidedPrincipal)) {
-      MOZ_DIAGNOSTIC_ASSERT(ChromeUtils::IsOriginAttributesEqualIgnoringFPD(mProvidedPrincipal->OriginAttributesRef(),
-                                                                            targetPrin->OriginAttributesRef()),
-                            "Unexpected postMessage call to a window with mismatched "
-                            "origin attributes");
+      OriginAttributes sourceAttrs = mProvidedPrincipal->OriginAttributesRef();
+      OriginAttributes targetAttrs = targetPrin->OriginAttributesRef();
+
+      MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mAppId == targetAttrs.mAppId,
+        "Target and source should have the same mAppId attribute.");
+      MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mUserContextId == targetAttrs.mUserContextId,
+        "Target and source should have the same userContextId attribute.");
+      MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mInIsolatedMozBrowser == targetAttrs.mInIsolatedMozBrowser,
+        "Target and source should have the same inIsolatedMozBrowser attribute.");
+
+      if (!nsContentUtils::IsSystemOrExpandedPrincipal(targetPrin) &&
+          !nsContentUtils::IsSystemOrExpandedPrincipal(mProvidedPrincipal) &&
+          !mTrustedCaller) {
+        MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mPrivateBrowsingId == targetAttrs.mPrivateBrowsingId,
+          "Target and source should have the same mPrivateBrowsingId attribute.");
+      }
 
       nsAutoString providedOrigin, targetOrigin;
       nsresult rv = nsContentUtils::GetUTFOrigin(targetPrin, targetOrigin);

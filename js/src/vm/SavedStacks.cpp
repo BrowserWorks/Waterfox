@@ -310,6 +310,7 @@ static const ClassOps SavedFrameClassOps = {
     nullptr,                    // getProperty
     nullptr,                    // setProperty
     nullptr,                    // enumerate
+    nullptr,                    // newEnumerate
     nullptr,                    // resolve
     nullptr,                    // mayResolve
     SavedFrame::finalize,       // finalize
@@ -1172,7 +1173,7 @@ SavedStacks::saveCurrentStack(JSContext* cx, MutableHandleSavedFrame frame,
         return true;
     }
 
-    AutoGeckoProfilerEntry psuedoFrame(cx->runtime(), "js::SavedStacks::saveCurrentStack");
+    AutoGeckoProfilerEntry psuedoFrame(cx, "js::SavedStacks::saveCurrentStack");
     FrameIter iter(cx);
     return insertFrames(cx, iter, frame, mozilla::Move(capture));
 }

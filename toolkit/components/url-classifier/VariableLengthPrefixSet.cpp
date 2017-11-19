@@ -133,7 +133,9 @@ VariableLengthPrefixSet::GetPrefixes(PrefixStringMap& aPrefixMap)
   size_t count = array.Length();
   if (count) {
     nsCString* prefixes = new nsCString();
-    prefixes->SetLength(PREFIX_SIZE_FIXED * count);
+    if (!prefixes->SetLength(PREFIX_SIZE_FIXED * count, fallible)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
 
     // Writing integer array to character array
     uint32_t* begin = reinterpret_cast<uint32_t*>(prefixes->BeginWriting());
@@ -312,6 +314,10 @@ VariableLengthPrefixSet::LoadPrefixes(nsIInputStream* in)
     rv = in->Read(reinterpret_cast<char*>(&prefixSize), sizeof(uint8_t), &read);
     NS_ENSURE_SUCCESS(rv, rv);
     NS_ENSURE_TRUE(read == sizeof(uint8_t), NS_ERROR_FAILURE);
+
+    if (prefixSize < PREFIX_SIZE || prefixSize > COMPLETE_SIZE) {
+      return NS_ERROR_FILE_CORRUPTED;
+    }
 
     uint32_t stringLength;
     rv = in->Read(reinterpret_cast<char*>(&stringLength), sizeof(uint32_t), &read);

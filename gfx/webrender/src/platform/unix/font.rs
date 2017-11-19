@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use app_units::Au;
-use webrender_traits::{FontKey, FontRenderMode, GlyphDimensions};
-use webrender_traits::{NativeFontHandle, GlyphOptions};
-use webrender_traits::{GlyphKey};
+use api::{FontInstanceKey, FontKey, FontRenderMode, GlyphDimensions};
+use api::{NativeFontHandle};
+use api::{GlyphKey};
 
 use freetype::freetype::{FT_Render_Mode, FT_Pixel_Mode};
 use freetype::freetype::{FT_Done_FreeType, FT_Library_SetLcdFilter};
@@ -13,10 +13,21 @@ use freetype::freetype::{FT_Library, FT_Set_Char_Size};
 use freetype::freetype::{FT_Face, FT_Long, FT_UInt, FT_F26Dot6};
 use freetype::freetype::{FT_Init_FreeType, FT_Load_Glyph, FT_Render_Glyph};
 use freetype::freetype::{FT_New_Memory_Face, FT_GlyphSlot, FT_LcdFilter};
-use freetype::freetype::{FT_Done_Face, FT_Error};
+use freetype::freetype::{FT_Done_Face, FT_Error, FT_Int32, FT_Get_Char_Index};
 
 use std::{cmp, mem, ptr, slice};
 use std::collections::HashMap;
+
+// This constant is not present in the freetype
+// bindings due to bindgen not handling the way
+// the macro is defined.
+const FT_LOAD_TARGET_LIGHT: FT_Int32 = 1 << 16;
+
+// Default to slight hinting, which is what most
+// Linux distros use by default, and is a better
+// default than no hinting.
+// TODO(gw): Make this configurable.
+const GLYPH_LOAD_FLAGS: FT_Int32 = FT_LOAD_TARGET_LIGHT;
 
 struct Face {
     face: FT_Face,
@@ -33,17 +44,11 @@ pub struct FontContext {
 unsafe impl Send for FontContext {}
 
 pub struct RasterizedGlyph {
+    pub top: f32,
+    pub left: f32,
     pub width: u32,
     pub height: u32,
     pub bytes: Vec<u8>,
-}
-
-fn float_to_fixed(before: usize, f: f64) -> i32 {
-    ((1i32 << before) as f64 * f) as i32
-}
-
-fn float_to_fixed_ft(f: f64) -> i32 {
-    float_to_fixed(6, f)
 }
 
 const SUCCESS: FT_Error = FT_Error(0);
@@ -63,7 +68,7 @@ impl FontContext {
         }
 
         FontContext {
-            lib: lib,
+            lib,
             faces: HashMap::new(),
         }
     }
@@ -84,7 +89,7 @@ impl FontContext {
             };
             if result.succeeded() && !face.is_null() {
                 self.faces.insert(*font_key, Face {
-                    face: face,
+                    face,
                     //_bytes: bytes
                 });
             } else {
@@ -113,14 +118,16 @@ impl FontContext {
 
         debug_assert!(self.faces.contains_key(&font_key));
         let face = self.faces.get(&font_key).unwrap();
-        let char_size = float_to_fixed_ft(size.to_f64_px());
+        let char_size = size.to_f64_px() * 64.0 + 0.5;
 
         assert_eq!(SUCCESS, unsafe {
             FT_Set_Char_Size(face.face, char_size as FT_F26Dot6, 0, 0, 0)
         });
 
         let result = unsafe {
-            FT_Load_Glyph(face.face, character as FT_UInt, 0)
+            FT_Load_Glyph(face.face,
+                          character as FT_UInt,
+                          GLYPH_LOAD_FLAGS)
         };
 
         if result == SUCCESS {
@@ -148,27 +155,46 @@ impl FontContext {
                 top: top as i32,
                 width: (right - left) as u32,
                 height: (bottom - top) as u32,
+                advance: metrics.horiAdvance as f32 / 64.0,
             })
         }
     }
 
+    pub fn get_glyph_index(&mut self, font_key: FontKey, ch: char) -> Option<u32> {
+        let face = self.faces
+                       .get(&font_key)
+                       .expect("Unknown font key!");
+        unsafe {
+            let idx = FT_Get_Char_Index(face.face, ch as _);
+            if idx != 0 {
+                Some(idx)
+            } else {
+                None
+            }
+        }
+    }
+
     pub fn get_glyph_dimensions(&mut self,
+                                font: &FontInstanceKey,
                                 key: &GlyphKey) -> Option<GlyphDimensions> {
-        self.load_glyph(key.font_key, key.size, key.index)
+        self.load_glyph(font.font_key,
+                        font.size,
+                        key.index)
             .and_then(Self::get_glyph_dimensions_impl)
     }
 
     pub fn rasterize_glyph(&mut self,
-                           key: &GlyphKey,
-                           render_mode: FontRenderMode,
-                           _glyph_options: Option<GlyphOptions>)
+                           font: &FontInstanceKey,
+                           key: &GlyphKey)
                            -> Option<RasterizedGlyph> {
 
-        let slot = match self.load_glyph(key.font_key, key.size, key.index) {
+        let slot = match self.load_glyph(font.font_key,
+                                         font.size,
+                                         key.index) {
             Some(slot) => slot,
             None => return None,
         };
-        let render_mode = match render_mode {
+        let render_mode = match font.render_mode {
             FontRenderMode::Mono => FT_Render_Mode::FT_RENDER_MODE_MONO,
             FontRenderMode::Alpha => FT_Render_Mode::FT_RENDER_MODE_NORMAL,
             FontRenderMode::Subpixel => FT_Render_Mode::FT_RENDER_MODE_LCD,
@@ -258,6 +284,8 @@ impl FontContext {
         }
 
         Some(RasterizedGlyph {
+            left: dimensions.left as f32,
+            top: dimensions.top as f32,
             width: dimensions.width as u32,
             height: dimensions.height as u32,
             bytes: final_buffer,

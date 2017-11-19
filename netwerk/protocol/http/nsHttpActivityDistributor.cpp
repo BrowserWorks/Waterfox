@@ -20,21 +20,22 @@ typedef nsTArray<ObserverHandle> ObserverArray;
 class nsHttpActivityEvent : public Runnable
 {
 public:
-    nsHttpActivityEvent(nsISupports *aHttpChannel,
-                        uint32_t aActivityType,
-                        uint32_t aActivitySubtype,
-                        PRTime aTimestamp,
-                        uint64_t aExtraSizeData,
-                        const nsACString & aExtraStringData,
-                        ObserverArray *aObservers)
-        : mHttpChannel(aHttpChannel)
-        , mActivityType(aActivityType)
-        , mActivitySubtype(aActivitySubtype)
-        , mTimestamp(aTimestamp)
-        , mExtraSizeData(aExtraSizeData)
-        , mExtraStringData(aExtraStringData)
-        , mObservers(*aObservers)
-    {
+  nsHttpActivityEvent(nsISupports* aHttpChannel,
+                      uint32_t aActivityType,
+                      uint32_t aActivitySubtype,
+                      PRTime aTimestamp,
+                      uint64_t aExtraSizeData,
+                      const nsACString& aExtraStringData,
+                      ObserverArray* aObservers)
+    : Runnable("net::nsHttpActivityEvent")
+    , mHttpChannel(aHttpChannel)
+    , mActivityType(aActivityType)
+    , mActivitySubtype(aActivitySubtype)
+    , mTimestamp(aTimestamp)
+    , mExtraSizeData(aExtraSizeData)
+    , mExtraStringData(aExtraStringData)
+    , mObservers(*aObservers)
+  {
     }
 
     NS_IMETHOD Run() override
@@ -115,7 +116,7 @@ nsHttpActivityDistributor::AddObserver(nsIHttpActivityObserver *aObserver)
 {
     MutexAutoLock lock(mLock);
 
-    ObserverHandle observer(new ObserverHolder(aObserver));
+    ObserverHandle observer(new ObserverHolder("nsIHttpActivityObserver", aObserver));
     if (!mObservers.AppendElement(observer))
         return NS_ERROR_OUT_OF_MEMORY;
 
@@ -127,7 +128,7 @@ nsHttpActivityDistributor::RemoveObserver(nsIHttpActivityObserver *aObserver)
 {
     MutexAutoLock lock(mLock);
 
-    ObserverHandle observer(new ObserverHolder(aObserver));
+    ObserverHandle observer(new ObserverHolder("nsIHttpActivityObserver", aObserver));
     if (!mObservers.RemoveElement(observer))
         return NS_ERROR_FAILURE;
 

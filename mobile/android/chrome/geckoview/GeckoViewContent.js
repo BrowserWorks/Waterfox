@@ -3,7 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+
+Cu.import("resource://gre/modules/GeckoViewContentModule.jsm");
 
 var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.d.bind(null, "ViewContent");
 
@@ -11,20 +13,40 @@ function debug(aMsg) {
   // dump(aMsg);
 }
 
-// This is copied from desktop's tab-content.js. See bug 1153485 about sharing this code somehow.
-var DOMTitleChangedListener = {
-  init: function() {
+class GeckoViewContent extends GeckoViewContentModule {
+  register() {
+    debug("register");
+
     addEventListener("DOMTitleChanged", this, false);
     addEventListener("MozDOMFullscreen:Entered", this, false);
     addEventListener("MozDOMFullscreen:Exit", this, false);
     addEventListener("MozDOMFullscreen:Exited", this, false);
     addEventListener("MozDOMFullscreen:Request", this, false);
+    addEventListener("contextmenu", this, { capture: true, passive: false });
 
-    addMessageListener("GeckoView:DOMFullscreenEntered", this);
-    addMessageListener("GeckoView:DOMFullscreenExited", this);
-  },
+    this.messageManager.addMessageListener("GeckoView:DOMFullscreenEntered",
+                                           this);
+    this.messageManager.addMessageListener("GeckoView:DOMFullscreenExited",
+                                           this);
+  }
 
-  receiveMessage: function(aMsg) {
+  unregister() {
+    debug("unregister");
+
+    removeEventListener("DOMTitleChanged", this);
+    removeEventListener("MozDOMFullscreen:Entered", this);
+    removeEventListener("MozDOMFullscreen:Exit", this);
+    removeEventListener("MozDOMFullscreen:Exited", this);
+    removeEventListener("MozDOMFullscreen:Request", this);
+    removeEventListener("contextmenu", this);
+
+    this.messageManager.removeMessageListener("GeckoView:DOMFullscreenEntered",
+                                              this);
+    this.messageManager.removeMessageListener("GeckoView:DOMFullscreenExited",
+                                              this);
+  }
+
+  receiveMessage(aMsg) {
     debug("receiveMessage " + aMsg.name);
 
     switch (aMsg.name) {
@@ -43,16 +65,38 @@ var DOMTitleChangedListener = {
         }
         break;
     }
-  },
+  }
 
-  handleEvent: function(aEvent) {
-    if (aEvent.originalTarget.defaultView != content) {
-      return;
-    }
-
+  handleEvent(aEvent) {
     debug("handleEvent " + aEvent.type);
 
     switch (aEvent.type) {
+      case "contextmenu":
+        function nearestParentHref(node) {
+          while (node && !node.href) {
+            node = node.parentNode;
+          }
+          return node && node.href;
+        }
+
+        let node = aEvent.target;
+        let hrefNode = nearestParentHref(node);
+        let isImageNode = node instanceof Ci.nsIDOMHTMLImageElement;
+        let isMediaNode = node instanceof Ci.nsIDOMHTMLMediaElement;
+        let msg = {
+          screenX: aEvent.screenX,
+          screenY: aEvent.screenY,
+          uri: hrefNode,
+          elementSrc: isImageNode || isMediaNode
+                      ? node.currentSrc || node.src
+                      : null
+        };
+
+        if (hrefNode || isImageNode || isMediaNode) {
+          sendAsyncMessage("GeckoView:ContextMenu", msg);
+          aEvent.preventDefault();
+        }
+        break;
       case "MozDOMFullscreen:Request":
         sendAsyncMessage("GeckoView:DOMFullscreenRequest");
         break;
@@ -73,7 +117,7 @@ var DOMTitleChangedListener = {
                          { title: content.document.title });
         break;
     }
-  },
-};
+  }
+}
 
-DOMTitleChangedListener.init();
+var contentListener = new GeckoViewContent("GeckoViewContent", this);

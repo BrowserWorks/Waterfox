@@ -44,7 +44,7 @@ using namespace mozilla::layout;
 
 enum eNormalLineHeightControl {
   eUninitialized = -1,
-  eNoExternalLeading = 0,   // does not include external leading 
+  eNoExternalLeading = 0,   // does not include external leading
   eIncludeExternalLeading,  // use whatever value font vendor provides
   eCompensateLeading        // compensate leading if leading provided by font vendor is not enough
 };
@@ -55,12 +55,13 @@ static eNormalLineHeightControl sNormalLineHeightControl = eUninitialized;
 // use for measuring things.
 ReflowInput::ReflowInput(nsPresContext*       aPresContext,
                                      nsIFrame*            aFrame,
-                                     nsRenderingContext*  aRenderingContext,
+                                     gfxContext*          aRenderingContext,
                                      const LogicalSize&   aAvailableSpace,
                                      uint32_t             aFlags)
   : SizeComputationInput(aFrame, aRenderingContext)
   , mBlockDelta(0)
   , mOrthogonalLimit(NS_UNCONSTRAINEDSIZE)
+  , mContainingBlockSize(mWritingMode)
   , mReflowDepth(0)
 {
   NS_PRECONDITION(aRenderingContext, "no rendering context");
@@ -160,7 +161,7 @@ FontSizeInflationListMarginAdjustment(const nsIFrame* aFrame)
 // block-direction percent margins and padding against the
 // containing-block block-size, rather than its inline-size.
 SizeComputationInput::SizeComputationInput(nsIFrame *aFrame,
-                                   nsRenderingContext *aRenderingContext,
+                                   gfxContext *aRenderingContext,
                                    WritingMode aContainingBlockWritingMode,
                                    nscoord aContainingBlockISize)
   : mFrame(aFrame)
@@ -192,6 +193,7 @@ ReflowInput::ReflowInput(
   : SizeComputationInput(aFrame, aParentReflowInput.mRenderingContext)
   , mBlockDelta(0)
   , mOrthogonalLimit(NS_UNCONSTRAINEDSIZE)
+  , mContainingBlockSize(mWritingMode)
   , mFlags(aParentReflowInput.mFlags)
   , mReflowDepth(aParentReflowInput.mReflowDepth + 1)
 {
@@ -203,13 +205,6 @@ ReflowInput::ReflowInput(
                   "frame should be clean when getting special bsize reflow");
 
   mParentReflowInput = &aParentReflowInput;
-
-  // If the parent is dirty, then the child is as well.
-  // XXX Are the other cases where the parent reflows a child a second
-  // time, as a resize?
-  if (!mFlags.mSpecialBSizeReflow)
-    mFrame->AddStateBits(mParentReflowInput->mFrame->GetStateBits() &
-                        NS_FRAME_IS_DIRTY);
 
   AvailableISize() = aAvailableSpace.ISize(mWritingMode);
   AvailableBSize() = aAvailableSpace.BSize(mWritingMode);
@@ -364,6 +359,27 @@ ReflowInput::Init(nsPresContext*     aPresContext,
                         const nsMargin*    aBorder,
                         const nsMargin*    aPadding)
 {
+  if ((mFrame->GetStateBits() & NS_FRAME_IS_DIRTY) &&
+      !mFrame->IsXULBoxFrame()) {
+    // Mark all child frames as dirty.
+    //
+    // We don't do this for XUL boxes because they handle their child
+    // reflow separately.
+    //
+    // FIXME (bug 1376530): It would be better for memory locality if we
+    // did this as we went.  However, we need to be careful not to do
+    // this twice for any particular child if we reflow it twice.  The
+    // easiest way to accomplish that is to do it at the start.
+    for (nsIFrame::ChildListIterator childLists(mFrame);
+         !childLists.IsDone(); childLists.Next()) {
+      for (nsIFrame* childFrame : childLists.CurrentList()) {
+        if (!childFrame->IsTableColGroupFrame()) {
+          childFrame->AddStateBits(NS_FRAME_IS_DIRTY);
+        }
+      }
+    }
+  }
+
   if (AvailableISize() == NS_UNCONSTRAINEDSIZE) {
     // Look up the parent chain for an orthogonal inline limit,
     // and reset AvailableISize() if found.
@@ -514,11 +530,11 @@ void ReflowInput::InitCBReflowInput()
 }
 
 /* Check whether CalcQuirkContainingBlockHeight would stop on the
- * given reflow state, using its block as a height.  (essentially 
- * returns false for any case in which CalcQuirkContainingBlockHeight 
+ * given reflow state, using its block as a height.  (essentially
+ * returns false for any case in which CalcQuirkContainingBlockHeight
  * has a "continue" in its main loop.)
  *
- * XXX Maybe refactor CalcQuirkContainingBlockHeight so it uses 
+ * XXX Maybe refactor CalcQuirkContainingBlockHeight so it uses
  * this function as well
  */
 static bool
@@ -773,11 +789,11 @@ ReflowInput::InitResizeFlags(nsPresContext* aPresContext,
       if (!rs) {
         break;
       }
-        
+
       if (rs->mFrame->GetStateBits() & NS_FRAME_CONTAINS_RELATIVE_BSIZE)
         break; // no need to go further
       rs->mFrame->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
-      
+
       // Keep track of whether we've hit the containing block, because
       // we need to go at least that far.
       if (rs == mCBReflowInput) {
@@ -795,7 +811,7 @@ ReflowInput::InitResizeFlags(nsPresContext* aPresContext,
     // where we hit the early break statements in
     // CalcQuirkContainingBlockHeight. But it doesn't hurt
     // us to set the bit in these cases.
-    
+
   }
   if (mFrame->GetStateBits() & NS_FRAME_IS_DIRTY) {
     // If we're reflowing everything, then we'll find out if we need
@@ -1224,7 +1240,6 @@ ReflowInput::CalculateBorderPaddingMargin(
   outside -= inside;
   *aInsideBoxSizing = inside;
   *aOutsideBoxSizing = outside;
-  return;
 }
 
 /**
@@ -1958,19 +1973,19 @@ GetBlockMarginBorderPadding(const ReflowInput* aReflowInput)
 
   // zero auto margins
   nsMargin margin = aReflowInput->ComputedPhysicalMargin();
-  if (NS_AUTOMARGIN == margin.top) 
+  if (NS_AUTOMARGIN == margin.top)
     margin.top = 0;
-  if (NS_AUTOMARGIN == margin.bottom) 
+  if (NS_AUTOMARGIN == margin.bottom)
     margin.bottom = 0;
 
   result += margin.top + margin.bottom;
-  result += aReflowInput->ComputedPhysicalBorderPadding().top + 
+  result += aReflowInput->ComputedPhysicalBorderPadding().top +
             aReflowInput->ComputedPhysicalBorderPadding().bottom;
 
   return result;
 }
 
-/* Get the height based on the viewport of the containing block specified 
+/* Get the height based on the viewport of the containing block specified
  * in aReflowInput when the containing block has mComputedHeight == NS_AUTOHEIGHT
  * This will walk up the chain of containing blocks looking for a computed height
  * until it finds the canvas frame, or it encounters a frame that is not a block,
@@ -1986,9 +2001,9 @@ CalcQuirkContainingBlockHeight(const ReflowInput* aCBReflowInput)
 {
   const ReflowInput* firstAncestorRI = nullptr; // a candidate for html frame
   const ReflowInput* secondAncestorRI = nullptr; // a candidate for body frame
-  
+
   // initialize the default to NS_AUTOHEIGHT as this is the containings block
-  // computed height when this function is called. It is possible that we 
+  // computed height when this function is called. It is possible that we
   // don't alter this height especially if we are restricted to one level
   nscoord result = NS_AUTOHEIGHT;
 
@@ -2022,21 +2037,21 @@ CalcQuirkContainingBlockHeight(const ReflowInput* aCBReflowInput)
     } else if (LayoutFrameType::PageContent == frameType) {
       nsIFrame* prevInFlow = rs->mFrame->GetPrevInFlow();
       // only use the page content frame for a height basis if it is the first in flow
-      if (prevInFlow) 
+      if (prevInFlow)
         break;
     }
     else {
       break;
     }
 
-    // if the ancestor is the page content frame then the percent base is 
+    // if the ancestor is the page content frame then the percent base is
     // the avail height, otherwise it is the computed height
     result = (LayoutFrameType::PageContent == frameType) ? rs->AvailableHeight()
                                                          : rs->ComputedHeight();
     // if unconstrained - don't sutract borders - would result in huge height
     if (NS_AUTOHEIGHT == result) return result;
 
-    // if we got to the canvas or page content frame, then subtract out 
+    // if we got to the canvas or page content frame, then subtract out
     // margin/border/padding for the BODY and HTML elements
     if ((LayoutFrameType::Canvas == frameType) ||
         (LayoutFrameType::PageContent == frameType)) {
@@ -2130,7 +2145,10 @@ ReflowInput::ComputeContainingBlockRectangle(
     if (!wm.IsVertical() &&
         NS_AUTOHEIGHT == cbSize.BSize(wm)) {
       if (eCompatibility_NavQuirks == aPresContext->CompatibilityMode() &&
-          mStylePosition->mHeight.GetUnit() == eStyleUnit_Percent) {
+          (mStylePosition->mHeight.GetUnit() == eStyleUnit_Percent ||
+           (mFrame->IsTableWrapperFrame() &&
+            mFrame->PrincipalChildList().FirstChild()->StylePosition()->
+              mHeight.GetUnit() == eStyleUnit_Percent))) {
         cbSize.BSize(wm) = CalcQuirkContainingBlockHeight(aContainingBlockRI);
       }
     }
@@ -2511,6 +2529,9 @@ ReflowInput::InitConstraints(nsPresContext* aPresContext,
       }
     }
   }
+
+  // Save our containing block dimensions
+  mContainingBlockSize = aContainingBlockSize;
 }
 
 static void
@@ -2540,7 +2561,7 @@ SizeComputationInput::InitOffsets(WritingMode aWM,
                                   const nsMargin* aPadding,
                                   const nsStyleDisplay* aDisplay)
 {
-  DISPLAY_INIT_OFFSETS(mFrame, this, aPercentBasis, aBorder, aPadding);
+  DISPLAY_INIT_OFFSETS(mFrame, this, aPercentBasis, aWM, aBorder, aPadding);
 
   // Since we are in reflow, we don't need to store these properties anymore
   // unless they are dependent on width, in which case we store the new value.
@@ -2673,7 +2694,7 @@ SizeComputationInput::InitOffsets(WritingMode aWM,
 //
 // 'margin-left' + 'border-left-width' + 'padding-left' + 'width' +
 //   'padding-right' + 'border-right-width' + 'margin-right'
-//   = width of containing block 
+//   = width of containing block
 //
 // Note: the width unit is not auto when this is called
 void
@@ -2789,14 +2810,14 @@ ReflowInput::CalculateBlockSideMargins(LayoutFrameType aFrameType)
   SetComputedLogicalMargin(margin.ConvertTo(mWritingMode, cbWM));
 }
 
-#define NORMAL_LINE_HEIGHT_FACTOR 1.2f    // in term of emHeight 
+#define NORMAL_LINE_HEIGHT_FACTOR 1.2f    // in term of emHeight
 // For "normal" we use the font's normal line height (em height + leading).
 // If both internal leading and  external leading specified by font itself
-// are zeros, we should compensate this by creating extra (external) leading 
-// in eCompensateLeading mode. This is necessary because without this 
-// compensation, normal line height might looks too tight. 
+// are zeros, we should compensate this by creating extra (external) leading
+// in eCompensateLeading mode. This is necessary because without this
+// compensation, normal line height might looks too tight.
 
-// For risk management, we use preference to control the behavior, and 
+// For risk management, we use preference to control the behavior, and
 // eNoExternalLeading is the old behavior.
 static nscoord
 GetNormalLineHeight(nsFontMetrics* aFontMetrics)
@@ -2841,7 +2862,7 @@ ComputeLineHeight(nsStyleContext* aStyleContext,
   }
 
   if (lhCoord.GetUnit() == eStyleUnit_Factor)
-    // For factor units the computed value of the line-height property 
+    // For factor units the computed value of the line-height property
     // is found by multiplying the factor by the font's computed size
     // (adjusted for min-size prefs and text zoom).
     return NSToCoordRound(lhCoord.GetFactorValue() * aFontSizeInflation *
@@ -2850,7 +2871,7 @@ ComputeLineHeight(nsStyleContext* aStyleContext,
   NS_ASSERTION(lhCoord.GetUnit() == eStyleUnit_Normal ||
                lhCoord.GetUnit() == eStyleUnit_Enumerated,
                "bad line-height unit");
-  
+
   if (lhCoord.GetUnit() == eStyleUnit_Enumerated) {
     NS_ASSERTION(lhCoord.GetIntValue() == NS_STYLE_LINE_HEIGHT_BLOCK_HEIGHT,
                  "bad line-height value");

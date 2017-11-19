@@ -2,8 +2,6 @@
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
@@ -200,4 +198,51 @@ function promiseNewSearchEngine(basename) {
       },
     });
   });
+}
+
+let gPageActionPanel = document.getElementById("pageActionPanel");
+
+function promisePageActionPanelOpen() {
+  let button = document.getElementById("pageActionButton");
+  let shownPromise = promisePageActionPanelShown();
+  EventUtils.synthesizeMouseAtCenter(button, {});
+  return shownPromise;
+}
+
+function promisePageActionPanelShown() {
+  return promisePageActionPanelEvent("popupshown");
+}
+
+function promisePageActionPanelHidden() {
+  return promisePageActionPanelEvent("popuphidden");
+}
+
+function promisePageActionPanelEvent(name) {
+  return new Promise(resolve => {
+    gPageActionPanel.addEventListener(name, () => {
+      executeSoon(resolve);
+    }, { once: true });
+  });
+}
+
+function promisePageActionViewShown() {
+  return new Promise(resolve => {
+    gPageActionPanel.addEventListener("ViewShown", (event) => {
+      let target = event.originalTarget;
+      window.setTimeout(() => {
+        resolve(target);
+      }, 5000);
+    }, { once: true });
+  });
+}
+
+function promiseSpeculativeConnection(httpserver) {
+  return BrowserTestUtils.waitForCondition(() => {
+    if (httpserver) {
+      is(httpserver.connectionNumber, 1,
+         `${httpserver.connectionNumber} speculative connection has been setup.`)
+      return httpserver.connectionNumber == 1;
+    }
+    return false;
+  }, "Waiting for connection setup");
 }

@@ -27,6 +27,8 @@ var ecmaGlobals =
     "ArrayBuffer",
     "Atomics",
     "Boolean",
+    {name: "ByteLengthQueuingStrategy", optional: true},
+    {name: "CountQueuingStrategy", optional: true},
     "DataView",
     "Date",
     "Error",
@@ -39,7 +41,7 @@ var ecmaGlobals =
     "Int32Array",
     "Int8Array",
     "InternalError",
-    {name: "Intl", nonReleaseAndroid: true, android: false},
+    "Intl",
     "Iterator",
     "JSON",
     "Map",
@@ -50,6 +52,7 @@ var ecmaGlobals =
     "Promise",
     "Proxy",
     "RangeError",
+    {name: "ReadableStream", optional: true},
     "ReferenceError",
     "Reflect",
     "RegExp",
@@ -262,9 +265,8 @@ function createInterfaceMap(version, userAgent) {
         ok(!("pref" in entry), "Bogus pref annotation for " + entry.name);
         if ((entry.nightly === !isNightly) ||
             (entry.nightlyAndroid === !(isAndroid && isNightly) && isAndroid) ||
-            (entry.nonReleaseAndroid === !(isAndroid && !isRelease) && isAndroid) ||
             (entry.desktop === !isDesktop) ||
-            (entry.android === !isAndroid && !entry.nonReleaseAndroid && !entry.nightlyAndroid) ||
+            (entry.android === !isAndroid && !entry.nightlyAndroid) ||
             (entry.release === !isRelease) ||
             (entry.isSecureContext === !isSecureContext) ||
             entry.disabled) {

@@ -12,6 +12,7 @@ include protocol PRenderFrame;
 include protocol PTexture;
 
 include "mozilla/GfxMessageUtils.h";
+include "mozilla/layers/LayersMessageUtils.h";
 
 using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
@@ -33,11 +34,6 @@ using mozilla::layers::CompositableHandle from "mozilla/layers/LayersTypes.h";
 
 namespace mozilla {
 namespace layers {
-
-union MaybeTransform {
-  Matrix4x4;
-  void_t;
-};
 
 /**
  * The PLayerTransaction protocol manages the layer tree for a single "browser".

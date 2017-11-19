@@ -122,8 +122,12 @@
           el.remove();
         }
 
-        // Set sitename
-        document.getElementById(error + "_sitename").textContent = getHostString();
+        // Set sitename if necessary.
+        let sitenameElem = document.getElementById(error + "_sitename");
+        if (sitenameElem) {
+          sitenameElem.textContent = getHostString();
+        }
+
         document.title = document.getElementById("errorTitleText_" + error)
                                  .innerHTML;
 
@@ -165,6 +169,11 @@
           <p id="errorLongDescText_phishing">&safeb.blocked.phishingPage.longDesc2;</p>
           <p id="errorLongDescText_malware">&safeb.blocked.malwarePage.longDesc;</p>
           <p id="errorLongDescText_unwanted">&safeb.blocked.unwantedPage.longDesc;</p>
+        </div>
+
+        <!-- Advisory -->
+        <div id="advisoryDesc">
+          <p id="advisoryDescText">&safeb.palm.advisory.desc;</p>
         </div>
 
         <!-- Action buttons -->

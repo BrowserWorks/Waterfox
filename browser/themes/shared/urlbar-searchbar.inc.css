@@ -64,3 +64,172 @@
   -moz-appearance: none;
 }
 
+%ifdef MOZ_PHOTON_THEME
+/* Page action panel */
+.pageAction-panel-button > .toolbarbutton-icon {
+  width: 16px;
+  height: 16px;
+}
+
+#pageAction-panel-bookmark,
+#star-button {
+  list-style-image: url("chrome://browser/skin/bookmark-hollow.svg");
+}
+#pageAction-panel-bookmark[starred],
+#star-button[starred] {
+  list-style-image: url("chrome://browser/skin/bookmark.svg");
+}
+#star-button[starred] {
+  fill-opacity: 1;
+  fill: var(--toolbarbutton-icon-fill-attention);
+}
+
+#pageAction-panel-copyURL,
+#pageAction-urlbar-copyURL {
+  list-style-image: url("chrome://browser/skin/link.svg");
+}
+
+#pageAction-panel-emailLink,
+#pageAction-urlbar-emailLink {
+  list-style-image: url("chrome://browser/skin/email-link.svg");
+}
+
+#pageAction-panel-sendToDevice,
+#pageAction-urlbar-sendToDevice {
+  list-style-image: url("chrome://browser/skin/device-mobile.svg");
+}
+
+.pageAction-sendToDevice-device[clientType=mobile] {
+  list-style-image: url("chrome://browser/skin/device-mobile.svg");
+}
+
+.pageAction-sendToDevice-device[clientType=desktop] {
+  list-style-image: url("chrome://browser/skin/device-desktop.svg");
+}
+
+#pageAction-panel-sendToDevice-fxa,
+#pageAction-urlbar-sendToDevice-fxa {
+  list-style-image: url("chrome://browser/skin/sync.svg");
+}
+
+/* Page action urlbar buttons */
+#urlbar-icons {
+  /* Add more space between the last icon and the urlbar's edge. */
+  margin-inline-end: 3px;
+}
+
+.urlbar-icon {
+  width: 22px;
+  height: 16px;
+  margin-inline-start: 6px;
+  -moz-context-properties: fill, fill-opacity;
+  fill: currentColor;
+  fill-opacity: 0.6;
+  color: inherit;
+}
+
+#pageActionButton {
+  list-style-image: url("chrome://browser/skin/page-action.svg");
+}
+
+%ifdef MOZ_PHOTON_ANIMATIONS
+@keyframes bookmark-animation {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-627px);
+  }
+}
+
+@keyframes bookmark-animation-rtl {
+  from {
+    transform: scaleX(-1) translateX(0);
+  }
+  to {
+    transform: scaleX(-1) translateX(-627px);
+  }
+}
+
+#star-button-box[animationsenabled] {
+  position: relative;
+}
+
+/* Preload the bookmark animations to prevent a flicker during the first playing
+   of the animations. */
+#star-button[preloadanimations] + #star-button-animatable-box > #star-button-animatable-image {
+  background-image: url("chrome://browser/skin/bookmark-animation.svg"),
+                    url("chrome://browser/skin/library-bookmark-animation.svg");
+  background-size: 0, 0;
+}
+
+#star-button-box[animationsenabled] > #star-button[starred][animate] {
+  fill: transparent;
+  position: relative;
+}
+
+#star-button-box[animationsenabled] > #star-button[starred][animate] + #star-button-animatable-box {
+  position: absolute;
+  overflow: hidden;
+  top: calc(50% - 16.5px); /* 16.5px is half the height of the sprite */
+  /* .urlbar-icon has width 22px. Each frame is 33px wide. Set margin-inline-start
+     to be half the difference, -5.5px, plus the 6px margin-inline-start of
+     .urlbar-icon, 6px. */
+  margin-inline-start: 0.5px;
+  /* Set the height to equal the height of each frame of the SVG. Must use
+     min- and max- width and height due to bug 1379332. */
+  min-width: 33px;
+  max-width: 33px;
+  min-height: 33px;
+  max-height: 33px;
+}
+
+#star-button-box[animationsenabled] > #star-button[starred][animate] + #star-button-animatable-box > #star-button-animatable-image {
+  background-image: url("chrome://browser/skin/bookmark-animation.svg");
+  background-size: auto;
+  list-style-image: none;
+  height: var(--toolbarbutton-height);
+  animation-name: bookmark-animation;
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1;
+  animation-timing-function: steps(19);
+  animation-duration: 304ms;
+  width: 660px;
+}
+
+#star-button-box[animationsenabled] > #star-button[starred][animate]:-moz-locale-dir(rtl) + #star-button-animatable-box > #star-button-animatable-image {
+  animation-name: bookmark-animation-rtl;
+}
+%endif /* MOZ_PHOTON_ANIMATIONS */
+%endif /* MOZ_PHOTON_THEME */
+
+/* Zoom button */
+#urlbar-zoom-button {
+  margin: 0 3px;
+  font-size: .8em;
+  padding: 0 8px;
+  border-radius: 1em;
+  background-color: hsla(0,0%,0%,.05);
+  border: 1px solid ThreeDLightShadow;
+}
+
+#urlbar-zoom-button[animate="true"] {
+  animation-name: urlbar-zoom-reset-pulse;
+  animation-duration: 250ms;
+}
+
+#urlbar-zoom-button:hover {
+  background-color: hsla(0,0%,0%,.1);
+}
+
+#urlbar-zoom-button:hover:active {
+  background-color: hsla(0,0%,0%,.15);
+}
+
+#urlbar-zoom-button > .toolbarbutton-text {
+  display: -moz-box;
+}
+
+#urlbar-zoom-button > .toolbarbutton-icon {
+  display: none;
+}

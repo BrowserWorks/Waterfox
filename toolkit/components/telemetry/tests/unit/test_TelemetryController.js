@@ -17,7 +17,6 @@ Cu.import("resource://gre/modules/TelemetryStorage.jsm", this);
 Cu.import("resource://gre/modules/TelemetrySend.jsm", this);
 Cu.import("resource://gre/modules/TelemetryArchive.jsm", this);
 Cu.import("resource://gre/modules/TelemetryUtils.jsm", this);
-Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/Preferences.jsm");
 
 const PING_FORMAT_VERSION = 4;
@@ -27,12 +26,6 @@ const TEST_PING_TYPE = "test-ping-type";
 const PLATFORM_VERSION = "1.9.2";
 const APP_VERSION = "1";
 const APP_NAME = "XPCShell";
-
-const PREF_BRANCH = "toolkit.telemetry.";
-const PREF_ENABLED = PREF_BRANCH + "enabled";
-const PREF_ARCHIVE_ENABLED = PREF_BRANCH + "archive.enabled";
-const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
-const PREF_UNIFIED = PREF_BRANCH + "unified";
 
 var gClientID = null;
 
@@ -99,11 +92,12 @@ add_task(async function test_setup() {
   // Addon manager needs a profile directory
   do_get_profile();
   loadAddonManager("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
+  finishAddonManagerStartup();
   // Make sure we don't generate unexpected pings due to pref changes.
   await setEmptyPrefWatchlist();
 
-  Services.prefs.setBoolPref(PREF_ENABLED, true);
-  Services.prefs.setBoolPref(PREF_FHR_UPLOAD_ENABLED, true);
+  Services.prefs.setBoolPref(TelemetryUtils.Preferences.TelemetryEnabled, true);
+  Services.prefs.setBoolPref(TelemetryUtils.Preferences.FhrUploadEnabled, true);
 
   await new Promise(resolve =>
     Telemetry.asyncFetchTelemetryData(wrapWithExceptionHandler(resolve)));
@@ -127,7 +121,7 @@ add_task(async function test_simplePing() {
   // Update the Telemetry Server preference with the address of the local server.
   // Otherwise we might end up sending stuff to a non-existing server after
   // |TelemetryController.testReset| is called.
-  Preferences.set(TelemetryController.Constants.PREF_SERVER, "http://localhost:" + PingServer.port);
+  Preferences.set(TelemetryUtils.Preferences.Server, "http://localhost:" + PingServer.port);
 
   await sendPing(false, false);
   let request = await PingServer.promiseNextRequest();
@@ -144,7 +138,7 @@ add_task(async function test_simplePing() {
 });
 
 add_task(async function test_disableDataUpload() {
-  const isUnified = Preferences.get(PREF_UNIFIED, false);
+  const isUnified = Preferences.get(TelemetryUtils.Preferences.Unified, false);
   if (!isUnified) {
     // Skipping the test if unified telemetry is off, as no deletion ping will
     // be generated.
@@ -152,7 +146,7 @@ add_task(async function test_disableDataUpload() {
   }
 
   // Disable FHR upload: this should trigger a deletion ping.
-  Preferences.set(PREF_FHR_UPLOAD_ENABLED, false);
+  Preferences.set(TelemetryUtils.Preferences.FhrUploadEnabled, false);
 
   let ping = await PingServer.promiseNextPing();
   checkPingFormat(ping, DELETION_PING_TYPE, true, false);
@@ -160,7 +154,7 @@ add_task(async function test_disableDataUpload() {
   await TelemetrySend.testWaitOnOutgoingPings();
 
   // Restore FHR Upload.
-  Preferences.set(PREF_FHR_UPLOAD_ENABLED, true);
+  Preferences.set(TelemetryUtils.Preferences.FhrUploadEnabled, true);
 
   // Simulate a failure in sending the deletion ping by disabling the HTTP server.
   await PingServer.stop();
@@ -169,7 +163,7 @@ add_task(async function test_disableDataUpload() {
   TelemetryController.submitExternalPing(TEST_PING_TYPE, {});
 
   // Disable FHR upload to send a deletion ping again.
-  Preferences.set(PREF_FHR_UPLOAD_ENABLED, false);
+  Preferences.set(TelemetryUtils.Preferences.FhrUploadEnabled, false);
 
   // Wait on sending activity to settle, as |TelemetryController.testReset()| doesn't do that.
   await TelemetrySend.testWaitOnOutgoingPings();
@@ -188,7 +182,7 @@ add_task(async function test_disableDataUpload() {
   PingServer.start();
   // We set the new server using the pref, otherwise it would get reset with
   // |TelemetryController.testReset|.
-  Preferences.set(TelemetryController.Constants.PREF_SERVER, "http://localhost:" + PingServer.port);
+  Preferences.set(TelemetryUtils.Preferences.Server, "http://localhost:" + PingServer.port);
 
   // Stop the sending task and then start it again.
   await TelemetrySend.shutdown();
@@ -204,15 +198,13 @@ add_task(async function test_disableDataUpload() {
   // pending pings.
   await TelemetrySend.testWaitOnOutgoingPings();
   // Restore FHR Upload.
-  Preferences.set(PREF_FHR_UPLOAD_ENABLED, true);
+  Preferences.set(TelemetryUtils.Preferences.FhrUploadEnabled, true);
 });
 
 add_task(async function test_pingHasClientId() {
-  const PREF_CACHED_CLIENTID = "toolkit.telemetry.cachedClientID";
-
   // Make sure we have no cached client ID for this test: we'll try to send
   // a ping with it while Telemetry is being initialized.
-  Preferences.reset(PREF_CACHED_CLIENTID);
+  Preferences.reset(TelemetryUtils.Preferences.CachedClientId);
   await TelemetryController.testShutdown();
   await ClientID._reset();
   await TelemetryStorage.testClearPendingPings();
@@ -258,7 +250,7 @@ add_task(async function test_pingHasClientId() {
 
   // Check that sending a ping without relying on the cache, after the
   // initialization, still works.
-  Preferences.reset(PREF_CACHED_CLIENTID);
+  Preferences.reset(TelemetryUtils.Preferences.CachedClientId);
   await TelemetryController.testShutdown();
   await TelemetryStorage.testClearPendingPings();
   await TelemetryController.testReset();
@@ -298,8 +290,8 @@ add_task(async function test_archivePings() {
   // Disable ping upload so that pings don't get sent.
   // With unified telemetry the FHR upload pref controls this,
   // with non-unified telemetry the Telemetry enabled pref.
-  const isUnified = Preferences.get(PREF_UNIFIED, false);
-  const uploadPref = isUnified ? PREF_FHR_UPLOAD_ENABLED : PREF_ENABLED;
+  const isUnified = Preferences.get(TelemetryUtils.Preferences.Unified, false);
+  const uploadPref = isUnified ? TelemetryUtils.Preferences.FhrUploadEnabled : TelemetryUtils.Preferences.TelemetryEnabled;
   Preferences.set(uploadPref, false);
 
   // If we're using unified telemetry, disabling ping upload will generate a "deletion"
@@ -320,7 +312,7 @@ add_task(async function test_archivePings() {
   // Check that pings don't get archived if not allowed to.
   now = new Date(2010, 10, 18, 12, 0, 0);
   fakeNow(now);
-  Preferences.set(PREF_ARCHIVE_ENABLED, false);
+  Preferences.set(TelemetryUtils.Preferences.ArchiveEnabled, false);
   pingId = await sendPing(true, true);
   let promise = TelemetryArchive.promiseArchivedPingById(pingId);
   Assert.ok((await promiseRejects(promise)),
@@ -328,7 +320,7 @@ add_task(async function test_archivePings() {
 
   // Enable archiving and the upload so that pings get sent and archived again.
   Preferences.set(uploadPref, true);
-  Preferences.set(PREF_ARCHIVE_ENABLED, true);
+  Preferences.set(TelemetryUtils.Preferences.ArchiveEnabled, true);
 
   now = new Date(2014, 6, 18, 22, 0, 0);
   fakeNow(now);
@@ -434,32 +426,32 @@ add_task(async function test_telemetryEnabledUnexpectedValue() {
   // Remove the default value for toolkit.telemetry.enabled from the default prefs.
   // Otherwise, we wouldn't be able to set the pref to a string.
   let defaultPrefBranch = Services.prefs.getDefaultBranch(null);
-  defaultPrefBranch.deleteBranch(PREF_ENABLED);
+  defaultPrefBranch.deleteBranch(TelemetryUtils.Preferences.TelemetryEnabled);
 
   // Set the preferences controlling the Telemetry status to a string.
-  Preferences.set(PREF_ENABLED, "false");
+  Preferences.set(TelemetryUtils.Preferences.TelemetryEnabled, "false");
   // Check that Telemetry is not enabled.
   await TelemetryController.testReset();
   Assert.equal(Telemetry.canRecordExtended, false,
                "Invalid values must not enable Telemetry recording.");
 
   // Delete the pref again.
-  defaultPrefBranch.deleteBranch(PREF_ENABLED);
+  defaultPrefBranch.deleteBranch(TelemetryUtils.Preferences.TelemetryEnabled);
 
   // Make sure that flipping it to true works.
-  Preferences.set(PREF_ENABLED, true);
+  Preferences.set(TelemetryUtils.Preferences.TelemetryEnabled, true);
   await TelemetryController.testReset();
   Assert.equal(Telemetry.canRecordExtended, true,
                "True must enable Telemetry recording.");
 
   // Also check that the false works as well.
-  Preferences.set(PREF_ENABLED, false);
+  Preferences.set(TelemetryUtils.Preferences.TelemetryEnabled, false);
   await TelemetryController.testReset();
   Assert.equal(Telemetry.canRecordExtended, false,
                "False must disable Telemetry recording.");
 
   // Restore the state of the pref.
-  Preferences.set(PREF_ENABLED, true);
+  Preferences.set(TelemetryUtils.Preferences.TelemetryEnabled, true);
 });
 
 add_task(async function test_telemetryCleanFHRDatabase() {

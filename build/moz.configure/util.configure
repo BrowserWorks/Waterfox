@@ -22,6 +22,7 @@ def configure_error(message):
 # by running the given command if it exits normally, and streams that
 # output to log.debug and calls die or the given error callback if it
 # does not.
+@imports(_from='__builtin__', _import='unicode')
 @imports('subprocess')
 @imports('sys')
 @imports(_from='mozbuild.configure.util', _import='LineIO')
@@ -29,10 +30,26 @@ def configure_error(message):
 def check_cmd_output(*args, **kwargs):
     onerror = kwargs.pop('onerror', None)
 
+    # subprocess on older Pythons can't handle unicode keys or values in
+    # environment dicts. Normalize automagically so callers don't have to
+    # deal with this.
+    if 'env' in kwargs:
+        normalized_env = {}
+        for k, v in kwargs['env'].items():
+            if isinstance(k, unicode):
+                k = k.encode('utf-8', 'strict')
+
+            if isinstance(v, unicode):
+                v = v.encode('utf-8', 'strict')
+
+            normalized_env[k] = v
+
+        kwargs['env'] = normalized_env
+
     with log.queue_debug():
         log.debug('Executing: `%s`', quote(*args))
         proc = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                stderr=subprocess.PIPE, **kwargs)
         stdout, stderr = proc.communicate()
         retcode = proc.wait()
         if retcode == 0:
@@ -387,10 +404,11 @@ always = dependable(True)
 never = dependable(False)
 
 
-# Like @depends, but the decorated function is only called if one of the
-# arguments it would be called with has a positive value (bool(value) is True)
+# Create a decorator that will only execute the body of a function
+# if the passed function returns True when passed all positional
+# arguments.
 @template
-def depends_if(*args, **kwargs):
+def depends_tmpl(eval_args_fn, *args, **kwargs):
     if kwargs:
         assert len(kwargs) == 1
         when = kwargs['when']
@@ -399,10 +417,25 @@ def depends_if(*args, **kwargs):
     def decorator(func):
         @depends(*args, when=when)
         def wrapper(*args):
-            if any(arg for arg in args):
+            if eval_args_fn(args):
                 return func(*args)
         return wrapper
     return decorator
+
+
+# Like @depends, but the decorated function is only called if one of the
+# arguments it would be called with has a positive value (bool(value) is True)
+@template
+def depends_if(*args, **kwargs):
+    return depends_tmpl(any, *args, **kwargs)
+
+
+# Like @depends, but the decorated function is only called if all of the
+# arguments it would be called with have a positive value.
+@template
+def depends_all(*args, **kwargs):
+    return depends_tmpl(all, *args, **kwargs)
+
 
 # Hacks related to old-configure
 # ==============================

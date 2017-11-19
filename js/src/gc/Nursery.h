@@ -227,9 +227,6 @@ class Nursery
         return cellsWithUid_.append(cell);
     }
 
-    using SweepThunk = void (*)(void *data);
-    void queueSweepAction(SweepThunk thunk, void* data);
-
     MOZ_MUST_USE bool queueDictionaryModeObjectToSweep(NativeObject* obj);
 
     size_t sizeOfHeapCommitted() const {
@@ -279,7 +276,6 @@ class Nursery
     void clearMinorGCRequest() { minorGCTriggerReason_ = JS::gcreason::NO_REASON; }
 
     bool enableProfiling() const { return enableProfiling_; }
-    bool trackTimings() const { return trackTimings_; }
 
   private:
     /* The amount of space in the mapped nursery available to allocations. */
@@ -326,12 +322,6 @@ class Nursery
     mozilla::TimeDuration profileThreshold_;
     bool enableProfiling_;
 
-    /*
-     * Track timings if either enableProfiling_ or the Gecko profiler is
-     * compiled in.
-     */
-    bool trackTimings_;
-
     /* Report ObjectGroups with at lest this many instances tenured. */
     int64_t reportTenurings_;
 
@@ -363,12 +353,18 @@ class Nursery
     ProfileDurations totalDurations_;
     uint64_t minorGcCount_;
 
+    struct {
+        JS::gcreason::Reason reason;
+        uint64_t nurseryUsedBytes;
+        uint64_t tenuredBytes;
+    } previousGC;
+
     /*
      * The set of externally malloced buffers potentially kept live by objects
      * stored in the nursery. Any external buffers that do not belong to a
      * tenured thing at the end of a minor GC must be freed.
      */
-    typedef HashSet<void*, PointerHasher<void*, 3>, SystemAllocPolicy> MallocedBuffersSet;
+    typedef HashSet<void*, PointerHasher<void*>, SystemAllocPolicy> MallocedBuffersSet;
     MallocedBuffersSet mallocedBuffers;
 
     /* A task structure used to free the malloced bufers on a background thread. */
@@ -382,7 +378,7 @@ class Nursery
      * buffers might overlap each other. For these, an entry in the following
      * table is used.
      */
-    typedef HashMap<void*, void*, PointerHasher<void*, 1>, SystemAllocPolicy> ForwardedBufferMap;
+    typedef HashMap<void*, void*, PointerHasher<void*>, SystemAllocPolicy> ForwardedBufferMap;
     ForwardedBufferMap forwardedBuffers;
 
     /*
@@ -399,9 +395,6 @@ class Nursery
      */
     using CellsWithUniqueIdVector = Vector<gc::Cell*, 8, SystemAllocPolicy>;
     CellsWithUniqueIdVector cellsWithUid_;
-
-    struct SweepAction;
-    SweepAction* sweepActions_;
 
     using NativeObjectVector = Vector<NativeObject*, 0, SystemAllocPolicy>;
     NativeObjectVector dictionaryModeObjects_;
@@ -470,21 +463,18 @@ class Nursery
      */
     void sweep();
 
-    void runSweepActions();
     void sweepDictionaryModeObjects();
 
     /* Change the allocable space provided by the nursery. */
     void maybeResizeNursery(JS::gcreason::Reason reason, double promotionRate);
     void growAllocableSpace();
-    void shrinkAllocableSpace();
+    void shrinkAllocableSpace(unsigned removeNumChunks);
     void minimizeAllocableSpace();
 
     /* Profile recording and printing. */
     void maybeClearProfileDurations();
     void startProfile(ProfileKey key);
     void endProfile(ProfileKey key);
-    void maybeStartProfile(ProfileKey key);
-    void maybeEndProfile(ProfileKey key);
     static void printProfileDurations(const ProfileDurations& times);
 
     friend class TenuringTracer;

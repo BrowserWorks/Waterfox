@@ -80,11 +80,10 @@ public:
     return mDocuments.end();
   }
 
-  nsresult Dispatch(const char* aName,
-                    TaskCategory aCategory,
+  nsresult Dispatch(TaskCategory aCategory,
                     already_AddRefed<nsIRunnable>&& aRunnable);
 
-  nsIEventTarget* EventTargetFor(TaskCategory aCategory) const;
+  nsISerialEventTarget* EventTargetFor(TaskCategory aCategory) const;
 
   AbstractThread*
   AbstractMainThreadFor(TaskCategory aCategory);

@@ -106,6 +106,8 @@ Http2Stream::~Http2Stream()
 {
   ClearTransactionsBlockedOnTunnel();
   mStreamID = Http2Session::kDeadStreamID;
+
+  LOG3(("Http2Stream::~Http2Stream %p", this));
 }
 
 // ReadSegments() is used to write data down the socket. Generally, HTTP
@@ -349,7 +351,7 @@ Http2Stream::CreatePushHashKey(const nsCString &scheme,
                                const nsCString &hostHeader,
                                const mozilla::OriginAttributes &originAttributes,
                                uint64_t serial,
-                               const nsCSubstring &pathInfo,
+                               const nsACString& pathInfo,
                                nsCString &outOrigin,
                                nsCString &outKey)
 {
@@ -1155,7 +1157,6 @@ Http2Stream::SetAllHeadersReceived()
     MapStreamToHttpConnection();
     ClearTransactionsBlockedOnTunnel();
   }
-  return;
 }
 
 bool
@@ -1554,6 +1555,16 @@ Http2Stream::Finish0RTT(bool aRestart, bool aAlpnChanged)
     }
   }
   return rv;
+}
+
+nsresult
+Http2Stream::GetOriginAttributes(mozilla::OriginAttributes *oa)
+{
+  if (!mSocketTransport) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  return mSocketTransport->GetOriginAttributes(oa);
 }
 
 } // namespace net

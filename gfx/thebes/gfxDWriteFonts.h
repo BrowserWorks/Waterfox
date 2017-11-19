@@ -8,7 +8,7 @@
 
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/UniquePtr.h"
-#include <dwrite.h>
+#include <dwrite_1.h>
 
 #include "gfxFont.h"
 #include "gfxUserFontSet.h"
@@ -61,9 +61,6 @@ public:
     virtual int32_t GetGlyphWidth(DrawTarget& aDrawTarget,
                                   uint16_t aGID) override;
 
-    virtual already_AddRefed<mozilla::gfx::GlyphRenderingOptions>
-    GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams = nullptr) override;
-
     virtual void AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                         FontCacheSizes* aSizes) const override;
     virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
@@ -93,6 +90,8 @@ protected:
     bool GetForceGDIClassic();
 
     RefPtr<IDWriteFontFace> mFontFace;
+    RefPtr<IDWriteFontFace1> mFontFace1; // may be unavailable on older DWrite
+
     cairo_font_face_t *mCairoFontFace;
 
     Metrics *mMetrics;

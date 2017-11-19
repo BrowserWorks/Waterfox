@@ -184,7 +184,7 @@ function log_exceptions(aCallback, ...aArgs) {
 
 function log_callback(aPromise, aCallback) {
   aPromise.then(aCallback)
-    .then(null, e => info("Exception thrown: " + e));
+    .catch(e => info("Exception thrown: " + e));
   return aPromise;
 }
 
@@ -409,7 +409,9 @@ function open_manager(aView, aCallback, aLoadCallback, aLongerTimeout) {
     }, "EM-loaded");
 
     gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
-    switchToTabHavingURI(MANAGER_URI, true);
+    switchToTabHavingURI(MANAGER_URI, true, {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
   });
 
   // The promise resolves with the manager window, so it is passed to the callback

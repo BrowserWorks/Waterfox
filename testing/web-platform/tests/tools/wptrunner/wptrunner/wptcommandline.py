@@ -68,6 +68,9 @@ scheme host and port.""")
     mode_group.add_argument("--list-disabled", action="store_true",
                             default=False,
                             help="List the tests that are disabled on the current platform")
+    mode_group.add_argument("--list-tests", action="store_true",
+                            default=False,
+                            help="List all tests that will run")
 
     test_selection_group = parser.add_argument_group("Test Selection")
     test_selection_group.add_argument("--test-types", action="store",
@@ -179,6 +182,15 @@ scheme host and port.""")
                              help="Defines an extra user preference (overrides those in prefs_root)")
     gecko_group.add_argument("--leak-check", dest="leak_check", action="store_true",
                              help="Enable leak checking")
+    gecko_group.add_argument("--stylo-threads", action="store", type=int, default=1,
+                             help="Number of parallel threads to use for stylo")
+    gecko_group.add_argument("--reftest-internal", dest="reftest_internal", action="store_true",
+                             default=None, help="Enable reftest runner implemented inside Marionette")
+    gecko_group.add_argument("--reftest-external", dest="reftest_internal", action="store_false",
+                             help="Disable reftest runner implemented inside Marionette")
+    gecko_group.add_argument("--reftest-screenshot", dest="reftest_screenshot", action="store",
+                             choices=["always", "fail", "unexpected"], default="unexpected",
+                             help="With --reftest-internal, when to take a screenshot")
 
     servo_group = parser.add_argument_group("Servo-specific")
     servo_group.add_argument("--user-stylesheet",
@@ -384,6 +396,10 @@ def check_args(kwargs):
         kwargs['extra_prefs'] = [tuple(prefarg.split('=', 1)) for prefarg in
                                  kwargs['extra_prefs']]
 
+    if kwargs["reftest_internal"] is None:
+        # Default to the internal reftest implementation on Linux and OSX
+        kwargs["reftest_internal"] = sys.platform.startswith("linux") or sys.platform.startswith("darwin")
+
     return kwargs
 
 
@@ -392,6 +408,15 @@ def check_args_update(kwargs):
 
     if kwargs["product"] is None:
         kwargs["product"] = "firefox"
+    if kwargs["patch"] is None:
+        kwargs["patch"] = kwargs["sync"]
+
+    for item in kwargs["run_log"]:
+        if os.path.isdir(item):
+            print >> sys.stderr, "Log file %s is a directory" % item
+            sys.exit(1)
+
+    return kwargs
 
 
 def create_parser_update(product_choices=None):
@@ -419,10 +444,12 @@ def create_parser_update(product_choices=None):
     parser.add_argument("--branch", action="store", type=abs_path,
                         help="Remote branch to sync against")
     parser.add_argument("--rev", action="store", help="Revision to sync to")
-    parser.add_argument("--no-patch", action="store_true",
-                        help="Don't create an mq patch or git commit containing the changes.")
+    parser.add_argument("--patch", action="store_true", dest="patch", default=None,
+                        help="Create a VCS commit containing the changes.")
+    parser.add_argument("--no-patch", action="store_false", dest="patch",
+                        help="Don't create a VCS commit containing the changes.")
     parser.add_argument("--sync", dest="sync", action="store_true", default=False,
-                        help="Sync the tests with the latest from upstream")
+                        help="Sync the tests with the latest from upstream (implies --patch)")
     parser.add_argument("--ignore-existing", action="store_true", help="When updating test results only consider results from the logfiles provided, not existing expectations.")
     parser.add_argument("--continue", action="store_true", help="Continue a previously started run of the update script")
     parser.add_argument("--abort", action="store_true", help="Clear state from a previous incomplete run of the update script")

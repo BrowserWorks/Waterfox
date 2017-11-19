@@ -89,7 +89,7 @@ RegExpCode
 CompilePattern(JSContext* cx, HandleRegExpShared shared, RegExpCompileData* data,
                HandleLinearString sample,  bool is_global, bool ignore_case,
                bool is_latin1, bool match_only, bool force_bytecode, bool sticky,
-               bool unicode);
+               bool unicode, RegExpShared::JitCodeTables& tables);
 
 // Note: this may return RegExpRunStatus_Error if an interrupt was requested
 // while the code was executing.
@@ -900,7 +900,6 @@ class BackReferenceNode : public SeqRegExpNode
                                       RegExpCompiler* compiler,
                                       int characters_filled_in,
                                       bool not_at_start) {
-        return;
     }
     virtual bool FillInBMInfo(int offset,
                               int budget,
@@ -1545,6 +1544,9 @@ class Analysis : public NodeVisitor
     Analysis(Analysis&) = delete;
     void operator=(Analysis&) = delete;
 };
+
+void
+AddClassNegated(const int* elmv, int elmc, CharacterRangeVector* ranges);
 
 } }  // namespace js::irregexp
 

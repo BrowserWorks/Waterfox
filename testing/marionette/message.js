@@ -21,11 +21,26 @@ this.EXPORTED_SYMBOLS = [
 
 const logger = Log.repository.getLogger("Marionette");
 
-this.MessageOrigin = {
+/**
+ * Messages may originate from either the server or the client.
+ * Because the remote protocol is full duplex, both endpoints may be the
+ * origin of both commands and responses.
+ *
+ * @enum
+ * @see {@link Message}
+ */
+const MessageOrigin = {
+  /** Indicates that the message originates from the client. */
   Client: 0,
+  /** Indicates that the message originates from the server. */
   Server: 1,
 };
 
+/**
+ * Representation of the packets transproted over the wire.
+ *
+ * @class
+ */
 this.Message = {};
 
 /**
@@ -36,13 +51,14 @@ this.Message = {};
  *     message type, message ID, method name or error, and parameters
  *     or result.
  *
- * @return {(Command,Response)}
- *     Based on the message type, a Command or Response instance.
+ * @return {Message}
+ *     Based on the message type, a {@link Command} or {@link Response}
+ *     instance.
  *
  * @throws {TypeError}
  *     If the message type is not recognised.
  */
-Message.fromMsg = function (data) {
+Message.fromMsg = function(data) {
   switch (data[0]) {
     case Command.TYPE:
       return Command.fromMsg(data);
@@ -95,10 +111,10 @@ Message.fromMsg = function (data) {
  *     Message ID unique identifying this message.
  * @param {string} name
  *     Command name.
- * @param {Object<string, ?>} params
+ * @param {Object.<string, ?>} params
  *     Command parameters.
  */
-this.Command = class {
+class Command {
   constructor(msgID, name, params = {}) {
     this.id = assert.integer(msgID);
     this.name = assert.string(name);
@@ -148,10 +164,9 @@ this.Command = class {
 
     return new Command(msgID, name, params);
   }
-};
+}
 
 Command.TYPE = 0;
-
 
 const validator = {
   exclusionary: {
@@ -161,7 +176,7 @@ const validator = {
     "value": ["error", "sessionId", "capabilities"],
   },
 
-  set: function (obj, prop, val) {
+  set(obj, prop, val) {
     let tests = this.exclusionary[prop];
     if (tests) {
       for (let t of tests) {
@@ -188,7 +203,14 @@ const validator = {
  * {@code value}, {@code sessionId}, or {@code capabilities} have been
  * set previously will cause an error.
  */
-this.ResponseBody = () => new Proxy({}, validator);
+const ResponseBody = () => new Proxy({}, validator);
+
+/**
+ * @callback ResponseCallback
+ *
+ * @param {Response} resp
+ *     Response to handle.
+ */
 
 /**
  * Represents the response returned from the remote end after execution
@@ -206,10 +228,10 @@ this.ResponseBody = () => new Proxy({}, validator);
  * @param {number} msgID
  *     Message ID tied to the corresponding command request this is a
  *     response for.
- * @param {function(Response|Message)} respHandler
+ * @param {ResponseHandler} respHandler
  *     Function callback called on sending the response.
  */
-this.Response = class {
+class Response {
   constructor(msgID, respHandler = () => {}) {
     this.id = assert.integer(msgID);
     this.respHandler_ = assert.callable(respHandler);
@@ -292,6 +314,6 @@ this.Response = class {
     resp.body = body;
     return resp;
   }
-};
+}
 
 Response.TYPE = 1;

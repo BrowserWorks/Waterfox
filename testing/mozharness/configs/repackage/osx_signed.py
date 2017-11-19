@@ -1,15 +1,31 @@
 import os
 
 config = {
-    "input_filename": "target.tar.gz",
-    "output_filename": "target.dmg",
-    "input_home": "/home/worker/workspace/inputs",
+    "input_home": "{abs_work_dir}/inputs",
+    "output_home": "{abs_work_dir}/artifacts{locale}",
     "src_mozconfig": "browser/config/mozconfigs/macosx64/repack",
 
+    "locale": os.environ.get("LOCALE"),
+
+    "download_config": {
+        "target.tar.gz": os.environ.get("SIGNED_INPUT"),
+        "mar": os.environ.get("UNSIGNED_MAR"),
+    },
+
+    "repackage_config": [[
+        "dmg",
+        "-i", "{abs_work_dir}/inputs/target.tar.gz",
+        "-o", "{output_home}/target.dmg"
+    ], [
+        "mar",
+        "-i", "{abs_work_dir}/inputs/target.tar.gz",
+        "--mar", "{abs_work_dir}/inputs/mar",
+        "-o", "{output_home}/target.complete.mar"
+    ]],
+
     # ToolTool
-    "tooltool_manifest_src": 'browser/config/tooltool-manifests/macosx64/cross-releng.manifest',
+    "tooltool_manifest_src": 'browser/config/tooltool-manifests/macosx64/cross-l10n.manifest',
     "tooltool_url": 'http://relengapi/tooltool/',
-    "tooltool_bootstrap": "setup.sh",
     'tooltool_script': ["/builds/tooltool.py"],
     'tooltool_cache': os.environ.get('TOOLTOOL_CACHE'),
 }

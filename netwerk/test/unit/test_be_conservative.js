@@ -11,27 +11,25 @@
 
 const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 const { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-const { Promise: promise } =
-  Cu.import("resource://gre/modules/Promise.jsm", {});
 
 // Get a profile directory and ensure PSM initializes NSS.
 do_get_profile();
 Cc["@mozilla.org/psm;1"].getService(Ci.nsISupports);
 
 function getCert() {
-  let deferred = promise.defer();
-  let certService = Cc["@mozilla.org/security/local-cert-service;1"]
-                      .getService(Ci.nsILocalCertService);
-  certService.getOrCreateCert("beConservative-test", {
-    handleCert: function(c, rv) {
-      if (rv) {
-        deferred.reject(rv);
-        return;
+  return new Promise((resolve, reject) => {
+    let certService = Cc["@mozilla.org/security/local-cert-service;1"]
+                        .getService(Ci.nsILocalCertService);
+    certService.getOrCreateCert("beConservative-test", {
+      handleCert: function(c, rv) {
+        if (rv) {
+          reject(rv);
+          return;
+        }
+        resolve(c);
       }
-      deferred.resolve(c);
-    }
+    });
   });
-  return deferred.promise;
 }
 
 class InputStreamCallback {
@@ -163,34 +161,34 @@ function startClient(port, beConservative, expectSuccess) {
   req.open("GET", `https://${hostname}:${port}`);
   let internalChannel = req.channel.QueryInterface(Ci.nsIHttpChannelInternal);
   internalChannel.beConservative = beConservative;
-  let deferred = promise.defer();
-  req.onload = () => {
-    ok(expectSuccess,
-       `should ${expectSuccess ? "" : "not "}have gotten load event`);
-    equal(req.responseText, "OK", "response text should be 'OK'");
-    deferred.resolve();
-  };
-  req.onerror = () => {
-    ok(!expectSuccess,
-       `should ${!expectSuccess ? "" : "not "}have gotten an error`);
-    deferred.resolve();
-  };
+  return new Promise((resolve, reject) => {
+    req.onload = () => {
+      ok(expectSuccess,
+         `should ${expectSuccess ? "" : "not "}have gotten load event`);
+      equal(req.responseText, "OK", "response text should be 'OK'");
+      resolve();
+    };
+    req.onerror = () => {
+      ok(!expectSuccess,
+         `should ${!expectSuccess ? "" : "not "}have gotten an error`);
+      resolve();
+    };
 
-  req.send();
-  return deferred.promise;
+    req.send();
+  });
 }
 
-add_task(function*() {
+add_task(async function() {
   Services.prefs.setIntPref("security.tls.version.max", 4);
   Services.prefs.setCharPref("network.dns.localDomains", hostname);
-  let cert = yield getCert();
+  let cert = await getCert();
 
   // First run a server that accepts TLS 1.2 and 1.3. A conservative client
   // should succeed in connecting.
   let server = startServer(cert, Ci.nsITLSClientStatus.TLS_VERSION_1_2,
                            Ci.nsITLSClientStatus.TLS_VERSION_1_3);
   storeCertOverride(server.port, cert);
-  yield startClient(server.port, true /*be conservative*/,
+  await startClient(server.port, true /*be conservative*/,
                     true /*should succeed*/);
   server.close();
 
@@ -199,11 +197,11 @@ add_task(function*() {
   server = startServer(cert, Ci.nsITLSClientStatus.TLS_VERSION_1_3,
                        Ci.nsITLSClientStatus.TLS_VERSION_1_3);
   storeCertOverride(server.port, cert);
-  yield startClient(server.port, true /*be conservative*/,
+  await startClient(server.port, true /*be conservative*/,
                     false /*should fail*/);
 
   // However, a non-conservative client should succeed.
-  yield startClient(server.port, false /*don't be conservative*/,
+  await startClient(server.port, false /*don't be conservative*/,
                     true /*should succeed*/);
   server.close();
 });

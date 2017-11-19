@@ -32,6 +32,7 @@ using mozilla::Telemetry::Common::IsInDataset;
 using mozilla::Telemetry::Common::LogToBrowserConsole;
 using mozilla::Telemetry::Common::GetNameForProcessID;
 using mozilla::Telemetry::ScalarActionType;
+using mozilla::Telemetry::ScalarID;
 using mozilla::Telemetry::ScalarVariant;
 using mozilla::Telemetry::ProcessID;
 
@@ -179,7 +180,7 @@ ScalarInfo::expiration() const
 }
 
 /**
- * The base scalar object, that servers as a common ancestor for storage
+ * The base scalar object, that serves as a common ancestor for storage
  * purposes.
  */
 class ScalarBase
@@ -2326,4 +2327,44 @@ TelemetryScalar::UpdateChildKeyedData(ProcessID aProcessType,
         NS_WARNING("Unsupported action coming from keyed scalar child updates.");
     }
   }
+}
+
+void
+TelemetryScalar::RecordDiscardedData(ProcessID aProcessType,
+                                     const mozilla::Telemetry::DiscardedData& aDiscardedData)
+{
+  MOZ_ASSERT(XRE_IsParentProcess(),
+             "Discarded Data must be updated from the parent process.");
+  StaticMutexAutoLock locker(gTelemetryScalarsMutex);
+  if (!internal_CanRecordBase()) {
+    return;
+  }
+
+  ScalarBase* scalar = nullptr;
+  mozilla::DebugOnly<nsresult> rv;
+
+  rv = internal_GetScalarByEnum(ScalarID::TELEMETRY_DISCARDED_ACCUMULATIONS,
+                                aProcessType, &scalar);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  scalar->AddValue(aDiscardedData.mDiscardedHistogramAccumulations);
+
+  rv = internal_GetScalarByEnum(ScalarID::TELEMETRY_DISCARDED_KEYED_ACCUMULATIONS,
+                                aProcessType, &scalar);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  scalar->AddValue(aDiscardedData.mDiscardedKeyedHistogramAccumulations);
+
+  rv = internal_GetScalarByEnum(ScalarID::TELEMETRY_DISCARDED_SCALAR_ACTIONS,
+                                aProcessType, &scalar);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  scalar->AddValue(aDiscardedData.mDiscardedScalarActions);
+
+  rv = internal_GetScalarByEnum(ScalarID::TELEMETRY_DISCARDED_KEYED_SCALAR_ACTIONS,
+                                aProcessType, &scalar);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  scalar->AddValue(aDiscardedData.mDiscardedKeyedScalarActions);
+
+  rv = internal_GetScalarByEnum(ScalarID::TELEMETRY_DISCARDED_CHILD_EVENTS,
+                                aProcessType, &scalar);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  scalar->AddValue(aDiscardedData.mDiscardedChildEvents);
 }

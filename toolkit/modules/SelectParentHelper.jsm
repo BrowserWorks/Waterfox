@@ -18,11 +18,13 @@ const MAX_ROWS = 20;
 // Minimum elements required to show select search
 const SEARCH_MINIMUM_ELEMENTS = 40;
 
+// Make sure to clear these objects when the popup closes to avoid leaking.
 var currentBrowser = null;
 var currentMenulist = null;
+var selectRect = null;
+
 var currentZoom = 1;
 var closedWithEnter = false;
-var selectRect;
 var customStylingEnabled = Services.prefs.getBoolPref("dom.forms.select.customstyling");
 var usedSelectBackgroundColor;
 
@@ -116,11 +118,15 @@ this.SelectParentHelper = {
 
     menupopup.classList.toggle("isOpenedViaTouch", isOpenedViaTouch);
 
-    let constraintRect = browser.getBoundingClientRect();
-    constraintRect = new win.DOMRect(constraintRect.left + win.mozInnerScreenX,
-                                     constraintRect.top + win.mozInnerScreenY,
-                                     constraintRect.width, constraintRect.height);
-    menupopup.setConstraintRect(constraintRect);
+    if (browser.getAttribute("selectmenuconstrained") != "false") {
+      let constraintRect = browser.getBoundingClientRect();
+      constraintRect = new win.DOMRect(constraintRect.left + win.mozInnerScreenX,
+                                       constraintRect.top + win.mozInnerScreenY,
+                                       constraintRect.width, constraintRect.height);
+      menupopup.setConstraintRect(constraintRect);
+    } else {
+      menupopup.setConstraintRect(new win.DOMRect(0, 0, 0, 0));
+    }
     menupopup.openPopupAtScreenRect(AppConstants.platform == "macosx" ? "selection" : "after_start", rect.left, rect.top, rect.width, rect.height, false, false);
   },
 
@@ -179,6 +185,7 @@ this.SelectParentHelper = {
         popup.parentNode.hidden = true;
         currentBrowser = null;
         currentMenulist = null;
+        selectRect = null;
         currentZoom = 1;
         break;
     }

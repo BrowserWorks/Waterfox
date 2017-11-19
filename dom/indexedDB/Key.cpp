@@ -47,14 +47,14 @@ namespace indexedDB {
  When encoding floats, 64bit IEEE 754 are almost sortable, except that
  positive sort lower than negative, and negative sort descending. So we use
  the following encoding:
- 
+
  value < 0 ?
    (-to64bitInt(value)) :
    (to64bitInt(value) | 0x8000000000000000)
 
 
  When encoding strings, we use variable-size encoding per the following table
- 
+
  Chars 0         - 7E           are encoded as 0xxxxxxx with 1 added
  Chars 7F        - (3FFF+7F)    are encoded as 10xxxxxx xxxxxxxx with 7F subtracted
  Chars (3FFF+80) - FFFF         are encoded as 11xxxxxx xxxxxxxx xx000000
@@ -103,7 +103,7 @@ namespace indexedDB {
 
  As a final optimization we do a post-encoding step which drops all 0s at the
  end of the encoded buffer.
- 
+
  "foo"         // 0x30 s s s
  1             // 0x10 bf f0
  ["a", "b"]    // 0x80 s 0 0x30 s
@@ -501,7 +501,7 @@ Key::EncodeAsString(const T* aStart, const T* aEnd, uint8_t aType)
 
   // Write end marker
   *(buffer++) = eTerminator;
-  
+
   NS_ASSERTION(buffer == mBuffer.EndReading(), "Wrote wrong number of bytes");
 
   return NS_OK;
@@ -568,14 +568,14 @@ Key::DecodeString(const unsigned char*& aPos, const unsigned char* aEnd,
 
   // First measure how big the decoded string will be.
   uint32_t size = 0;
-  const unsigned char* iter; 
+  const unsigned char* iter;
   for (iter = buffer; iter < aEnd && *iter != eTerminator; ++iter) {
     if (*iter & 0x80) {
       iter += (*iter & 0x40) ? 2 : 1;
     }
     ++size;
   }
-  
+
   // Set end so that we don't have to check for null termination in the loop
   // below
   if (iter < aEnd) {
@@ -608,13 +608,13 @@ Key::DecodeString(const unsigned char*& aPos, const unsigned char* aEnd,
       }
       *out = (char16_t)c;
     }
-    
+
     ++out;
   }
-  
+
   NS_ASSERTION(!size || out == aString.EndReading(),
                "Should have written the whole string");
-  
+
   aPos = iter + 1;
 }
 

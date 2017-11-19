@@ -60,6 +60,7 @@ class IonGetPropertyIC;
 class IonSetPropertyIC;
 class IonGetNameIC;
 class IonBindNameIC;
+class IonGetIteratorIC;
 class IonHasOwnIC;
 class IonInIC;
 
@@ -149,6 +150,10 @@ class IonIC
         MOZ_ASSERT(kind_ == CacheKind::BindName);
         return (IonBindNameIC*)this;
     }
+    IonGetIteratorIC* asGetIteratorIC() {
+        MOZ_ASSERT(kind_ == CacheKind::GetIterator);
+        return (IonGetIteratorIC*)this;
+    }
     IonHasOwnIC* asHasOwnIC() {
         MOZ_ASSERT(kind_ == CacheKind::HasOwn);
         return (IonHasOwnIC*)this;
@@ -173,6 +178,7 @@ class IonIC
 
 class IonGetPropertyIC : public IonIC
 {
+  private:
     LiveRegisterSet liveRegs_;
 
     TypedOrValueRegister value_;
@@ -180,30 +186,29 @@ class IonGetPropertyIC : public IonIC
     TypedOrValueRegister output_;
     Register maybeTemp_; // Might be InvalidReg.
 
-    bool monitoredResult_ : 1;
-    bool allowDoubleResult_ : 1;
+    GetPropertyResultFlags resultFlags_;
 
   public:
     IonGetPropertyIC(CacheKind kind, LiveRegisterSet liveRegs, TypedOrValueRegister value,
                      const ConstantOrRegister& id, TypedOrValueRegister output, Register maybeTemp,
-                     bool monitoredResult, bool allowDoubleResult)
+                     GetPropertyResultFlags resultFlags)
       : IonIC(kind),
         liveRegs_(liveRegs),
         value_(value),
         id_(id),
         output_(output),
         maybeTemp_(maybeTemp),
-        monitoredResult_(monitoredResult),
-        allowDoubleResult_(allowDoubleResult)
+        resultFlags_(resultFlags)
     { }
 
-    bool monitoredResult() const { return monitoredResult_; }
     TypedOrValueRegister value() const { return value_; }
     ConstantOrRegister id() const { return id_; }
     TypedOrValueRegister output() const { return output_; }
     Register maybeTemp() const { return maybeTemp_; }
     LiveRegisterSet liveRegs() const { return liveRegs_; }
-    bool allowDoubleResult() const { return allowDoubleResult_; }
+    GetPropertyResultFlags resultFlags() const { return resultFlags_; }
+    bool monitoredResult() const { return resultFlags_ & GetPropertyResultFlags::Monitored; }
+    bool allowDoubleResult() const { return resultFlags_ & GetPropertyResultFlags::AllowDouble; }
 
     static MOZ_MUST_USE bool update(JSContext* cx, HandleScript outerScript, IonGetPropertyIC* ic,
                                     HandleValue val, HandleValue idVal, MutableHandleValue res);
@@ -312,6 +317,35 @@ class IonBindNameIC : public IonIC
 
     static JSObject* update(JSContext* cx, HandleScript outerScript, IonBindNameIC* ic,
                             HandleObject envChain);
+};
+
+class IonGetIteratorIC : public IonIC
+{
+    LiveRegisterSet liveRegs_;
+    TypedOrValueRegister value_;
+    Register output_;
+    Register temp1_;
+    Register temp2_;
+
+  public:
+    IonGetIteratorIC(LiveRegisterSet liveRegs, TypedOrValueRegister value, Register output,
+                     Register temp1, Register temp2)
+      : IonIC(CacheKind::GetIterator),
+        liveRegs_(liveRegs),
+        value_(value),
+        output_(output),
+        temp1_(temp1),
+        temp2_(temp2)
+    { }
+
+    TypedOrValueRegister value() const { return value_; }
+    Register output() const { return output_; }
+    Register temp1() const { return temp1_; }
+    Register temp2() const { return temp2_; }
+    LiveRegisterSet liveRegs() const { return liveRegs_; }
+
+    static JSObject* update(JSContext* cx, HandleScript outerScript, IonGetIteratorIC* ic,
+                            HandleValue value);
 };
 
 class IonHasOwnIC : public IonIC

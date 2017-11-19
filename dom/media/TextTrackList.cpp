@@ -4,6 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/TextTrackList.h"
+
+#include "mozilla/DebugOnly.h"
 #include "mozilla/dom/TextTrackListBinding.h"
 #include "mozilla/dom/TrackEvent.h"
 #include "nsThreadUtils.h"
@@ -139,7 +141,8 @@ class TrackEventRunner : public Runnable
 {
 public:
   TrackEventRunner(TextTrackList* aList, nsIDOMEvent* aEvent)
-    : mList(aList)
+    : Runnable("dom::TrackEventRunner")
+    , mList(aList)
     , mEvent(aEvent)
   {}
 
@@ -190,9 +193,7 @@ TextTrackList::CreateAndDispatchChangeEvent()
     event->SetTrusted(true);
 
     nsCOMPtr<nsIRunnable> eventRunner = new ChangeEventRunner(this, event);
-    nsGlobalWindow::Cast(win)->Dispatch(
-      "TextTrackList::CreateAndDispatchChangeEvent", TaskCategory::Other,
-      eventRunner.forget());
+    nsGlobalWindow::Cast(win)->Dispatch(TaskCategory::Other, eventRunner.forget());
   }
 }
 
@@ -200,9 +201,9 @@ void
 TextTrackList::CreateAndDispatchTrackEventRunner(TextTrack* aTrack,
                                                  const nsAString& aEventName)
 {
-  nsCOMPtr<nsIThread> thread;
-  nsresult rv = NS_GetMainThread(getter_AddRefs(thread));
-  if (NS_FAILED(rv)) {
+  DebugOnly<nsresult> rv;
+  nsCOMPtr<nsIEventTarget> target = GetMainThreadEventTarget();
+  if (!target) {
     // If we are not able to get the main-thread object we are shutting down.
     return;
   }
@@ -213,7 +214,7 @@ TextTrackList::CreateAndDispatchTrackEventRunner(TextTrack* aTrack,
     TrackEvent::Constructor(this, aEventName, eventInit);
 
   // Dispatch the TrackEvent asynchronously.
-  rv = thread->Dispatch(do_AddRef(new TrackEventRunner(this, event)),
+  rv = target->Dispatch(do_AddRef(new TrackEventRunner(this, event)),
                         NS_DISPATCH_NORMAL);
 
   // If we are shutting down this can file but it's still ok.
@@ -253,6 +254,12 @@ bool TextTrackList::AreTextTracksLoaded()
     }
   }
   return true;
+}
+
+nsTArray<RefPtr<TextTrack>>&
+TextTrackList::GetTextTrackArray()
+{
+  return mTextTracks;
 }
 
 } // namespace dom

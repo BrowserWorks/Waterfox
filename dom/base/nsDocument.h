@@ -19,6 +19,7 @@
 #include "nsWeakReference.h"
 #include "nsWeakPtr.h"
 #include "nsTArray.h"
+#include "nsIdentifierMapEntry.h"
 #include "nsIDOMDocument.h"
 #include "nsIDOMDocumentXBL.h"
 #include "nsStubDocumentObserver.h"
@@ -27,7 +28,7 @@
 #include "nsIPrincipal.h"
 #include "nsIParser.h"
 #include "nsBindingManager.h"
-#include "nsInterfaceHashtable.h"
+#include "nsRefPtrHashtable.h"
 #include "nsJSThingHashtable.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIURI.h"
@@ -58,6 +59,7 @@
 #include "mozilla/EventStates.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/PendingAnimationTracker.h"
+#include "mozilla/dom/BoxObject.h"
 #include "mozilla/dom/DOMImplementation.h"
 #include "mozilla/dom/ScriptLoader.h"
 #include "mozilla/dom/StyleSheetList.h"
@@ -66,7 +68,6 @@
 #include "mozilla/Attributes.h"
 #include "nsIDOMXPathEvaluator.h"
 #include "jsfriendapi.h"
-#include "ImportManager.h"
 #include "mozilla/LinkedList.h"
 #include "CustomElementRegistry.h"
 #include "mozilla/dom/Performance.h"
@@ -90,12 +91,10 @@ class nsWindowSizes;
 class nsHtml5TreeOpExecutor;
 class nsDocumentOnStack;
 class nsISecurityConsoleMessage;
-class nsPIBoxObject;
 
 namespace mozilla {
 class EventChainPreVisitor;
 namespace dom {
-class BoxObject;
 class ImageTracker;
 struct LifecycleCallbacks;
 class CallbackFunction;
@@ -127,214 +126,6 @@ public:
   // need to send some notification itself with the real origin.
   bool mShouldNotifyNewOrigin = true;
 };
-
-} // namespace dom
-} // namespace mozilla
-
-/**
- * Right now our identifier map entries contain information for 'name'
- * and 'id' mappings of a given string. This is so that
- * nsHTMLDocument::ResolveName only has to do one hash lookup instead
- * of two. It's not clear whether this still matters for performance.
- *
- * We also store the document.all result list here. This is mainly so that
- * when all elements with the given ID are removed and we remove
- * the ID's nsIdentifierMapEntry, the document.all result is released too.
- * Perhaps the document.all results should have their own hashtable
- * in nsHTMLDocument.
- */
-class nsIdentifierMapEntry : public PLDHashEntryHdr
-{
-public:
-  struct AtomOrString
-  {
-    MOZ_IMPLICIT AtomOrString(nsIAtom* aAtom) : mAtom(aAtom) {}
-    MOZ_IMPLICIT AtomOrString(const nsAString& aString) : mString(aString) {}
-    AtomOrString(const AtomOrString& aOther)
-      : mAtom(aOther.mAtom)
-      , mString(aOther.mString)
-    {
-    }
-
-    AtomOrString(AtomOrString&& aOther)
-      : mAtom(aOther.mAtom.forget())
-      , mString(aOther.mString)
-    {
-    }
-
-    nsCOMPtr<nsIAtom> mAtom;
-    const nsString mString;
-  };
-
-  typedef const AtomOrString& KeyType;
-  typedef const AtomOrString* KeyTypePointer;
-
-  typedef mozilla::dom::Element Element;
-  typedef mozilla::net::ReferrerPolicy ReferrerPolicy;
-
-  explicit nsIdentifierMapEntry(const AtomOrString& aKey)
-    : mKey(aKey)
-  {
-  }
-  explicit nsIdentifierMapEntry(const AtomOrString* aKey)
-    : mKey(aKey ? *aKey : nullptr)
-  {
-  }
-  nsIdentifierMapEntry(nsIdentifierMapEntry&& aOther) :
-    mKey(mozilla::Move(aOther.GetKey())),
-    mIdContentList(mozilla::Move(aOther.mIdContentList)),
-    mNameContentList(aOther.mNameContentList.forget()),
-    mChangeCallbacks(aOther.mChangeCallbacks.forget()),
-    mImageElement(aOther.mImageElement.forget())
-  {
-  }
-  ~nsIdentifierMapEntry();
-
-  KeyType GetKey() const { return mKey; }
-
-  nsString GetKeyAsString() const
-  {
-    if (mKey.mAtom) {
-      return nsAtomString(mKey.mAtom);
-    }
-
-    return mKey.mString;
-  }
-
-  bool KeyEquals(const KeyTypePointer aOtherKey) const
-  {
-    if (mKey.mAtom) {
-      if (aOtherKey->mAtom) {
-        return mKey.mAtom == aOtherKey->mAtom;
-      }
-
-      return mKey.mAtom->Equals(aOtherKey->mString);
-    }
-
-    if (aOtherKey->mAtom) {
-      return aOtherKey->mAtom->Equals(mKey.mString);
-    }
-
-    return mKey.mString.Equals(aOtherKey->mString);
-  }
-
-  static KeyTypePointer KeyToPointer(KeyType aKey) { return &aKey; }
-
-  static PLDHashNumber HashKey(const KeyTypePointer aKey)
-  {
-    return aKey->mAtom ?
-      aKey->mAtom->hash() : mozilla::HashString(aKey->mString);
-  }
-
-  enum { ALLOW_MEMMOVE = false };
-
-  void AddNameElement(nsINode* aDocument, Element* aElement);
-  void RemoveNameElement(Element* aElement);
-  bool IsEmpty();
-  nsBaseContentList* GetNameContentList() {
-    return mNameContentList;
-  }
-  bool HasNameElement() const {
-    return mNameContentList && mNameContentList->Length() != 0;
-  }
-
-  /**
-   * Returns the element if we know the element associated with this
-   * id. Otherwise returns null.
-   */
-  Element* GetIdElement();
-  /**
-   * Returns the list of all elements associated with this id.
-   */
-  const nsTArray<Element*>& GetIdElements() const {
-    return mIdContentList;
-  }
-  /**
-   * If this entry has a non-null image element set (using SetImageElement),
-   * the image element will be returned, otherwise the same as GetIdElement().
-   */
-  Element* GetImageIdElement();
-  /**
-   * Append all the elements with this id to aElements
-   */
-  void AppendAllIdContent(nsCOMArray<nsIContent>* aElements);
-  /**
-   * This can fire ID change callbacks.
-   * @return true if the content could be added, false if we failed due
-   * to OOM.
-   */
-  bool AddIdElement(Element* aElement);
-  /**
-   * This can fire ID change callbacks.
-   */
-  void RemoveIdElement(Element* aElement);
-  /**
-   * Set the image element override for this ID. This will be returned by
-   * GetIdElement(true) if non-null.
-   */
-  void SetImageElement(Element* aElement);
-  bool HasIdElementExposedAsHTMLDocumentProperty();
-
-  bool HasContentChangeCallback() { return mChangeCallbacks != nullptr; }
-  void AddContentChangeCallback(nsIDocument::IDTargetObserver aCallback,
-                                void* aData, bool aForImage);
-  void RemoveContentChangeCallback(nsIDocument::IDTargetObserver aCallback,
-                                void* aData, bool aForImage);
-
-  void Traverse(nsCycleCollectionTraversalCallback* aCallback);
-
-  struct ChangeCallback {
-    nsIDocument::IDTargetObserver mCallback;
-    void* mData;
-    bool mForImage;
-  };
-
-  struct ChangeCallbackEntry : public PLDHashEntryHdr {
-    typedef const ChangeCallback KeyType;
-    typedef const ChangeCallback* KeyTypePointer;
-
-    explicit ChangeCallbackEntry(const ChangeCallback* aKey) :
-      mKey(*aKey) { }
-    ChangeCallbackEntry(const ChangeCallbackEntry& toCopy) :
-      mKey(toCopy.mKey) { }
-
-    KeyType GetKey() const { return mKey; }
-    bool KeyEquals(KeyTypePointer aKey) const {
-      return aKey->mCallback == mKey.mCallback &&
-             aKey->mData == mKey.mData &&
-             aKey->mForImage == mKey.mForImage;
-    }
-
-    static KeyTypePointer KeyToPointer(KeyType& aKey) { return &aKey; }
-    static PLDHashNumber HashKey(KeyTypePointer aKey)
-    {
-      return mozilla::HashGeneric(aKey->mCallback, aKey->mData);
-    }
-    enum { ALLOW_MEMMOVE = true };
-
-    ChangeCallback mKey;
-  };
-
-  size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
-
-private:
-  nsIdentifierMapEntry(const nsIdentifierMapEntry& aOther) = delete;
-  nsIdentifierMapEntry& operator=(const nsIdentifierMapEntry& aOther) = delete;
-
-  void FireChangeCallbacks(Element* aOldElement, Element* aNewElement,
-                           bool aImageOnly = false);
-
-  AtomOrString mKey;
-  // empty if there are no elements with this ID.
-  // The elements are stored as weak pointers.
-  AutoTArray<Element*, 1> mIdContentList;
-  RefPtr<nsBaseContentList> mNameContentList;
-  nsAutoPtr<nsTHashtable<ChangeCallbackEntry> > mChangeCallbacks;
-  RefPtr<Element> mImageElement;
-};
-
-namespace mozilla {
-namespace dom {
 
 } // namespace dom
 } // namespace mozilla
@@ -633,10 +424,11 @@ public:
   virtual void GetBaseTarget(nsAString &aBaseTarget) override;
 
   /**
-   * Return a standard name for the document's character set. This will
+   * Set the document's character encoding. This will
    * trigger a startDocumentLoad if necessary to answer the question.
    */
-  virtual void SetDocumentCharacterSet(const nsACString& aCharSetID) override;
+  virtual void
+    SetDocumentCharacterSet(NotNull<const Encoding*> aEncoding) override;
 
   /**
    * Add an observer that gets notified whenever the charset changes.
@@ -878,7 +670,6 @@ public:
 
 private:
   void AddOnDemandBuiltInUASheet(mozilla::StyleSheet* aSheet);
-  nsRadioGroupStruct* GetRadioGroupInternal(const nsAString& aName) const;
   void SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages);
 
 public:
@@ -1217,63 +1008,6 @@ public:
                                                     const mozilla::dom::ElementCreationOptionsOrString& aOptions,
                                                     mozilla::ErrorResult& rv) override;
 
-  virtual nsIDocument* MasterDocument() override
-  {
-    return mMasterDocument ? mMasterDocument.get()
-                           : this;
-  }
-
-  virtual void SetMasterDocument(nsIDocument* master) override
-  {
-    MOZ_ASSERT(master);
-    mMasterDocument = master;
-  }
-
-  virtual bool IsMasterDocument() override
-  {
-    return !mMasterDocument;
-  }
-
-  virtual mozilla::dom::ImportManager* ImportManager() override
-  {
-    if (mImportManager) {
-      MOZ_ASSERT(!mMasterDocument, "Only the master document has ImportManager set");
-      return mImportManager.get();
-    }
-
-    if (mMasterDocument) {
-      return mMasterDocument->ImportManager();
-    }
-
-    // ImportManager is created lazily.
-    // If the manager is not yet set it has to be the
-    // master document and this is the first import in it.
-    // Let's create a new manager.
-    mImportManager = new mozilla::dom::ImportManager();
-    return mImportManager.get();
-  }
-
-  virtual bool HasSubImportLink(nsINode* aLink) override
-  {
-    return mSubImportLinks.Contains(aLink);
-  }
-
-  virtual uint32_t IndexOfSubImportLink(nsINode* aLink) override
-  {
-    return mSubImportLinks.IndexOf(aLink);
-  }
-
-  virtual void AddSubImportLink(nsINode* aLink) override
-  {
-    mSubImportLinks.AppendElement(aLink);
-  }
-
-  virtual nsINode* GetSubImportLink(uint32_t aIdx) override
-  {
-    return aIdx < mSubImportLinks.Length() ? mSubImportLinks[aIdx].get()
-                                           : nullptr;
-  }
-
   virtual void UnblockDOMContentLoaded() override;
 
 protected:
@@ -1315,7 +1049,7 @@ protected:
 
   void TryChannelCharset(nsIChannel *aChannel,
                          int32_t& aCharsetSource,
-                         nsACString& aCharset,
+                         NotNull<const Encoding*>& aEncoding,
                          nsHtml5TreeOpExecutor* aExecutor);
 
   // Call this before the document does something that will unbind all content.
@@ -1463,8 +1197,6 @@ public:
   // Check whether web components are enabled for the global of the document
   // this nodeinfo comes from.
   static bool IsWebComponentsEnabled(mozilla::dom::NodeInfo* aNodeInfo);
-  // Check whether web components are enabled for the given window.
-  static bool IsWebComponentsEnabled(nsPIDOMWindowInner* aWindow);
 
   RefPtr<mozilla::EventListenerManager> mListenerManager;
   RefPtr<mozilla::dom::StyleSheetList> mDOMStyleSheets;
@@ -1535,7 +1267,7 @@ public:
 
   uint8_t mXMLDeclarationBits;
 
-  nsInterfaceHashtable<nsPtrHashKey<nsIContent>, nsPIBoxObject> *mBoxObjectTable;
+  nsRefPtrHashtable<nsPtrHashKey<nsIContent>, mozilla::dom::BoxObject>* mBoxObjectTable;
 
   // A document "without a browsing context" that owns the content of
   // HTMLTemplateElement.
@@ -1680,10 +1412,6 @@ private:
 
   nsrefcnt mStackRefCnt;
   bool mNeedsReleaseAfterStackRefCntRelease;
-
-  nsCOMPtr<nsIDocument> mMasterDocument;
-  RefPtr<mozilla::dom::ImportManager> mImportManager;
-  nsTArray<nsCOMPtr<nsINode> > mSubImportLinks;
 
   // Set to true when the document is possibly controlled by the ServiceWorker.
   // Used to prevent multiple requests to ServiceWorkerManager.

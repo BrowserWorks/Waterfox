@@ -8,6 +8,8 @@
 #include "nsThreadUtils.h"
 
 #include "mozilla/CycleCollectedJSContext.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/SystemGroup.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/TimeStamp.h"
 
@@ -24,6 +26,8 @@ namespace dom {
 class FlushRejections: public CancelableRunnable
 {
 public:
+  FlushRejections() : CancelableRunnable("dom::FlushRejections") {}
+
   static void Init() {
     if (!sDispatched.init()) {
       MOZ_CRASH("Could not initialize FlushRejections::sDispatched");
@@ -38,7 +42,8 @@ public:
       return;
     }
     sDispatched.set(true);
-    NS_DispatchToCurrentThread(new FlushRejections());
+    SystemGroup::Dispatch(TaskCategory::Other,
+                          do_AddRef(new FlushRejections()));
   }
 
   static void FlushSync() {

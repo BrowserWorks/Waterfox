@@ -30,6 +30,7 @@
 #include "gfxGradientCache.h"
 #include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/layers/WebRenderDisplayItemLayer.h"
+#include "mozilla/Range.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -3342,13 +3343,13 @@ nsCSSBorderRenderer::DrawBorders()
   // rect is supposed to enclose the entire border
   {
     gfxRect outerRect = ThebesRect(mOuterRect);
-    outerRect.Condition();
+    gfxUtils::ConditionRect(outerRect);
     if (outerRect.IsEmpty())
       return;
     mOuterRect = ToRect(outerRect);
 
     gfxRect innerRect = ThebesRect(mInnerRect);
-    innerRect.Condition();
+    gfxUtils::ConditionRect(innerRect);
     mInnerRect = ToRect(innerRect);
   }
 
@@ -3373,8 +3374,7 @@ nsCSSBorderRenderer::DrawBorders()
     DrawBorderSides(eSideBitsAll);
     PrintAsStringNewline("---------------- (1)");
   } else {
-    PROFILER_LABEL("nsCSSBorderRenderer", "DrawBorders::multipass",
-      js::ProfileEntry::Category::GRAPHICS);
+    AUTO_PROFILER_LABEL("nsCSSBorderRenderer::DrawBorders:multipass", GRAPHICS);
 
     /* We have more than one pass to go.  Draw the corners separately from the sides. */
 
@@ -3552,25 +3552,24 @@ nsCSSBorderRenderer::CanCreateWebRenderCommands()
 
 void
 nsCSSBorderRenderer::CreateWebRenderCommands(wr::DisplayListBuilder& aBuilder,
-                                             const layers::StackingContextHelper& aSc,
-                                             layers::WebRenderDisplayItemLayer* aLayer)
+                                             const layers::StackingContextHelper& aSc)
 {
   LayoutDeviceRect outerRect = LayoutDeviceRect::FromUnknownRect(mOuterRect);
-  WrRect transformedRect = aSc.ToRelativeWrRect(outerRect);
-  WrBorderSide side[4];
+  wr::LayoutRect transformedRect = aSc.ToRelativeLayoutRect(outerRect);
+  wr::BorderSide side[4];
   NS_FOR_CSS_SIDES(i) {
-    side[i] = wr::ToWrBorderSide(ToDeviceColor(mBorderColors[i]), mBorderStyles[i]);
+    side[i] = wr::ToBorderSide(ToDeviceColor(mBorderColors[i]), mBorderStyles[i]);
   }
 
-  WrClipRegionToken clipRegion = aBuilder.PushClipRegion(transformedRect);
-  WrBorderRadius borderRadius = wr::ToWrBorderRadius(LayerSize(mBorderRadii[0].width, mBorderRadii[0].height),
+  wr::BorderRadius borderRadius = wr::ToBorderRadius(LayerSize(mBorderRadii[0].width, mBorderRadii[0].height),
                                                      LayerSize(mBorderRadii[1].width, mBorderRadii[1].height),
                                                      LayerSize(mBorderRadii[3].width, mBorderRadii[3].height),
                                                      LayerSize(mBorderRadii[2].width, mBorderRadii[2].height));
+  Range<const wr::BorderSide> wrsides(side, 4);
   aBuilder.PushBorder(transformedRect,
-                      clipRegion,
-                      wr::ToWrBorderWidths(mBorderWidths[0], mBorderWidths[1], mBorderWidths[2], mBorderWidths[3]),
-                      side[0], side[1], side[2], side[3],
+                      transformedRect,
+                      wr::ToBorderWidths(mBorderWidths[0], mBorderWidths[1], mBorderWidths[2], mBorderWidths[3]),
+                      wrsides,
                       borderRadius);
 }
 
@@ -3613,7 +3612,7 @@ nsCSSBorderImageRenderer::CreateBorderImageRenderer(nsPresContext* aPresContext,
 
 DrawResult
 nsCSSBorderImageRenderer::DrawBorderImage(nsPresContext* aPresContext,
-                                          nsRenderingContext& aRenderingContext,
+                                          gfxContext& aRenderingContext,
                                           nsIFrame* aForFrame,
                                           const nsRect& aDirtyRect)
 {
@@ -3622,11 +3621,10 @@ nsCSSBorderImageRenderer::DrawBorderImage(nsPresContext* aPresContext,
   gfxContextAutoSaveRestore autoSR;
 
   if (!mClip.IsEmpty()) {
-    autoSR.EnsureSaved(aRenderingContext.ThebesContext());
-    aRenderingContext.ThebesContext()->
-      Clip(NSRectToSnappedRect(mClip,
-                               aForFrame->PresContext()->AppUnitsPerDevPixel(),
-                               *aRenderingContext.GetDrawTarget()));
+    autoSR.EnsureSaved(&aRenderingContext);
+    aRenderingContext.Clip(NSRectToSnappedRect(mClip,
+                           aForFrame->PresContext()->AppUnitsPerDevPixel(),
+                           *aRenderingContext.GetDrawTarget()));
   }
 
   // intrinsicSize.CanComputeConcreteSize() return false means we can not

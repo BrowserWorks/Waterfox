@@ -10,6 +10,9 @@
 #include "base/message_loop.h"          // for MessageLoop
 #include "base/task.h"                  // for CancelableTask, etc
 #include "base/thread.h"                // for Thread
+#ifdef XP_WIN
+#include "mozilla/gfx/DeviceManagerDx.h"// for DeviceManagerDx
+#endif
 #include "mozilla/ipc/Transport.h"      // for Transport
 #include "mozilla/layers/AnimationHelper.h" // for CompositorAnimationStorage
 #include "mozilla/layers/APZCTreeManager.h"  // for APZCTreeManager
@@ -23,7 +26,7 @@
 #include "mozilla/layers/PLayerTransactionParent.h"
 #include "mozilla/layers/RemoteContentController.h"
 #include "mozilla/layers/WebRenderBridgeParent.h"
-#include "mozilla/layers/WebRenderCompositableHolder.h"
+#include "mozilla/layers/AsyncImagePipelineManager.h"
 #include "mozilla/mozalloc.h"           // for operator new, etc
 #include "nsDebug.h"                    // for NS_ASSERTION, etc
 #include "nsTArray.h"                   // for nsTArray
@@ -54,9 +57,14 @@ CrossProcessCompositorBridgeParent::RecvRequestNotifyAfterRemotePaint()
 void
 CrossProcessCompositorBridgeParent::ActorDestroy(ActorDestroyReason aWhy)
 {
+  mCanSend = false;
+
   // We must keep this object alive untill the code handling message
   // reception is finished on this thread.
-  MessageLoop::current()->PostTask(NewRunnableMethod(this, &CrossProcessCompositorBridgeParent::DeferredDestroy));
+  MessageLoop::current()->PostTask(NewRunnableMethod(
+    "layers::CrossProcessCompositorBridgeParent::DeferredDestroy",
+    this,
+    &CrossProcessCompositorBridgeParent::DeferredDestroy));
 }
 
 PLayerTransactionParent*
@@ -83,14 +91,15 @@ CrossProcessCompositorBridgeParent::AllocPLayerTransactionParent(
   if (state && state->mLayerManager) {
     state->mCrossProcessParent = this;
     HostLayerManager* lm = state->mLayerManager;
-    LayerTransactionParent* p = new LayerTransactionParent(lm, this, aId);
+    CompositorAnimationStorage* animStorage = state->mParent ? state->mParent->GetAnimationStorage() : nullptr;
+    LayerTransactionParent* p = new LayerTransactionParent(lm, this, animStorage, aId);
     p->AddIPDLReference();
     sIndirectLayerTrees[aId].mLayerTree = p;
     return p;
   }
 
   NS_WARNING("Created child without a matching parent?");
-  LayerTransactionParent* p = new LayerTransactionParent(nullptr, this, aId);
+  LayerTransactionParent* p = new LayerTransactionParent(/* aManager */ nullptr, this, /* aAnimStorage */ nullptr, aId);
   p->AddIPDLReference();
   return p;
 }
@@ -185,7 +194,7 @@ PWebRenderBridgeParent*
 CrossProcessCompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::PipelineId& aPipelineId,
                                                                 const LayoutDeviceIntSize& aSize,
                                                                 TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                                                                uint32_t *aIdNamespace)
+                                                                wr::IdNamespace *aIdNamespace)
 {
 #ifndef MOZ_BUILD_WEBRENDER
   // Extra guard since this in the parent process and we don't want a malicious
@@ -202,19 +211,29 @@ CrossProcessCompositorBridgeParent::AllocPWebRenderBridgeParent(const wr::Pipeli
   MonitorAutoLock lock(*sIndirectLayerTreesLock);
   MOZ_ASSERT(sIndirectLayerTrees.find(layersId) != sIndirectLayerTrees.end());
   MOZ_ASSERT(sIndirectLayerTrees[layersId].mWrBridge == nullptr);
+  WebRenderBridgeParent* parent = nullptr;
   CompositorBridgeParent* cbp = sIndirectLayerTrees[layersId].mParent;
+  if (!cbp) {
+    // This could happen when this function is called after CompositorBridgeParent destruction.
+    // This was observed during Tab move between different windows.
+    NS_WARNING("Created child without a matching parent?");
+    parent = WebRenderBridgeParent::CreateDestroyed();
+    *aIdNamespace = parent->GetIdNamespace();
+    *aTextureFactoryIdentifier = TextureFactoryIdentifier(LayersBackend::LAYERS_NONE);
+    return parent;
+  }
   WebRenderBridgeParent* root = sIndirectLayerTrees[cbp->RootLayerTreeId()].mWrBridge.get();
 
-  WebRenderBridgeParent* parent = nullptr;
   RefPtr<wr::WebRenderAPI> api = root->GetWebRenderAPI();
-  RefPtr<WebRenderCompositableHolder> holder = root->CompositableHolder();
-  parent = new WebRenderBridgeParent(this, aPipelineId, nullptr, root->CompositorScheduler(), Move(api), Move(holder));
+  RefPtr<AsyncImagePipelineManager> holder = root->AsyncImageManager();
+  RefPtr<CompositorAnimationStorage> animStorage = cbp->GetAnimationStorage();
+  parent = new WebRenderBridgeParent(this, aPipelineId, nullptr, root->CompositorScheduler(), Move(api), Move(holder), Move(animStorage));
 
   parent->AddRef(); // IPDL reference
   sIndirectLayerTrees[layersId].mCrossProcessParent = this;
   sIndirectLayerTrees[layersId].mWrBridge = parent;
   *aTextureFactoryIdentifier = parent->GetTextureFactoryIdentifier();
-  *aIdNamespace = parent->GetIdNameSpace();
+  *aIdNamespace = parent->GetIdNamespace();
 
   return parent;
 }
@@ -260,6 +279,29 @@ CrossProcessCompositorBridgeParent::RecvMapAndNotifyChildCreated(const uint64_t&
   return IPC_FAIL_NO_REASON(this);
 }
 
+
+mozilla::ipc::IPCResult
+CrossProcessCompositorBridgeParent::RecvCheckContentOnlyTDR(const uint32_t& sequenceNum,
+                                                            bool* isContentOnlyTDR)
+{
+  *isContentOnlyTDR = false;
+#ifdef XP_WIN
+  ContentDeviceData compositor;
+
+  DeviceManagerDx* dm = DeviceManagerDx::Get();
+
+  // Check that the D3D11 device sequence numbers match.
+  D3D11DeviceStatus status;
+  dm->ExportDeviceInfo(&status);
+
+  if (sequenceNum == status.sequenceNumber() && !dm->HasDeviceReset()) {
+    *isContentOnlyTDR = true;
+  }
+
+#endif
+  return IPC_OK();
+};
+
 void
 CrossProcessCompositorBridgeParent::ShadowLayersUpdated(
   LayerTransactionParent* aLayerTree,
@@ -293,6 +335,7 @@ CrossProcessCompositorBridgeParent::ShadowLayersUpdated(
   state->mParent->NotifyShadowTreeTransaction(
     id,
     aInfo.isFirstPaint(),
+    aInfo.focusTarget(),
     aInfo.scheduleComposite(),
     aInfo.paintSequenceNumber(),
     aInfo.isRepeatTransaction(),
@@ -319,12 +362,28 @@ CrossProcessCompositorBridgeParent::DidComposite(
   TimeStamp& aCompositeStart,
   TimeStamp& aCompositeEnd)
 {
+  MonitorAutoLock lock(*sIndirectLayerTreesLock);
+  DidCompositeLocked(aId, aCompositeStart, aCompositeEnd);
+}
+
+void
+CrossProcessCompositorBridgeParent::DidCompositeLocked(
+  uint64_t aId,
+  TimeStamp& aCompositeStart,
+  TimeStamp& aCompositeEnd)
+{
   sIndirectLayerTreesLock->AssertCurrentThreadOwns();
   if (LayerTransactionParent *layerTree = sIndirectLayerTrees[aId].mLayerTree) {
-    Unused << SendDidComposite(aId, layerTree->GetPendingTransactionId(), aCompositeStart, aCompositeEnd);
-    layerTree->SetPendingTransactionId(0);
+    uint64_t transactionId = layerTree->GetPendingTransactionId();
+    if (transactionId) {
+      Unused << SendDidComposite(aId, transactionId, aCompositeStart, aCompositeEnd);
+      layerTree->SetPendingTransactionId(0);
+    }
   } else if (WebRenderBridgeParent* wrbridge = sIndirectLayerTrees[aId].mWrBridge) {
-    Unused << SendDidComposite(aId, wrbridge->FlushPendingTransactionIds(), aCompositeStart, aCompositeEnd);
+    uint64_t transactionId = wrbridge->FlushPendingTransactionIds();
+    if (transactionId) {
+      Unused << SendDidComposite(aId, transactionId, aCompositeStart, aCompositeEnd);
+    }
   }
 }
 
@@ -359,34 +418,32 @@ CrossProcessCompositorBridgeParent::NotifyClearCachedResources(LayerTransactionP
 }
 
 bool
-CrossProcessCompositorBridgeParent::SetTestSampleTime(
-  LayerTransactionParent* aLayerTree, const TimeStamp& aTime)
+CrossProcessCompositorBridgeParent::SetTestSampleTime(const uint64_t& aId,
+                                                      const TimeStamp& aTime)
 {
-  uint64_t id = aLayerTree->GetId();
-  MOZ_ASSERT(id != 0);
+  MOZ_ASSERT(aId != 0);
   const CompositorBridgeParent::LayerTreeState* state =
-    CompositorBridgeParent::GetIndirectShadowTree(id);
+    CompositorBridgeParent::GetIndirectShadowTree(aId);
   if (!state) {
     return false;
   }
 
   MOZ_ASSERT(state->mParent);
-  return state->mParent->SetTestSampleTime(aLayerTree, aTime);
+  return state->mParent->SetTestSampleTime(aId, aTime);
 }
 
 void
-CrossProcessCompositorBridgeParent::LeaveTestMode(LayerTransactionParent* aLayerTree)
+CrossProcessCompositorBridgeParent::LeaveTestMode(const uint64_t& aId)
 {
-  uint64_t id = aLayerTree->GetId();
-  MOZ_ASSERT(id != 0);
+  MOZ_ASSERT(aId != 0);
   const CompositorBridgeParent::LayerTreeState* state =
-    CompositorBridgeParent::GetIndirectShadowTree(id);
+    CompositorBridgeParent::GetIndirectShadowTree(aId);
   if (!state) {
     return;
   }
 
   MOZ_ASSERT(state->mParent);
-  state->mParent->LeaveTestMode(aLayerTree);
+  state->mParent->LeaveTestMode(aId);
 }
 
 void
@@ -403,22 +460,6 @@ CrossProcessCompositorBridgeParent::ApplyAsyncProperties(
 
   MOZ_ASSERT(state->mParent);
   state->mParent->ApplyAsyncProperties(aLayerTree);
-}
-
-CompositorAnimationStorage*
-CrossProcessCompositorBridgeParent::GetAnimationStorage(
-    const uint64_t& aId)
-{
-  MOZ_ASSERT(aId != 0);
-  const CompositorBridgeParent::LayerTreeState* state =
-    CompositorBridgeParent::GetIndirectShadowTree(aId);
-  if (!state) {
-    return nullptr;
-  }
-
-  MOZ_ASSERT(state->mParent);
-  // GetAnimationStorage in CompositorBridgeParent expects id as 0
-  return state->mParent->GetAnimationStorage(0);
 }
 
 void
@@ -478,14 +519,12 @@ CrossProcessCompositorBridgeParent::GetCompositionManager(LayerTransactionParent
 void
 CrossProcessCompositorBridgeParent::DeferredDestroy()
 {
-  mCompositorThreadHolder = nullptr;
   mSelfRef = nullptr;
 }
 
 CrossProcessCompositorBridgeParent::~CrossProcessCompositorBridgeParent()
 {
   MOZ_ASSERT(XRE_GetIOMessageLoop());
-  MOZ_ASSERT(IToplevelProtocol::GetTransport());
 }
 
 PTextureParent*
@@ -505,6 +544,11 @@ CrossProcessCompositorBridgeParent::AllocPTextureParent(const SurfaceDescriptor&
 
   TextureFlags flags = aFlags;
 
+  LayersBackend actualBackend = LayersBackend::LAYERS_NONE;
+  if (state && state->mLayerManager) {
+    actualBackend = state->mLayerManager->GetBackendType();
+  }
+
   if (!state) {
     // The compositor was recreated, and we're receiving layers updates for a
     // a layer manager that will soon be discarded or invalidated. We can't
@@ -512,8 +556,7 @@ CrossProcessCompositorBridgeParent::AllocPTextureParent(const SurfaceDescriptor&
     // kill the content process. Instead, we signal that the underlying
     // TextureHost should not attempt to access the compositor.
     flags |= TextureFlags::INVALID_COMPOSITOR;
-  } else if (state->mLayerManager && state->mLayerManager->GetCompositor() &&
-             aLayersBackend != state->mLayerManager->GetCompositor()->GetBackendType()) {
+  } else if (actualBackend != LayersBackend::LAYERS_NONE && aLayersBackend != actualBackend) {
     gfxDevCrash(gfx::LogReason::PAllocTextureBackendMismatch) << "Texture backend is wrong";
   }
 

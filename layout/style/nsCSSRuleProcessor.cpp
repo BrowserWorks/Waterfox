@@ -18,6 +18,7 @@
 #include "PLDHashTable.h"
 #include "nsICSSPseudoComparator.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/css/ImportRule.h"
 #include "mozilla/css/StyleRule.h"
 #include "mozilla/css/GroupRule.h"
 #include "nsIDocument.h"
@@ -323,7 +324,7 @@ RuleHash_TagTable_MoveEntry(PLDHashTable *table, const PLDHashEntryHdr *from,
 static PLDHashNumber
 RuleHash_NameSpaceTable_HashKey(const void *key)
 {
-  return NS_PTR_TO_INT32(key);
+  return HashGeneric(key);
 }
 
 static bool
@@ -1067,6 +1068,12 @@ nsCSSRuleProcessor::Startup()
                                true);
 }
 
+/* static */ bool
+nsCSSRuleProcessor::VisitedLinksEnabled()
+{
+  return gSupportVisitedPseudo;
+}
+
 /* static */ void
 nsCSSRuleProcessor::InitSystemMetrics()
 {
@@ -1131,6 +1138,11 @@ nsCSSRuleProcessor::InitSystemMetrics()
     sSystemMetrics->AppendElement(nsGkAtoms::mac_yosemite_theme);
   }
 
+  rv = LookAndFeel::GetInt(LookAndFeel::eIntID_WindowsAccentColorInTitlebar, &metricResult);
+  if (NS_SUCCEEDED(rv) && metricResult) {
+    sSystemMetrics->AppendElement(nsGkAtoms::windows_accent_color_in_titlebar);
+  }
+
   rv = LookAndFeel::GetInt(LookAndFeel::eIntID_DWMCompositor, &metricResult);
   if (NS_SUCCEEDED(rv) && metricResult) {
     sSystemMetrics->AppendElement(nsGkAtoms::windows_compositor);
@@ -1155,7 +1167,7 @@ nsCSSRuleProcessor::InitSystemMetrics()
   if (NS_SUCCEEDED(rv) && metricResult) {
     sSystemMetrics->AppendElement(nsGkAtoms::touch_enabled);
   }
- 
+
   rv = LookAndFeel::GetInt(LookAndFeel::eIntID_SwipeAnimationEnabled,
                            &metricResult);
   if (NS_SUCCEEDED(rv) && metricResult) {
@@ -1234,7 +1246,8 @@ nsCSSRuleProcessor::GetWindowsThemeIdentifier()
 
 /* static */
 EventStates
-nsCSSRuleProcessor::GetContentState(Element* aElement, bool aUsingPrivateBrowsing)
+nsCSSRuleProcessor::GetContentState(const Element* aElement,
+                                    bool aUsingPrivateBrowsing)
 {
   EventStates state = aElement->StyleState();
 
@@ -1254,7 +1267,8 @@ nsCSSRuleProcessor::GetContentState(Element* aElement, bool aUsingPrivateBrowsin
 
 /* static */
 EventStates
-nsCSSRuleProcessor::GetContentState(Element* aElement, const TreeMatchContext& aTreeMatchContext)
+nsCSSRuleProcessor::GetContentState(const Element* aElement,
+                                    const TreeMatchContext& aTreeMatchContext)
 {
   return nsCSSRuleProcessor::GetContentState(
     aElement,
@@ -1264,7 +1278,7 @@ nsCSSRuleProcessor::GetContentState(Element* aElement, const TreeMatchContext& a
 
 /* static */
 EventStates
-nsCSSRuleProcessor::GetContentState(Element* aElement)
+nsCSSRuleProcessor::GetContentState(const Element* aElement)
 {
   nsILoadContext* loadContext = aElement->OwnerDoc()->GetLoadContext();
   bool usingPrivateBrowsing = loadContext && loadContext->UsePrivateBrowsing();
@@ -1282,7 +1296,7 @@ nsCSSRuleProcessor::IsLink(const Element* aElement)
 /* static */
 EventStates
 nsCSSRuleProcessor::GetContentStateForVisitedHandling(
-                     Element* aElement,
+                     const Element* aElement,
                      nsRuleWalker::VisitedHandlingType aVisitedHandling,
                      bool aIsRelevantLink)
 {
@@ -1549,7 +1563,7 @@ checkGenericEmptyMatches(Element* aElement,
   do {
     child = aElement->GetChildAt(++index);
     // stop at first non-comment (and non-whitespace for
-    // :-moz-only-whitespace) node        
+    // :-moz-only-whitespace) node
   } while (child && !IsSignificantChild(child, true, isWhitespaceSignificant));
   return (child == nullptr);
 }
@@ -1677,7 +1691,7 @@ IsSignificantChildMaybeThreadSafe(const nsIContent* aContent,
 
 /* static */ bool
 nsCSSRuleProcessor::LangPseudoMatches(const mozilla::dom::Element* aElement,
-                                      const nsAString* aOverrideLang,
+                                      const nsIAtom* aOverrideLang,
                                       bool aHasOverrideLang,
                                       const char16_t* aString,
                                       const nsIDocument* aDocument)
@@ -1691,52 +1705,42 @@ nsCSSRuleProcessor::LangPseudoMatches(const mozilla::dom::Element* aElement,
   // this is currently no property and since the language is inherited
   // from the parent we have to be prepared to look at all parent
   // nodes.  The language itself is encoded in the LANG attribute.
-  bool haveLanguage = false;
-  nsAutoString language;
-  if (aHasOverrideLang) {
-    if (aOverrideLang) {
-      language = *aOverrideLang;
-      haveLanguage = true;
-    }
-  } else {
-    haveLanguage = aElement->GetLang(language);
-  }
-
-  if (haveLanguage) {
-    return nsStyleUtil::DashMatchCompare(language,
+  if (auto* language = aHasOverrideLang ? aOverrideLang : aElement->GetLang()) {
+    return nsStyleUtil::DashMatchCompare(nsDependentAtomString(language),
                                          nsDependentString(aString),
                                          nsASCIICaseInsensitiveStringComparator());
   }
 
-  if (aDocument) {
-    // Try to get the language from the HTTP header or if this
-    // is missing as well from the preferences.
-    // The content language can be a comma-separated list of
-    // language codes.
-    aDocument->GetContentLanguage(language);
-
-    nsDependentString langString(aString);
-    language.StripWhitespace();
-    int32_t begin = 0;
-    int32_t len = language.Length();
-    while (begin < len) {
-      int32_t end = language.FindChar(char16_t(','), begin);
-      if (end == kNotFound) {
-        end = len;
-      }
-      if (nsStyleUtil::DashMatchCompare(Substring(language, begin,
-                                                  end-begin),
-                                        langString,
-                                        nsASCIICaseInsensitiveStringComparator())) {
-        return true;
-      }
-      begin = end + 1;
-    }
-    if (begin < len) {
-      return true;
-    }
+  if (!aDocument) {
+    return false;
   }
 
+  // Try to get the language from the HTTP header or if this
+  // is missing as well from the preferences.
+  // The content language can be a comma-separated list of
+  // language codes.
+  nsAutoString language;
+  aDocument->GetContentLanguage(language);
+
+  nsDependentString langString(aString);
+  language.StripWhitespace();
+  int32_t begin = 0;
+  int32_t len = language.Length();
+  while (begin < len) {
+    int32_t end = language.FindChar(char16_t(','), begin);
+    if (end == kNotFound) {
+      end = len;
+    }
+    if (nsStyleUtil::DashMatchCompare(Substring(language, begin, end - begin),
+                                      langString,
+                                      nsASCIICaseInsensitiveStringComparator())) {
+      return true;
+    }
+    begin = end + 1;
+  }
+  if (begin < len) {
+    return true;
+  }
   return false;
 }
 
@@ -2434,6 +2438,12 @@ SelectorMatchesTree(Element* aPrevElement,
     // to test against is the parent
     else {
       nsIContent *content = prevElement->GetParent();
+      if (prevElement->IsRootOfUseElementShadowTree()) {
+        // 'prevElement' is the shadow root of an use-element shadow tree.
+        // According to the spec, we should not match rules cross the shadow
+        // DOM boundary.
+        content = nullptr;
+      }
       // GetParent could return a document fragment; we only want
       // element parents.
       if (content && content->IsElement()) {
@@ -3141,7 +3151,7 @@ nsCSSRuleProcessor::AppendFontFaceRules(
     if (!aArray.AppendElements(cascade->mFontFaceRules))
       return false;
   }
-  
+
   return true;
 }
 
@@ -3185,7 +3195,7 @@ nsCSSRuleProcessor::AppendPageRules(
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -3501,7 +3511,7 @@ struct RuleByWeightEntry : public PLDHashEntryHdr {
 static PLDHashNumber
 HashIntKey(const void *key)
 {
-  return PLDHashNumber(NS_PTR_TO_INT32(key));
+  return HashGeneric(key);
 }
 
 static bool
@@ -3947,7 +3957,6 @@ nsCSSRuleProcessor::RefreshRuleCascade(nsPresContext* aPresContext)
       mRuleCascades = newCascade.forget();
     }
   }
-  return;
 }
 
 /* static */ bool

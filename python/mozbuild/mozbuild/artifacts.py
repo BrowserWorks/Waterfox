@@ -131,13 +131,14 @@ class ArtifactJob(object):
         ('bin/OCSPStaplingServer', ('bin', 'bin')),
         ('bin/certutil', ('bin', 'bin')),
         ('bin/fileid', ('bin', 'bin')),
+        ('bin/geckodriver', ('bin', 'bin')),
         ('bin/pk12util', ('bin', 'bin')),
         ('bin/screentopng', ('bin', 'bin')),
         ('bin/ssltunnel', ('bin', 'bin')),
         ('bin/xpcshell', ('bin', 'bin')),
         ('bin/plugins/gmp-*/*/*', ('bin/plugins', 'bin')),
         ('bin/plugins/*', ('bin/plugins', 'plugins')),
-        ('bin/components/*', ('bin/components', 'bin/components')),
+        ('bin/components/*.xpt', ('bin/components', 'bin/components')),
     }
 
     # We can tell our input is a test archive by this suffix, which happens to
@@ -435,6 +436,7 @@ class WinArtifactJob(ArtifactJob):
         ('bin/OCSPStaplingServer.exe', ('bin', 'bin')),
         ('bin/certutil.exe', ('bin', 'bin')),
         ('bin/fileid.exe', ('bin', 'bin')),
+        ('bin/geckodriver.exe', ('bin', 'bin')),
         ('bin/pk12util.exe', ('bin', 'bin')),
         ('bin/screenshot.exe', ('bin', 'bin')),
         ('bin/ssltunnel.exe', ('bin', 'bin')),
@@ -470,9 +472,9 @@ class WinArtifactJob(ArtifactJob):
 # https://tools.taskcluster.net/index/artifacts/#gecko.v2.mozilla-central.latest/gecko.v2.mozilla-central.latest
 # The values correpsond to a pair of (<package regex>, <test archive regex>).
 JOB_DETAILS = {
-    'android-api-15-opt': (AndroidArtifactJob, (r'(public/build/fennec-(.*)\.android-arm.apk|public/build/target\.apk)',
+    'android-api-16-opt': (AndroidArtifactJob, (r'(public/build/fennec-(.*)\.android-arm.apk|public/build/target\.apk)',
                                                 r'public/build/fennec-(.*)\.common\.tests\.zip|public/build/target\.common\.tests\.zip')),
-    'android-api-15-debug': (AndroidArtifactJob, (r'public/build/target\.apk',
+    'android-api-16-debug': (AndroidArtifactJob, (r'public/build/target\.apk',
                                                   r'public/build/target\.common\.tests\.zip')),
     'android-x86-opt': (AndroidArtifactJob, (r'public/build/target\.apk',
                                              r'public/build/target\.common\.tests\.zip')),
@@ -488,14 +490,14 @@ JOB_DETAILS = {
                                       r'public/build/firefox-(.*)\.common\.tests\.zip|public/build/target\.common\.tests\.zip')),
     'macosx64-debug': (MacArtifactJob, (r'public/build/firefox-(.*)\.mac\.dmg|public/build/target\.dmg',
                                         r'public/build/firefox-(.*)\.common\.tests\.zip|public/build/target\.common\.tests\.zip')),
-    'win32-opt': (WinArtifactJob, (r'public/build/firefox-(.*)\.win32.zip',
-                                   r'public/build/firefox-(.*)\.common\.tests\.zip')),
-    'win32-debug': (WinArtifactJob, (r'public/build/firefox-(.*)\.win32.zip',
-                                     r'public/build/firefox-(.*)\.common\.tests\.zip')),
-    'win64-opt': (WinArtifactJob, (r'public/build/firefox-(.*)\.win64.zip',
-                                   r'public/build/firefox-(.*)\.common\.tests\.zip')),
-    'win64-debug': (WinArtifactJob, (r'public/build/firefox-(.*)\.win64.zip',
-                                     r'public/build/firefox-(.*)\.common\.tests\.zip')),
+    'win32-opt': (WinArtifactJob, (r'public/build/firefox-(.*)\.win32\.zip|public/build/target\.zip',
+                                   r'public/build/firefox-(.*)\.common\.tests\.zip|public/build/target\.common\.tests\.zip')),
+    'win32-debug': (WinArtifactJob, (r'public/build/firefox-(.*)\.win32\.zip|public/build/target\.zip',
+                                     r'public/build/firefox-(.*)\.common\.tests\.zip|public/build/target\.common\.tests\.zip')),
+    'win64-opt': (WinArtifactJob, (r'public/build/firefox-(.*)\.win64\.zip|public/build/target\.zip',
+                                   r'public/build/firefox-(.*)\.common\.tests\.zip|public/build/target\.common\.tests\.zip')),
+    'win64-debug': (WinArtifactJob, (r'public/build/firefox-(.*)\.win64\.zip|public/build/target\.zip',
+                                     r'public/build/firefox-(.*)\.common\.tests\.zip|public/build/target\.common\.tests\.zip')),
 }
 
 
@@ -891,7 +893,7 @@ class Artifacts(object):
         if self._substs.get('MOZ_BUILD_APP', '') == 'mobile/android':
             if self._substs['ANDROID_CPU_ARCH'] == 'x86':
                 return 'android-x86-opt'
-            return 'android-api-15' + target_suffix
+            return 'android-api-16' + target_suffix
 
         target_64bit = False
         if self._substs['target_cpu'] == 'x86_64':

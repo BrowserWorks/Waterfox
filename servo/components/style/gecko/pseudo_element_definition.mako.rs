@@ -7,7 +7,11 @@
 pub enum PseudoElement {
     % for pseudo in PSEUDOS:
         /// ${pseudo.value}
+        % if pseudo.is_tree_pseudo_element():
+        ${pseudo.capitalized()}(Box<[String]>),
+        % else:
         ${pseudo.capitalized()},
+        % endif
     % endfor
 }
 
@@ -23,13 +27,21 @@ pub const EAGER_PSEUDOS: [PseudoElement; EAGER_PSEUDO_COUNT] = [
     % endfor
 ];
 
+<% TREE_PSEUDOS = [pseudo for pseudo in PSEUDOS if pseudo.is_tree_pseudo_element()] %>
+<% SIMPLE_PSEUDOS = [pseudo for pseudo in PSEUDOS if not pseudo.is_tree_pseudo_element()] %>
+
+<%def name="pseudo_element_variant(pseudo, tree_arg='..')">\
+PseudoElement::${pseudo.capitalized()}${"({})".format(tree_arg) if pseudo.is_tree_pseudo_element() else ""}\
+</%def>
+
 impl PseudoElement {
-    /// Executes a closure with each pseudo-element as an argument.
-    pub fn each<F>(mut fun: F)
+    /// Executes a closure with each simple (not functional)
+    /// pseudo-element as an argument.
+    pub fn each_simple<F>(mut fun: F)
         where F: FnMut(Self),
     {
-        % for pseudo in PSEUDOS:
-            fun(PseudoElement::${pseudo.capitalized()});
+        % for pseudo in SIMPLE_PSEUDOS:
+            fun(${pseudo_element_variant(pseudo)});
         % endfor
     }
 
@@ -38,7 +50,7 @@ impl PseudoElement {
     pub fn atom(&self) -> Atom {
         match *self {
             % for pseudo in PSEUDOS:
-                PseudoElement::${pseudo.capitalized()} => atom!("${pseudo.value}"),
+                ${pseudo_element_variant(pseudo)} => atom!("${pseudo.value}"),
             % endfor
         }
     }
@@ -48,8 +60,11 @@ impl PseudoElement {
     fn is_anon_box(&self) -> bool {
         match *self {
             % for pseudo in PSEUDOS:
-                PseudoElement::${pseudo.capitalized()} => ${str(pseudo.is_anon_box()).lower()},
+                % if pseudo.is_anon_box():
+                    ${pseudo_element_variant(pseudo)} => true,
+                % endif
             % endfor
+            _ => false,
         }
     }
 
@@ -65,13 +80,14 @@ impl PseudoElement {
     pub fn flags(&self) -> u32 {
         match *self {
             % for pseudo in PSEUDOS:
-                PseudoElement::${pseudo.capitalized()} => {
-                    % if pseudo.is_anon_box():
-                        0
-                    % else:
-                        structs::SERVO_CSS_PSEUDO_ELEMENT_FLAGS_${pseudo.original_ident}
-                    % endif
-                }
+                ${pseudo_element_variant(pseudo)} =>
+                % if pseudo.is_tree_pseudo_element():
+                    0,
+                % elif pseudo.is_anon_box():
+                    structs::CSS_PSEUDO_ELEMENT_UA_SHEET_ONLY,
+                % else:
+                    structs::SERVO_CSS_PSEUDO_ELEMENT_FLAGS_${pseudo.original_ident},
+                % endif
             % endfor
         }
     }
@@ -83,7 +99,7 @@ impl PseudoElement {
             % for pseudo in PSEUDOS:
                 % if not pseudo.is_anon_box():
                     CSSPseudoElementType::${pseudo.original_ident} => {
-                        Some(PseudoElement::${pseudo.capitalized()})
+                        Some(${pseudo_element_variant(pseudo)})
                     },
                 % endif
             % endfor
@@ -91,13 +107,55 @@ impl PseudoElement {
         }
     }
 
+    /// Construct a `CSSPseudoElementType` from a pseudo-element
+    #[inline]
+    pub fn pseudo_type(&self) -> CSSPseudoElementType {
+        use gecko_bindings::structs::CSSPseudoElementType_InheritingAnonBox;
+
+        match *self {
+            % for pseudo in PSEUDOS:
+                % if not pseudo.is_anon_box():
+                    PseudoElement::${pseudo.capitalized()} => CSSPseudoElementType::${pseudo.original_ident},
+                % elif pseudo.is_tree_pseudo_element():
+                    PseudoElement::${pseudo.capitalized()}(..) => CSSPseudoElementType_InheritingAnonBox,
+                % elif pseudo.is_inheriting_anon_box():
+                    PseudoElement::${pseudo.capitalized()} => CSSPseudoElementType_InheritingAnonBox,
+                % else:
+                    PseudoElement::${pseudo.capitalized()} => CSSPseudoElementType::NonInheritingAnonBox,
+                % endif
+            % endfor
+        }
+    }
+
+    /// Get a PseudoInfo for a pseudo
+    pub fn pseudo_info(&self) -> (*mut structs::nsIAtom, CSSPseudoElementType) {
+        (self.atom().as_ptr(), self.pseudo_type())
+    }
+
+    /// Construct a pseudo-element from an `Atom`.
+    #[inline]
+    pub fn from_atom(atom: &Atom) -> Option<Self> {
+        % for pseudo in PSEUDOS:
+            % if pseudo.is_tree_pseudo_element():
+                // We cannot generate ${pseudo_element_variant(pseudo)} from just an atom.
+            % else:
+                if atom == &atom!("${pseudo.value}") {
+                    return Some(${pseudo_element_variant(pseudo)});
+                }
+            % endif
+        % endfor
+        None
+    }
+
     /// Construct a pseudo-element from an anonymous box `Atom`.
     #[inline]
     pub fn from_anon_box_atom(atom: &Atom) -> Option<Self> {
         % for pseudo in PSEUDOS:
-            % if pseudo.is_anon_box():
+            % if pseudo.is_tree_pseudo_element():
+                // We cannot generate ${pseudo_element_variant(pseudo)} from just an atom.
+            % elif pseudo.is_anon_box():
                 if atom == &atom!("${pseudo.value}") {
-                    return Some(PseudoElement::${pseudo.capitalized()});
+                    return Some(${pseudo_element_variant(pseudo)});
                 }
             % endif
         % endfor
@@ -115,10 +173,13 @@ impl PseudoElement {
     pub fn from_slice(s: &str, in_ua_stylesheet: bool) -> Option<Self> {
         use std::ascii::AsciiExt;
 
-        % for pseudo in PSEUDOS:
-            if in_ua_stylesheet || PseudoElement::${pseudo.capitalized()}.exposed_in_non_ua_sheets() {
+        // We don't need to support tree pseudos because functional
+        // pseudo-elements needs arguments, and thus should be created
+        // via other methods.
+        % for pseudo in SIMPLE_PSEUDOS:
+            if in_ua_stylesheet || ${pseudo_element_variant(pseudo)}.exposed_in_non_ua_sheets() {
                 if s.eq_ignore_ascii_case("${pseudo.value[1:]}") {
-                    return Some(PseudoElement::${pseudo.capitalized()})
+                    return Some(${pseudo_element_variant(pseudo)});
                 }
             }
         % endfor
@@ -126,13 +187,47 @@ impl PseudoElement {
         None
     }
 
-    /// Returns the pseudo-element's definition as a string, with only one colon
-    /// before it.
-    pub fn as_str(&self) -> &'static str {
-        match *self {
-        % for pseudo in PSEUDOS:
-            PseudoElement::${pseudo.capitalized()} => "${pseudo.value}",
+    /// Constructs a tree pseudo-element from the given name and arguments.
+    /// "name" must start with "-moz-tree-".
+    ///
+    /// Returns `None` if the pseudo-element is not recognized.
+    #[inline]
+    pub fn tree_pseudo_element(name: &str, args: Box<[String]>) -> Option<Self> {
+        use std::ascii::AsciiExt;
+        debug_assert!(name.starts_with("-moz-tree-"));
+        let tree_part = &name[10..];
+        % for pseudo in TREE_PSEUDOS:
+            if tree_part.eq_ignore_ascii_case("${pseudo.value[11:]}") {
+                return Some(${pseudo_element_variant(pseudo, "args")});
+            }
         % endfor
+        None
+    }
+}
+
+impl ToCss for PseudoElement {
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
+        dest.write_char(':')?;
+        match *self {
+            % for pseudo in PSEUDOS:
+                ${pseudo_element_variant(pseudo)} => dest.write_str("${pseudo.value}")?,
+            % endfor
+        }
+        match *self {
+            ${" |\n            ".join("PseudoElement::{}(ref args)".format(pseudo.capitalized())
+                                      for pseudo in TREE_PSEUDOS)} => {
+                dest.write_char('(')?;
+                let mut iter = args.iter();
+                if let Some(first) = iter.next() {
+                    serialize_identifier(first, dest)?;
+                    for item in iter {
+                        dest.write_str(", ")?;
+                        serialize_identifier(item, dest)?;
+                    }
+                }
+                dest.write_char(')')
+            }
+            _ => Ok(()),
         }
     }
 }

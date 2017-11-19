@@ -13,15 +13,15 @@ linux64-clang:
     worker:
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
     run:
         using: toolchain-script
         script: build-clang-linux.sh
-        tooltool-downloads: public
         resources:
             - 'build/build-clang/**'
             - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/clang.tar.xz
+    toolchains:
+        - linux64-gcc
 
 linux64-clang-tidy:
     description: "Clang-tidy build"
@@ -37,16 +37,16 @@ linux64-clang-tidy:
     worker:
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
     run:
         using: toolchain-script
         script: build-clang-tidy-linux.sh
-        tooltool-downloads: public
         resources:
             - 'build/clang-plugin/**'
             - 'build/build-clang/**'
             - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/clang-tidy.tar.xz
+    toolchains:
+        - linux64-gcc
 
 linux64-gcc:
     description: "GCC toolchain build"
@@ -64,6 +64,7 @@ linux64-gcc:
         script: build-gcc-linux.sh
         resources:
             - 'build/unix/build-gcc/**'
+        toolchain-artifact: public/build/gcc.tar.xz
 
 linux64-binutils:
     description: "Binutils toolchain build"
@@ -81,6 +82,7 @@ linux64-binutils:
         script: build-binutils-linux.sh
         resources:
             - 'build/unix/build-binutils/**'
+        toolchain-artifact: public/build/binutils.tar.xz
 
 linux64-cctools-port:
     description: "cctools-port toolchain build"
@@ -93,14 +95,14 @@ linux64-cctools-port:
     worker:
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/clang.manifest"
     run:
         using: toolchain-script
         script: build-cctools-port.sh
-        tooltool-downloads: public
         resources:
             - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/cctools.tar.xz
+    toolchains:
+        - linux64-clang
 
 linux64-hfsplus:
     description: "hfsplus toolchain build"
@@ -113,15 +115,15 @@ linux64-hfsplus:
     worker:
         docker-image: {in-tree: desktop-build}
         max-run-time: 36000
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/clang.manifest"
     run:
         using: toolchain-script
         script: build-hfsplus-linux.sh
-        tooltool-downloads: public
         resources:
             - 'build/unix/build-hfsplus/**'
             - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/hfsplus-tools.tar.xz
+    toolchains:
+        - linux64-clang
 
 linux64-libdmg:
     description: "libdmg-hfsplus toolchain build"
@@ -137,3 +139,26 @@ linux64-libdmg:
     run:
         using: toolchain-script
         script: build-libdmg-hfsplus.sh
+        toolchain-artifact: public/build/dmg.tar.xz
+
+linux64-sccache:
+    description: "sccache toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(sccache)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/clang.manifest"
+    run:
+        using: toolchain-script
+        script: build-sccache.sh
+        resources:
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/sccache2.tar.xz
+    toolchains:
+        - linux64-clang

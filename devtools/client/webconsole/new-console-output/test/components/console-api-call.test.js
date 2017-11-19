@@ -86,12 +86,18 @@ describe("ConsoleAPICall component:", () => {
       const message = stubPreparedMessages.get("console.log('foobar', 'test')");
 
       const indent = 10;
-      let wrapper = render(ConsoleApiCall({ message, serviceContainer, indent }));
-      expect(wrapper.find(".indent").prop("style").width)
-        .toBe(`${indent * INDENT_WIDTH}px`);
+      let wrapper = render(ConsoleApiCall({
+        message: Object.assign({}, message, {indent}),
+        serviceContainer
+      }));
+      let indentEl = wrapper.find(".indent");
+      expect(indentEl.prop("style").width).toBe(`${indent * INDENT_WIDTH}px`);
+      expect(indentEl.prop("data-indent")).toBe(`${indent}`);
 
       wrapper = render(ConsoleApiCall({ message, serviceContainer}));
-      expect(wrapper.find(".indent").prop("style").width).toBe(`0`);
+      indentEl = wrapper.find(".indent");
+      expect(indentEl.prop("style").width).toBe(`0`);
+      expect(indentEl.prop("data-indent")).toBe(`0`);
     });
 
     it("renders a timestamp when passed a truthy timestampsVisible prop", () => {
@@ -322,6 +328,16 @@ describe("ConsoleAPICall component:", () => {
 
       expect(wrapper.find(".message-body").text())
         .toBe("Window http://example.com/browser/devtools/client/webconsole/new-console-output/test/fixtures/stub-generators/test-console-api.html");
+    });
+  });
+
+  describe("console.dir", () => {
+    it("renders", () => {
+      const message = stubPreparedMessages.get("console.dir({C, M, Y, K})");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      expect(wrapper.find(".message-body").text())
+        .toBe(`Object { cyan: "C", magenta: "M", yellow: "Y", black: "K" }`);
     });
   });
 });

@@ -24,6 +24,7 @@ common-tests:
     - jittest
     - jsreftest
     - marionette
+    - marionette-headless
     - mochitest
     - mochitest-a11y
     - mochitest-browser-chrome
@@ -36,20 +37,13 @@ common-tests:
     - mochitest-webgl
     - reftest
     - reftest-no-accel
+    - telemetry-tests-client
     - xpcshell
 
 web-platform-tests:
     - web-platform-tests
     - web-platform-tests-reftests
     - web-platform-tests-wdspec
-
-external-media-tests:
-    - external-media-tests-base
-    - external-media-tests-youtube
-
-external-media-tests-slow:
-    # twitch tests are too slow and stall under debug, give them their own special set
-    - external-media-tests-twitch
 
 opt-only-tests:
     - mochitest-valgrind
@@ -66,12 +60,10 @@ talos:
     - talos-svgr
     - talos-tp5o
     - talos-perf-reftest
+    - talos-perf-reftest-singletons
 
 awsy:
     - awsy
-
-headless:
-    - marionette-headless
 
 ##
 # Limited test sets for specific platforms
@@ -83,6 +75,8 @@ stylo-tests:
     - reftest-stylo
     - mochitest-style
     - mochitest-chrome-style
+    - web-platform-tests
+    - web-platform-tests-reftests
 
 stylo-sequential-tests:
     - crashtest
@@ -103,7 +97,13 @@ qr-tests:
     - reftest-no-accel
     - xpcshell
 
-ccov-code-coverage-tests:
+jsdcov-code-coverage-tests:
+    - mochitest
+    - mochitest-browser-chrome
+    - mochitest-devtools-chrome
+    - xpcshell
+
+windows-tests:
     - cppunit
     - crashtest
     - firefox-ui-functional-local
@@ -112,6 +112,7 @@ ccov-code-coverage-tests:
     - jittest
     - jsreftest
     - marionette
+    - marionette-headless
     - mochitest
     - mochitest-a11y
     - mochitest-browser-chrome
@@ -123,20 +124,29 @@ ccov-code-coverage-tests:
     - mochitest-media
     - mochitest-webgl
     - reftest
+    - reftest-gpu
     - reftest-no-accel
     - web-platform-tests
+    - web-platform-tests-reftests
     - xpcshell
 
-jsdcov-code-coverage-tests:
-    - mochitest
-    - mochitest-browser-chrome
-    - mochitest-devtools-chrome
-    - xpcshell
+windows-talos:
+    - talos-chrome
+    - talos-dromaeojs
+    - talos-g1
+    - talos-g2
+    - talos-g4
+    - talos-g5
+    - talos-other
+    - talos-perf-reftest
+    - talos-perf-reftest-singletons
+    - talos-svgr
+    - talos-tp5o
+    - talos-xperf
+    - talos-quantum-pageload
+    - talos-quantum-pageload-stylo
 
-##
-# Test sets still being greened up in various ways
-
-windows-vm-tests:
+macosx64-tests:
     - cppunit
     - crashtest
     - firefox-ui-functional-local
@@ -145,36 +155,7 @@ windows-vm-tests:
     - jittest
     - jsreftest
     - marionette
-    - mochitest
-    - mochitest-a11y
-    - mochitest-browser-chrome
-    - mochitest-devtools-chrome
-    - mochitest-jetpack
-    - mochitest-media
-    - web-platform-tests
-    - web-platform-tests-reftests
-    #- xpcshell
-
-windows-gpu-tests:
-    - reftest
-    - reftest-no-accel
-    - mochitest-gpu
-    - mochitest-webgl
-
-# these tests currently run on hardware, but may migrate above when validated
-# see https://bugzilla.mozilla.org/show_bug.cgi?id=1280474#c36
-#    - mochitest-chrome
-#    - mochitest-clipboard
-
-macosx64-tests-debug:
-    - cppunit
-    - crashtest
-    - external-media-tests-base
-    - external-media-tests-youtube
-    - gtest
-    - jittest
-    - jsreftest
-    - marionette
+    - marionette-headless
     - mochitest
     - mochitest-a11y
     - mochitest-browser-chrome
@@ -201,6 +182,7 @@ macosx64-tests-talos:
     - talos-svgr
     - talos-tp5o
     - talos-perf-reftest
+    - talos-perf-reftest-singletons
 
 linux32-tests:
     - cppunit
@@ -258,5 +240,20 @@ android-gradle-tests:
     - geckoview
 
 android-x86-tests:
+    - mochitest-chrome
+    - xpcshell
+
+windows8-tests:
+    - crashtest
+    - mochitest
+    - mochitest-browser-chrome
+    - mochitest-devtools-chrome
+    - mochitest-media
+    - jsreftest
+    - reftest
+    - reftest-no-accel
+    - mochitest-gpu
+    - mochitest-webgl
+    - mochitest-clipboard
     - mochitest-chrome
     - xpcshell

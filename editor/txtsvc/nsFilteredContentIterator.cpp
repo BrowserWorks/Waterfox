@@ -210,10 +210,10 @@ ContentToParentOffset(nsIContent *aContent, nsIDOMNode **aParent,
 //
 static bool
 ContentIsInTraversalRange(nsIContent *aContent,   bool aIsPreMode,
-                          nsIDOMNode *aStartNode, int32_t aStartOffset,
-                          nsIDOMNode *aEndNode,   int32_t aEndOffset)
+                          nsIDOMNode *aStartContainer, int32_t aStartOffset,
+                          nsIDOMNode *aEndContainer, int32_t aEndOffset)
 {
-  NS_ENSURE_TRUE(aStartNode && aEndNode && aContent, false);
+  NS_ENSURE_TRUE(aStartContainer && aEndContainer && aContent, false);
 
   nsCOMPtr<nsIDOMNode> parentNode;
   int32_t indx = 0;
@@ -225,9 +225,10 @@ ContentIsInTraversalRange(nsIContent *aContent,   bool aIsPreMode,
   if (!aIsPreMode)
     ++indx;
 
-  int32_t startRes = nsContentUtils::ComparePoints(aStartNode, aStartOffset,
-                                                   parentNode, indx);
-  int32_t endRes = nsContentUtils::ComparePoints(aEndNode, aEndOffset,
+  int32_t startRes =
+    nsContentUtils::ComparePoints(aStartContainer, aStartOffset,
+                                  parentNode, indx);
+  int32_t endRes = nsContentUtils::ComparePoints(aEndContainer, aEndOffset,
                                                  parentNode, indx);
   return (startRes <= 0) && (endRes >= 0);
 }
@@ -240,13 +241,15 @@ ContentIsInTraversalRange(nsRange* aRange, nsIDOMNode* aNextNode, bool aIsPreMod
 
   nsCOMPtr<nsIDOMNode> sNode;
   nsCOMPtr<nsIDOMNode> eNode;
-  int32_t sOffset;
-  int32_t eOffset;
+  uint32_t sOffset;
+  uint32_t eOffset;
   aRange->GetStartContainer(getter_AddRefs(sNode));
   aRange->GetStartOffset(&sOffset);
   aRange->GetEndContainer(getter_AddRefs(eNode));
   aRange->GetEndOffset(&eOffset);
-  return ContentIsInTraversalRange(content, aIsPreMode, sNode, sOffset, eNode, eOffset);
+  return ContentIsInTraversalRange(content, aIsPreMode,
+                                   sNode, static_cast<int32_t>(sOffset),
+                                   eNode, static_cast<int32_t>(eOffset));
 }
 
 //------------------------------------------------------------

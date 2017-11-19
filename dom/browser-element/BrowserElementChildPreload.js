@@ -16,7 +16,6 @@ var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ManifestFinder",
                                   "resource://gre/modules/ManifestFinder.jsm");
@@ -425,20 +424,19 @@ BrowserElementChild.prototype = {
     win.modalDepth++;
     let origModalDepth = win.modalDepth;
 
-    let thread = Services.tm.currentThread;
     debug("Nested event loop - begin");
-    while (win.modalDepth == origModalDepth && !this._shuttingDown) {
+    Services.tm.spinEventLoopUntil(() => {
       // Bail out of the loop if the inner window changed; that means the
       // window navigated.  Bail out when we're shutting down because otherwise
       // we'll leak our window.
       if (this._tryGetInnerWindowID(win) !== innerWindowID) {
         debug("_waitForResult: Inner window ID changed " +
               "while in nested event loop.");
-        break;
+        return true;
       }
 
-      thread.processNextEvent(/* mayWait = */ true);
-    }
+      return win.modalDepth !== origModalDepth || this._shuttingDown;
+    });
     debug("Nested event loop - finish");
 
     if (win.modalDepth == 0) {
@@ -1229,7 +1227,6 @@ BrowserElementChild.prototype = {
     var visible = data.json.visible;
     if (docShell && docShell.isActive !== visible) {
       docShell.isActive = visible;
-      sendAsyncMsg('visibilitychange', {visible: visible});
 
       // Ensure painting is not frozen if the app goes visible.
       if (visible && this._paintFrozenTimer) {
@@ -1309,13 +1306,13 @@ BrowserElementChild.prototype = {
     docShell.contentViewer.fullZoom = data.json.zoom;
   },
 
-  _recvGetWebManifest: Task.async(function* (data) {
+  async _recvGetWebManifest(data) {
     debug(`Received GetWebManifest message: (${data.json.id})`);
     let manifest = null;
     let hasManifest = ManifestFinder.contentHasManifestLink(content);
     if (hasManifest) {
       try {
-        manifest = yield ManifestObtainer.contentObtainManifest(content);
+        manifest = await ManifestObtainer.contentObtainManifest(content);
       } catch (e) {
         sendAsyncMsg('got-web-manifest', {
           id: data.json.id,
@@ -1328,7 +1325,7 @@ BrowserElementChild.prototype = {
       id: data.json.id,
       successRv: manifest
     });
-  }),
+  },
 
   _initFinder: function() {
     if (!this._finder) {

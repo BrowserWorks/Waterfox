@@ -92,18 +92,6 @@ Would you like to create this directory?
 
 Your choice: '''
 
-STYLO_DEVELOPMENT_INFO = '''
-Stylo is an experimental rewrite of the Gecko style system in Rust to
-be faster and make better use of modern computer hardware.
-
-Would you like to download packages for working on Stylo?  If you're
-not sure, select "No".
-
-  1. Yes
-  2. No
-
-Your choice: '''
-
 STYLO_DIRECTORY_MESSAGE = '''
 Stylo packages require a directory to store shared, persistent state.
 On this machine, that directory is:
@@ -315,30 +303,22 @@ class Bootstrapper(object):
 
         # Install the clang packages needed for developing stylo.
         if not self.instance.no_interactive:
-            choice = self.instance.prompt_int(
-                prompt=STYLO_DEVELOPMENT_INFO,
-                low=1,
-                high=2)
-
             # The best place to install our packages is in the state directory
             # we have.  If the user doesn't have one, we need them to re-run
             # bootstrap and create the directory.
             #
             # XXX Android bootstrap just assumes the existence of the state
             # directory and writes the NDK into it.  Should we do the same?
-            wants_stylo = choice == 1
-            if wants_stylo and not state_dir_available:
+            if not state_dir_available:
                 print(STYLO_DIRECTORY_MESSAGE.format(statedir=state_dir))
                 sys.exit(1)
 
-            if wants_stylo and not have_clone:
+            if not have_clone:
                 print(STYLO_REQUIRES_CLONE)
                 sys.exit(1)
 
-            self.instance.stylo = wants_stylo
-            if wants_stylo:
-                self.instance.state_dir = state_dir
-                self.instance.ensure_stylo_packages(state_dir, checkout_root)
+            self.instance.state_dir = state_dir
+            self.instance.ensure_stylo_packages(state_dir, checkout_root)
 
         print(self.finished % name)
         if not (self.instance.which('rustc') and self.instance._parse_version('rustc') >= MODERN_RUST_VERSION):
@@ -485,10 +465,13 @@ def current_firefox_checkout(check_output, hg=None):
             except subprocess.CalledProcessError:
                 pass
 
-        # TODO check git remotes or `git rev-parse -q --verify $sha1^{commit}`
-        # for signs of Firefox.
+        # Just check for known-good files in the checkout, to prevent attempted
+        # foot-shootings.  Determining a canonical git checkout of mozilla-central
+        # is...complicated
         elif os.path.exists(git_dir):
-            return ('git', path)
+            moz_configure = os.path.join(path, 'moz.configure')
+            if os.path.exists(moz_configure):
+                return ('git', path)
 
         path, child = os.path.split(path)
         if child == '':

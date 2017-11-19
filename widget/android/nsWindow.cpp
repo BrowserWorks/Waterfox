@@ -44,6 +44,7 @@ using mozilla::Unused;
 #include "nsLayoutUtils.h"
 #include "nsViewManager.h"
 
+#include "nsContentUtils.h"
 #include "WidgetUtils.h"
 
 #include "nsIDOMSimpleGestureEvent.h"
@@ -71,7 +72,6 @@ using mozilla::Unused;
 #include "AndroidBridge.h"
 #include "AndroidBridgeUtilities.h"
 #include "AndroidUiThread.h"
-#include "android_npapi.h"
 #include "FennecJNINatives.h"
 #include "GeneratedJNINatives.h"
 #include "GeckoEditableSupport.h"
@@ -81,7 +81,7 @@ using mozilla::Unused;
 #include "imgIEncoder.h"
 
 #include "nsString.h"
-#include "GeckoProfiler.h" // For PROFILER_LABEL
+#include "GeckoProfiler.h" // For AUTO_PROFILER_LABEL
 #include "nsIXULRuntime.h"
 #include "nsPrintfCString.h"
 
@@ -115,11 +115,8 @@ static const double SWIPE_MAX_PINCH_DELTA_INCHES = 0.4;
 static const double SWIPE_MIN_DISTANCE_INCHES = 0.6;
 
 template<typename Lambda, bool IsStatic, typename InstanceType, class Impl>
-class nsWindow::WindowEvent : public nsAppShell::LambdaEvent<Lambda>
+class nsWindow::WindowEvent : public Runnable
 {
-    typedef nsAppShell::Event Event;
-    typedef nsAppShell::LambdaEvent<Lambda> Base;
-
     bool IsStaleCall()
     {
         if (IsStatic) {
@@ -141,35 +138,29 @@ class nsWindow::WindowEvent : public nsAppShell::LambdaEvent<Lambda>
         return natives && !natives->get();
     }
 
+    Lambda mLambda;
     const InstanceType mInstance;
-    const Event::Type mEventType;
 
 public:
     WindowEvent(Lambda&& aLambda,
-                InstanceType&& aInstance,
-                Event::Type aEventType = Event::Type::kGeneralActivity)
-        : Base(mozilla::Move(aLambda))
-        , mInstance(mozilla::Move(aInstance))
-        , mEventType(aEventType)
+                InstanceType&& aInstance)
+        : Runnable("nsWindowEvent")
+        , mLambda(mozilla::Move(aLambda))
+        , mInstance(Forward<InstanceType>(aInstance))
     {}
 
-    WindowEvent(Lambda&& aLambda,
-                Event::Type aEventType = Event::Type::kGeneralActivity)
-        : Base(mozilla::Move(aLambda))
-        , mInstance(Base::lambda.GetThisArg())
-        , mEventType(aEventType)
+    WindowEvent(Lambda&& aLambda)
+        : Runnable("nsWindowEvent")
+        , mLambda(mozilla::Move(aLambda))
+        , mInstance(mLambda.GetThisArg())
     {}
 
-    void Run() override
+    NS_IMETHOD Run() override
     {
         if (!IsStaleCall()) {
-            return Base::Run();
+            mLambda();
         }
-    }
-
-    Event::Type ActivityType() const override
-    {
-        return mEventType;
+        return NS_OK;
     }
 };
 
@@ -263,8 +254,7 @@ public:
             return aCall();
         }
 
-        nsAppShell::PostEvent(mozilla::MakeUnique<WindowEvent<Functor>>(
-                mozilla::Move(aCall)));
+        NS_DispatchToMainThread(new WindowEvent<Functor>(mozilla::Move(aCall)));
     }
 
     GeckoViewSupport(nsWindow* aWindow,
@@ -362,6 +352,7 @@ class nsWindow::NPZCSupport final
     template<typename Lambda>
     void PostInputEvent(Lambda&& aLambda)
     {
+        // Use priority queue for input events.
         nsAppShell::PostEvent(MakeUnique<InputEvent<Lambda>>(
                 this, mozilla::Move(aLambda)));
     }
@@ -374,7 +365,9 @@ public:
         : mWindow(aPtr, aWindow)
         , mNPZC(aNPZC)
         , mPreviousButtons(0)
-    {}
+    {
+        MOZ_ASSERT(mWindow);
+    }
 
     ~NPZCSupport()
     {}
@@ -434,8 +427,6 @@ public:
 public:
     void SetIsLongpressEnabled(bool aIsLongpressEnabled)
     {
-        MOZ_ASSERT(AndroidBridge::IsJavaUiThread());
-
         RefPtr<IAPZCTreeManager> controller;
 
         if (LockedWindowPtr window{mWindow}) {
@@ -838,7 +829,9 @@ public:
         : mWindow(aPtr, aWindow)
         , mCompositor(aInstance)
         , mCompositorPaused(true)
-    {}
+    {
+        MOZ_ASSERT(mWindow);
+    }
 
     ~LayerViewSupport()
     {}
@@ -930,7 +923,9 @@ public:
                           jni::Object::Param aSurface)
     {
         MOZ_ASSERT(NS_IsMainThread());
-        MOZ_ASSERT(mWindow);
+        if (!mWindow) {
+            return; // Already shut down.
+        }
 
         mSurface = aSurface;
         mWindow->CreateLayerManager(aWidth, aHeight);
@@ -987,17 +982,19 @@ public:
                 MOZ_ASSERT(NS_IsMainThread());
 
                 JNIEnv* const env = jni::GetGeckoThreadEnv();
-                // Make sure LayerViewSupport hasn't been detached from the
-                // Java object since this event was dispatched.
-                if (LayerViewSupport* const lvs = GetNative(
-                        LayerView::Compositor::LocalRef(env, mCompositor))) {
-                    MOZ_CATCH_JNI_EXCEPTION(env);
+                LayerViewSupport* const lvs = GetNative(
+                        LayerView::Compositor::LocalRef(env, mCompositor));
 
-                    lvs->OnResumedCompositor();
+                if (!lvs || !lvs->mWindow) {
+                    env->ExceptionClear();
+                    return; // Already shut down.
                 }
+
+                lvs->OnResumedCompositor();
             }
         };
 
+        // Use priority queue for timing-sensitive event.
         nsAppShell::PostEvent(MakeUnique<LayerViewEvent>(
                 MakeUnique<OnResumedEvent>(aObj)));
     }
@@ -1012,7 +1009,8 @@ public:
         if (!AndroidBridge::IsJavaUiThread()) {
             RefPtr<nsThread> uiThread = GetAndroidUiThread();
             if (uiThread) {
-                uiThread->Dispatch(NewRunnableMethod(child,
+                uiThread->Dispatch(NewRunnableMethod("layers::UiCompositorControllerChild::InvalidateAndRender",
+                                                     child,
                                                      &UiCompositorControllerChild::InvalidateAndRender),
                                    nsIThread::DISPATCH_NORMAL);
             }
@@ -1042,6 +1040,7 @@ public:
             RefPtr<nsThread> uiThread = GetAndroidUiThread();
             if (uiThread) {
                 uiThread->Dispatch(NewRunnableMethod<bool, int32_t>(
+                                       "layers::UiCompositorControllerChild::SetPinned",
                                        child, &UiCompositorControllerChild::SetPinned, aPinned, aReason),
                                    nsIThread::DISPATCH_NORMAL);
             }
@@ -1064,6 +1063,7 @@ public:
             RefPtr<nsThread> uiThread = GetAndroidUiThread();
             if (uiThread) {
                 uiThread->Dispatch(NewRunnableMethod<int32_t>(
+                                       "layers::UiCompositorControllerChild::ToolbarAnimatorMessageFromUI",
                                        child, &UiCompositorControllerChild::ToolbarAnimatorMessageFromUI, aMessage),
                                    nsIThread::DISPATCH_NORMAL);
             }
@@ -1259,18 +1259,17 @@ nsWindow::GeckoViewSupport::Open(const jni::Class::LocalRef& aCls,
 {
     MOZ_ASSERT(NS_IsMainThread());
 
-    PROFILER_LABEL("nsWindow", "GeckoViewSupport::Open",
-                   js::ProfileEntry::Category::OTHER);
+    AUTO_PROFILER_LABEL("nsWindow::GeckoViewSupport::Open", OTHER);
 
     nsCOMPtr<nsIWindowWatcher> ww = do_GetService(NS_WINDOWWATCHER_CONTRACTID);
     MOZ_RELEASE_ASSERT(ww);
 
-    nsAdoptingCString url;
+    nsAutoCString url;
     if (aChromeURI) {
         url = aChromeURI->ToCString();
     } else {
-        url = Preferences::GetCString("toolkit.defaultChromeURI");
-        if (!url) {
+        nsresult rv = Preferences::GetCString("toolkit.defaultChromeURI", url);
+        if (NS_FAILED(rv)) {
             url = NS_LITERAL_CSTRING("chrome://geckoview/content/geckoview.xul");
         }
     }
@@ -1287,7 +1286,7 @@ nsWindow::GeckoViewSupport::Open(const jni::Class::LocalRef& aCls,
         chromeFlags += ",private";
     }
     nsCOMPtr<mozIDOMWindowProxy> domWindow;
-    ww->OpenWindow(nullptr, url, nullptr, chromeFlags.get(),
+    ww->OpenWindow(nullptr, url.get(), nullptr, chromeFlags.get(),
                    androidView, getter_AddRefs(domWindow));
     MOZ_RELEASE_ASSERT(domWindow);
 
@@ -1409,6 +1408,7 @@ nsWindow::GeckoViewSupport::LoadUri(jni::String::Param aUri, int32_t aFlags)
 
     if (NS_FAILED(browserWin->OpenURI(
             uri, nullptr, flags, nsIBrowserDOMWindow::OPEN_EXTERNAL,
+            nsContentUtils::GetSystemPrincipal(),
             getter_AddRefs(newWin)))) {
         NS_WARNING("Failed to open URI");
     }
@@ -1467,7 +1467,6 @@ nsWindow::nsWindow() :
     mScreenId(0), // Use 0 (primary screen) as the default value.
     mIsVisible(false),
     mParent(nullptr),
-    mAwaitingFullScreen(false),
     mIsFullScreen(false)
 {
 }
@@ -1476,6 +1475,10 @@ nsWindow::~nsWindow()
 {
     gTopLevelWindows.RemoveElement(this);
     ALOG("nsWindow %p destructor", (void*)this);
+    // The mCompositorSession should have been cleaned up in nsWindow::Destroy()
+    // DestroyLayerManager() will call DestroyCompositor() which will crash if
+    // called from nsBaseWidget destructor. See Bug 1392705
+    MOZ_ASSERT(!mCompositorSession);
 }
 
 bool
@@ -1546,6 +1549,9 @@ nsWindow::Destroy()
         ALOG("### Warning: Destroying window %p and reparenting child %p to null!", (void*)this, (void*)mChildren[0]);
         mChildren[0]->SetParent(nullptr);
     }
+
+    // Ensure the compositor has been shutdown before this nsWindow is potentially deleted
+    nsBaseWidget::DestroyCompositor();
 
     nsBaseWidget::Destroy();
 
@@ -1771,12 +1777,6 @@ nsWindow::Resize(double aX,
     // Should we skip honoring aRepaint here?
     if (aRepaint && FindTopLevel() == nsWindow::TopWindow())
         RedrawAll();
-
-    nsIWidgetListener* listener = GetWidgetListener();
-    if (mAwaitingFullScreen && listener) {
-        listener->FullscreenChanged(mIsFullScreen);
-        mAwaitingFullScreen = false;
-    }
 }
 
 void
@@ -1932,9 +1932,13 @@ nsWindow::MakeFullScreen(bool aFullScreen, nsIScreen*)
     }
 
     mIsFullScreen = aFullScreen;
-    mAwaitingFullScreen = true;
     mAndroidView->mEventDispatcher->Dispatch(aFullScreen ?
             u"GeckoView:FullScreenEnter" : u"GeckoView:FullScreenExit");
+
+    nsIWidgetListener* listener = GetWidgetListener();
+    if (listener) {
+        listener->FullscreenChanged(mIsFullScreen);
+    }
     return NS_OK;
 }
 
@@ -2352,15 +2356,12 @@ nsWindow::RecvToolbarAnimatorMessageFromCompositor(int32_t aMessage)
 }
 
 void
-nsWindow::UpdateRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom, const CSSRect& aPage)
+nsWindow::UpdateRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom)
 {
-
   MOZ_ASSERT(AndroidBridge::IsJavaUiThread());
   if (NativePtr<LayerViewSupport>::Locked lvs{mLayerViewSupport}) {
     GeckoLayerClient::LocalRef client = lvs->GetLayerClient();
-    client->UpdateRootFrameMetrics(aScrollOffset.x, aScrollOffset.y, aZoom.scale,
-                                   aPage.x, aPage.y,
-                                   aPage.XMost(), aPage.YMost());
+    client->UpdateRootFrameMetrics(aScrollOffset.x, aScrollOffset.y, aZoom.scale);
   }
 }
 

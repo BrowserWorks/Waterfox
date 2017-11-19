@@ -14,6 +14,7 @@ use dom_struct::dom_struct;
 use js::jsapi::{Heap, JSContext, JSObject};
 use js::typedarray::{Float32Array, CreateWith};
 use std::default::Default;
+use std::ptr;
 use webvr_traits::WebVREyeParameters;
 
 #[dom_struct]
@@ -41,14 +42,16 @@ impl VREyeParameters {
     pub fn new(parameters: WebVREyeParameters, global: &GlobalScope) -> Root<VREyeParameters> {
         let fov = VRFieldOfView::new(&global, parameters.field_of_view.clone());
 
+        let cx = global.get_cx();
+        rooted!(in (cx) let mut array = ptr::null_mut());
+        unsafe {
+            let _ = Float32Array::create(cx, CreateWith::Slice(&parameters.offset), array.handle_mut());
+        }
+
         let eye_parameters = reflect_dom_object(box VREyeParameters::new_inherited(parameters, &fov),
                                                 global,
                                                 VREyeParametersBinding::Wrap);
-        unsafe {
-            let _ = Float32Array::create(global.get_cx(),
-                                         CreateWith::Slice(&eye_parameters.parameters.borrow().offset),
-                                         eye_parameters.offset.handle_mut());
-        }
+        eye_parameters.offset.set(array.get());
 
         eye_parameters
     }
@@ -58,7 +61,7 @@ impl VREyeParametersMethods for VREyeParameters {
     #[allow(unsafe_code)]
     // https://w3c.github.io/webvr/#dom-vreyeparameters-offset
     unsafe fn Offset(&self, _cx: *mut JSContext) -> NonZero<*mut JSObject> {
-        NonZero::new(self.offset.get())
+        NonZero::new_unchecked(self.offset.get())
     }
 
     // https://w3c.github.io/webvr/#dom-vreyeparameters-fieldofview

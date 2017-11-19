@@ -177,7 +177,8 @@ class MediaRecorder::Session: public nsIObserver,
   {
   public:
     explicit PushBlobRunnable(Session* aSession)
-      : mSession(aSession)
+      : Runnable("dom::MediaRecorder::Session::PushBlobRunnable")
+      , mSession(aSession)
     { }
 
     NS_IMETHOD Run() override
@@ -207,7 +208,8 @@ class MediaRecorder::Session: public nsIObserver,
   {
   public:
     explicit EncoderErrorNotifierRunnable(Session* aSession)
-      : mSession(aSession)
+      : Runnable("dom::MediaRecorder::Session::EncoderErrorNotifierRunnable")
+      , mSession(aSession)
     { }
 
     NS_IMETHOD Run() override
@@ -234,8 +236,9 @@ class MediaRecorder::Session: public nsIObserver,
   class DispatchStartEventRunnable : public Runnable
   {
   public:
-    DispatchStartEventRunnable(Session* aSession, const nsAString & aEventName)
-      : mSession(aSession)
+    DispatchStartEventRunnable(Session* aSession, const nsAString& aEventName)
+      : Runnable("dom::MediaRecorder::Session::DispatchStartEventRunnable")
+      , mSession(aSession)
       , mEventName(aEventName)
     { }
 
@@ -264,14 +267,17 @@ class MediaRecorder::Session: public nsIObserver,
   {
   public:
     explicit ExtractRunnable(Session* aSession)
-      : mSession(aSession) {}
+      : Runnable("dom::MediaRecorder::Session::ExtractRunnable")
+      , mSession(aSession)
+    {
+    }
 
     ~ExtractRunnable()
     {}
 
     NS_IMETHOD Run() override
     {
-      MOZ_ASSERT(NS_GetCurrentThread() == mSession->mReadThread);
+      MOZ_ASSERT(mSession->mReadThread->EventTarget()->IsOnCurrentThread());
 
       LOG(LogLevel::Debug, ("Session.ExtractRunnable shutdown = %d", mSession->mEncoder->IsShutdown()));
       if (!mSession->mEncoder->IsShutdown()) {
@@ -364,10 +370,16 @@ class MediaRecorder::Session: public nsIObserver,
   {
   public:
     explicit DestroyRunnable(Session* aSession)
-      : mSession(aSession) {}
+      : Runnable("dom::MediaRecorder::Session::DestroyRunnable")
+      , mSession(aSession)
+    {
+    }
 
     explicit DestroyRunnable(already_AddRefed<Session> aSession)
-      : mSession(aSession) {}
+      : Runnable("dom::MediaRecorder::Session::DestroyRunnable")
+      , mSession(aSession)
+    {
+    }
 
     NS_IMETHOD Run() override
     {
@@ -421,7 +433,6 @@ public:
     , mIsStartEventFired(false)
     , mNeedSessionEndTask(true)
     , mSelectedVideoTrackID(TRACK_NONE)
-    , mAbstractMainThread(aRecorder->mAbstractMainThread)
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -485,7 +496,7 @@ public:
     // Create a Track Union Stream
     MediaStreamGraph* gm = mRecorder->GetSourceMediaStream()->Graph();
     TrackRate trackRate = gm->GraphRate();
-    mTrackUnionStream = gm->CreateTrackUnionStream(mAbstractMainThread);
+    mTrackUnionStream = gm->CreateTrackUnionStream();
     MOZ_ASSERT(mTrackUnionStream, "CreateTrackUnionStream failed");
 
     mTrackUnionStream->SetAutofinish(true);
@@ -617,11 +628,10 @@ private:
   // PushBlobRunnable to main thread.
   void Extract(bool aForceFlush)
   {
-    MOZ_ASSERT(NS_GetCurrentThread() == mReadThread);
+    MOZ_ASSERT(mReadThread->EventTarget()->IsOnCurrentThread());
     LOG(LogLevel::Debug, ("Session.Extract %p", this));
 
-    PROFILER_LABEL("MediaRecorder", "Session Extract",
-      js::ProfileEntry::Category::OTHER);
+    AUTO_PROFILER_LABEL("MediaRecorder::Session::Extract", OTHER);
 
     // Pull encoded media data from MediaEncoder
     nsTArray<nsTArray<uint8_t> > encodedBuf;
@@ -789,7 +799,7 @@ private:
     nsContentUtils::RegisterShutdownObserver(this);
 
     nsCOMPtr<nsIRunnable> event = new ExtractRunnable(this);
-    if (NS_FAILED(mReadThread->Dispatch(event, NS_DISPATCH_NORMAL))) {
+    if (NS_FAILED(mReadThread->EventTarget()->Dispatch(event.forget(), NS_DISPATCH_NORMAL))) {
       NS_WARNING("Failed to dispatch ExtractRunnable at beginning");
       LOG(LogLevel::Debug, ("Session.InitEncoder !ReadThread->Dispatch %p", this));
       DoSessionEndTask(NS_ERROR_ABORT);
@@ -808,8 +818,11 @@ private:
       new DispatchStartEventRunnable(this, NS_LITERAL_STRING("start")));
 
     if (NS_FAILED(rv)) {
-      NS_DispatchToMainThread(NewRunnableMethod<nsresult>(mRecorder,
-                                                          &MediaRecorder::NotifyError, rv));
+      NS_DispatchToMainThread(
+        NewRunnableMethod<nsresult>("dom::MediaRecorder::NotifyError",
+                                    mRecorder,
+                                    &MediaRecorder::NotifyError,
+                                    rv));
     }
     if (NS_FAILED(NS_DispatchToMainThread(new EncoderErrorNotifierRunnable(this)))) {
       MOZ_ASSERT(false, "NS_DispatchToMainThread EncoderErrorNotifierRunnable failed");
@@ -946,7 +959,6 @@ private:
   // Main thread only.
   bool mNeedSessionEndTask;
   TrackID mSelectedVideoTrackID;
-  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 NS_IMPL_ISUPPORTS(MediaRecorder::Session, nsIObserver)
@@ -965,7 +977,6 @@ MediaRecorder::MediaRecorder(DOMMediaStream& aSourceMediaStream,
                              nsPIDOMWindowInner* aOwnerWindow)
   : DOMEventTargetHelper(aOwnerWindow)
   , mState(RecordingState::Inactive)
-  , mAbstractMainThread(aSourceMediaStream.AbstractMainThread())
 {
   MOZ_ASSERT(aOwnerWindow);
   MOZ_ASSERT(aOwnerWindow->IsInnerWindow());
@@ -979,7 +990,6 @@ MediaRecorder::MediaRecorder(AudioNode& aSrcAudioNode,
                              nsPIDOMWindowInner* aOwnerWindow)
   : DOMEventTargetHelper(aOwnerWindow)
   , mState(RecordingState::Inactive)
-  , mAbstractMainThread(aSrcAudioNode.AbstractMainThread())
 {
   MOZ_ASSERT(aOwnerWindow);
   MOZ_ASSERT(aOwnerWindow->IsInnerWindow());
@@ -1408,9 +1418,7 @@ MediaRecorder::NotifyError(nsresult aRv)
   rv = DispatchDOMEvent(nullptr, event, nullptr, nullptr);
   if (NS_FAILED(rv)) {
     NS_ERROR("Failed to dispatch the error event!!!");
-    return;
   }
-  return;
 }
 
 void

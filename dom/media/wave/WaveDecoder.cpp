@@ -13,7 +13,7 @@
 
 namespace mozilla {
 
-MediaDecoder*
+ChannelMediaDecoder*
 WaveDecoder::Clone(MediaDecoderInit& aInit)
 {
   return new WaveDecoder(aInit);
@@ -22,8 +22,11 @@ WaveDecoder::Clone(MediaDecoderInit& aInit)
 MediaDecoderStateMachine*
 WaveDecoder::CreateStateMachine()
 {
-  return new MediaDecoderStateMachine(
-    this, new MediaFormatReader(this, new WAVDemuxer(GetResource())));
+  MediaFormatReaderInit init;
+  init.mCrashHelper = GetOwner()->CreateGMPCrashHelper();
+  init.mFrameStats = mFrameStats;
+  mReader = new MediaFormatReader(init, new WAVDemuxer(mResource));
+  return new MediaDecoderStateMachine(this, mReader);
 }
 
 /* static */ bool

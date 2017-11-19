@@ -22,15 +22,15 @@ namespace CacheFileUtils {
 extern const char *kAltDataKey;
 
 already_AddRefed<nsILoadContextInfo>
-ParseKey(const nsCSubstring &aKey,
-         nsCSubstring *aIdEnhance = nullptr,
-         nsCSubstring *aURISpec = nullptr);
+ParseKey(const nsACString& aKey,
+         nsACString* aIdEnhance = nullptr,
+         nsACString* aURISpec = nullptr);
 
 void
 AppendKeyPrefix(nsILoadContextInfo *aInfo, nsACString &_retval);
 
 void
-AppendTagWithValue(nsACString & aTarget, char const aTag, nsCSubstring const & aValue);
+AppendTagWithValue(nsACString& aTarget, char const aTag, const nsACString& aValue);
 
 nsresult
 KeyMatchesLoadContextInfo(const nsACString &aKey,
@@ -143,9 +143,80 @@ private:
 
   // Counter of samples that is compared against kTotalSamplesReportLimit.
   static uint32_t sRecordCnt;
- 
+
   // Hit rate statistics for every cache size range.
   static HitRate sHRStats[kNumOfRanges];
+};
+
+class CachePerfStats {
+public:
+  // perfStatTypes in displayRcwnStats() in toolkit/content/aboutNetworking.js
+  // must match EDataType
+  enum EDataType {
+    IO_OPEN    = 0,
+    IO_READ    = 1,
+    IO_WRITE   = 2,
+    ENTRY_OPEN = 3,
+    LAST       = 4
+  };
+
+  static void     AddValue(EDataType aType, uint32_t aValue, bool aShortOnly);
+  static uint32_t GetAverage(EDataType aType, bool aFiltered);
+  static uint32_t GetStdDev(EDataType aType, bool aFiltered);
+  static bool     IsCacheSlow();
+  static void     GetSlowStats(uint32_t *aSlow, uint32_t *aNotSlow);
+
+private:
+
+  // This class computes average and standard deviation, it returns an
+  // arithmetic avg and stddev until total number of values reaches mWeight.
+  // Then it returns modified moving average computed as follows:
+  //
+  //   avg = (1-a)*avg + a*value
+  //   avgsq = (1-a)*avgsq + a*value^2
+  //   stddev = sqrt(avgsq - avg^2)
+  //
+  //   where
+  //       avgsq is an average of the square of the values
+  //       a = 1 / weight
+  class MMA {
+  public:
+    MMA(uint32_t aTotalWeight, bool aFilter);
+
+    void     AddValue(uint32_t aValue);
+    uint32_t GetAverage();
+    uint32_t GetStdDev();
+
+  private:
+    uint64_t mSum;
+    uint64_t mSumSq;
+    uint32_t mCnt;
+    uint32_t mWeight;
+    bool     mFilter;
+  };
+
+  class PerfData {
+  public:
+    PerfData();
+
+    void     AddValue(uint32_t aValue, bool aShortOnly);
+    uint32_t GetAverage(bool aFiltered);
+    uint32_t GetStdDev(bool aFiltered);
+
+  private:
+    // Contains filtered data (i.e. times when we think the cache and disk was
+    // not busy) for a longer time.
+    MMA mFilteredAvg;
+
+    // Contains unfiltered average of few recent values.
+    MMA mShortAvg;
+  };
+
+  static StaticMutex sLock;
+
+  static PerfData sData[LAST];
+  static uint32_t sCacheSlowCnt;
+  static uint32_t sCacheNotSlowCnt;
 };
 
 void

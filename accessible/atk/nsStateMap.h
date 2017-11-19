@@ -23,9 +23,6 @@ The following accessible states aren't translated, just ignored:
                          This is supported via STATE_MULTISELECTABLE.
   STATE_PROTECTED:       The object is a password-protected edit control.
                          Supported via ATK_ROLE_PASSWORD_TEXT
-  STATE_HASPOPUP:        Object displays a pop-up menu or window when invoked.
-                         No ATK equivalent. The accessible state is not
-                         currently supported.
   STATE_PINNED:          The object is pinned, usually indicating it is fixed in
                          place and has permanence. No ATK equivalent. The
                          accessible state is not currently supported.
@@ -34,7 +31,7 @@ The following ATK states are not supported:
   ATK_STATE_ARMED:       No clear use case, used briefly when button is activated
   ATK_STATE_HAS_TOOLTIP: No clear use case, no IA2 equivalent
   ATK_STATE_ICONIFIED:   Mozilla does not have elements which are collapsable into icons
-  ATK_STATE_TRUNCATED:   No clear use case. Indicates that an object's onscreen content is truncated, 
+  ATK_STATE_TRUNCATED:   No clear use case. Indicates that an object's onscreen content is truncated,
                          e.g. a text value in a spreadsheet cell. No IA2 state.
 ******************************************************************************/
 
@@ -95,7 +92,7 @@ static const AtkStateMap gAtkStateMap[] = {                     // Cross Platfor
   { kNone,                                    kMapDirectly },   // states::ALERT_MEDIUM            = 1 << 27
   { ATK_STATE_INVALID_ENTRY,                  kMapDirectly },   // states::INVALID                 = 1 << 28
   { kNone,                                    kMapDirectly },   // states::PROTECTED               = 1 << 29
-  { kNone,                                    kMapDirectly },   // states::HASPOPUP                = 1 << 30
+  { ATK_STATE_HAS_POPUP,                      kMapDirectly },   // states::HASPOPUP                = 1 << 30
   { ATK_STATE_SUPPORTS_AUTOCOMPLETION,        kMapDirectly },   // states::SUPPORTS_AUTOCOMPLETION = 1 << 31
   { ATK_STATE_DEFUNCT,                        kMapDirectly },   // states::DEFUNCT                 = 1 << 32
   { ATK_STATE_SELECTABLE_TEXT,                kMapDirectly },   // states::SELECTABLE_TEXT         = 1 << 33
@@ -113,5 +110,6 @@ static const AtkStateMap gAtkStateMap[] = {                     // Cross Platfor
   { ATK_STATE_SENSITIVE,                      kMapDirectly },   // states::SENSITIVE               = 1 << 45
   { ATK_STATE_EXPANDABLE,                     kMapDirectly },   // states::EXPANDABLE              = 1 << 46
   { kNone,                                    kMapDirectly },   // states::PINNED                  = 1 << 47
-  { kNone,                                    kNoSuchState },   //                                 = 1 << 48
+  { ATK_STATE_ACTIVE,                         kMapDirectly },   // states::CURRENT                 = 1 << 48
+  { kNone,                                    kNoSuchState },   //                                 = 1 << 49
 };

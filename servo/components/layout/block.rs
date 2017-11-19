@@ -56,7 +56,7 @@ use style::computed_values::{border_collapse, box_sizing, display, float, overfl
 use style::computed_values::{position, text_align};
 use style::context::SharedStyleContext;
 use style::logical_geometry::{LogicalPoint, LogicalRect, LogicalSize, WritingMode};
-use style::properties::ServoComputedValues;
+use style::properties::ComputedValues;
 use style::servo::restyle_damage::{BUBBLE_ISIZES, REFLOW, REFLOW_OUT_OF_FLOW, REPOSITION};
 use style::values::computed::{LengthOrPercentageOrNone, LengthOrPercentage};
 use style::values::computed::LengthOrPercentageOrAuto;
@@ -322,7 +322,7 @@ impl CandidateBSizeIterator {
 
         let block_size = match (fragment.style.content_block_size(), block_container_block_size) {
             (LengthOrPercentageOrAuto::Percentage(percent), Some(block_container_block_size)) => {
-                MaybeAuto::Specified(block_container_block_size.scale_by(percent))
+                MaybeAuto::Specified(block_container_block_size.scale_by(percent.0))
             }
             (LengthOrPercentageOrAuto::Calc(calc), _) => {
                 MaybeAuto::from_option(calc.to_used_value(block_container_block_size))
@@ -333,7 +333,7 @@ impl CandidateBSizeIterator {
         };
         let max_block_size = match (fragment.style.max_block_size(), block_container_block_size) {
             (LengthOrPercentageOrNone::Percentage(percent), Some(block_container_block_size)) => {
-                Some(block_container_block_size.scale_by(percent))
+                Some(block_container_block_size.scale_by(percent.0))
             }
             (LengthOrPercentageOrNone::Calc(calc), _) => {
                 calc.to_used_value(block_container_block_size)
@@ -344,7 +344,7 @@ impl CandidateBSizeIterator {
         };
         let min_block_size = match (fragment.style.min_block_size(), block_container_block_size) {
             (LengthOrPercentage::Percentage(percent), Some(block_container_block_size)) => {
-                block_container_block_size.scale_by(percent)
+                block_container_block_size.scale_by(percent.0)
             }
             (LengthOrPercentage::Calc(calc), _) => {
                 calc.to_used_value(block_container_block_size).unwrap_or(Au(0))
@@ -1178,7 +1178,7 @@ impl BlockFlow {
             }
             (LengthOrPercentageOrAuto::Length(length), _) => Some(length),
             (LengthOrPercentageOrAuto::Percentage(percent), Some(container_size)) => {
-                Some(container_size.scale_by(percent))
+                Some(container_size.scale_by(percent.0))
             }
             (LengthOrPercentageOrAuto::Percentage(_), None) |
             (LengthOrPercentageOrAuto::Auto, None) => {
@@ -1967,7 +1967,7 @@ impl Flow for BlockFlow {
                 // flow w.r.t. the containing block.
                 self.base
                     .late_absolute_position_info
-                    .stacking_relative_position_of_absolute_containing_block + position_start
+                    .stacking_relative_position_of_absolute_containing_block + position_start.to_vector()
             };
 
             if !self.base.writing_mode.is_vertical() {
@@ -2000,9 +2000,9 @@ impl Flow for BlockFlow {
             self.base
                 .late_absolute_position_info
                 .stacking_relative_position_of_absolute_containing_block =
-                    self.base.stacking_relative_position +
+                    self.base.stacking_relative_position.to_point() +
                      (border_box_origin + relative_offset).to_physical(self.base.writing_mode,
-                                                                       container_size)
+                                                                       container_size).to_vector()
         }
 
         // Compute absolute position info for children.
@@ -2036,7 +2036,7 @@ impl Flow for BlockFlow {
             self.base.position.size.to_physical(self.base.writing_mode);
 
         // Compute the origin and clipping rectangle for children.
-        let relative_offset = relative_offset.to_physical(self.base.writing_mode);
+        let relative_offset = relative_offset.to_physical(self.base.writing_mode).to_vector();
         let is_stacking_context = self.fragment.establishes_stacking_context();
         let origin_for_children = if is_stacking_context {
             // We establish a stacking context, so the position of our children is vertically
@@ -2048,7 +2048,7 @@ impl Flow for BlockFlow {
             let margin = self.fragment.margin.to_physical(self.base.writing_mode);
             Point2D::new(-margin.left, Au(0))
         } else {
-            self.base.stacking_relative_position + relative_offset
+            self.base.stacking_relative_position.to_point() + relative_offset
         };
 
         // Process children.
@@ -2139,7 +2139,7 @@ impl Flow for BlockFlow {
         self.build_display_list_for_block(state, BorderPaintingMode::Separate);
     }
 
-    fn repair_style(&mut self, new_style: &::StyleArc<ServoComputedValues>) {
+    fn repair_style(&mut self, new_style: &::ServoArc<ComputedValues>) {
         self.fragment.repair_style(new_style)
     }
 
@@ -2171,7 +2171,7 @@ impl Flow for BlockFlow {
                                                                 .early_absolute_position_info
                                                                 .relative_containing_block_mode,
                                                             CoordinateSystem::Own)
-                              .translate(stacking_context_position));
+                              .translate(&stacking_context_position.to_vector()));
     }
 
     fn mutate_fragments(&mut self, mutator: &mut FnMut(&mut Fragment)) {

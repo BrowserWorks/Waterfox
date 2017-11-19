@@ -6,24 +6,24 @@
 #ifndef MOZILLA_MEDIASTREAMGRAPH_H_
 #define MOZILLA_MEDIASTREAMGRAPH_H_
 
+#include "AudioStream.h"
+#include "MainThreadUtils.h"
+#include "MediaStreamTypes.h"
+#include "StreamTracks.h"
+#include "VideoSegment.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/TaskQueue.h"
-
 #include "mozilla/dom/AudioChannelBinding.h"
-
-#include "AudioStream.h"
-#include "nsTArray.h"
-#include "nsIRunnable.h"
-#include "VideoSegment.h"
-#include "StreamTracks.h"
-#include "MainThreadUtils.h"
-#include "StreamTracks.h"
 #include "nsAutoPtr.h"
 #include "nsAutoRef.h"
+#include "nsIRunnable.h"
+#include "nsTArray.h"
 #include <speex/speex_resampler.h>
 
 class nsIRunnable;
+class nsIGlobalObject;
+class nsPIDOMWindowInner;
 
 template <>
 class nsAutoRefTraits<SpeexResamplerState> : public nsPointerRefTraits<SpeexResamplerState>
@@ -77,7 +77,6 @@ namespace media {
  * reprocess it. This is triggered automatically by the MediaStreamGraph.
  */
 
-class AbstractThread;
 class AudioNodeEngine;
 class AudioNodeExternalInputStream;
 class AudioNodeStream;
@@ -170,9 +169,6 @@ class ProcessedMediaStream;
 class SourceMediaStream;
 class TrackUnionStream;
 
-enum MediaStreamGraphEvent : uint32_t;
-enum TrackEventCommand : uint32_t;
-
 /**
  * Helper struct for binding a track listener to a specific TrackID.
  */
@@ -181,24 +177,6 @@ struct TrackBound
 {
   RefPtr<Listener> mListener;
   TrackID mTrackID;
-};
-
-/**
- * Describes how a track should be disabled.
- *
- * ENABLED        Not disabled.
- * SILENCE_BLACK  Audio data is turned into silence, video frames are made black.
- * SILENCE_FREEZE Audio data is turned into silence, video freezes at last frame.
- */
-enum class DisabledTrackMode
-{
-  ENABLED, SILENCE_BLACK, SILENCE_FREEZE
-};
-struct DisabledTrack {
-  DisabledTrack(TrackID aTrackID, DisabledTrackMode aMode)
-    : mTrackID(aTrackID), mMode(aMode) {}
-  TrackID mTrackID;
-  DisabledTrackMode mMode;
 };
 
 /**
@@ -276,7 +254,7 @@ class MediaStream : public mozilla::LinkedListElement<MediaStream>
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaStream)
 
-  explicit MediaStream(AbstractThread* aMainThread);
+  explicit MediaStream();
 
 protected:
   // Protected destructor, to discourage deletion outside of Release():
@@ -686,8 +664,6 @@ protected:
   MediaStreamGraphImpl* mGraph;
 
   dom::AudioChannel mAudioChannelType;
-
-  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 /**
@@ -699,7 +675,7 @@ protected:
 class SourceMediaStream : public MediaStream
 {
 public:
-  explicit SourceMediaStream(AbstractThread* aMainThread);
+  explicit SourceMediaStream();
 
   SourceMediaStream* AsSourceStream() override { return this; }
 
@@ -830,6 +806,8 @@ public:
     MutexAutoLock lock(mMutex);
     return mStreamTracksStartTimeStamp;
   }
+
+  bool OpenNewAudioCallbackDriver(AudioDataListener *aListener);
 
   // XXX need a Reset API
 
@@ -978,10 +956,12 @@ class MediaInputPort final
 {
 private:
   // Do not call this constructor directly. Instead call aDest->AllocateInputPort.
-  MediaInputPort(MediaStream* aSource, TrackID& aSourceTrack,
-                 ProcessedMediaStream* aDest, TrackID& aDestTrack,
-                 uint16_t aInputNumber, uint16_t aOutputNumber,
-                 AbstractThread* aMainThread)
+  MediaInputPort(MediaStream* aSource,
+                 TrackID& aSourceTrack,
+                 ProcessedMediaStream* aDest,
+                 TrackID& aDestTrack,
+                 uint16_t aInputNumber,
+                 uint16_t aOutputNumber)
     : mSource(aSource)
     , mSourceTrack(aSourceTrack)
     , mDest(aDest)
@@ -989,7 +969,6 @@ private:
     , mInputNumber(aInputNumber)
     , mOutputNumber(aOutputNumber)
     , mGraph(nullptr)
-    , mAbstractMainThread(aMainThread)
   {
     MOZ_COUNT_CTOR(MediaInputPort);
   }
@@ -1132,8 +1111,6 @@ private:
 
   // Our media stream graph
   MediaStreamGraphImpl* mGraph;
-
-  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 /**
@@ -1144,8 +1121,10 @@ private:
 class ProcessedMediaStream : public MediaStream
 {
 public:
-  explicit ProcessedMediaStream(AbstractThread* aMainThread)
-    : MediaStream(aMainThread), mAutofinish(false), mCycleMarker(0)
+  explicit ProcessedMediaStream()
+    : MediaStream()
+    , mAutofinish(false)
+    , mCycleMarker(0)
   {}
 
   // Control API.
@@ -1269,7 +1248,7 @@ protected:
 };
 
 /**
- * There can be multiple MediaStreamGraph per process: one per AudioChannel.
+ * There is a single MediaStreamGraph per window.
  * Additionaly, each OfflineAudioContext object creates its own MediaStreamGraph
  * object too..
  */
@@ -1296,8 +1275,16 @@ public:
 
   // Main thread only
   static MediaStreamGraph* GetInstance(GraphDriverType aGraphDriverRequested,
-                                       dom::AudioChannel aChannel);
-  static MediaStreamGraph* CreateNonRealtimeInstance(TrackRate aSampleRate);
+                                       dom::AudioChannel aChannel,
+                                       nsPIDOMWindowInner* aWindow);
+  static MediaStreamGraph* CreateNonRealtimeInstance(
+    TrackRate aSampleRate,
+    nsPIDOMWindowInner* aWindowId);
+
+  // Return the correct main thread for this graph. This always returns
+  // something that is valid. Thread safe.
+  AbstractThread* AbstractMainThread();
+
   // Idempotent
   static void DestroyNonRealtimeInstance(MediaStreamGraph* aGraph);
 
@@ -1312,7 +1299,7 @@ public:
    * Create a stream that a media decoder (or some other source of
    * media data, such as a camera) can write to.
    */
-  SourceMediaStream* CreateSourceStream(AbstractThread* aMainThread);
+  SourceMediaStream* CreateSourceStream();
   /**
    * Create a stream that will form the union of the tracks of its input
    * streams.
@@ -1327,12 +1314,11 @@ public:
    * TODO at some point we will probably need to add API to select
    * particular tracks of each input stream.
    */
-  ProcessedMediaStream* CreateTrackUnionStream(AbstractThread* aMainThread);
+  ProcessedMediaStream* CreateTrackUnionStream();
   /**
    * Create a stream that will mix all its audio input.
    */
-  ProcessedMediaStream* CreateAudioCaptureStream(TrackID aTrackId,
-                                                 AbstractThread* aMainThread);
+  ProcessedMediaStream* CreateAudioCaptureStream(TrackID aTrackId);
 
   /**
    * Add a new stream to the graph.  Main thread.
@@ -1370,19 +1356,9 @@ public:
    *
    * Should only be called during MediaStreamListener callbacks or during
    * ProcessedMediaStream::ProcessInput().
-   *
-   * |aMainThread| is the corresponding AbstractThread on the main thread to
-   * drain the direct tasks generated by |aRunnable|.
-   * Note: The reasons for assigning proper |aMainThread| are
-   * - MSG serves media elements in multiple windows run on main thread.
-   * - DocGroup-specific AbstractMainThread is introduced to cluster the tasks
-   *   of the same window for prioritizing tasks among different windows.
-   * - Proper |aMainThread| ensures that tasks dispatched to the main thread are
-   *   clustered to the right queue and are executed in right order.
    */
-  virtual void
-  DispatchToMainThreadAfterStreamStateUpdate(AbstractThread* aMainThread,
-                                             already_AddRefed<nsIRunnable> aRunnable);
+  virtual void DispatchToMainThreadAfterStreamStateUpdate(
+    already_AddRefed<nsIRunnable> aRunnable);
 
   /**
    * Returns graph sample rate in Hz.

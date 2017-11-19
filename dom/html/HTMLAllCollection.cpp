@@ -70,7 +70,6 @@ static bool
 IsAllNamedElement(nsIContent* aContent)
 {
   return aContent->IsAnyOfHTMLElements(nsGkAtoms::a,
-                                       nsGkAtoms::applet,
                                        nsGkAtoms::button,
                                        nsGkAtoms::embed,
                                        nsGkAtoms::form,
@@ -111,15 +110,12 @@ DocAllResultMatch(Element* aElement, int32_t aNamespaceID, nsIAtom* aAtom,
 nsContentList*
 HTMLAllCollection::GetDocumentAllList(const nsAString& aID)
 {
-  if (nsContentList* docAllList = mNamedMap.GetWeak(aID)) {
-    return docAllList;
-  }
-
-  nsCOMPtr<nsIAtom> id = NS_Atomize(aID);
-  RefPtr<nsContentList> docAllList =
-    new nsContentList(mDocument, DocAllResultMatch, nullptr, nullptr, true, id);
-  mNamedMap.Put(aID, docAllList);
-  return docAllList;
+  return mNamedMap.LookupForAdd(aID).OrInsert(
+    [this, &aID] () {
+      nsCOMPtr<nsIAtom> id = NS_Atomize(aID);
+      return new nsContentList(mDocument, DocAllResultMatch, nullptr,
+                               nullptr, true, id);
+    });
 }
 
 void

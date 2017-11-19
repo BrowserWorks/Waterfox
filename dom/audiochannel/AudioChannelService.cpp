@@ -22,10 +22,6 @@
 #include "nsPIDOMWindow.h"
 #include "nsServiceManagerUtils.h"
 
-#ifdef MOZ_WIDGET_GONK
-#include "nsJSUtils.h"
-#endif
-
 #include "mozilla/Preferences.h"
 
 using namespace mozilla;
@@ -85,9 +81,11 @@ private:
 class AudioPlaybackRunnable final : public Runnable
 {
 public:
-  AudioPlaybackRunnable(nsPIDOMWindowOuter* aWindow, bool aActive,
+  AudioPlaybackRunnable(nsPIDOMWindowOuter* aWindow,
+                        bool aActive,
                         AudioChannelService::AudibleChangedReasons aReason)
-    : mWindow(aWindow)
+    : mozilla::Runnable("AudioPlaybackRunnable")
+    , mWindow(aWindow)
     , mActive(aActive)
     , mReason(aReason)
   {}
@@ -318,19 +316,6 @@ AudioChannelService::AudioChannelService()
 
 AudioChannelService::~AudioChannelService()
 {
-}
-
-void
-AudioChannelService::NotifyCreatedNewAgent(AudioChannelAgent* aAgent)
-{
-  MOZ_ASSERT(aAgent);
-
-  nsCOMPtr<nsPIDOMWindowOuter> window = aAgent->Window();
-  if (!window) {
-    return;
-  }
-
-  window->NotifyCreatedNewMediaComponent();
 }
 
 void
@@ -578,7 +563,8 @@ AudioChannelService::GetAudioChannel(const nsAString& aChannel)
 /* static */ AudioChannel
 AudioChannelService::GetDefaultAudioChannel()
 {
-  nsAutoString audioChannel(Preferences::GetString("media.defaultAudioChannel"));
+  nsAutoString audioChannel;
+  Preferences::GetString("media.defaultAudioChannel", audioChannel);
   if (audioChannel.IsEmpty()) {
     return AudioChannel::Normal;
   }
@@ -632,7 +618,12 @@ AudioChannelService::IsWindowActive(nsPIDOMWindowOuter* aWindow)
   if (!window) {
     return false;
   }
-  AudioChannelWindow* winData = GetOrCreateWindowData(window);
+
+  AudioChannelWindow* winData = GetWindowData(window->WindowID());
+  if (!winData) {
+    return false;
+  }
+
   return !winData->mAudibleAgents.IsEmpty();
 }
 
@@ -664,10 +655,6 @@ AudioChannelService::NotifyMediaResumedFromBlock(nsPIDOMWindowOuter* aWindow)
 
   AudioChannelWindow* winData = GetWindowData(topWindow->WindowID());
   if (!winData) {
-    return;
-  }
-
-  if (!winData->mShouldSendBlockStopEvent) {
     return;
   }
 
@@ -871,10 +858,11 @@ AudioChannelService::AudioChannelWindow::RemoveAgent(AudioChannelAgent* aAgent)
 void
 AudioChannelService::AudioChannelWindow::NotifyMediaBlockStop(nsPIDOMWindowOuter* aWindow)
 {
-  mShouldSendBlockStopEvent = false;
   // Can't use raw pointer for lamba variable capturing, use smart ptr.
   nsCOMPtr<nsPIDOMWindowOuter> window = aWindow;
-  NS_DispatchToCurrentThread(NS_NewRunnableFunction([window] () -> void {
+  NS_DispatchToCurrentThread(NS_NewRunnableFunction(
+    "dom::AudioChannelService::AudioChannelWindow::NotifyMediaBlockStop",
+    [window]() -> void {
       nsCOMPtr<nsIObserverService> observerService =
         services::GetObserverService();
       if (NS_WARN_IF(!observerService)) {
@@ -883,9 +871,27 @@ AudioChannelService::AudioChannelWindow::NotifyMediaBlockStop(nsPIDOMWindowOuter
 
       observerService->NotifyObservers(ToSupports(window),
                                        "audio-playback",
-                                       u"blockStop");
+                                       u"mediaBlockStop");
     })
   );
+
+  if (mShouldSendActiveMediaBlockStopEvent) {
+    mShouldSendActiveMediaBlockStopEvent = false;
+    NS_DispatchToCurrentThread(NS_NewRunnableFunction(
+      "dom::AudioChannelService::AudioChannelWindow::NotifyMediaBlockStop",
+      [window]() -> void {
+        nsCOMPtr<nsIObserverService> observerService =
+          services::GetObserverService();
+        if (NS_WARN_IF(!observerService)) {
+          return;
+        }
+
+        observerService->NotifyObservers(ToSupports(window),
+                                         "audio-playback",
+                                         u"activeMediaBlockStop");
+      })
+    );
+  }
 }
 
 void
@@ -1047,20 +1053,21 @@ AudioChannelService::AudioChannelWindow::MaybeNotifyMediaBlockStart(AudioChannel
     return;
   }
 
-  if (!mShouldSendBlockStopEvent) {
-      mShouldSendBlockStopEvent = true;
-      NS_DispatchToCurrentThread(NS_NewRunnableFunction([window] () -> void {
-        nsCOMPtr<nsIObserverService> observerService =
-          services::GetObserverService();
-        if (NS_WARN_IF(!observerService)) {
-          return;
-        }
+  if (!mShouldSendActiveMediaBlockStopEvent) {
+      mShouldSendActiveMediaBlockStopEvent = true;
+      NS_DispatchToCurrentThread(NS_NewRunnableFunction(
+        "dom::AudioChannelService::AudioChannelWindow::"
+        "MaybeNotifyMediaBlockStart",
+        [window]() -> void {
+          nsCOMPtr<nsIObserverService> observerService =
+            services::GetObserverService();
+          if (NS_WARN_IF(!observerService)) {
+            return;
+          }
 
-        observerService->NotifyObservers(ToSupports(window),
-                                         "audio-playback",
-                                         u"blockStart");
-      })
-    );
+          observerService->NotifyObservers(
+            ToSupports(window), "audio-playback", u"activeMediaBlockStart");
+        }));
   }
 }
 

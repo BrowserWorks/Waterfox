@@ -40,23 +40,22 @@ class MozlintParser(ArgumentParser):
                   "testing a directory that otherwise wouldn't be run, "
                   "without needing to modify the config file.",
           }],
-        [['-r', '--rev'],
-         {'default': None,
-          'help': "Lint files touched by the given revision(s). Works with "
-                  "mercurial or git."
-          }],
         [['-o', '--outgoing'],
          {'const': 'default',
           'nargs': '?',
-          'help': "Lint files touched by commits that are not on the remote repository."
-                  "If you are using git please specify which remote you want to compare to."
-                  "Works with mercurial or git."
+          'help': "Lint files touched by commits that are not on the remote repository. "
+                  "Without arguments, finds the default remote that would be pushed to. "
+                  "The remote branch can also be specified manually. Works with "
+                  "mercurial or git."
           }],
         [['-w', '--workdir'],
-         {'default': False,
-          'action': 'store_true',
+         {'const': 'all',
+          'nargs': '?',
+          'choices': ['staged', 'all'],
           'help': "Lint files touched by changes in the working directory "
-                  "(i.e haven't been committed yet). Works with mercurial or git.",
+                  "(i.e haven't been committed yet). On git, --workdir=staged "
+                  "can be used to only consider staged files. Works with "
+                  "mercurial or git.",
           }],
         [['extra_args'],
          {'nargs': REMAINDER,
@@ -71,6 +70,13 @@ class MozlintParser(ArgumentParser):
             self.add_argument(*cli, **args)
 
     def parse_known_args(self, *args, **kwargs):
+        # Allow '-wo' or '-ow' as shorthand for both --workdir and --outgoing.
+        for token in ('-wo', '-ow'):
+            if token in args[0]:
+                i = args[0].index(token)
+                args[0].pop(i)
+                args[0][i:i] = [token[:2], '-' + token[2]]
+
         # This is here so the eslint mach command doesn't lose 'extra_args'
         # when using mach's dispatch functionality.
         args, extra = ArgumentParser.parse_known_args(self, *args, **kwargs)
@@ -101,16 +107,14 @@ def find_linters(linters=None):
     return lints
 
 
-def run(paths, linters, fmt, rev, outgoing, workdir, **lintargs):
+def run(paths, linters, fmt, outgoing, workdir, **lintargs):
     from mozlint import LintRoller, formatters
 
     lint = LintRoller(**lintargs)
     lint.read(find_linters(linters))
 
     # run all linters
-    results = lint.roll(paths, rev=rev, outgoing=outgoing,
-                        workdir=workdir)
-
+    results = lint.roll(paths, outgoing=outgoing, workdir=workdir)
     formatter = formatters.get(fmt)
 
     # Encode output with 'replace' to avoid UnicodeEncodeErrors on

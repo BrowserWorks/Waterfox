@@ -22,15 +22,17 @@ namespace jit {
     _(GuardIsInt32Index)                  \
     _(GuardType)                          \
     _(GuardClass)                         \
+    _(GuardIsNativeFunction)              \
     _(GuardIsProxy)                       \
-    _(GuardIsCrossCompartmentWrapper)     \
     _(GuardNotDOMProxy)                   \
+    _(GuardSpecificInt32Immediate)        \
     _(GuardMagicValue)                    \
     _(GuardNoUnboxedExpando)              \
     _(GuardAndLoadUnboxedExpando)         \
     _(GuardNoDetachedTypedObjects)        \
     _(GuardNoDenseElements)               \
     _(GuardAndGetIndexFromString)         \
+    _(GuardIndexIsNonNegative)            \
     _(LoadProto)                          \
     _(LoadEnclosingEnvironment)           \
     _(LoadWrapperTarget)                  \
@@ -53,6 +55,11 @@ namespace jit {
     _(LoadTypedElementResult)             \
     _(LoadObjectResult)                   \
     _(LoadTypeOfObjectResult)             \
+    _(CompareStringResult)                \
+    _(CompareObjectResult)                \
+    _(CompareSymbolResult)                \
+    _(CallPrintString)                    \
+    _(Breakpoint)                         \
     _(MegamorphicLoadSlotByValueResult)   \
     _(MegamorphicHasOwnResult)            \
     _(WrapResult)
@@ -590,6 +597,8 @@ class MOZ_RAII CacheIRCompiler
     void emitStoreTypedObjectReferenceProp(ValueOperand val, ReferenceTypeDescr::Type type,
                                            const Address& dest, Register scratch);
 
+    void emitRegisterEnumerator(Register enumeratorsList, Register iter, Register scratch);
+
   private:
     void emitPostBarrierShared(Register obj, const ConstantOrRegister& val, Register scratch,
                                Register maybeIndex);
@@ -610,6 +619,8 @@ class MOZ_RAII CacheIRCompiler
         MOZ_ASSERT(index != InvalidReg);
         emitPostBarrierShared(obj, val, scratch, index);
     }
+
+    bool emitComparePointerResultShared(bool symbol);
 
 #define DEFINE_SHARED_OP(op) MOZ_MUST_USE bool emit##op();
     CACHE_IR_SHARED_OPS(DEFINE_SHARED_OP)

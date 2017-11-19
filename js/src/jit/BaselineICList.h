@@ -47,7 +47,7 @@ namespace jit {
     _(Call_ScriptedApplyArray)                   \
     _(Call_ScriptedApplyArguments)               \
     _(Call_ScriptedFunCall)                      \
-    _(Call_StringSplit)                          \
+    _(Call_ConstStringSplit)                     \
     _(Call_IsSuspendedStarGenerator)             \
                                                  \
     _(GetElem_Fallback)                          \
@@ -67,7 +67,7 @@ namespace jit {
                                                  \
     _(TableSwitch)                               \
                                                  \
-    _(IteratorNew_Fallback)                      \
+    _(GetIterator_Fallback)                      \
     _(IteratorMore_Fallback)                     \
     _(IteratorMore_Native)                       \
     _(IteratorClose_Fallback)                    \

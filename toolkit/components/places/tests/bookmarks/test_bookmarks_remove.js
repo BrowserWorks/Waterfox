@@ -1,6 +1,39 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+const UNVISITED_BOOKMARK_BONUS = 140;
+
+function promiseFrecencyChanged(expectedURI, expectedFrecency) {
+  return new Promise(resolve => {
+    let obs = new NavHistoryObserver();
+    obs.onFrecencyChanged = (uri, newFrecency) => {
+      Assert.equal(uri.spec, expectedURI, "onFrecencyChanged is triggered for the correct uri.");
+      Assert.equal(newFrecency, expectedFrecency, "onFrecencyChanged has the expected frecency");
+      PlacesUtils.history.removeObserver(obs)
+      resolve();
+    };
+
+    PlacesUtils.history.addObserver(obs);
+  });
+}
+
+function promiseManyFrecenciesChanged() {
+  return new Promise(resolve => {
+    let obs = new NavHistoryObserver();
+    obs.onManyFrecenciesChanged = () => {
+      Assert.ok(true, "onManyFrecenciesChanged is triggered.");
+      PlacesUtils.history.removeObserver(obs)
+      resolve();
+    };
+
+    PlacesUtils.history.addObserver(obs);
+  });
+}
+
+add_task(async function setup() {
+  Services.prefs.setIntPref("places.frecency.unvisitedBookmarkBonus", UNVISITED_BOOKMARK_BONUS);
+});
+
 add_task(async function invalid_input_throws() {
   Assert.throws(() => PlacesUtils.bookmarks.remove(),
                 /Input should be a valid object/);
@@ -66,11 +99,20 @@ add_task(async function remove_normal_folder_under_root_succeeds() {
 });
 
 add_task(async function remove_bookmark() {
+  // When removing a bookmark we need to check the frecency. First we confirm
+  // that there is a normal update when it is inserted.
+  let frecencyChangedPromise = promiseFrecencyChanged("http://example.com/",
+    UNVISITED_BOOKMARK_BONUS);
   let bm1 = await PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
                                                  type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
                                                  url: "http://example.com/",
                                                  title: "a bookmark" });
   checkBookmarkObject(bm1);
+
+  await frecencyChangedPromise;
+
+  // This second one checks the frecency is changed when we remove the bookmark.
+  frecencyChangedPromise = promiseFrecencyChanged("http://example.com/", 0);
 
   let bm2 = await PlacesUtils.bookmarks.remove(bm1.guid);
   checkBookmarkObject(bm2);
@@ -82,6 +124,8 @@ add_task(async function remove_bookmark() {
   Assert.equal(bm2.type, PlacesUtils.bookmarks.TYPE_BOOKMARK);
   Assert.equal(bm2.url.href, "http://example.com/");
   Assert.equal(bm2.title, "a bookmark");
+
+  await frecencyChangedPromise;
 });
 
 
@@ -121,7 +165,7 @@ add_task(async function remove_bookmark_empty_title() {
 
   Assert.deepEqual(bm1, bm2);
   Assert.equal(bm2.index, 0);
-  Assert.ok(!("title" in bm2));
+  Assert.strictEqual(bm2.title, "");
 });
 
 add_task(async function remove_folder() {
@@ -140,7 +184,30 @@ add_task(async function remove_folder() {
   Assert.equal(bm2.type, PlacesUtils.bookmarks.TYPE_FOLDER);
   Assert.equal(bm2.title, "a folder");
   Assert.ok(!("url" in bm2));
+
+  // No promiseManyFrecenciesChanged in this test as the folder doesn't have
+  // any children that would need updating.
 });
+
+add_task(async function test_contents_removed() {
+  let folder1 = await PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+                                                     type: PlacesUtils.bookmarks.TYPE_FOLDER,
+                                                     title: "a folder" });
+  let bm1 = await PlacesUtils.bookmarks.insert({ parentGuid: folder1.guid,
+                                                 type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+                                                 url: "http://example.com/",
+                                                 title: "" });
+
+  let manyFrencenciesPromise = promiseManyFrecenciesChanged();
+  await PlacesUtils.bookmarks.remove(folder1);
+  Assert.strictEqual((await PlacesUtils.bookmarks.fetch(folder1.guid)), null);
+  Assert.strictEqual((await PlacesUtils.bookmarks.fetch(bm1.guid)), null);
+
+  // We should get an onManyFrecenciesChanged notification with the removal of
+  // a folder with children.
+  await manyFrencenciesPromise;
+});
+
 
 add_task(async function test_nested_contents_removed() {
   let folder1 = await PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
@@ -149,12 +216,20 @@ add_task(async function test_nested_contents_removed() {
   let folder2 = await PlacesUtils.bookmarks.insert({ parentGuid: folder1.guid,
                                                      type: PlacesUtils.bookmarks.TYPE_FOLDER,
                                                      title: "a folder" });
-  let sep = await PlacesUtils.bookmarks.insert({ parentGuid: folder2.guid,
-                                                 type: PlacesUtils.bookmarks.TYPE_SEPARATOR });
+  let bm1 = await PlacesUtils.bookmarks.insert({ parentGuid: folder2.guid,
+                                                 type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+                                                 url: "http://example.com/",
+                                                 title: "" });
+
+  let manyFrencenciesPromise = promiseManyFrecenciesChanged();
   await PlacesUtils.bookmarks.remove(folder1);
   Assert.strictEqual((await PlacesUtils.bookmarks.fetch(folder1.guid)), null);
   Assert.strictEqual((await PlacesUtils.bookmarks.fetch(folder2.guid)), null);
-  Assert.strictEqual((await PlacesUtils.bookmarks.fetch(sep.guid)), null);
+  Assert.strictEqual((await PlacesUtils.bookmarks.fetch(bm1.guid)), null);
+
+  // We should get an onManyFrecenciesChanged notification with the removal of
+  // a folder with children.
+  await manyFrencenciesPromise;
 });
 
 add_task(async function remove_folder_empty_title() {
@@ -168,7 +243,7 @@ add_task(async function remove_folder_empty_title() {
 
   Assert.deepEqual(bm1, bm2);
   Assert.equal(bm2.index, 0);
-  Assert.ok(!("title" in bm2));
+  Assert.strictEqual(bm2.title, "");
 });
 
 add_task(async function remove_separator() {
@@ -185,7 +260,7 @@ add_task(async function remove_separator() {
   Assert.deepEqual(bm2.dateAdded, bm2.lastModified);
   Assert.equal(bm2.type, PlacesUtils.bookmarks.TYPE_SEPARATOR);
   Assert.ok(!("url" in bm2));
-  Assert.ok(!("title" in bm2));
+  Assert.strictEqual(bm2.title, "");
 });
 
 add_task(async function test_nested_content_fails_when_not_allowed() {
@@ -198,7 +273,3 @@ add_task(async function test_nested_content_fails_when_not_allowed() {
   await Assert.rejects(PlacesUtils.bookmarks.remove(folder1, {preventRemovalOfNonEmptyFolders: true}),
                        /Cannot remove a non-empty folder./);
 });
-
-function run_test() {
-  run_next_test();
-}

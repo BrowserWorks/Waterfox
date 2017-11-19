@@ -51,13 +51,13 @@
 #include "nsFrameState.h"
 #include "Units.h"
 
+class gfxContext;
 class nsDocShell;
 class nsIDocument;
 class nsIFrame;
 class nsPresContext;
 class nsViewManager;
 class nsView;
-class nsRenderingContext;
 class nsIPageSequenceFrame;
 class nsCanvasFrame;
 class nsAString;
@@ -77,7 +77,6 @@ template<class E> class nsCOMArray;
 class AutoWeakFrame;
 class WeakFrame;
 class nsIScrollableFrame;
-class gfxContext;
 class nsIDOMEvent;
 class nsDisplayList;
 class nsDisplayListBuilder;
@@ -429,15 +428,37 @@ public:
    */
   virtual nsIScrollableFrame* GetRootScrollFrameAsScrollableExternal() const;
 
-  /*
+  /**
+   * Get the current focused content or DOM selection that should be the
+   * target for scrolling.
+   */
+  already_AddRefed<nsIContent> GetContentForScrolling() const;
+
+  /**
+   * Get the DOM selection that should be the target for scrolling, if there
+   * is no focused content.
+   */
+  already_AddRefed<nsIContent> GetSelectedContentForScrolling() const;
+
+  /**
+   * Gets nearest scrollable frame from the specified content node. The frame
+   * is scrollable with overflow:scroll or overflow:auto in some direction when
+   * aDirection is eEither.  Otherwise, this returns a nearest frame that is
+   * scrollable in the specified direction.
+   */
+  enum ScrollDirection { eHorizontal, eVertical, eEither };
+  nsIScrollableFrame* GetScrollableFrameToScrollForContent(
+                         nsIContent* aContent,
+                         ScrollDirection aDirection);
+
+  /**
    * Gets nearest scrollable frame from current focused content or DOM
    * selection if there is no focused content. The frame is scrollable with
    * overflow:scroll or overflow:auto in some direction when aDirection is
    * eEither.  Otherwise, this returns a nearest frame that is scrollable in
    * the specified direction.
    */
-  enum ScrollDirection { eHorizontal, eVertical, eEither };
-  nsIScrollableFrame* GetFrameToScrollAsScrollable(ScrollDirection aDirection);
+  nsIScrollableFrame* GetScrollableFrameToScroll(ScrollDirection aDirection);
 
   /**
    * Returns the page sequence frame associated with the frame hierarchy.
@@ -1007,7 +1028,7 @@ public:
   virtual void DumpReflows() = 0;
   virtual void CountReflows(const char * aName, nsIFrame * aFrame) = 0;
   virtual void PaintCount(const char * aName,
-                                      nsRenderingContext* aRenderingContext,
+                                      gfxContext* aRenderingContext,
                                       nsPresContext * aPresContext,
                                       nsIFrame * aFrame,
                                       const nsPoint& aOffset,
@@ -1422,6 +1443,17 @@ public:
   virtual already_AddRefed<nsPIDOMWindowOuter> GetRootWindow() = 0;
 
   /**
+   * This returns the focused DOM window under our top level window.
+   * I.e., when we are deactive, this returns the *last* focused DOM window.
+   */
+  virtual already_AddRefed<nsPIDOMWindowOuter> GetFocusedDOMWindowInOurWindow() = 0;
+
+  /**
+   * Get the focused content under this window.
+   */
+  already_AddRefed<nsIContent> GetFocusedContentInOurWindow() const;
+
+  /**
    * Get the layer manager for the widget of the root view, if it has
    * one.
    */
@@ -1814,7 +1846,6 @@ protected:
   // missing/double frees.
   nsTHashtable<nsPtrHashKey<void>> mAllocatedPointers;
 #endif
-
 
   // Count of the number of times this presshell has been painted to a window.
   uint64_t                  mPaintCount;

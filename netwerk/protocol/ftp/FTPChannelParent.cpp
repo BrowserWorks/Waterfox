@@ -714,7 +714,7 @@ FTPChannelParent::ResumeForDiversion()
   // keep us alive if there's more data to be delivered to listener.
   if (NS_WARN_IF(NS_FAILED(Delete()))) {
     FailDiversion(NS_ERROR_UNEXPECTED);
-    return NS_ERROR_UNEXPECTED;   
+    return NS_ERROR_UNEXPECTED;
   }
   return NS_OK;
 }
@@ -755,8 +755,9 @@ FTPChannelParent::DivertTo(nsIStreamListener *aListener)
   // Call OnStartRequest and SendDivertMessages asynchronously to avoid
   // reentering client context.
   NS_DispatchToCurrentThread(
-    NewRunnableMethod(this, &FTPChannelParent::StartDiversion));
-  return;
+    NewRunnableMethod("net::FTPChannelParent::StartDiversion",
+                      this,
+                      &FTPChannelParent::StartDiversion));
 }
 
 void
@@ -800,10 +801,11 @@ FTPChannelParent::StartDiversion()
 class FTPFailDiversionEvent : public Runnable
 {
 public:
-  FTPFailDiversionEvent(FTPChannelParent *aChannelParent,
+  FTPFailDiversionEvent(FTPChannelParent* aChannelParent,
                         nsresult aErrorCode,
                         bool aSkipResume)
-    : mChannelParent(aChannelParent)
+    : Runnable("net::FTPFailDiversionEvent")
+    , mChannelParent(aChannelParent)
     , mErrorCode(aErrorCode)
     , mSkipResume(aSkipResume)
   {
@@ -899,11 +901,11 @@ FTPChannelParent::AsyncOnChannelRedirect(
     // when FTP is set to use HTTP proxying, we wind up getting redirected to an HTTP channel.
     nsCOMPtr<nsIHttpChannel> httpChan = do_QueryInterface(newChannel);
     if (!httpChan)
-      return NS_ERROR_UNEXPECTED; 
+      return NS_ERROR_UNEXPECTED;
   }
   mChannel = newChannel;
   callback->OnRedirectVerifyCallback(NS_OK);
-  return NS_OK; 
+  return NS_OK;
 }
 
 NS_IMETHODIMP

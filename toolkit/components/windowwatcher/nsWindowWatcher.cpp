@@ -490,13 +490,6 @@ nsWindowWatcher::CreateChromeWindow(const nsACString& aFeatures,
     return NS_ERROR_UNEXPECTED;
   }
 
-  // B2G multi-screen support. mozDisplayId is returned from the
-  // "display-changed" event, it is also platform-dependent.
-#ifdef MOZ_WIDGET_GONK
-  int retval = WinHasOption(aFeatures, "mozDisplayId", 0, nullptr);
-  windowCreator2->SetScreenId(retval);
-#endif
-
   bool cancel = false;
   nsCOMPtr<nsIWebBrowserChrome> newWindowChrome;
   nsresult rv =
@@ -803,10 +796,6 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
 
   SizeSpec sizeSpec;
   CalcSizeSpec(features, sizeSpec);
-
-  nsCOMPtr<nsIScriptSecurityManager> sm(
-    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID));
-
 
   // XXXbz Why is an AutoJSAPI good enough here?  Wouldn't AutoEntryScript (so
   // we affect the entry global) make more sense?  Or do we just want to affect

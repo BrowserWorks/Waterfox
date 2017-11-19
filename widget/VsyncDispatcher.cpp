@@ -11,11 +11,6 @@
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/CompositorThread.h"
 
-#ifdef MOZ_GECKO_PROFILER
-#include "GeckoProfiler.h"
-#include "ProfilerMarkerPayload.h"
-#endif
-
 using namespace mozilla::layers;
 
 namespace mozilla {
@@ -38,9 +33,7 @@ void
 CompositorVsyncDispatcher::NotifyVsync(TimeStamp aVsyncTimestamp)
 {
   // In vsync thread
-#ifdef MOZ_GECKO_PROFILER
   layers::CompositorBridgeParent::PostInsertVsyncProfilerMarker(aVsyncTimestamp);
-#endif
 
   MutexAutoLock lock(mCompositorObserverLock);
   if (mCompositorVsyncObserver) {
@@ -78,9 +71,11 @@ CompositorVsyncDispatcher::SetCompositorVsyncObserver(VsyncObserver* aVsyncObser
   }
 
   bool observeVsync = aVsyncObserver != nullptr;
-  nsCOMPtr<nsIRunnable> vsyncControl = NewRunnableMethod<bool>(this,
-                                        &CompositorVsyncDispatcher::ObserveVsync,
-                                        observeVsync);
+  nsCOMPtr<nsIRunnable> vsyncControl =
+    NewRunnableMethod<bool>("CompositorVsyncDispatcher::ObserveVsync",
+                            this,
+                            &CompositorVsyncDispatcher::ObserveVsync,
+                            observeVsync);
   NS_DispatchToMainThread(vsyncControl);
 }
 
@@ -169,8 +164,10 @@ void
 RefreshTimerVsyncDispatcher::UpdateVsyncStatus()
 {
   if (!NS_IsMainThread()) {
-    NS_DispatchToMainThread(NewRunnableMethod(this,
-                                              &RefreshTimerVsyncDispatcher::UpdateVsyncStatus));
+    NS_DispatchToMainThread(
+      NewRunnableMethod("RefreshTimerVsyncDispatcher::UpdateVsyncStatus",
+                        this,
+                        &RefreshTimerVsyncDispatcher::UpdateVsyncStatus));
     return;
   }
 

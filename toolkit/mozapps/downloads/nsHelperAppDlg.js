@@ -269,6 +269,9 @@ nsUnknownContentTypeDialog.prototype = {
 
           // Check to make sure we have a valid directory, otherwise, prompt
           if (result) {
+            // Notifications for CloudStorage API consumers to show offer
+            // prompts while downloading. See Bug 1365129
+            Services.obs.notifyObservers(null, "cloudstorage-prompt-notification", result.path);
             // This path is taken when we have a writable default download directory.
             aLauncher.saveDestinationAvailable(result);
             return;
@@ -362,7 +365,7 @@ nsUnknownContentTypeDialog.prototype = {
           aLauncher.saveDestinationAvailable(result);
         });
       });
-    })().then(null, Components.utils.reportError);
+    })().catch(Components.utils.reportError);
   },
 
   getFinalLeafName: function (aLeafName, aFileExt)
@@ -1068,9 +1071,7 @@ nsUnknownContentTypeDialog.prototype = {
         // Remember the file they chose to run.
         this.chosenApp = params.handlerApp;
       }
-    }
-    else {
-#if MOZ_WIDGET_GTK == 3
+    } else if ("@mozilla.org/applicationchooser;1" in Components.classes) {
       var nsIApplicationChooser = Components.interfaces.nsIApplicationChooser;
       var appChooser = Components.classes["@mozilla.org/applicationchooser;1"]
                                  .createInstance(nsIApplicationChooser);
@@ -1085,7 +1086,7 @@ nsUnknownContentTypeDialog.prototype = {
       appChooser.open(this.mLauncher.MIMEInfo.MIMEType, appChooserCallback);
       // The finishChooseApp is called from appChooserCallback
       return;
-#else
+    } else {
       var nsIFilePicker = Components.interfaces.nsIFilePicker;
       var fp = Components.classes["@mozilla.org/filepicker;1"]
                          .createInstance(nsIFilePicker);
@@ -1103,8 +1104,8 @@ nsUnknownContentTypeDialog.prototype = {
         localHandlerApp.executable = fp.file;
         this.chosenApp = localHandlerApp;
       }
-#endif // MOZ_WIDGET_GTK == 3
     }
+
     this.finishChooseApp();
   },
 

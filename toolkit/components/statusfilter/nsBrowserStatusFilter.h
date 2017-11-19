@@ -14,7 +14,7 @@
 #include "nsString.h"
 
 //-----------------------------------------------------------------------------
-// nsBrowserStatusFilter - a web progress listener implementation designed to 
+// nsBrowserStatusFilter - a web progress listener implementation designed to
 // sit between nsDocLoader and nsBrowserStatusHandler to filter out and limit
 // the frequency of certain events to improve page load performance.
 //-----------------------------------------------------------------------------
@@ -46,6 +46,7 @@ private:
 
 private:
     nsCOMPtr<nsIWebProgressListener> mListener;
+    nsCOMPtr<nsIEventTarget>         mTarget;
     nsCOMPtr<nsITimer>               mTimer;
 
     // delayed values

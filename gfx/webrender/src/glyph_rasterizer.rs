@@ -2,23 +2,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#[cfg(test)]
 use app_units::Au;
 use device::TextureFilter;
+use fnv::FnvHasher;
 use frame::FrameId;
 use platform::font::{FontContext, RasterizedGlyph};
 use profiler::TextureCacheProfileCounters;
 use rayon::ThreadPool;
 use rayon::prelude::*;
 use resource_cache::ResourceClassCache;
+use std::hash::BuildHasherDefault;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::sync::mpsc::{channel, Receiver, Sender};
+use std::collections::hash_map::Entry;
 use std::collections::HashSet;
 use std::mem;
 use texture_cache::{TextureCacheItemId, TextureCache};
-use internal_types::FontTemplate;
-use webrender_traits::{FontKey, FontRenderMode, ImageData, ImageFormat};
-use webrender_traits::{ImageDescriptor, ColorF, LayoutPoint};
-use webrender_traits::{GlyphKey, GlyphOptions, GlyphInstance, GlyphDimensions};
+#[cfg(test)]
+use api::{ColorF, FontRenderMode, IdNamespace};
+use api::{FontInstanceKey, LayoutPoint};
+use api::{FontKey, FontTemplate};
+use api::{ImageData, ImageDescriptor, ImageFormat};
+use api::{GlyphKey, GlyphInstance, GlyphDimensions};
 
 pub type GlyphCache = ResourceClassCache<GlyphRequest, Option<TextureCacheItemId>>;
 
@@ -111,10 +117,10 @@ impl GlyphRasterizer {
                     workers: Arc::clone(&workers),
                 }
             ),
-            glyph_rx: glyph_rx,
-            glyph_tx: glyph_tx,
+            glyph_rx,
+            glyph_tx,
             pending_glyphs: HashSet::new(),
-            workers: workers,
+            workers,
             fonts_to_remove: Vec::new(),
         }
     }
@@ -144,33 +150,32 @@ impl GlyphRasterizer {
         &mut self,
         glyph_cache: &mut GlyphCache,
         current_frame_id: FrameId,
-        font_key: FontKey,
-        size: Au,
-        color: ColorF,
+        font: FontInstanceKey,
         glyph_instances: &[GlyphInstance],
-        render_mode: FontRenderMode,
-        glyph_options: Option<GlyphOptions>,
+        requested_items: &mut HashSet<TextureCacheItemId, BuildHasherDefault<FnvHasher>>,
     ) {
-        assert!(self.font_contexts.lock_shared_context().has_font(&font_key));
+        assert!(self.font_contexts.lock_shared_context().has_font(&font.font_key));
 
         let mut glyphs = Vec::with_capacity(glyph_instances.len());
 
         // select glyphs that have not been requested yet.
         for glyph in glyph_instances {
-            let glyph_request = GlyphRequest::new(
-                font_key,
-                size,
-                color,
-                glyph.index,
-                glyph.point,
-                render_mode,
-                glyph_options,
-            );
+            let glyph_request = GlyphRequest::new(font.clone(),
+                                                  glyph.index,
+                                                  glyph.point);
 
-            glyph_cache.mark_as_needed(&glyph_request, current_frame_id);
-            if !glyph_cache.contains_key(&glyph_request) && !self.pending_glyphs.contains(&glyph_request) {
-                self.pending_glyphs.insert(glyph_request.clone());
-                glyphs.push(glyph_request);
+            match glyph_cache.entry(glyph_request.clone(), current_frame_id) {
+                Entry::Occupied(entry) => {
+                    if let &Some(texture_cache_item_id) = entry.get() {
+                        requested_items.insert(texture_cache_item_id);
+                    }
+                }
+                Entry::Vacant(..) => {
+                    if !self.pending_glyphs.contains(&glyph_request) {
+                        self.pending_glyphs.insert(glyph_request.clone());
+                        glyphs.push(glyph_request.clone());
+                    }
+                }
             }
         }
 
@@ -183,17 +188,13 @@ impl GlyphRasterizer {
         // spawn an async task to get off of the render backend thread as early as
         // possible and in that task use rayon's fork join dispatch to rasterize the
         // glyphs in the thread pool.
-        self.workers.spawn_async(move || {
+        self.workers.spawn(move || {
             let jobs = glyphs.par_iter().map(|request: &GlyphRequest| {
                 profile_scope!("glyph-raster");
                 let mut context = font_contexts.lock_current_context();
                 let job = GlyphRasterJob {
                     request: request.clone(),
-                    result: context.rasterize_glyph(
-                        &request.key,
-                        request.render_mode,
-                        request.glyph_options
-                    ),
+                    result: context.rasterize_glyph(&request.font, &request.key),
                 };
 
                 // Sanity check.
@@ -209,8 +210,14 @@ impl GlyphRasterizer {
         });
     }
 
-    pub fn get_glyph_dimensions(&mut self, glyph_key: &GlyphKey) -> Option<GlyphDimensions> {
-        self.font_contexts.lock_shared_context().get_glyph_dimensions(glyph_key)
+    pub fn get_glyph_dimensions(&mut self,
+                                font: &FontInstanceKey,
+                                glyph_key: &GlyphKey) -> Option<GlyphDimensions> {
+        self.font_contexts.lock_shared_context().get_glyph_dimensions(font, glyph_key)
+    }
+
+    pub fn get_glyph_index(&mut self, font_key: FontKey, ch: char) -> Option<u32> {
+        self.font_contexts.lock_shared_context().get_glyph_index(font_key, ch)
     }
 
     pub fn resolve_glyphs(
@@ -218,6 +225,7 @@ impl GlyphRasterizer {
         current_frame_id: FrameId,
         glyph_cache: &mut GlyphCache,
         texture_cache: &mut TextureCache,
+        requested_items: &mut HashSet<TextureCacheItemId, BuildHasherDefault<FnvHasher>>,
         texture_cache_profile: &mut TextureCacheProfileCounters,
     ) {
         let mut rasterized_glyphs = Vec::with_capacity(self.pending_glyphs.len());
@@ -248,21 +256,22 @@ impl GlyphRasterizer {
         for job in rasterized_glyphs {
             let image_id = job.result.and_then(
                 |glyph| if glyph.width > 0 && glyph.height > 0 {
-                    let image_id = texture_cache.new_item_id();
-                    texture_cache.insert(
-                        image_id,
+                    assert_eq!((glyph.left.fract(), glyph.top.fract()), (0.0, 0.0));
+                    let image_id = texture_cache.insert(
                         ImageDescriptor {
                             width: glyph.width,
                             height: glyph.height,
                             stride: None,
-                            format: ImageFormat::RGBA8,
+                            format: ImageFormat::BGRA8,
                             is_opaque: false,
                             offset: 0,
                         },
                         TextureFilter::Linear,
                         ImageData::Raw(Arc::new(glyph.bytes)),
+                        [glyph.left, glyph.top],
                         texture_cache_profile,
                     );
+                    requested_items.insert(image_id);
                     Some(image_id)
                 } else {
                     None
@@ -277,7 +286,7 @@ impl GlyphRasterizer {
         if !self.fonts_to_remove.is_empty() {
             let font_contexts = Arc::clone(&self.font_contexts);
             let fonts_to_remove = mem::replace(&mut self.fonts_to_remove, Vec::new());
-            self.workers.spawn_async(move || {
+            self.workers.spawn(move || {
                 for font_key in &fonts_to_remove {
                     font_contexts.lock_shared_context().delete_font(font_key);
                 }
@@ -308,24 +317,17 @@ impl FontContext {
 #[derive(Clone, Hash, PartialEq, Eq, Debug, Ord, PartialOrd)]
 pub struct GlyphRequest {
     pub key: GlyphKey,
-    pub render_mode: FontRenderMode,
-    pub glyph_options: Option<GlyphOptions>,
+    pub font: FontInstanceKey,
 }
 
 impl GlyphRequest {
     pub fn new(
-        font_key: FontKey,
-        size: Au,
-        color: ColorF,
+        font: FontInstanceKey,
         index: u32,
-        point: LayoutPoint,
-        render_mode: FontRenderMode,
-        glyph_options: Option<GlyphOptions>,
-    ) -> GlyphRequest {
+        point: LayoutPoint) -> Self {
         GlyphRequest {
-            key: GlyphKey::new(font_key, size, color, index, point, render_mode),
-            render_mode: render_mode,
-            glyph_options: glyph_options,
+            key: GlyphKey::new(index, point, font.render_mode),
+            font,
         }
     }
 }
@@ -347,12 +349,13 @@ fn raterize_200_glyphs() {
     let workers = Arc::new(ThreadPool::new(Configuration::new()).unwrap());
     let mut glyph_rasterizer = GlyphRasterizer::new(workers);
     let mut glyph_cache = GlyphCache::new();
+    let mut requested_items = HashSet::default();
 
     let mut font_file = File::open("../wrench/reftests/text/VeraBd.ttf").expect("Couldn't open font file");
     let mut font_data = vec![];
     font_file.read_to_end(&mut font_data).expect("failed to read font file");
 
-    let font_key = FontKey::new(0, 0);
+    let font_key = FontKey::new(IdNamespace(0), 0);
     glyph_rasterizer.add_font(font_key, FontTemplate::Raw(Arc::new(font_data), 0));
 
     let frame_id = FrameId(1);
@@ -365,16 +368,21 @@ fn raterize_200_glyphs() {
         });
     }
 
+    let font = FontInstanceKey {
+        font_key,
+        color: ColorF::new(0.0, 0.0, 0.0, 1.0).into(),
+        size: Au::from_px(32),
+        render_mode: FontRenderMode::Subpixel,
+        glyph_options: None,
+    };
+
     for i in 0..4 {
         glyph_rasterizer.request_glyphs(
             &mut glyph_cache,
             frame_id,
-            font_key,
-            Au::from_px(32),
-            ColorF::new(0.0, 0.0, 0.0, 1.0),
+            font.clone(),
             &glyph_instances[(50 * i)..(50 * (i + 1))],
-            FontRenderMode::Subpixel,
-            None,
+            &mut requested_items,
         );
     }
 
@@ -384,6 +392,7 @@ fn raterize_200_glyphs() {
         frame_id,
         &mut glyph_cache,
         &mut TextureCache::new(4096),
+        &mut requested_items,
         &mut TextureCacheProfileCounters::new(),
     );
 }

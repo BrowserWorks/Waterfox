@@ -22,8 +22,8 @@ def set_defaults(config, jobs):
         job['treeherder'].setdefault('tier', 1)
         job.setdefault('needs-sccache', True)
         _, worker_os = worker_type_implementation(job['worker-type'])
+        worker = job.setdefault('worker', {})
         if worker_os == "linux":
-            worker = job.setdefault('worker')
             worker.setdefault('docker-image', {'in-tree': 'desktop-build'})
             worker['chain-of-trust'] = True
             extra = job.setdefault('extra', {})
@@ -32,8 +32,12 @@ def set_defaults(config, jobs):
             extra['chainOfTrust']['inputs']['docker-image'] = {
                 "task-reference": "<docker-image>"
             }
-        elif worker_os in set(["macosx", "windows"]):
-            job['worker'].setdefault('env', {})
+        elif worker_os == "windows":
+            worker.setdefault('env', {})
+            worker['chain-of-trust'] = True
+        elif worker_os == "macosx":
+            worker.setdefault('env', {})
+
         yield job
 
 
@@ -43,6 +47,8 @@ def set_env(config, jobs):
     for job in jobs:
         env = config.config['args'].env
         if env:
-            job_env = job['worker']['env']
+            job_env = {}
+            if 'worker' in job:
+                job_env = job['worker']['env']
             job_env.update(dict(x.split('=') for x in env))
         yield job

@@ -10,6 +10,7 @@
 
 #include "mozilla/ViewportFrame.h"
 
+#include "mozilla/ServoRestyleManager.h"
 #include "nsGkAtoms.h"
 #include "nsIScrollableFrame.h"
 #include "nsSubDocumentFrame.h"
@@ -18,6 +19,7 @@
 #include "GeckoProfiler.h"
 #include "nsIMozBrowserFrame.h"
 #include "nsPlaceholderFrame.h"
+#include "mozilla/ServoStyleContextInlines.h"
 
 using namespace mozilla;
 typedef nsAbsoluteContainingBlock::AbsPosReflowFlags AbsPosReflowFlags;
@@ -55,8 +57,7 @@ ViewportFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists)
 {
-  PROFILER_LABEL("ViewportFrame", "BuildDisplayList",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("ViewportFrame::BuildDisplayList", GRAPHICS);
 
   if (nsIFrame* kid = mFrames.FirstChild()) {
     // make the kid's BorderBackground our own. This ensures that the canvas
@@ -211,7 +212,7 @@ ViewportFrame::RemoveFrame(ChildListID     aListID,
 #endif
 
 /* virtual */ nscoord
-ViewportFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+ViewportFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -224,7 +225,7 @@ ViewportFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-ViewportFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+ViewportFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -413,6 +414,34 @@ ViewportFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
   }
 
   return nsContainerFrame::ComputeCustomOverflow(aOverflowAreas);
+}
+
+void
+ViewportFrame::UpdateStyle(ServoRestyleState& aRestyleState)
+{
+  ServoStyleContext* oldContext = StyleContext()->AsServo();
+  nsIAtom* pseudo = oldContext->GetPseudo();
+  RefPtr<ServoStyleContext> newContext =
+    aRestyleState.StyleSet().ResolveInheritingAnonymousBoxStyle(pseudo, nullptr);
+
+  // We're special because we have a null GetContent(), so don't call things
+  // like UpdateStyleOfOwnedChildFrame that try to append changes for the
+  // content to the change list.  Nor do we computed a changehint, since we have
+  // no way to apply it anyway.
+  newContext->ResolveSameStructsAs(oldContext);
+
+  MOZ_ASSERT(!GetNextContinuation(), "Viewport has continuations?");
+  SetStyleContext(newContext);
+
+  UpdateStyleOfOwnedAnonBoxes(aRestyleState);
+}
+
+void
+ViewportFrame::AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult)
+{
+  if (mFrames.NotEmpty()) {
+    aResult.AppendElement(mFrames.FirstChild());
+  }
 }
 
 #ifdef DEBUG_FRAME_DUMP

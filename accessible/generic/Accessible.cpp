@@ -318,7 +318,9 @@ Accessible::TranslateString(const nsString& aKey, nsAString& aStringOut)
     return;
 
   nsXPIDLString xsValue;
-  nsresult rv = stringBundle->GetStringFromName(aKey.get(), getter_Copies(xsValue));
+  nsresult rv =
+    stringBundle->GetStringFromName(NS_ConvertUTF16toUTF8(aKey).get(),
+                                    getter_Copies(xsValue));
   if (NS_SUCCEEDED(rv))
     aStringOut.Assign(xsValue);
 }
@@ -945,6 +947,10 @@ Accessible::Attributes()
                            NS_LITERAL_STRING("true"));
   }
 
+  // XXX: In ARIA 1.1, the value of aria-haspopup became a token (bug 1355449).
+  if (aria::UniversalStatesFor(mContent->AsElement()) & states::HASPOPUP)
+    nsAccUtils::SetAccAttr(attributes, nsGkAtoms::haspopup, NS_LITERAL_STRING("true"));
+
   // If there is no aria-live attribute then expose default value of 'live'
   // object attribute used for ARIA role of this accessible.
   const nsRoleMapEntry* roleMapEntry = ARIARoleMap();
@@ -1410,6 +1416,22 @@ Accessible::SetCurValue(double aValue)
 role
 Accessible::ARIATransformRole(role aRole)
 {
+  // Beginning with ARIA 1.1, user agents are expected to use the native host
+  // language role of the element when the region role is used without a name.
+  // https://rawgit.com/w3c/aria/master/core-aam/core-aam.html#role-map-region
+  //
+  // XXX: While the name computation algorithm can be non-trivial in the general
+  // case, it should not be especially bad here: If the author hasn't used the
+  // region role, this calculation won't occur. And the region role's name
+  // calculation rule excludes name from content. That said, this use case is
+  // another example of why we should consider caching the accessible name. See:
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=1378235.
+  if (aRole == roles::REGION) {
+    nsAutoString name;
+    Name(name);
+    return name.IsEmpty() ? NativeRole() : aRole;
+  }
+
   // XXX: these unfortunate exceptions don't fit into the ARIA table. This is
   // where the accessible role depends on both the role and ARIA state.
   if (aRole == roles::PUSHBUTTON) {
@@ -1430,14 +1452,14 @@ Accessible::ARIATransformRole(role aRole)
   } else if (aRole == roles::LISTBOX) {
     // A listbox inside of a combobox needs a special role because of ATK
     // mapping to menu.
-    if (mParent && mParent->Role() == roles::COMBOBOX) {
+    if (mParent && mParent->IsCombobox()) {
       return roles::COMBOBOX_LIST;
     } else {
       // Listbox is owned by a combobox
       Relation rel = RelationByType(RelationType::NODE_CHILD_OF);
       Accessible* targetAcc = nullptr;
       while ((targetAcc = rel.Next()))
-        if (targetAcc->Role() == roles::COMBOBOX)
+        if (targetAcc->IsCombobox())
           return roles::COMBOBOX_LIST;
     }
 
@@ -1799,8 +1821,13 @@ Accessible::DoCommand(nsIContent *aContent, uint32_t aActionIndex)
   class Runnable final : public mozilla::Runnable
   {
   public:
-    Runnable(Accessible* aAcc, nsIContent* aContent, uint32_t aIdx) :
-      mAcc(aAcc), mContent(aContent), mIdx(aIdx) { }
+    Runnable(Accessible* aAcc, nsIContent* aContent, uint32_t aIdx)
+      : mozilla::Runnable("Runnable")
+      , mAcc(aAcc)
+      , mContent(aContent)
+      , mIdx(aIdx)
+    {
+    }
 
     NS_IMETHOD Run() override
     {
@@ -2808,12 +2835,12 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
     return;
 
   nsAutoString separator;
-  keyStringBundle->GetStringFromName(u"MODIFIER_SEPARATOR",
+  keyStringBundle->GetStringFromName("MODIFIER_SEPARATOR",
                                      getter_Copies(separator));
 
   nsAutoString modifierName;
   if (mModifierMask & kControl) {
-    keyStringBundle->GetStringFromName(u"VK_CONTROL",
+    keyStringBundle->GetStringFromName("VK_CONTROL",
                                        getter_Copies(modifierName));
 
     aValue.Append(modifierName);
@@ -2821,7 +2848,7 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
   }
 
   if (mModifierMask & kAlt) {
-    keyStringBundle->GetStringFromName(u"VK_ALT",
+    keyStringBundle->GetStringFromName("VK_ALT",
                                        getter_Copies(modifierName));
 
     aValue.Append(modifierName);
@@ -2829,7 +2856,7 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
   }
 
   if (mModifierMask & kShift) {
-    keyStringBundle->GetStringFromName(u"VK_SHIFT",
+    keyStringBundle->GetStringFromName("VK_SHIFT",
                                        getter_Copies(modifierName));
 
     aValue.Append(modifierName);
@@ -2837,7 +2864,7 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
   }
 
   if (mModifierMask & kMeta) {
-    keyStringBundle->GetStringFromName(u"VK_META",
+    keyStringBundle->GetStringFromName("VK_META",
                                        getter_Copies(modifierName));
 
     aValue.Append(modifierName);

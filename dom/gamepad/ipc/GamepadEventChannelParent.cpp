@@ -20,12 +20,13 @@ class SendGamepadUpdateRunnable final : public Runnable
   RefPtr<GamepadEventChannelParent> mParent;
   GamepadChangeEvent mEvent;
  public:
-  SendGamepadUpdateRunnable(GamepadEventChannelParent* aParent,
-                            GamepadChangeEvent aEvent)
-    : mEvent(aEvent)
-  {
-    MOZ_ASSERT(aParent);
-    mParent = aParent;
+   SendGamepadUpdateRunnable(GamepadEventChannelParent* aParent,
+                             GamepadChangeEvent aEvent)
+     : Runnable("dom::SendGamepadUpdateRunnable")
+     , mEvent(aEvent)
+   {
+     MOZ_ASSERT(aParent);
+     mParent = aParent;
   }
   NS_IMETHOD Run() override
   {
@@ -45,7 +46,8 @@ GamepadEventChannelParent::GamepadEventChannelParent()
   RefPtr<GamepadPlatformService> service =
     GamepadPlatformService::GetParentService();
   MOZ_ASSERT(service);
-  mBackgroundThread = NS_GetCurrentThread();
+
+  mBackgroundEventTarget = GetCurrentThreadEventTarget();
   service->AddChannelParent(this);
 }
 
@@ -116,8 +118,8 @@ GamepadEventChannelParent::ActorDestroy(ActorDestroyReason aWhy)
 void
 GamepadEventChannelParent::DispatchUpdateEvent(const GamepadChangeEvent& aEvent)
 {
-  mBackgroundThread->Dispatch(new SendGamepadUpdateRunnable(this, aEvent),
-                              NS_DISPATCH_NORMAL);
+  mBackgroundEventTarget->Dispatch(new SendGamepadUpdateRunnable(this, aEvent),
+                                   NS_DISPATCH_NORMAL);
 }
 
 } // namespace dom

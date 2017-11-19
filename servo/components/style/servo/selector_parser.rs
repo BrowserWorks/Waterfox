@@ -6,20 +6,22 @@
 
 //! Servo's selector parser.
 
-use {Atom, Prefix, Namespace, LocalName};
+use {Atom, Prefix, Namespace, LocalName, CaseSensitivityExt};
 use attr::{AttrIdentifier, AttrValue};
-use cssparser::{Parser as CssParser, ToCss, serialize_identifier};
+use cssparser::{Parser as CssParser, ToCss, serialize_identifier, CowRcStr};
 use dom::{OpaqueNode, TElement, TNode};
 use element_state::ElementState;
 use fnv::FnvHashMap;
-use restyle_hints::ElementSnapshot;
+use invalidation::element::element_wrapper::ElementSnapshot;
+use properties::ComputedValues;
+use properties::PropertyFlags;
+use properties::longhands::display::computed_value as display;
 use selector_parser::{AttrValue as SelectorAttrValue, ElementExt, PseudoElementCascadeType, SelectorParser};
 use selectors::Element;
-use selectors::attr::{AttrSelectorOperation, NamespaceConstraint};
+use selectors::attr::{AttrSelectorOperation, NamespaceConstraint, CaseSensitivity};
 use selectors::parser::{SelectorMethods, SelectorParseError};
 use selectors::visitor::SelectorVisitor;
 use std::ascii::AsciiExt;
-use std::borrow::Cow;
 use std::fmt;
 use std::fmt::Debug;
 use std::mem;
@@ -28,7 +30,7 @@ use style_traits::{ParseError, StyleParseError};
 
 /// A pseudo-element, both public and private.
 ///
-/// NB: If you add to this list, be sure to update `each_pseudo_element` too.
+/// NB: If you add to this list, be sure to update `each_simple_pseudo_element` too.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 #[allow(missing_docs)]
@@ -38,6 +40,15 @@ pub enum PseudoElement {
     After = 0,
     Before,
     Selection,
+    // If/when :first-letter is added, update is_first_letter accordingly.
+
+    // If/when :first-line is added, update is_first_line accordingly.
+
+    // If/when ::first-letter, ::first-line, or ::placeholder are added, adjust
+    // our property_restriction implementation to do property filtering for
+    // them.  Also, make sure the UA sheet has the !important rules some of the
+    // APPLIES_TO_PLACEHOLDER properties expect!
+
     // Non-eager pseudos.
     DetailsSummary,
     DetailsContent,
@@ -110,6 +121,18 @@ impl PseudoElement {
         matches!(*self, PseudoElement::After | PseudoElement::Before)
     }
 
+    /// Whether the current pseudo element is :first-letter
+    #[inline]
+    pub fn is_first_letter(&self) -> bool {
+        false
+    }
+
+    /// Whether the current pseudo element is :first-line
+    #[inline]
+    pub fn is_first_line(&self) -> bool {
+        false
+    }
+
     /// Whether this pseudo-element is eagerly-cascaded.
     #[inline]
     pub fn is_eager(&self) -> bool {
@@ -158,6 +181,30 @@ impl PseudoElement {
     /// canonical one as it is.
     pub fn canonical(&self) -> PseudoElement {
         self.clone()
+    }
+
+    /// Stub, only Gecko needs this
+    pub fn pseudo_info(&self) { () }
+
+    /// Property flag that properties must have to apply to this pseudo-element.
+    #[inline]
+    pub fn property_restriction(&self) -> Option<PropertyFlags> {
+        None
+    }
+
+    /// Whether this pseudo-element should actually exist if it has
+    /// the given styles.
+    pub fn should_exist(&self, style: &ComputedValues) -> bool
+    {
+        let display = style.get_box().clone_display();
+        if display == display::T::none {
+            return false;
+        }
+        if self.is_before_or_after() && style.ineffective_content_property() {
+            return false;
+        }
+
+        true
     }
 }
 
@@ -311,7 +358,7 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
     type Impl = SelectorImpl;
     type Error = StyleParseError<'i>;
 
-    fn parse_non_ts_pseudo_class(&self, name: Cow<'i, str>)
+    fn parse_non_ts_pseudo_class(&self, name: CowRcStr<'i>)
                                  -> Result<NonTSPseudoClass, ParseError<'i>> {
         use self::NonTSPseudoClass::*;
         let pseudo_class = match_ignore_ascii_case! { &name,
@@ -344,19 +391,19 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
     }
 
     fn parse_non_ts_functional_pseudo_class<'t>(&self,
-                                                name: Cow<'i, str>,
+                                                name: CowRcStr<'i>,
                                                 parser: &mut CssParser<'i, 't>)
                                                 -> Result<NonTSPseudoClass, ParseError<'i>> {
         use self::NonTSPseudoClass::*;
         let pseudo_class = match_ignore_ascii_case!{ &name,
             "lang" => {
-                Lang(parser.expect_ident_or_string()?.into_owned().into_boxed_str())
+                Lang(parser.expect_ident_or_string()?.as_ref().into())
             }
             "-servo-case-sensitive-type-attr" => {
                 if !self.in_user_agent_stylesheet() {
                     return Err(SelectorParseError::UnexpectedIdent(name.clone()).into());
                 }
-                ServoCaseSensitiveTypeAttr(Atom::from(parser.expect_ident()?))
+                ServoCaseSensitiveTypeAttr(Atom::from(parser.expect_ident()?.as_ref()))
             }
             _ => return Err(SelectorParseError::UnexpectedIdent(name.clone()).into())
         };
@@ -364,7 +411,7 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
         Ok(pseudo_class)
     }
 
-    fn parse_pseudo_element(&self, name: Cow<'i, str>) -> Result<PseudoElement, ParseError<'i>> {
+    fn parse_pseudo_element(&self, name: CowRcStr<'i>) -> Result<PseudoElement, ParseError<'i>> {
         use self::PseudoElement::*;
         let pseudo_element = match_ignore_ascii_case! { &name,
             "before" => Before,
@@ -478,7 +525,7 @@ impl SelectorImpl {
 
     /// Executes `fun` for each pseudo-element.
     #[inline]
-    pub fn each_pseudo_element<F>(mut fun: F)
+    pub fn each_simple_pseudo_element<F>(mut fun: F)
         where F: FnMut(PseudoElement),
     {
         fun(PseudoElement::Before);
@@ -545,6 +592,12 @@ pub struct ServoElementSnapshot {
     pub attrs: Option<Vec<(AttrIdentifier, AttrValue)>>,
     /// Whether this element is an HTML element in an HTML document.
     pub is_html_element_in_html_document: bool,
+    /// Whether the class attribute changed or not.
+    pub class_changed: bool,
+    /// Whether the id attribute changed or not.
+    pub id_changed: bool,
+    /// Whether other attributes other than id or class changed or not.
+    pub other_attributes_changed: bool,
 }
 
 impl ServoElementSnapshot {
@@ -554,7 +607,25 @@ impl ServoElementSnapshot {
             state: None,
             attrs: None,
             is_html_element_in_html_document: is_html_element_in_html_document,
+            class_changed: false,
+            id_changed: false,
+            other_attributes_changed: false,
         }
+    }
+
+    /// Returns whether the id attribute changed or not.
+    pub fn id_changed(&self) -> bool {
+        self.id_changed
+    }
+
+    /// Returns whether the class attribute changed or not.
+    pub fn class_changed(&self) -> bool {
+        self.class_changed
+    }
+
+    /// Returns whether other attributes other than id or class changed or not.
+    pub fn other_attr_changed(&self) -> bool {
+        self.other_attributes_changed
     }
 
     fn get_attr(&self, namespace: &Namespace, name: &LocalName) -> Option<&AttrValue> {
@@ -584,9 +655,9 @@ impl ElementSnapshot for ServoElementSnapshot {
         self.get_attr(&ns!(), &local_name!("id")).map(|v| v.as_atom().clone())
     }
 
-    fn has_class(&self, name: &Atom) -> bool {
+    fn has_class(&self, name: &Atom, case_sensitivity: CaseSensitivity) -> bool {
         self.get_attr(&ns!(), &local_name!("class"))
-            .map_or(false, |v| v.as_tokens().iter().any(|atom| atom == name))
+            .map_or(false, |v| v.as_tokens().iter().any(|atom| case_sensitivity.eq_atom(atom, name)))
     }
 
     fn each_class<F>(&self, mut callback: F)

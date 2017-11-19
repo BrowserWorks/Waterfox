@@ -41,6 +41,13 @@
  *
  */
 
+// Forward decl because of nsHTMLDocument.h's complex dependency on /layout/style
+class nsHTMLDocument {
+public:
+  bool IsRegistrableDomainSuffixOfOrEqualTo(const nsAString& aHostSuffixString,
+                                            const nsACString& aOrigHost);
+};
+
 namespace mozilla {
 namespace dom {
 
@@ -62,8 +69,7 @@ public:
   static WebAuthnManager* Get();
 
   void
-  FinishMakeCredential(nsTArray<uint8_t>& aRegBuffer,
-                       nsTArray<uint8_t>& aSigBuffer);
+  FinishMakeCredential(nsTArray<uint8_t>& aRegBuffer);
 
   void
   FinishGetAssertion(nsTArray<uint8_t>& aCredentialId,
@@ -93,8 +99,9 @@ private:
 
   void MaybeClearTransaction();
 
-  already_AddRefed<MozPromise<nsresult, nsresult, false>>
-  GetOrCreateBackgroundActor();
+  typedef MozPromise<nsresult, nsresult, false> BackgroundActorPromise;
+
+  RefPtr<BackgroundActorPromise> GetOrCreateBackgroundActor();
 
   // JS Promise representing transaction status.
   RefPtr<Promise> mTransactionPromise;
@@ -114,7 +121,7 @@ private:
   Maybe<WebAuthnTransactionInfo> mInfo;
 
   // Promise for dealing with PBackground Actor creation.
-  MozPromiseHolder<MozPromise<nsresult, nsresult, false>> mPBackgroundCreationPromise;
+  MozPromiseHolder<BackgroundActorPromise> mPBackgroundCreationPromise;
 };
 
 } // namespace dom

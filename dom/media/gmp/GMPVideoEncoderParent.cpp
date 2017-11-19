@@ -58,18 +58,6 @@ GMPVideoEncoderParent::GMPVideoEncoderParent(GMPContentParent *aPlugin)
   mPluginId(aPlugin->GetPluginId())
 {
   MOZ_ASSERT(mPlugin);
-
-  nsresult rv = NS_NewNamedThread("GMPEncoded", getter_AddRefs(mEncodedThread));
-  if (NS_FAILED(rv)) {
-    MOZ_CRASH();
-  }
-}
-
-GMPVideoEncoderParent::~GMPVideoEncoderParent()
-{
-  if (mEncodedThread) {
-    mEncodedThread->Shutdown();
-  }
 }
 
 GMPVideoHostImpl&
@@ -83,10 +71,11 @@ void
 GMPVideoEncoderParent::Close()
 {
   LOGD(("%s::%s: %p", __CLASS__, __FUNCTION__, this));
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(mPlugin->GMPEventTarget()->IsOnCurrentThread());
   // Consumer is done with us; we can shut down.  No more callbacks should
   // be made to mCallback.  Note: do this before Shutdown()!
   mCallback = nullptr;
+
   // Let Shutdown mark us as dead so it knows if we had been alive
 
   // In case this is the last reference
@@ -108,7 +97,8 @@ GMPVideoEncoderParent::InitEncode(const GMPVideoCodec& aCodecSettings,
     return GMPGenericErr;;
   }
 
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(mPlugin->GMPEventTarget()->IsOnCurrentThread());
+  MOZ_ASSERT(!mCallback);
 
   if (!aCallback) {
     return GMPGenericErr;
@@ -134,7 +124,7 @@ GMPVideoEncoderParent::Encode(GMPUniquePtr<GMPVideoi420Frame> aInputFrame,
     return GMPGenericErr;
   }
 
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(mPlugin->GMPEventTarget()->IsOnCurrentThread());
 
   GMPUniquePtr<GMPVideoi420FrameImpl> inputFrameImpl(
     static_cast<GMPVideoi420FrameImpl*>(aInputFrame.release()));
@@ -168,7 +158,7 @@ GMPVideoEncoderParent::SetChannelParameters(uint32_t aPacketLoss, uint32_t aRTT)
     return GMPGenericErr;
   }
 
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(mPlugin->GMPEventTarget()->IsOnCurrentThread());
 
   if (!SendSetChannelParameters(aPacketLoss, aRTT)) {
     return GMPGenericErr;
@@ -186,7 +176,7 @@ GMPVideoEncoderParent::SetRates(uint32_t aNewBitRate, uint32_t aFrameRate)
     return GMPGenericErr;
   }
 
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(mPlugin->GMPEventTarget()->IsOnCurrentThread());
 
   if (!SendSetRates(aNewBitRate, aFrameRate)) {
     return GMPGenericErr;
@@ -204,7 +194,7 @@ GMPVideoEncoderParent::SetPeriodicKeyFrames(bool aEnable)
     return GMPGenericErr;
   }
 
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(mPlugin->GMPEventTarget()->IsOnCurrentThread());
 
   if (!SendSetPeriodicKeyFrames(aEnable)) {
     return GMPGenericErr;
@@ -219,7 +209,7 @@ void
 GMPVideoEncoderParent::Shutdown()
 {
   LOGD(("%s::%s: %p", __CLASS__, __FUNCTION__, this));
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(mPlugin->GMPEventTarget()->IsOnCurrentThread());
 
   if (mShuttingDown) {
     return;
@@ -238,12 +228,6 @@ GMPVideoEncoderParent::Shutdown()
   }
 }
 
-static void
-ShutdownEncodedThread(nsCOMPtr<nsIThread>& aThread)
-{
-  aThread->Shutdown();
-}
-
 // Note: Keep this sync'd up with Shutdown
 void
 GMPVideoEncoderParent::ActorDestroy(ActorDestroyReason aWhy)
@@ -256,14 +240,6 @@ GMPVideoEncoderParent::ActorDestroy(ActorDestroyReason aWhy)
     mCallback->Terminated();
     mCallback = nullptr;
   }
-  // Must be shut down before VideoEncoderDestroyed(), since this can recurse
-  // the GMPThread event loop.  See bug 1049501
-  if (mEncodedThread) {
-    nsCOMPtr<nsIRunnable> r = WrapRunnableNM(
-      &ShutdownEncodedThread, nsCOMPtr<nsIThread>(mEncodedThread));
-    SystemGroup::Dispatch("ShutdownEncodedThread", TaskCategory::Other, r.forget());
-    mEncodedThread = nullptr;
-  }
   if (mPlugin) {
     // Ignore any return code. It is OK for this to fail without killing the process.
     mPlugin->VideoEncoderDestroyed(this);
@@ -271,21 +247,6 @@ GMPVideoEncoderParent::ActorDestroy(ActorDestroyReason aWhy)
   }
   mVideoHost.ActorDestroyed(); // same as DoneWithAPI
   MaybeDisconnect(aWhy == AbnormalShutdown);
-}
-
-static void
-EncodedCallback(GMPVideoEncoderCallbackProxy* aCallback,
-                GMPVideoEncodedFrame* aEncodedFrame,
-                nsTArray<uint8_t>* aCodecSpecificInfo,
-                nsCOMPtr<nsIThread> aThread)
-{
-  aCallback->Encoded(aEncodedFrame, *aCodecSpecificInfo);
-  delete aCodecSpecificInfo;
-  // Ugh.  Must destroy the frame on GMPThread.
-  // XXX add locks to the ShmemManager instead?
-  aThread->Dispatch(WrapRunnable(aEncodedFrame,
-                                &GMPVideoEncodedFrame::Destroy),
-                   NS_DISPATCH_NORMAL);
 }
 
 mozilla::ipc::IPCResult
@@ -297,14 +258,10 @@ GMPVideoEncoderParent::RecvEncoded(const GMPVideoEncodedFrameData& aEncodedFrame
   }
 
   auto f = new GMPVideoEncodedFrameImpl(aEncodedFrame, &mVideoHost);
-  nsTArray<uint8_t> *codecSpecificInfo = new nsTArray<uint8_t>;
-  codecSpecificInfo->AppendElements((uint8_t*)aCodecSpecificInfo.Elements(), aCodecSpecificInfo.Length());
-  nsCOMPtr<nsIThread> thread = NS_GetCurrentThread();
-
-  mEncodedThread->Dispatch(WrapRunnableNM(&EncodedCallback,
-                                          mCallback, f, codecSpecificInfo, thread),
-                           NS_DISPATCH_NORMAL);
-
+  // Ignore any return code. It is OK for this to fail without killing the process.
+  // This can be called on any thread (or more than one)
+  mCallback->Encoded(f, aCodecSpecificInfo);
+  f->Destroy();
   return IPC_OK();
 }
 

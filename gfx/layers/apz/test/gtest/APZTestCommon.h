@@ -93,6 +93,7 @@ public:
   MOCK_METHOD3(NotifyAPZStateChange, void(const ScrollableLayerGuid& aGuid, APZStateChange aChange, int aArg));
   MOCK_METHOD0(NotifyFlushComplete, void());
   MOCK_METHOD1(NotifyAsyncScrollbarDragRejected, void(const FrameMetrics::ViewID&));
+  MOCK_METHOD1(NotifyAutoscrollHandledByAPZ, void(const FrameMetrics::ViewID&));
 };
 
 class MockContentControllerDelayed : public MockContentController {
@@ -272,9 +273,6 @@ public:
     case ScrollDirection::VERTICAL:
       EXPECT_EQ(PANNING_LOCKED_Y, mState);
       break;
-    case ScrollDirection::SENTINEL:
-      MOZ_ASSERT(false, "Invalid value");
-      break;
     }
   }
 
@@ -290,9 +288,9 @@ public:
     mcc->AdvanceBy(aIncrement);
     bool ret = AdvanceAnimations(mcc->Time());
     if (aOutTransform) {
-      *aOutTransform = GetCurrentAsyncTransform(AsyncPanZoomController::NORMAL);
+      *aOutTransform = GetCurrentAsyncTransform(AsyncPanZoomController::eForHitTesting);
     }
-    aScrollOffset = GetCurrentAsyncScrollOffset(AsyncPanZoomController::NORMAL);
+    aScrollOffset = GetCurrentAsyncScrollOffset(AsyncPanZoomController::eForHitTesting);
     return ret;
   }
 

@@ -15,6 +15,7 @@
 #include "nsIRequest.h"
 #include "nsILoadInfo.h"
 #include "nsIIOService.h"
+#include "mozilla/NotNull.h"
 #include "mozilla/Services.h"
 #include "mozilla/Unused.h"
 #include "nsNetCID.h"
@@ -51,7 +52,10 @@ class nsIIncrementalStreamLoaderObserver;
 class nsIUnicharStreamLoader;
 class nsIUnicharStreamLoaderObserver;
 
-namespace mozilla { class OriginAttributes; }
+namespace mozilla {
+class Encoding;
+class OriginAttributes;
+}
 
 template <class> class nsCOMPtr;
 template <typename> struct already_AddRefed;
@@ -70,8 +74,20 @@ nsresult NS_NewURI(nsIURI **result,
                    nsIIOService *ioService = nullptr);     // pass in nsIIOService to optimize callers
 
 nsresult NS_NewURI(nsIURI **result,
+                   const nsACString &spec,
+                   mozilla::NotNull<const mozilla::Encoding*> encoding,
+                   nsIURI *baseURI = nullptr,
+                   nsIIOService *ioService = nullptr);     // pass in nsIIOService to optimize callers
+
+nsresult NS_NewURI(nsIURI **result,
                    const nsAString &spec,
                    const char *charset = nullptr,
+                   nsIURI *baseURI = nullptr,
+                   nsIIOService *ioService = nullptr);     // pass in nsIIOService to optimize callers
+
+nsresult NS_NewURI(nsIURI **result,
+                   const nsAString &spec,
+                   mozilla::NotNull<const mozilla::Encoding*> encoding,
                    nsIURI *baseURI = nullptr,
                    nsIIOService *ioService = nullptr);     // pass in nsIIOService to optimize callers
 
@@ -650,8 +666,8 @@ bool NS_HasBeenCrossOrigin(nsIChannel* aChannel, bool aReport = false);
 #define NECKO_UNKNOWN_APP_ID UINT32_MAX
 
 // Unique first-party domain for separating the safebrowsing cookie.
-// Note if this value is changed, code in test_cookiejars_safebrowsing.js
-// should also be changed.
+// Note if this value is changed, code in test_cookiejars_safebrowsing.js and
+// nsUrlClassifierHashCompleter.js should also be changed.
 #define NECKO_SAFEBROWSING_FIRST_PARTY_DOMAIN \
   "safebrowsing.86868755-6b82-4842-b301-72671a0db32e.mozilla"
 
@@ -781,11 +797,10 @@ nsresult NS_URIChainHasFlags(nsIURI   *uri,
 already_AddRefed<nsIURI> NS_GetInnermostURI(nsIURI *aURI);
 
 /**
- * Get the "final" URI for a channel.  This is either the same as GetURI or
- * GetOriginalURI, depending on whether this channel has
- * nsIChanel::LOAD_REPLACE set.  For channels without that flag set, the final
- * URI is the original URI, while for ones with the flag the final URI is the
- * channel URI.
+ * Get the "final" URI for a channel.  This is either channel's load info
+ * resultPrincipalURI, if set, or GetOriginalURI.  In most cases (but not all) load
+ * info resultPrincipalURI, if set, corresponds to URI of the channel if it's required
+ * to represent the actual principal for the channel.
  */
 nsresult NS_GetFinalChannelURI(nsIChannel *channel, nsIURI **uri);
 
@@ -952,11 +967,6 @@ nsresult NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel);
  * pref network.http.referer.userControlPolicy
  */
 uint32_t NS_GetDefaultReferrerPolicy();
-
-/**
- * Update the window id of the current focused top level content window.
- */
-nsresult NS_NotifyCurrentTopLevelOuterContentWindowId(uint64_t aWindowId);
 
 namespace mozilla {
 namespace net {

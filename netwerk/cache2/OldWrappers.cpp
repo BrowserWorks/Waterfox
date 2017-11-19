@@ -40,7 +40,9 @@ namespace {
 class DoomCallbackSynchronizer : public Runnable
 {
 public:
-  explicit DoomCallbackSynchronizer(nsICacheEntryDoomCallback* cb) : mCB(cb)
+  explicit DoomCallbackSynchronizer(nsICacheEntryDoomCallback* cb)
+    : Runnable("net::DoomCallbackSynchronizer")
+    , mCB(cb)
   {
   }
   nsresult Dispatch();
@@ -302,7 +304,8 @@ NS_IMPL_ISUPPORTS_INHERITED(_OldGetDiskConsumption,
 
 _OldGetDiskConsumption::_OldGetDiskConsumption(
   nsICacheStorageConsumptionObserver* aCallback)
-  : mCallback(aCallback)
+  : Runnable("net::_OldGetDiskConsumption")
+  , mCallback(aCallback)
   , mSize(0)
 {
 }
@@ -523,7 +526,7 @@ namespace {
 
 nsresult
 GetCacheSessionNameForStoragePolicy(
-        nsCSubstring const &scheme,
+        const nsACString& scheme,
         nsCacheStoragePolicy storagePolicy,
         bool isPrivate,
         OriginAttributes const *originAttribs,
@@ -587,7 +590,7 @@ GetCacheSessionNameForStoragePolicy(
 }
 
 nsresult
-GetCacheSession(nsCSubstring const &aScheme,
+GetCacheSession(const nsACString& aScheme,
                 bool aWriteToDisk,
                 nsILoadContextInfo* aLoadInfo,
                 nsIApplicationCache* aAppCache,
@@ -653,14 +656,15 @@ GetCacheSession(nsCSubstring const &aScheme,
 
 NS_IMPL_ISUPPORTS_INHERITED(_OldCacheLoad, Runnable, nsICacheListener)
 
-_OldCacheLoad::_OldCacheLoad(nsCSubstring const& aScheme,
-                             nsCSubstring const& aCacheKey,
+_OldCacheLoad::_OldCacheLoad(const nsACString& aScheme,
+                             const nsACString& aCacheKey,
                              nsICacheEntryOpenCallback* aCallback,
                              nsIApplicationCache* aAppCache,
                              nsILoadContextInfo* aLoadInfo,
                              bool aWriteToDisk,
                              uint32_t aFlags)
-  : mScheme(aScheme)
+  : Runnable("net::_OldCacheLoad")
+  , mScheme(aScheme)
   , mCacheKey(aCacheKey)
   , mCallback(aCallback)
   , mLoadInfo(GetLoadContextInfo(aLoadInfo))
@@ -677,7 +681,8 @@ _OldCacheLoad::_OldCacheLoad(nsCSubstring const& aScheme,
 
 _OldCacheLoad::~_OldCacheLoad()
 {
-  ProxyReleaseMainThread(mAppCache);
+  ProxyReleaseMainThread(
+    "_OldCacheLoad::mAppCache", mAppCache);
 }
 
 nsresult _OldCacheLoad::Start()
@@ -1136,7 +1141,7 @@ nsresult _OldStorage::AssembleCacheKey(nsIURI *aURI,
   return NS_OK;
 }
 
-nsresult _OldStorage::ChooseApplicationCache(nsCSubstring const &cacheKey,
+nsresult _OldStorage::ChooseApplicationCache(const nsACString& cacheKey,
                                              nsIApplicationCache** aCache)
 {
   nsresult rv;

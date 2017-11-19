@@ -6,37 +6,26 @@
 //! name, ids and hash.
 
 use {Atom, LocalName};
+use applicable_declarations::ApplicableDeclarationBlock;
+use context::QuirksMode;
 use dom::TElement;
 use fnv::FnvHashMap;
 use pdqsort::sort_by;
 use rule_tree::CascadeLevel;
 use selector_parser::SelectorImpl;
 use selectors::matching::{matches_selector, MatchingContext, ElementSelectorFlags};
-use selectors::parser::{AncestorHashes, Component, Combinator, SelectorAndHashes, SelectorIter};
+use selectors::parser::{Component, Combinator, SelectorIter};
 use selectors::parser::LocalName as LocalNameSelector;
 use smallvec::VecLike;
-use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::collections::hash_map;
 use std::hash::Hash;
-use stylist::{ApplicableDeclarationBlock, Rule};
+use stylist::Rule;
 
 /// A trait to abstract over a given selector map entry.
 pub trait SelectorMapEntry : Sized + Clone {
     /// Gets the selector we should use to index in the selector map.
     fn selector(&self) -> SelectorIter<SelectorImpl>;
-
-    /// Gets the ancestor hashes associated with the selector.
-    fn hashes(&self) -> &AncestorHashes;
-}
-
-impl SelectorMapEntry for SelectorAndHashes<SelectorImpl> {
-    fn selector(&self) -> SelectorIter<SelectorImpl> {
-        self.selector.iter()
-    }
-
-    fn hashes(&self) -> &AncestorHashes {
-        &self.hashes
-    }
 }
 
 /// Map element data to selector-providing objects for which the last simple
@@ -63,11 +52,11 @@ impl SelectorMapEntry for SelectorAndHashes<SelectorImpl> {
 /// TODO: Tune the initial capacity of the HashMap
 #[derive(Debug)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-pub struct SelectorMap<T: SelectorMapEntry> {
+pub struct SelectorMap<T> {
     /// A hash from an ID to rules which contain that ID selector.
-    pub id_hash: FnvHashMap<Atom, Vec<T>>,
+    pub id_hash: MaybeCaseInsensitiveHashMap<Atom, Vec<T>>,
     /// A hash from a class name to rules which contain that class selector.
-    pub class_hash: FnvHashMap<Atom, Vec<T>>,
+    pub class_hash: MaybeCaseInsensitiveHashMap<Atom, Vec<T>>,
     /// A hash from local name to rules which contain that local name selector.
     pub local_name_hash: FnvHashMap<LocalName, Vec<T>>,
     /// Rules that don't have ID, class, or element selectors.
@@ -81,12 +70,12 @@ fn sort_by_key<T, F: Fn(&T) -> K, K: Ord>(v: &mut [T], f: F) {
     sort_by(v, |a, b| f(a).cmp(&f(b)))
 }
 
-impl<T: SelectorMapEntry> SelectorMap<T> {
+impl<T> SelectorMap<T> {
     /// Trivially constructs an empty `SelectorMap`.
     pub fn new() -> Self {
         SelectorMap {
-            id_hash: HashMap::default(),
-            class_hash: HashMap::default(),
+            id_hash: MaybeCaseInsensitiveHashMap::new(),
+            class_hash: MaybeCaseInsensitiveHashMap::new(),
             local_name_hash: HashMap::default(),
             other: Vec::new(),
             count: 0,
@@ -114,6 +103,7 @@ impl SelectorMap<Rule> {
                                            rule_hash_target: &E,
                                            matching_rules_list: &mut V,
                                            context: &mut MatchingContext,
+                                           quirks_mode: QuirksMode,
                                            flags_setter: &mut F,
                                            cascade_level: CascadeLevel)
         where E: TElement,
@@ -127,32 +117,35 @@ impl SelectorMap<Rule> {
         // At the end, we're going to sort the rules that we added, so remember where we began.
         let init_len = matching_rules_list.len();
         if let Some(id) = rule_hash_target.get_id() {
-            SelectorMap::get_matching_rules_from_hash(element,
-                                                      &self.id_hash,
-                                                      &id,
-                                                      matching_rules_list,
-                                                      context,
-                                                      flags_setter,
-                                                      cascade_level)
+            if let Some(rules) = self.id_hash.get(&id, quirks_mode) {
+                SelectorMap::get_matching_rules(element,
+                                                rules,
+                                                matching_rules_list,
+                                                context,
+                                                flags_setter,
+                                                cascade_level)
+            }
         }
 
         rule_hash_target.each_class(|class| {
-            SelectorMap::get_matching_rules_from_hash(element,
-                                                      &self.class_hash,
-                                                      class,
-                                                      matching_rules_list,
-                                                      context,
-                                                      flags_setter,
-                                                      cascade_level);
+            if let Some(rules) = self.class_hash.get(&class, quirks_mode) {
+                SelectorMap::get_matching_rules(element,
+                                                rules,
+                                                matching_rules_list,
+                                                context,
+                                                flags_setter,
+                                                cascade_level)
+            }
         });
 
-        SelectorMap::get_matching_rules_from_hash(element,
-                                                  &self.local_name_hash,
-                                                  rule_hash_target.get_local_name(),
-                                                  matching_rules_list,
-                                                  context,
-                                                  flags_setter,
-                                                  cascade_level);
+        if let Some(rules) = self.local_name_hash.get(rule_hash_target.get_local_name()) {
+            SelectorMap::get_matching_rules(element,
+                                            rules,
+                                            matching_rules_list,
+                                            context,
+                                            flags_setter,
+                                            cascade_level)
+        }
 
         SelectorMap::get_matching_rules(element,
                                         &self.other,
@@ -163,13 +156,7 @@ impl SelectorMap<Rule> {
 
         // Sort only the rules we just added.
         sort_by_key(&mut matching_rules_list[init_len..],
-                    |block| (block.specificity, block.source_order));
-    }
-
-    /// Check whether we have rules for the given id
-    #[inline]
-    pub fn has_rules_for_id(&self, id: &Atom) -> bool {
-        self.id_hash.get(id).is_some()
+                    |block| (block.specificity, block.source_order()));
     }
 
     /// Append to `rule_list` all universal Rules (rules with selector `*|*`) in
@@ -190,33 +177,9 @@ impl SelectorMap<Rule> {
         }
 
         sort_by_key(&mut rules_list,
-                    |block| (block.specificity, block.source_order));
+                    |block| (block.specificity, block.source_order()));
 
         rules_list
-    }
-
-    fn get_matching_rules_from_hash<E, Str, BorrowedStr: ?Sized, Vector, F>(
-        element: &E,
-        hash: &FnvHashMap<Str, Vec<Rule>>,
-        key: &BorrowedStr,
-        matching_rules: &mut Vector,
-        context: &mut MatchingContext,
-        flags_setter: &mut F,
-        cascade_level: CascadeLevel)
-        where E: TElement,
-              Str: Borrow<BorrowedStr> + Eq + Hash,
-              BorrowedStr: Eq + Hash,
-              Vector: VecLike<ApplicableDeclarationBlock>,
-              F: FnMut(&E, ElementSelectorFlags),
-    {
-        if let Some(rules) = hash.get(key) {
-            SelectorMap::get_matching_rules(element,
-                                            rules,
-                                            matching_rules,
-                                            context,
-                                            flags_setter,
-                                            cascade_level)
-        }
     }
 
     /// Adds rules in `rules` that match `element` to the `matching_rules` list.
@@ -233,7 +196,7 @@ impl SelectorMap<Rule> {
         for rule in rules {
             if matches_selector(&rule.selector,
                                 0,
-                                &rule.hashes,
+                                Some(&rule.hashes),
                                 element,
                                 context,
                                 flags_setter) {
@@ -246,16 +209,16 @@ impl SelectorMap<Rule> {
 
 impl<T: SelectorMapEntry> SelectorMap<T> {
     /// Inserts into the correct hash, trying id, class, and localname.
-    pub fn insert(&mut self, entry: T) {
+    pub fn insert(&mut self, entry: T, quirks_mode: QuirksMode) {
         self.count += 1;
 
         if let Some(id_name) = get_id_name(entry.selector()) {
-            find_push(&mut self.id_hash, id_name, entry);
+            self.id_hash.entry(id_name, quirks_mode).or_insert_with(Vec::new).push(entry);
             return;
         }
 
         if let Some(class_name) = get_class_name(entry.selector()) {
-            find_push(&mut self.class_hash, class_name, entry);
+            self.class_hash.entry(class_name, quirks_mode).or_insert_with(Vec::new).push(entry);
             return;
         }
 
@@ -292,13 +255,13 @@ impl<T: SelectorMapEntry> SelectorMap<T> {
     /// FIXME(bholley) This overlaps with SelectorMap<Rule>::get_all_matching_rules,
     /// but that function is extremely hot and I'd rather not rearrange it.
     #[inline]
-    pub fn lookup<E, F>(&self, element: E, f: &mut F) -> bool
+    pub fn lookup<E, F>(&self, element: E, quirks_mode: QuirksMode, f: &mut F) -> bool
         where E: TElement,
               F: FnMut(&T) -> bool
     {
         // Id.
         if let Some(id) = element.get_id() {
-            if let Some(v) = self.id_hash.get(&id) {
+            if let Some(v) = self.id_hash.get(&id, quirks_mode) {
                 for entry in v.iter() {
                     if !f(&entry) {
                         return false;
@@ -311,7 +274,7 @@ impl<T: SelectorMapEntry> SelectorMap<T> {
         let mut done = false;
         element.each_class(|class| {
             if !done {
-                if let Some(v) = self.class_hash.get(class) {
+                if let Some(v) = self.class_hash.get(class, quirks_mode) {
                     for entry in v.iter() {
                         if !f(&entry) {
                             done = true;
@@ -354,7 +317,8 @@ impl<T: SelectorMapEntry> SelectorMap<T> {
     #[inline]
     pub fn lookup_with_additional<E, F>(&self,
                                         element: E,
-                                        additional_id: Option<Atom>,
+                                        quirks_mode: QuirksMode,
+                                        additional_id: Option<&Atom>,
                                         additional_classes: &[Atom],
                                         f: &mut F)
                                         -> bool
@@ -362,13 +326,13 @@ impl<T: SelectorMapEntry> SelectorMap<T> {
               F: FnMut(&T) -> bool
     {
         // Do the normal lookup.
-        if !self.lookup(element, f) {
+        if !self.lookup(element, quirks_mode, f) {
             return false;
         }
 
         // Check the additional id.
         if let Some(id) = additional_id {
-            if let Some(v) = self.id_hash.get(&id) {
+            if let Some(v) = self.id_hash.get(id, quirks_mode) {
                 for entry in v.iter() {
                     if !f(&entry) {
                         return false;
@@ -379,7 +343,7 @@ impl<T: SelectorMapEntry> SelectorMap<T> {
 
         // Check the additional classes.
         for class in additional_classes {
-            if let Some(v) = self.class_hash.get(class) {
+            if let Some(v) = self.class_hash.get(class, quirks_mode) {
                 for entry in v.iter() {
                     if !f(&entry) {
                         return false;
@@ -392,15 +356,12 @@ impl<T: SelectorMapEntry> SelectorMap<T> {
     }
 }
 
-/// Searches the selector from right to left, beginning to the left of the
-/// ::pseudo-element (if any), and ending at the first combinator.
+/// Searches a compound selector from left to right. If the compound selector
+/// is a pseudo-element, it's ignored.
 ///
 /// The first non-None value returned from |f| is returned.
-///
-/// Effectively, pseudo-elements are ignored, given only state pseudo-classes
-/// may appear before them.
 #[inline(always)]
-fn find_from_right<F, R>(mut iter: SelectorIter<SelectorImpl>,
+fn find_from_left<F, R>(mut iter: SelectorIter<SelectorImpl>,
                          mut f: F)
                          -> Option<R>
     where F: FnMut(&Component<SelectorImpl>) -> Option<R>,
@@ -411,6 +372,8 @@ fn find_from_right<F, R>(mut iter: SelectorIter<SelectorImpl>,
         }
     }
 
+    // Effectively, pseudo-elements are ignored, given only state pseudo-classes
+    // may appear before them.
     if iter.next_sequence() == Some(Combinator::PseudoElement) {
         for ss in &mut iter {
             if let Some(r) = f(ss) {
@@ -426,7 +389,7 @@ fn find_from_right<F, R>(mut iter: SelectorIter<SelectorImpl>,
 #[inline(always)]
 pub fn get_id_name(iter: SelectorIter<SelectorImpl>)
                    -> Option<Atom> {
-    find_from_right(iter, |ss| {
+    find_from_left(iter, |ss| {
         // TODO(pradeep): Implement case-sensitivity based on the
         // document type and quirks mode.
         if let Component::ID(ref id) = *ss {
@@ -440,7 +403,7 @@ pub fn get_id_name(iter: SelectorIter<SelectorImpl>)
 #[inline(always)]
 pub fn get_class_name(iter: SelectorIter<SelectorImpl>)
                       -> Option<Atom> {
-    find_from_right(iter, |ss| {
+    find_from_left(iter, |ss| {
         // TODO(pradeep): Implement case-sensitivity based on the
         // document type and quirks mode.
         if let Component::Class(ref class) = *ss {
@@ -454,7 +417,7 @@ pub fn get_class_name(iter: SelectorIter<SelectorImpl>)
 #[inline(always)]
 pub fn get_local_name(iter: SelectorIter<SelectorImpl>)
                       -> Option<LocalNameSelector<SelectorImpl>> {
-    find_from_right(iter, |ss| {
+    find_from_left(iter, |ss| {
         if let Component::LocalName(ref n) = *ss {
             return Some(LocalNameSelector {
                 name: n.name.clone(),
@@ -470,4 +433,43 @@ fn find_push<Str: Eq + Hash, V>(map: &mut FnvHashMap<Str, Vec<V>>,
                                 key: Str,
                                 value: V) {
     map.entry(key).or_insert_with(Vec::new).push(value)
+}
+
+/// Wrapper for FnvHashMap that does ASCII-case-insensitive lookup in quirks mode.
+#[derive(Debug)]
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+pub struct MaybeCaseInsensitiveHashMap<K: Hash + Eq, V>(FnvHashMap<K, V>);
+
+impl<V> MaybeCaseInsensitiveHashMap<Atom, V> {
+    /// Empty map
+    pub fn new() -> Self {
+        MaybeCaseInsensitiveHashMap(FnvHashMap::default())
+    }
+
+    /// HashMap::entry
+    pub fn entry(&mut self, mut key: Atom, quirks_mode: QuirksMode) -> hash_map::Entry<Atom, V> {
+        if quirks_mode == QuirksMode::Quirks {
+            key = key.to_ascii_lowercase()
+        }
+        self.0.entry(key)
+    }
+
+    /// HashMap::iter
+    pub fn iter(&self) -> hash_map::Iter<Atom, V> {
+        self.0.iter()
+    }
+
+    /// HashMap::clear
+    pub fn clear(&mut self) {
+        self.0.clear()
+    }
+
+    /// HashMap::get
+    pub fn get(&self, key: &Atom, quirks_mode: QuirksMode) -> Option<&V> {
+        if quirks_mode == QuirksMode::Quirks {
+            self.0.get(&key.to_ascii_lowercase())
+        } else {
+            self.0.get(key)
+        }
+    }
 }

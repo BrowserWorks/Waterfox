@@ -504,11 +504,14 @@ AsyncFetchAndSetIconForPage::AsyncFetchAndSetIconForPage(
 , bool aFaviconLoadPrivate
 , nsIFaviconDataCallback* aCallback
 , nsIPrincipal* aLoadingPrincipal
-) : mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(aCallback))
+) : Runnable("places::AsyncFetchAndSetIconForPage")
+  , mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(
+      "AsyncFetchAndSetIconForPage::mCallback", aCallback))
   , mIcon(aIcon)
   , mPage(aPage)
   , mFaviconLoadPrivate(aFaviconLoadPrivate)
-  , mLoadingPrincipal(new nsMainThreadPtrHolder<nsIPrincipal>(aLoadingPrincipal))
+  , mLoadingPrincipal(new nsMainThreadPtrHolder<nsIPrincipal>(
+      "AsyncFetchAndSetIconForPage::mLoadingPrincipal", aLoadingPrincipal))
   , mCanceled(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -541,7 +544,9 @@ AsyncFetchAndSetIconForPage::Run()
   // Fetch the icon from the network, the request starts from the main-thread.
   // When done this will associate the icon to the page and notify.
   nsCOMPtr<nsIRunnable> event =
-    NewRunnableMethod(this, &AsyncFetchAndSetIconForPage::FetchFromNetwork);
+    NewRunnableMethod("places::AsyncFetchAndSetIconForPage::FetchFromNetwork",
+                      this,
+                      &AsyncFetchAndSetIconForPage::FetchFromNetwork);
   return NS_DispatchToMainThread(event);
 }
 
@@ -784,10 +789,11 @@ AsyncFetchAndSetIconForPage::OnStopRequest(nsIRequest* aRequest,
 //// AsyncAssociateIconToPage
 
 AsyncAssociateIconToPage::AsyncAssociateIconToPage(
-  const IconData& aIcon
-, const PageData& aPage
-, const nsMainThreadPtrHandle<nsIFaviconDataCallback>& aCallback
-) : mCallback(aCallback)
+  const IconData& aIcon,
+  const PageData& aPage,
+  const nsMainThreadPtrHandle<nsIFaviconDataCallback>& aCallback)
+  : Runnable("places::AsyncAssociateIconToPage")
+  , mCallback(aCallback)
   , mIcon(aIcon)
   , mPage(aPage)
 {
@@ -936,8 +942,10 @@ AsyncGetFaviconURLForPage::AsyncGetFaviconURLForPage(
 , const nsACString& aPageHost
 , uint16_t aPreferredWidth
 , nsIFaviconDataCallback* aCallback
-) : mPreferredWidth(aPreferredWidth == 0 ? UINT16_MAX : aPreferredWidth)
-  , mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(aCallback))
+) : Runnable("places::AsyncGetFaviconURLForPage")
+  , mPreferredWidth(aPreferredWidth == 0 ? UINT16_MAX : aPreferredWidth)
+  , mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(
+      "AsyncGetFaviconURLForPage::mCallback", aCallback))
 {
   MOZ_ASSERT(NS_IsMainThread());
   mPageSpec.Assign(aPageSpec);
@@ -975,8 +983,10 @@ AsyncGetFaviconDataForPage::AsyncGetFaviconDataForPage(
 , const nsACString& aPageHost
 ,  uint16_t aPreferredWidth
 , nsIFaviconDataCallback* aCallback
-) : mPreferredWidth(aPreferredWidth == 0 ? UINT16_MAX : aPreferredWidth)
-  , mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(aCallback))
+) : Runnable("places::AsyncGetFaviconDataForPage")
+  , mPreferredWidth(aPreferredWidth == 0 ? UINT16_MAX : aPreferredWidth)
+  , mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(
+      "AsyncGetFaviconDataForPage::mCallback", aCallback))
  {
   MOZ_ASSERT(NS_IsMainThread());
   mPageSpec.Assign(aPageSpec);
@@ -1014,8 +1024,9 @@ AsyncGetFaviconDataForPage::Run()
 ////////////////////////////////////////////////////////////////////////////////
 //// AsyncReplaceFaviconData
 
-AsyncReplaceFaviconData::AsyncReplaceFaviconData(const IconData &aIcon)
-  : mIcon(aIcon)
+AsyncReplaceFaviconData::AsyncReplaceFaviconData(const IconData& aIcon)
+  : Runnable("places::AsyncReplaceFaviconData")
+  , mIcon(aIcon)
 {
   MOZ_ASSERT(NS_IsMainThread());
 }
@@ -1040,8 +1051,10 @@ AsyncReplaceFaviconData::Run()
   NS_ENSURE_SUCCESS(rv, rv);
 
   // We can invalidate the cache version since we now persist the icon.
-  nsCOMPtr<nsIRunnable> event =
-    NewRunnableMethod(this, &AsyncReplaceFaviconData::RemoveIconDataCacheEntry);
+  nsCOMPtr<nsIRunnable> event = NewRunnableMethod(
+    "places::AsyncReplaceFaviconData::RemoveIconDataCacheEntry",
+    this,
+    &AsyncReplaceFaviconData::RemoveIconDataCacheEntry);
   rv = NS_DispatchToMainThread(event);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1069,13 +1082,13 @@ AsyncReplaceFaviconData::RemoveIconDataCacheEntry()
 //// NotifyIconObservers
 
 NotifyIconObservers::NotifyIconObservers(
-  const IconData& aIcon
-, const PageData& aPage
-, const nsMainThreadPtrHandle<nsIFaviconDataCallback>& aCallback
-)
-: mCallback(aCallback)
-, mIcon(aIcon)
-, mPage(aPage)
+  const IconData& aIcon,
+  const PageData& aPage,
+  const nsMainThreadPtrHandle<nsIFaviconDataCallback>& aCallback)
+  : Runnable("places::NotifyIconObservers")
+  , mCallback(aCallback)
+  , mIcon(aIcon)
+  , mPage(aPage)
 {
 }
 
@@ -1146,9 +1159,10 @@ NotifyIconObservers::SendGlobalNotifications(nsIURI* aIconURI)
 ////////////////////////////////////////////////////////////////////////////////
 //// FetchAndConvertUnsupportedPayloads
 
-FetchAndConvertUnsupportedPayloads::FetchAndConvertUnsupportedPayloads (
-  mozIStorageConnection* aDBConn
-) : mDB(aDBConn)
+FetchAndConvertUnsupportedPayloads::FetchAndConvertUnsupportedPayloads(
+  mozIStorageConnection* aDBConn)
+  : Runnable("places::FetchAndConvertUnsupportedPayloads")
+  , mDB(aDBConn)
 {
 
 }
@@ -1377,13 +1391,14 @@ FetchAndConvertUnsupportedPayloads::StorePayload(int64_t aId,
 ////////////////////////////////////////////////////////////////////////////////
 //// AsyncCopyFavicons
 
-AsyncCopyFavicons::AsyncCopyFavicons(
-  PageData& aFromPage
-, PageData& aToPage
-, nsIFaviconDataCallback* aCallback
-) : mFromPage(aFromPage)
+AsyncCopyFavicons::AsyncCopyFavicons(PageData& aFromPage,
+                                     PageData& aToPage,
+                                     nsIFaviconDataCallback* aCallback)
+  : Runnable("places::AsyncCopyFavicons")
+  , mFromPage(aFromPage)
   , mToPage(aToPage)
-  , mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(aCallback))
+  , mCallback(new nsMainThreadPtrHolder<nsIFaviconDataCallback>(
+      "AsyncCopyFavicons::mCallback", aCallback))
 {
   MOZ_ASSERT(NS_IsMainThread());
 }

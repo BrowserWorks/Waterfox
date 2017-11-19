@@ -40,9 +40,14 @@ add_task(async function() {
     let blockDownloads = doc.getElementById("blockDownloads");
     let blockUncommon = doc.getElementById("blockUncommonUnwanted");
     let checked = checkbox.checked;
+    if (!AppConstants.MOZILLA_OFFICIAL) {
+      is(blockDownloads, undefined, "downloads protection is disabled in un-official builds");
+    } else {
+      is(blockDownloads.hasAttribute("disabled"), !checked, "block downloads checkbox is set correctly");
+    }
+
     is(checked, val1 && val2, "safebrowsing preference is initialized correctly");
     // should be disabled when checked is false (= pref is turned off)
-    is(blockDownloads.hasAttribute("disabled"), !checked, "block downloads checkbox is set correctly");
     is(blockUncommon.hasAttribute("disabled"), !checked, "block uncommon checkbox is set correctly");
 
     // click the checkbox
@@ -56,8 +61,10 @@ add_task(async function() {
 
     // check if the other checkboxes have updated
     checked = checkbox.checked;
-    is(blockDownloads.hasAttribute("disabled"), !checked, "block downloads checkbox is set correctly");
-    is(blockUncommon.hasAttribute("disabled"), !checked || !blockDownloads.checked, "block uncommon checkbox is set correctly");
+    if (blockDownloads) {
+      is(blockDownloads.hasAttribute("disabled"), !checked, "block downloads checkbox is set correctly");
+      is(blockUncommon.hasAttribute("disabled"), !checked || !blockDownloads.checked, "block uncommon checkbox is set correctly");
+    }
   }
 
   await checkPrefSwitch(true, true);
@@ -76,6 +83,11 @@ add_task(async function() {
 
     let doc = gBrowser.selectedBrowser.contentDocument;
     let checkbox = doc.getElementById("blockDownloads");
+    if (!AppConstants.MOZILLA_OFFICIAL) {
+      is(checkbox, undefined, "downloads protection is disabled in un-official builds");
+      return;
+    }
+
     let blockUncommon = doc.getElementById("blockUncommonUnwanted");
     let checked = checkbox.checked;
     is(checked, val, "downloads preference is initialized correctly");
@@ -97,11 +109,19 @@ add_task(async function() {
   await checkPrefSwitch(false);
 });
 
+requestLongerTimeout(2);
 // test the unwanted/uncommon software warning preference
 add_task(async function() {
-  async function checkPrefSwitch(val1, val2) {
+  async function checkPrefSwitch(val1, val2, isV2) {
     Services.prefs.setBoolPref("browser.safebrowsing.downloads.remote.block_potentially_unwanted", val1);
     Services.prefs.setBoolPref("browser.safebrowsing.downloads.remote.block_uncommon", val2);
+    let testMalwareTable = "goog-malware-" + (isV2 ? "shavar" : "proto");
+    testMalwareTable += ",test-malware-simple";
+    if (val1 && val2) {
+      testMalwareTable += ",goog-unwanted-" + (isV2 ? "shavar" : "proto");
+      testMalwareTable += ",test-unwanted-simple";
+    }
+    Services.prefs.setCharPref("urlclassifier.malwareTable", testMalwareTable);
 
     gBrowser.reload();
     await BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
@@ -122,8 +142,13 @@ add_task(async function() {
 
     // when the preference is on, the malware table should include these ids
     let malwareTable = Services.prefs.getCharPref("urlclassifier.malwareTable").split(",");
-    is(malwareTable.includes("goog-unwanted-shavar"), !checked,
-       "malware table doesn't include goog-unwanted-shavar");
+    if (isV2) {
+      is(malwareTable.includes("goog-unwanted-shavar"), !checked,
+         "malware table doesn't include goog-unwanted-shavar");
+    } else {
+      is(malwareTable.includes("goog-unwanted-proto"), !checked,
+         "malware table doesn't include goog-unwanted-proto");
+    }
     is(malwareTable.includes("test-unwanted-simple"), !checked,
        "malware table doesn't include test-unwanted-simple");
     let sortedMalware = malwareTable.slice(0);
@@ -131,8 +156,13 @@ add_task(async function() {
     Assert.deepEqual(malwareTable, sortedMalware, "malware table has been sorted");
   }
 
-  await checkPrefSwitch(true, true);
-  await checkPrefSwitch(false, true);
-  await checkPrefSwitch(true, false);
-  await checkPrefSwitch(false, false);
+  await checkPrefSwitch(true, true, false);
+  await checkPrefSwitch(false, true, false);
+  await checkPrefSwitch(true, false, false);
+  await checkPrefSwitch(false, false, false);
+  await checkPrefSwitch(true, true, true);
+  await checkPrefSwitch(false, true, true);
+  await checkPrefSwitch(true, false, true);
+  await checkPrefSwitch(false, false, true);
+
 });

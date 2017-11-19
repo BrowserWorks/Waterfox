@@ -21,6 +21,9 @@
 #include "webrtc/call.h"
 #include "webrtc/config.h"
 #include "webrtc/common_types.h"
+#include "webrtc/common_types.h"
+#include "webrtc/api/video/video_frame_buffer.h"
+#include "webrtc/logging/rtc_event_log/rtc_event_log.h"
 
 #include <vector>
 
@@ -36,9 +39,9 @@ class WebRtcCallWrapper : public RefCounted<WebRtcCallWrapper>
 public:
   typedef webrtc::Call::Config Config;
 
-  static RefPtr<WebRtcCallWrapper> Create(const Config& config)
+  static RefPtr<WebRtcCallWrapper> Create()
   {
-    return new WebRtcCallWrapper(webrtc::Call::Create(config));
+    return new WebRtcCallWrapper();
   }
 
   webrtc::Call* Call() const
@@ -53,17 +56,23 @@ public:
       mCall.reset(nullptr); // Force it to release the voice engine reference
       // Delete() must be after all refs are released
       webrtc::VoiceEngine::Delete(voice_engine);
+    } else {
+      // Must ensure it's destroyed *before* the EventLog!
+      mCall.reset(nullptr);
     }
   }
 
   MOZ_DECLARE_REFCOUNTED_TYPENAME(WebRtcCallWrapper)
 
 private:
-  WebRtcCallWrapper() = delete;
-  explicit WebRtcCallWrapper(webrtc::Call* aCall)
-    : mCall(aCall) {}
+  WebRtcCallWrapper()
+  {
+    webrtc::Call::Config config(&mEventLog);
+    mCall.reset(webrtc::Call::Create(config));
+  }
   DISALLOW_COPY_AND_ASSIGN(WebRtcCallWrapper);
   UniquePtr<webrtc::Call> mCall;
+  webrtc::RtcEventLogNullImpl mEventLog;
 };
 
 
@@ -97,21 +106,6 @@ public:
 };
 
 /**
- * This class wraps image object for VideoRenderer::RenderVideoFrame()
- * callback implementation to use for rendering.
- */
-class ImageHandle
-{
-public:
-  explicit ImageHandle(layers::Image* image) : mImage(image) {}
-
-  const RefPtr<layers::Image>& GetImage() const { return mImage; }
-
-private:
-  RefPtr<layers::Image> mImage;
-};
-
-/**
  * 1. Abstract renderer for video data
  * 2. This class acts as abstract interface between the video-engine and
  *    video-engine agnostic renderer implementation.
@@ -136,34 +130,21 @@ public:
                                unsigned int number_of_streams) = 0;
 
   /**
-   * Callback Function reporting decoded I420 frame for processing.
-   * @param buffer: pointer to decoded video frame
+   * Callback Function reporting decoded frame for processing.
+   * @param buffer: reference to decoded video frame
    * @param buffer_size: size of the decoded frame
    * @param time_stamp: Decoder timestamp, typically 90KHz as per RTP
    * @render_time: Wall-clock time at the decoder for synchronization
    *                purposes in milliseconds
-   * @handle: opaque handle for image object of decoded video frame.
    * NOTE: If decoded video frame is passed through buffer , it is the
    * responsibility of the concrete implementations of this class to own copy
    * of the frame if needed for time longer than scope of this callback.
    * Such implementations should be quick in processing the frames and return
    * immediately.
-   * On the other hand, if decoded video frame is passed through handle, the
-   * implementations should keep a reference to the (ref-counted) image object
-   * inside until it's no longer needed.
    */
-  virtual void RenderVideoFrame(const unsigned char* buffer,
-                                size_t buffer_size,
+  virtual void RenderVideoFrame(const webrtc::VideoFrameBuffer& buffer,
                                 uint32_t time_stamp,
-                                int64_t render_time,
-                                const ImageHandle& handle) = 0;
-  virtual void RenderVideoFrame(const unsigned char* buffer,
-                                size_t buffer_size,
-                                uint32_t y_stride,
-                                uint32_t cbcr_stride,
-                                uint32_t time_stamp,
-                                int64_t render_time,
-                                const ImageHandle& handle) = 0;
+                                int64_t render_time) = 0;
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VideoRenderer)
 };
@@ -268,7 +249,8 @@ public:
                                     double* framerateStdDev,
                                     double* bitrateMean,
                                     double* bitrateStdDev,
-                                    uint32_t* discardedPackets) = 0;
+                                    uint32_t* discardedPackets,
+                                    uint32_t* framesDecoded) = 0;
   virtual bool GetAVStats(int32_t* jitterBufferDelayMs,
                           int32_t* playoutBufferDelayMs,
                           int32_t* avSyncOffsetMs) = 0;
@@ -412,14 +394,6 @@ public:
   virtual MediaConduitErrorCode ConfigureRecvMediaCodecs(
       const std::vector<VideoCodecConfig* >& recvCodecConfigList) = 0;
 
-  /**
-   * These methods allow unit tests to double-check that the
-   * max-fs and max-fr related settings are as expected.
-   */
-  virtual unsigned short SendingWidth() = 0;
-
-  virtual unsigned short SendingHeight() = 0;
-
   virtual unsigned int SendingMaxFs() = 0;
 
   virtual unsigned int SendingMaxFr() = 0;
@@ -540,7 +514,7 @@ public:
     */
   virtual MediaConduitErrorCode EnableAudioLevelExtension(bool enabled, uint8_t id) = 0;
 
-  virtual bool SetDtmfPayloadType(unsigned char type) = 0;
+  virtual bool SetDtmfPayloadType(unsigned char type, int freq) = 0;
 
   virtual bool InsertDTMFTone(int channel, int eventCode, bool outOfBand,
                               int lengthMs, int attenuationDb) = 0;

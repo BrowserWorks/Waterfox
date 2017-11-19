@@ -6,8 +6,10 @@
 
 "use strict";
 
+const Services = require("Services");
 const { Ci, Cc, CC } = require("chrome");
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
+const { gDevTools } = require("devtools/client/framework/devtools");
 
 XPCOMUtils.defineLazyGetter(this, "dirService", function () {
   return Cc["@mozilla.org/file/directory_service;1"]
@@ -23,7 +25,7 @@ XPCOMUtils.defineLazyGetter(this, "LocalFile", function () {
 });
 
 XPCOMUtils.defineLazyGetter(this, "getMostRecentBrowserWindow", function () {
-  return require("sdk/window/utils").getMostRecentBrowserWindow;
+  return Services.wm.getMostRecentWindow(gDevTools.chromeWindowType);
 });
 
 const OPEN_FLAGS = {
@@ -90,7 +92,7 @@ var HarUtils = {
 
       let convertor = Cc["@mozilla.org/intl/converter-output-stream;1"]
         .createInstance(Ci.nsIConverterOutputStream);
-      convertor.init(foStream, "UTF-8", 0, 0);
+      convertor.init(foStream, "UTF-8");
 
       // The entire jsonString can be huge so, write the data in chunks.
       let chunkLength = 1024 * 1024;

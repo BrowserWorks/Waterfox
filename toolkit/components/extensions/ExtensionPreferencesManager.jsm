@@ -80,29 +80,62 @@ function initialValueCallback() {
 }
 
 /**
- * Takes an item returned by the ExtensionSettingsStore and conditionally sets
- * preferences based on the item's contents.
+ * Loops through a set of prefs, either setting or resetting them.
  *
+ * @param {Object} setting
+ *        An object that represents a setting, which will have a setCallback
+ *        property.
+ * @param {Object} item
+ *        An object that represents an item handed back from the setting store
+ *        from which the new pref values can be calculated.
+*/
+function setPrefs(setting, item) {
+  let prefs = item.initialValue || setting.setCallback(item.value);
+  for (let pref in prefs) {
+    if (prefs[pref] === undefined) {
+      Preferences.reset(pref);
+    } else {
+      Preferences.set(pref, prefs[pref]);
+    }
+  }
+}
+
+/**
+ * Commits a change to a setting and conditionally sets preferences.
+ *
+ * If the change to the setting causes a different extension to gain
+ * control of the pref (or removes all extensions with control over the pref)
+ * then the prefs should be updated, otherwise they should not be.
+ * In addition, if the current value of any of the prefs does not
+ * match what we expect the value to be (which could be the result of a
+ * user manually changing the pref value), then we do not change any
+ * of the prefs.
+ *
+ * @param {Extension} extension
+ *        The extension for which a setting is being modified.
  * @param {string} name
  *        The name of the setting being processed.
- * @param {Object|null} item
- *        Either null, or an object with a value property which indicates the
- *        value stored for the setting in the settings store.
+ * @param {string} action
+ *        The action that is being performed. Will be one of disable, enable
+ *        or removeSetting.
 
  * @returns {Promise}
- *          Resolves to true if the preferences were changed and to false if
- *          the preferences were not changed.
+ *          Resolves to true if preferences were set as a result and to false
+ *          if preferences were not set.
 */
-async function processItem(name, item) {
+async function processSetting(extension, name, action) {
+  await ExtensionSettingsStore.initialize();
+  let expectedItem = ExtensionSettingsStore.getSetting(STORE_TYPE, name);
+  let item = ExtensionSettingsStore[action](extension, STORE_TYPE, name);
   if (item) {
-    let prefs = item.initialValue || await settingsMap.get(name).setCallback(item.value);
-    for (let pref in prefs) {
-      if (prefs[pref] === undefined) {
-        Preferences.reset(pref);
-      } else {
-        Preferences.set(pref, prefs[pref]);
-      }
+    let setting = settingsMap.get(name);
+    let expectedPrefs = expectedItem.initialValue
+      || setting.setCallback(expectedItem.value);
+    if (Object.keys(expectedPrefs).some(
+        pref => expectedPrefs[pref] && Preferences.get(pref) != expectedPrefs[pref])) {
+      return false;
     }
+    setPrefs(setting, item);
     return true;
   }
   return false;
@@ -153,9 +186,14 @@ this.ExtensionPreferencesManager = {
    */
   async setSetting(extension, name, value) {
     let setting = settingsMap.get(name);
+    await ExtensionSettingsStore.initialize();
     let item = await ExtensionSettingsStore.addSetting(
       extension, STORE_TYPE, name, value, initialValueCallback.bind(setting));
-    return await processItem(name, item);
+    if (item) {
+      setPrefs(setting, item);
+      return true;
+    }
+    return false;
   },
 
   /**
@@ -171,10 +209,8 @@ this.ExtensionPreferencesManager = {
    *          Resolves to true if the preferences were changed and to false if
    *          the preferences were not changed.
    */
-  async disableSetting(extension, name) {
-    let item = await ExtensionSettingsStore.disable(
-      extension, STORE_TYPE, name);
-    return await processItem(name, item);
+  disableSetting(extension, name) {
+    return processSetting(extension, name, "disable");
   },
 
   /**
@@ -189,9 +225,8 @@ this.ExtensionPreferencesManager = {
    *          Resolves to true if the preferences were changed and to false if
    *          the preferences were not changed.
    */
-  async enableSetting(extension, name) {
-    let item = await ExtensionSettingsStore.enable(extension, STORE_TYPE, name);
-    return await processItem(name, item);
+  enableSetting(extension, name) {
+    return processSetting(extension, name, "enable");
   },
 
   /**
@@ -206,10 +241,8 @@ this.ExtensionPreferencesManager = {
    *          Resolves to true if the preferences were changed and to false if
    *          the preferences were not changed.
    */
-  async removeSetting(extension, name) {
-    let item = await ExtensionSettingsStore.removeSetting(
-      extension, STORE_TYPE, name);
-    return await processItem(name, item);
+  removeSetting(extension, name) {
+    return processSetting(extension, name, "removeSetting");
   },
 
   /**
@@ -220,7 +253,8 @@ this.ExtensionPreferencesManager = {
    *        The extension for which all settings are being unset.
    */
   async disableAll(extension) {
-    let settings = await ExtensionSettingsStore.getAllForExtension(extension, STORE_TYPE);
+    await ExtensionSettingsStore.initialize();
+    let settings = ExtensionSettingsStore.getAllForExtension(extension, STORE_TYPE);
     let disablePromises = [];
     for (let name of settings) {
       disablePromises.push(this.disableSetting(extension, name));
@@ -236,7 +270,8 @@ this.ExtensionPreferencesManager = {
    *        The extension for which all settings are being enabled.
    */
   async enableAll(extension) {
-    let settings = await ExtensionSettingsStore.getAllForExtension(extension, STORE_TYPE);
+    await ExtensionSettingsStore.initialize();
+    let settings = ExtensionSettingsStore.getAllForExtension(extension, STORE_TYPE);
     let enablePromises = [];
     for (let name of settings) {
       enablePromises.push(this.enableSetting(extension, name));
@@ -252,7 +287,8 @@ this.ExtensionPreferencesManager = {
    *        The extension for which all settings are being unset.
    */
   async removeAll(extension) {
-    let settings = await ExtensionSettingsStore.getAllForExtension(extension, STORE_TYPE);
+    await ExtensionSettingsStore.initialize();
+    let settings = ExtensionSettingsStore.getAllForExtension(extension, STORE_TYPE);
     let removePromises = [];
     for (let name of settings) {
       removePromises.push(this.removeSetting(extension, name));
@@ -279,6 +315,7 @@ this.ExtensionPreferencesManager = {
         return "not_controllable";
       }
     }
-    return await ExtensionSettingsStore.getLevelOfControl(extension, STORE_TYPE, name);
+    await ExtensionSettingsStore.initialize();
+    return ExtensionSettingsStore.getLevelOfControl(extension, STORE_TYPE, name);
   },
 };

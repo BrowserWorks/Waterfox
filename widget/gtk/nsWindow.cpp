@@ -40,6 +40,11 @@
 #if (MOZ_WIDGET_GTK == 3)
 #include <gtk/gtkx.h>
 #endif
+
+#ifdef MOZ_WAYLAND
+#include <gdk/gdkwayland.h>
+#endif /* MOZ_WAYLAND */
+
 #ifdef MOZ_X11
 #include <gdk/gdkx.h>
 #include <X11/Xatom.h>
@@ -48,11 +53,11 @@
 #if (MOZ_WIDGET_GTK == 3)
 #include <gdk/gdkkeysyms-compat.h>
 #endif
-
 #if (MOZ_WIDGET_GTK == 2)
 #include "gtk2xtbin.h"
 #endif
 #endif /* MOZ_X11 */
+
 #include <gdk/gdkkeysyms.h>
 #if (MOZ_WIDGET_GTK == 2)
 #include <gtk/gtkprivate.h>
@@ -112,6 +117,7 @@ using namespace mozilla::widget;
 #include "GLContextProvider.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/HelpersCairo.h"
+#include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/CompositorThread.h"
 
@@ -220,8 +226,10 @@ static void     theme_changed_cb          (GtkSettings *settings,
                                            nsWindow *data);
 static void     check_resize_cb           (GtkContainer* container,
                                            gpointer user_data);
-static void     composited_changed_cb     (GtkWidget* widget,
-                                           gpointer user_data);
+static void     screen_composited_changed_cb     (GdkScreen* screen,
+                                                  gpointer user_data);
+static void     widget_composited_changed_cb     (GtkWidget* widget,
+                                                  gpointer user_data);
 
 #if (MOZ_WIDGET_GTK == 3)
 static void     scale_changed_cb          (GtkWidget* widget,
@@ -804,19 +812,32 @@ nsWindow::GetParent(void)
 float
 nsWindow::GetDPI()
 {
-    GdkScreen *screen = gdk_display_get_default_screen(gdk_display_get_default());
-    double heightInches = gdk_screen_get_height_mm(screen)/MM_PER_INCH_FLOAT;
-    if (heightInches < 0.25) {
-        // Something's broken, but we'd better not crash.
-        return 96.0f;
+    float dpi = 96.0f;
+    nsCOMPtr<nsIScreen> screen = GetWidgetScreen();
+    if (screen) {
+        screen->GetDpi(&dpi);
     }
-    return float(gdk_screen_get_height(screen)/heightInches);
+    return dpi;
 }
 
 double
 nsWindow::GetDefaultScaleInternal()
 {
-    return GdkScaleFactor() * gfxPlatformGtk::GetDPIScale();
+    return GdkScaleFactor() * gfxPlatformGtk::GetFontScaleFactor();
+}
+
+DesktopToLayoutDeviceScale
+nsWindow::GetDesktopToDeviceScale()
+{
+#ifdef MOZ_WAYLAND
+    GdkDisplay* gdkDisplay = gdk_display_get_default();
+    if (GDK_IS_WAYLAND_DISPLAY(gdkDisplay)) {
+        return DesktopToLayoutDeviceScale(GdkScaleFactor());
+    }
+#endif
+
+    // In Gtk/X11, we manage windows using device pixels.
+    return DesktopToLayoutDeviceScale(1.0);
 }
 
 void
@@ -1494,7 +1515,7 @@ nsWindow::GetClientBounds()
 void
 nsWindow::UpdateClientOffset()
 {
-    PROFILER_LABEL("nsWindow", "UpdateClientOffset", js::ProfileEntry::Category::GRAPHICS);
+    AUTO_PROFILER_LABEL("nsWindow::UpdateClientOffset", GRAPHICS);
 
     if (!mIsTopLevel || !mShell || !mGdkWindow || !mIsX11Display ||
         gtk_window_get_window_type(GTK_WINDOW(mShell)) == GTK_WINDOW_POPUP) {
@@ -2102,7 +2123,7 @@ nsWindow::OnExposeEvent(cairo_t *cr)
     }
 
     if (GetLayerManager()->AsKnowsCompositor() && GetLayerManager()->NeedsComposite()) {
-      GetLayerManager()->Composite();
+      GetLayerManager()->ScheduleComposite();
       GetLayerManager()->SetNeedsComposite(false);
     }
 
@@ -2443,7 +2464,8 @@ nsWindow::OnSizeAllocate(GtkAllocation *aAllocation)
     // GtkWindow callers of gtk_widget_size_allocate expect the signal
     // handlers to return sometime in the near future.
     mNeedsDispatchResized = true;
-    NS_DispatchToCurrentThread(NewRunnableMethod(this, &nsWindow::MaybeDispatchResized));
+    NS_DispatchToCurrentThread(NewRunnableMethod(
+      "nsWindow::MaybeDispatchResized", this, &nsWindow::MaybeDispatchResized));
 }
 
 void
@@ -3381,7 +3403,6 @@ nsWindow::OnCompositedChanged()
       presShell->ThemeChanged();
     }
   }
-  CleanLayerManagerRecursive();
 }
 
 void
@@ -3489,7 +3510,7 @@ GetBrandName(nsXPIDLString& brandName)
 
     if (bundle)
         bundle->GetStringFromName(
-            u"brandShortName",
+            "brandShortName",
             getter_Copies(brandName));
 
     if (brandName.IsEmpty())
@@ -3852,8 +3873,18 @@ nsWindow::Create(nsIWidget* aParent,
                          G_CALLBACK(window_state_event_cb), nullptr);
         g_signal_connect(mShell, "check-resize",
                          G_CALLBACK(check_resize_cb), nullptr);
+
+        GdkScreen *screen = gtk_widget_get_screen(mShell);
+
         g_signal_connect(mShell, "composited-changed",
-                         G_CALLBACK(composited_changed_cb), nullptr);
+                         G_CALLBACK(widget_composited_changed_cb), nullptr);
+
+        if (!g_signal_handler_find(screen, G_SIGNAL_MATCH_FUNC,
+                                   0, 0, nullptr,
+                                   FuncToGpointer(screen_composited_changed_cb), 0)) {
+            g_signal_connect(screen, "composited-changed",
+                             G_CALLBACK(screen_composited_changed_cb), nullptr);
+        }
 
         GtkSettings* default_settings = gtk_settings_get_default();
         g_signal_connect_after(default_settings,
@@ -4731,7 +4762,9 @@ nsWindow::GrabPointer(guint32 aTime)
         // popups don't rollup while potentially adjusting the grab for
         // this popup.
         nsCOMPtr<nsIRunnable> event =
-            NewRunnableMethod(this, &nsWindow::CheckForRollupDuringGrab);
+          NewRunnableMethod("nsWindow::CheckForRollupDuringGrab",
+                            this,
+                            &nsWindow::CheckForRollupDuringGrab);
         NS_DispatchToCurrentThread(event.forget());
     }
 }
@@ -5889,7 +5922,13 @@ check_resize_cb (GtkContainer* container, gpointer user_data)
 }
 
 static void
-composited_changed_cb (GtkWidget* widget, gpointer user_data)
+screen_composited_changed_cb (GdkScreen* screen, gpointer user_data)
+{
+    GPUProcessManager::Get()->ResetCompositors();
+}
+
+static void
+widget_composited_changed_cb (GtkWidget* widget, gpointer user_data)
 {
     RefPtr<nsWindow> window = get_window_for_gtk_widget(widget);
     if (!window) {
@@ -6189,12 +6228,6 @@ nsWindow::DispatchRestoreEventAccessible(void)
 
 #endif /* #ifdef ACCESSIBILITY */
 
-// nsChildWindow class
-
-nsChildWindow::nsChildWindow() = default;
-
-nsChildWindow::~nsChildWindow() = default;
-
 void
 nsWindow::SetInputContext(const InputContext& aContext,
                           const InputContextAction& aAction)
@@ -6234,13 +6267,19 @@ nsWindow::GetEditCommandsRemapped(NativeKeyBindingsType aType,
                                   uint32_t aGeckoKeyCode,
                                   uint32_t aNativeKeyCode)
 {
+    // If aEvent.mNativeKeyEvent is nullptr, the event was created by chrome
+    // script.  In such case, we shouldn't expose the OS settings to it.
+    // So, just ignore such events here.
+    if (!aEvent.mNativeKeyEvent) {
+        return;
+    }
     WidgetKeyboardEvent modifiedEvent(aEvent);
     modifiedEvent.mKeyCode = aGeckoKeyCode;
     static_cast<GdkEventKey*>(modifiedEvent.mNativeKeyEvent)->keyval =
         aNativeKeyCode;
 
     NativeKeyBindings* keyBindings = NativeKeyBindings::GetInstance(aType);
-    return keyBindings->GetEditCommands(modifiedEvent, aCommands);
+    keyBindings->GetEditCommands(modifiedEvent, aCommands);
 }
 
 void
@@ -6499,7 +6538,7 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
       return mLayerManager;
     }
 
-    if (!mLayerManager &&
+    if (!mLayerManager && !IsComposited() &&
         eTransparencyTransparent == GetTransparencyMode())
     {
         mLayerManager = CreateBasicLayerManager();

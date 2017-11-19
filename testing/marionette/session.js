@@ -4,14 +4,17 @@
 
 "use strict";
 
-const {interfaces: Ci, utils: Cu} = Components;
+const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 Cu.import("chrome://marionette/content/assert.js");
-Cu.import("chrome://marionette/content/error.js");
+const {
+  error,
+  InvalidArgumentError,
+} = Cu.import("chrome://marionette/content/error.js", {});
 
 this.EXPORTED_SYMBOLS = ["session"];
 
@@ -24,12 +27,16 @@ const appinfo = {name: "<missing>", version: "<missing>"};
 try { appinfo.name = Services.appinfo.name.toLowerCase(); } catch (e) {}
 try { appinfo.version = Services.appinfo.version; } catch (e) {}
 
-/** State associated with a WebDriver session. */
+/**
+ * State associated with a WebDriver session.
+ *
+ * @namespace
+ */
 this.session = {};
 
 /** Representation of WebDriver session timeouts. */
 session.Timeouts = class {
-  constructor () {
+  constructor() {
     // disabled
     this.implicit = 0;
     // five mintues
@@ -38,9 +45,10 @@ session.Timeouts = class {
     this.script = 30000;
   }
 
-  toString () { return "[object session.Timeouts]"; }
+  toString() { return "[object session.Timeouts]"; }
 
-  toJSON () {
+  /** Marshals timeout durations to a JSON Object. */
+  toJSON() {
     return {
       implicit: this.implicit,
       pageLoad: this.pageLoad,
@@ -48,7 +56,7 @@ session.Timeouts = class {
     };
   }
 
-  static fromJSON (json) {
+  static fromJSON(json) {
     assert.object(json);
     let t = new session.Timeouts();
 
@@ -75,15 +83,29 @@ session.Timeouts = class {
   }
 };
 
-/** Enum of page loading strategies. */
+/**
+ * Enum of page loading strategies.
+ *
+ * @enum
+ */
 session.PageLoadStrategy = {
+  /** No page load strategy.  Navigation will return immediately. */
   None: "none",
+  /**
+   * Eager, causing navigation to complete when the document reaches
+   * the <code>interactive</code> ready state.
+   */
   Eager: "eager",
+  /**
+   * Normal, causing navigation to return when the document reaches the
+   * <code>complete</code> ready state.
+   */
   Normal: "normal",
 };
 
 /** Proxy configuration object representation. */
 session.Proxy = class {
+  /** @class */
   constructor() {
     this.proxyType = null;
     this.httpProxy = null;
@@ -133,7 +155,8 @@ session.Proxy = class {
 
       case "pac":
         Preferences.set("network.proxy.type", 2);
-        Preferences.set("network.proxy.autoconfig_url", this.proxyAutoconfigUrl);
+        Preferences.set(
+            "network.proxy.autoconfig_url", this.proxyAutoconfigUrl);
         return true;
 
       case "autodetect":
@@ -153,13 +176,17 @@ session.Proxy = class {
     }
   }
 
-  toString () { return "[object session.Proxy]"; }
+  toString() { return "[object session.Proxy]"; }
 
-  toJSON () {
+  /**
+   * @return {Object.<string, (number|string)>}
+   *     JSON serialisation of proxy object.
+   */
+  toJSON() {
     return marshal({
       proxyType: this.proxyType,
       httpProxy: this.httpProxy,
-      httpProxyPort: this.httpProxyPort ,
+      httpProxyPort: this.httpProxyPort,
       sslProxy: this.sslProxy,
       sslProxyPort: this.sslProxyPort,
       ftpProxy: this.ftpProxy,
@@ -171,7 +198,11 @@ session.Proxy = class {
     });
   }
 
-  static fromJSON (json) {
+  /**
+   * @param {Object.<string, ?>} json
+   *     JSON Object to unmarshal.
+   */
+  static fromJSON(json) {
     let p = new session.Proxy();
     if (typeof json == "undefined" || json === null) {
       return p;
@@ -215,7 +246,8 @@ session.Proxy = class {
 
 /** WebDriver session capabilities representation. */
 session.Capabilities = class extends Map {
-  constructor () {
+  /** @class */
+  constructor() {
     super([
       // webdriver
       ["browserName", appinfo.name],
@@ -235,10 +267,17 @@ session.Capabilities = class extends Map {
       ["moz:processID", Services.appinfo.processID],
       ["moz:profile", maybeProfile()],
       ["moz:accessibilityChecks", false],
+      ["moz:headless", Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo).isHeadless],
     ]);
   }
 
-  set (key, value) {
+  /**
+   * @param {string} key
+   *     Capability name.
+   * @param {(string|number|boolean)} value
+   *     JSON-safe capability value.
+   */
+  set(key, value) {
     if (key === "timeouts" && !(value instanceof session.Timeouts)) {
       throw new TypeError();
     } else if (key === "proxy" && !(value instanceof session.Proxy)) {
@@ -248,8 +287,14 @@ session.Capabilities = class extends Map {
     return super.set(key, value);
   }
 
+  /** @return {string} */
   toString() { return "[object session.Capabilities]"; }
 
+  /**
+   * JSON serialisation of capabilities object.
+   *
+   * @return {Object.<string, ?>}
+   */
   toJSON() {
     return marshal(this);
   }
@@ -260,16 +305,16 @@ session.Capabilities = class extends Map {
    * @param {Object.<string, ?>=} json
    *     WebDriver capabilities.
    * @param {boolean=} merge
-   *     If providing |json| with |desiredCapabilities| or
-   *     |requiredCapabilities| fields, or both, it should be set to
-   *     true to merge these before parsing.  This indicates
-   *     that the input provided is from a client and not from
-   *     |session.Capabilities#toJSON|.
+   *     If providing <var>json</var> with <tt>desiredCapabilities</tt> or
+   *     <tt>requiredCapabilities</tt> fields, or both, it should be
+   *     set to true to merge these before parsing.  This indicates that
+   *     the input provided is from a client and not from
+   *     {@link session.Capabilities#toJSON}.
    *
    * @return {session.Capabilities}
    *     Internal representation of WebDriver capabilities.
    */
-  static fromJSON (json, {merge = false} = {}) {
+  static fromJSON(json, {merge = false} = {}) {
     if (typeof json == "undefined" || json === null) {
       json = {};
     }
@@ -282,12 +327,13 @@ session.Capabilities = class extends Map {
   }
 
   // Processes capabilities as described by WebDriver.
-  static merge_ (json) {
+  static merge_(json) {
     for (let entry of [json.desiredCapabilities, json.requiredCapabilities]) {
       if (typeof entry == "undefined" || entry === null) {
         continue;
       }
-      assert.object(entry, error.pprint`Expected ${entry} to be a capabilities object`);
+      assert.object(entry,
+          error.pprint`Expected ${entry} to be a capabilities object`);
     }
 
     let desired = json.desiredCapabilities || {};
@@ -299,7 +345,7 @@ session.Capabilities = class extends Map {
   }
 
   // Matches capabilities as described by WebDriver.
-  static match_ (caps = {}) {
+  static match_(caps = {}) {
     let matched = new session.Capabilities();
 
     const defined = v => typeof v != "undefined" && v !== null;
@@ -308,11 +354,11 @@ session.Capabilities = class extends Map {
     // Iff |actual| provides some value, or is a wildcard or an exact
     // match of |expected|.  This means it can be null or undefined,
     // or "*", or "firefox".
-    function stringMatch (actual, expected) {
+    function stringMatch(actual, expected) {
       return !defined(actual) || (wildcard(actual) || actual === expected);
     }
 
-    for (let [k,v] of Object.entries(caps)) {
+    for (let [k, v] of Object.entries(caps)) {
       switch (k) {
         case "browserName":
           let bname = matched.get("browserName");
@@ -365,7 +411,8 @@ session.Capabilities = class extends Map {
             if (Object.values(session.PageLoadStrategy).includes(v)) {
               matched.set("pageLoadStrategy", v);
             } else {
-              throw new InvalidArgumentError("Unknown page load strategy: " + v);
+              throw new InvalidArgumentError(
+                  "Unknown page load strategy: " + v);
             }
           }
 
@@ -406,8 +453,8 @@ function marshal(obj) {
 
   function* iter(mapOrObject) {
     if (mapOrObject instanceof Map) {
-      for (const [k,v] of mapOrObject) {
-        yield [k,v];
+      for (const [k, v] of mapOrObject) {
+        yield [k, v];
       }
     } else {
       for (const k of Object.keys(mapOrObject)) {
@@ -416,7 +463,7 @@ function marshal(obj) {
     }
   }
 
-  for (let [k,v] of iter(obj)) {
+  for (let [k, v] of iter(obj)) {
     // Skip empty values when serialising to JSON.
     if (typeof v == "undefined" || v === null) {
       continue;
@@ -426,10 +473,9 @@ function marshal(obj) {
     // JSON representation.
     if (typeof v.toJSON == "function") {
       v = marshal(v.toJSON());
-    }
 
     // Or do the same for object literals.
-    else if (isObject(v)) {
+    } else if (isObject(v)) {
       v = marshal(v);
     }
 

@@ -288,7 +288,7 @@ nsHttpChannelAuthProvider::CheckForSuperfluousAuth()
     // contained a userpass, then (provided some other conditions are true),
     // we'll give the user an opportunity to abort the channel as this might be
     // an attempt to spoof a different site (see bug 232567).
-    if (!ConfirmAuth(NS_LITERAL_STRING("SuperfluousAuth"), true)) {
+    if (!ConfirmAuth("SuperfluousAuth", true)) {
         // calling cancel here sets our mStatus and aborts the HTTP
         // transaction, which prevents OnDataAvailable events.
         Unused << mAuthChannel->Cancel(NS_ERROR_ABORT);
@@ -563,7 +563,7 @@ nsHttpChannelAuthProvider::PrepareForAuthentication(bool proxyAuth)
 nsresult
 nsHttpChannelAuthProvider::GetCredentials(const char     *challenges,
                                           bool            proxyAuth,
-                                          nsAFlatCString &creds)
+                                          nsCString& creds)
 {
     nsCOMPtr<nsIHttpAuthenticator> auth;
     nsAutoCString challenge;
@@ -660,10 +660,10 @@ nsHttpChannelAuthProvider::GetCredentials(const char     *challenges,
 
 nsresult
 nsHttpChannelAuthProvider::GetAuthorizationMembers(bool                 proxyAuth,
-                                                   nsCSubstring&        scheme,
+                                                   nsACString&        scheme,
                                                    const char*&         host,
                                                    int32_t&             port,
-                                                   nsCSubstring&        path,
+                                                   nsACString&        path,
                                                    nsHttpAuthIdentity*& ident,
                                                    nsISupports**&       continuationState)
 {
@@ -701,7 +701,7 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
                                                       const char *authType,
                                                       bool        proxyAuth,
                                                       nsIHttpAuthenticator *auth,
-                                                      nsAFlatCString     &creds)
+                                                      nsCString& creds)
 {
     LOG(("nsHttpChannelAuthProvider::GetCredentialsForChallenge "
          "[this=%p channel=%p proxyAuth=%d challenges=%s]\n",
@@ -929,7 +929,7 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
     if (identFromURI) {
         // Warn the user before automatically using the identity from the URL
         // to automatically log them into a site (see bug 232567).
-        if (!ConfirmAuth(NS_LITERAL_STRING("AutomaticAuth"), false)) {
+        if (!ConfirmAuth("AutomaticAuth", false)) {
             // calling cancel here sets our mStatus and aborts the HTTP
             // transaction, which prevents OnDataAvailable events.
             rv = mAuthChannel->Cancel(NS_ERROR_ABORT);
@@ -1488,7 +1488,7 @@ NS_IMETHODIMP nsHttpChannelAuthProvider::OnCredsGenerated(const char *aGenerated
 }
 
 nsresult
-nsHttpChannelAuthProvider::ContinueOnAuthAvailable(const nsCSubstring& creds)
+nsHttpChannelAuthProvider::ContinueOnAuthAvailable(const nsACString& creds)
 {
     nsresult rv;
     if (mProxyAuth)
@@ -1509,8 +1509,8 @@ nsHttpChannelAuthProvider::ContinueOnAuthAvailable(const nsCSubstring& creds)
 }
 
 bool
-nsHttpChannelAuthProvider::ConfirmAuth(const nsString &bundleKey,
-                                       bool            doYesNoPrompt)
+nsHttpChannelAuthProvider::ConfirmAuth(const char* bundleKey,
+                                       bool        doYesNoPrompt)
 {
     // skip prompting the user if
     //   1) we've already prompted the user
@@ -1587,7 +1587,7 @@ nsHttpChannelAuthProvider::ConfirmAuth(const nsString &bundleKey,
     const char16_t *strs[2] = { ucsHost.get(), ucsUser.get() };
 
     nsXPIDLString msg;
-    bundle->FormatStringFromName(bundleKey.get(), strs, 2, getter_Copies(msg));
+    bundle->FormatStringFromName(bundleKey, strs, 2, getter_Copies(msg));
     if (!msg)
         return true;
 

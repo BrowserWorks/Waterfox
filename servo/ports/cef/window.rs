@@ -19,27 +19,26 @@ use wrappers::CefWrap;
 
 use compositing::compositor_thread::EventLoopWaker;
 use compositing::windowing::{WindowEvent, WindowMethods};
-use euclid::point::{Point2D, TypedPoint2D};
-use euclid::rect::TypedRect;
-use euclid::scale_factor::ScaleFactor;
-use euclid::size::{Size2D, TypedSize2D};
+use euclid::{Point2D, TypedPoint2D, Size2D, TypedSize2D, ScaleFactor};
 use gleam::gl;
 use msg::constellation_msg::{Key, KeyModifiers};
 use net_traits::net_error_list::NetError;
-use script_traits::{DevicePixel, LoadData};
+use script_traits::LoadData;
+use servo::ipc_channel::ipc::IpcSender;
 use servo_geometry::DeviceIndependentPixel;
 use std::cell::RefCell;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_void};
 use std::ptr;
 use std::rc::Rc;
-use std::sync::mpsc::{Sender, channel};
 use servo_url::ServoUrl;
 use style_traits::cursor::Cursor;
+use style_traits::DevicePixel;
 #[cfg(target_os="linux")]
 extern crate x11;
 #[cfg(target_os="linux")]
 use self::x11::xlib::{XInitThreads,XOpenDisplay};
+use webrender_api::{DeviceUintSize, DeviceUintRect};
 
 #[cfg(target_os="linux")]
 pub static mut DISPLAY: *mut c_void = 0 as *mut c_void;
@@ -48,7 +47,7 @@ pub static mut DISPLAY: *mut c_void = 0 as *mut c_void;
 #[derive(Clone)]
 pub struct Window {
     cef_browser: RefCell<Option<CefBrowser>>,
-    size: TypedSize2D<u32, DevicePixel>,
+    size: DeviceUintSize,
     gl: Rc<gl::Gl>,
 }
 
@@ -176,7 +175,7 @@ impl WindowMethods for Window {
         self.gl.clone()
     }
 
-    fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel> {
+    fn framebuffer_size(&self) -> DeviceUintSize {
         let browser = self.cef_browser.borrow();
         match *browser {
             None => self.size,
@@ -207,16 +206,16 @@ impl WindowMethods for Window {
                         }
                     }
 
-                    TypedSize2D::new(rect.width as u32, rect.height as u32)
+                    DeviceUintSize::new(rect.width as u32, rect.height as u32)
                 }
             }
         }
     }
 
-    fn window_rect(&self) -> TypedRect<u32, DevicePixel> {
+    fn window_rect(&self) -> DeviceUintRect {
         let size = self.framebuffer_size();
         let origin = TypedPoint2D::zero();
-        TypedRect::new(origin, size)
+        DeviceUintRect::new(origin, size)
     }
 
     fn size(&self) -> TypedSize2D<f32, DeviceIndependentPixel> {
@@ -436,7 +435,6 @@ impl WindowMethods for Window {
         };
         let frame = browser.get_main_frame();
         let frame = frame.downcast();
-        let mut title_visitor = frame.title_visitor.borrow_mut();
         let str = match string {
             Some(s) => s.encode_utf16().collect(),
             None => vec![]
@@ -447,9 +445,7 @@ impl WindowMethods for Window {
             browser.get_host().get_client().get_display_handler().on_title_change((*browser).clone(), str.as_slice());
         }
 
-        if let Some(ref mut visitor) = *title_visitor {
-            visitor.visit(&str);
-        }
+        *frame.title.borrow_mut() = str;
     }
 
     fn history_changed(&self, history: Vec<LoadData>, current: usize) {
@@ -495,8 +491,10 @@ impl WindowMethods for Window {
         }
     }
 
-    fn allow_navigation(&self, _: ServoUrl) -> bool {
-        true
+    fn allow_navigation(&self, _: ServoUrl, response_chan: IpcSender<bool>) {
+        if let Err(e) = response_chan.send(true) {
+            warn!("Failed to send allow_navigation() response: {}", e);
+        };
     }
 
     fn supports_clipboard(&self) -> bool {

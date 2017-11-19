@@ -12,10 +12,8 @@
 #include "mozilla/Telemetry.h"
 #include "PluginInstanceParent.h"
 #include "BrowserStreamParent.h"
-#include "PluginAsyncSurrogate.h"
 #include "PluginBackgroundDestroyer.h"
 #include "PluginModuleParent.h"
-#include "PluginStreamParent.h"
 #include "StreamNotifyParent.h"
 #include "npfunctions.h"
 #include "nsAutoPtr.h"
@@ -31,7 +29,6 @@
 #ifdef MOZ_X11
 #include "gfxXlibSurface.h"
 #endif
-#include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "Layers.h"
@@ -116,8 +113,6 @@ PluginInstanceParent::PluginInstanceParent(PluginModuleParent* parent,
                                            const nsCString& aMimeType,
                                            const NPNetscapeFuncs* npniface)
     : mParent(parent)
-    , mSurrogate(PluginAsyncSurrogate::Cast(npp))
-    , mUseSurrogate(true)
     , mNPP(npp)
     , mNPNIface(npniface)
     , mWindowType(NPWindowTypeWindow)
@@ -241,20 +236,6 @@ PluginInstanceParent::DeallocPBrowserStreamParent(PBrowserStreamParent* stream)
     return true;
 }
 
-PPluginStreamParent*
-PluginInstanceParent::AllocPPluginStreamParent(const nsCString& mimeType,
-                                               const nsCString& target,
-                                               NPError* result)
-{
-    return new PluginStreamParent(this, mimeType, target, result);
-}
-
-bool
-PluginInstanceParent::DeallocPPluginStreamParent(PPluginStreamParent* stream)
-{
-    delete stream;
-    return true;
-}
 
 mozilla::ipc::IPCResult
 PluginInstanceParent::AnswerNPN_GetValue_NPNVnetscapeWindow(NativeWindowHandle* value,
@@ -1220,12 +1201,6 @@ PluginInstanceParent::GetScrollCaptureContainer(ImageContainer** aContainer)
 }
 #endif // XP_WIN
 
-PluginAsyncSurrogate*
-PluginInstanceParent::GetAsyncSurrogate()
-{
-    return mSurrogate;
-}
-
 bool
 PluginInstanceParent::CreateBackground(const nsIntSize& aSize)
 {
@@ -1769,22 +1744,12 @@ PluginInstanceParent::NPP_NewStream(NPMIMEType type, NPStream* stream,
     }
 
     NPError err = NPERR_NO_ERROR;
-    if (mParent->IsStartingAsync()) {
-        MOZ_ASSERT(mSurrogate);
-        mSurrogate->AsyncCallDeparting();
-        if (SendAsyncNPP_NewStream(bs, NullableString(type), seekable)) {
-            *stype = nsPluginStreamListenerPeer::STREAM_TYPE_UNKNOWN;
-        } else {
-            err = NPERR_GENERIC_ERROR;
-        }
-    } else {
-        bs->SetAlive();
-        if (!CallNPP_NewStream(bs, NullableString(type), seekable, &err, stype)) {
-            err = NPERR_GENERIC_ERROR;
-        }
-        if (NPERR_NO_ERROR != err) {
-            Unused << PBrowserStreamParent::Send__delete__(bs);
-        }
+    bs->SetAlive();
+    if (!CallNPP_NewStream(bs, NullableString(type), seekable, &err, stype)) {
+        err = NPERR_GENERIC_ERROR;
+    }
+    if (NPERR_NO_ERROR != err) {
+        Unused << PBrowserStreamParent::Send__delete__(bs);
     }
 
     return err;
@@ -1803,24 +1768,13 @@ PluginInstanceParent::NPP_DestroyStream(NPStream* stream, NPReason reason)
         // returns an error code.
         return NPERR_NO_ERROR;
     }
-    if (s->IsBrowserStream()) {
-        BrowserStreamParent* sp =
-            static_cast<BrowserStreamParent*>(s);
-        if (sp->mNPP != this)
-            MOZ_CRASH("Mismatched plugin data");
-
-        sp->NPP_DestroyStream(reason);
-        return NPERR_NO_ERROR;
-    }
-    else {
-        PluginStreamParent* sp =
-            static_cast<PluginStreamParent*>(s);
-        if (sp->mInstance != this)
-            MOZ_CRASH("Mismatched plugin data");
-
-        return PPluginStreamParent::Call__delete__(sp, reason, false) ?
-            NPERR_NO_ERROR : NPERR_GENERIC_ERROR;
-    }
+    MOZ_ASSERT(s->IsBrowserStream());
+    BrowserStreamParent* sp =
+        static_cast<BrowserStreamParent*>(s);
+    if (sp->mNPP != this)
+        MOZ_CRASH("Mismatched plugin data");
+    sp->NPP_DestroyStream(reason);
+    return NPERR_NO_ERROR;
 }
 
 void
@@ -2046,42 +2000,6 @@ PluginInstanceParent::GetOwner()
 }
 
 mozilla::ipc::IPCResult
-PluginInstanceParent::RecvAsyncNPP_NewResult(const NPError& aResult)
-{
-    // NB: mUseSurrogate must be cleared before doing anything else, especially
-    //     calling NPP_SetWindow!
-    mUseSurrogate = false;
-
-    mSurrogate->AsyncCallArriving();
-    if (aResult == NPERR_NO_ERROR) {
-        mSurrogate->SetAcceptingCalls(true);
-    }
-
-    // It is possible for a plugin instance to outlive its owner (eg. When a
-    // PluginDestructionGuard was on the stack at the time the owner was being
-    // destroyed). We need to handle that case.
-    nsPluginInstanceOwner* owner = GetOwner();
-    if (!owner) {
-        // We can't do anything at this point, just return. Any pending browser
-        // streams will be cleaned up when the plugin instance is destroyed.
-        return IPC_OK();
-    }
-
-    if (aResult != NPERR_NO_ERROR) {
-        mSurrogate->NotifyAsyncInitFailed();
-        return IPC_OK();
-    }
-
-    // Now we need to do a bunch of exciting post-NPP_New housekeeping.
-    owner->NotifyHostCreateWidget();
-
-    MOZ_ASSERT(mSurrogate);
-    mSurrogate->OnInstanceCreated(this);
-
-    return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
 PluginInstanceParent::RecvSetNetscapeWindowAsParent(const NativeWindowHandle& childWindow)
 {
 #if defined(XP_WIN)
@@ -2195,7 +2113,7 @@ PluginInstanceParent::UnsubclassPluginWindow()
             // Remove 'this' from the plugin list safely
             nsAutoPtr<PluginInstanceParent> tmp;
             MOZ_ASSERT(sPluginInstanceList);
-            sPluginInstanceList->RemoveAndForget((void*)mPluginHWND, tmp);
+            sPluginInstanceList->Remove((void*)mPluginHWND, &tmp);
             tmp.forget();
             if (!sPluginInstanceList->Count()) {
                 delete sPluginInstanceList;
@@ -2329,28 +2247,21 @@ PluginInstanceParent::AnswerPluginFocusChange(const bool& gotFocus)
 }
 
 PluginInstanceParent*
-PluginInstanceParent::Cast(NPP aInstance, PluginAsyncSurrogate** aSurrogate)
+PluginInstanceParent::Cast(NPP aInstance)
 {
-    PluginDataResolver* resolver =
-        static_cast<PluginDataResolver*>(aInstance->pdata);
+    auto ip = static_cast<PluginInstanceParent*>(aInstance->pdata);
 
     // If the plugin crashed and the PluginInstanceParent was deleted,
     // aInstance->pdata will be nullptr.
-    if (!resolver) {
+    if (!ip) {
         return nullptr;
     }
 
-    PluginInstanceParent* instancePtr = resolver->GetInstance();
-
-    if (instancePtr && aInstance != instancePtr->mNPP) {
+    if (aInstance != ip->mNPP) {
         MOZ_CRASH("Corrupted plugin data.");
     }
 
-    if (aSurrogate) {
-        *aSurrogate = resolver->GetAsyncSurrogate();
-    }
-
-    return instancePtr;
+    return ip;
 }
 
 mozilla::ipc::IPCResult

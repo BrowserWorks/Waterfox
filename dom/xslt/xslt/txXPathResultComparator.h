@@ -30,7 +30,7 @@ public:
      * 1 if val1 > val2 and 0 if val1 == val2.
      */
     virtual int compareValues(txObject* val1, txObject* val2) = 0;
-    
+
     /*
      * Create a sortable value.
      */
@@ -45,14 +45,14 @@ class txResultStringComparator : public txXPathResultComparator
 {
 public:
     txResultStringComparator(bool aAscending, bool aUpperFirst,
-                             const nsAFlatString& aLanguage);
+                             const nsString& aLanguage);
 
     int compareValues(txObject* aVal1, txObject* aVal2) override;
     nsresult createSortableValue(Expr *aExpr, txIEvalContext *aContext,
                                  txObject *&aResult) override;
 private:
     nsCOMPtr<nsICollation> mCollation;
-    nsresult init(const nsAFlatString& aLanguage);
+    nsresult init(const nsString& aLanguage);
     nsresult createRawSortKey(const int32_t aStrength,
                               const nsString& aString,
                               uint8_t** aKey,

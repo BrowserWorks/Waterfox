@@ -9,6 +9,7 @@
 #include "nsFrameMessageManager.h"
 
 #include "ContentChild.h"
+#include "GeckoProfiler.h"
 #include "nsASCIIMask.h"
 #include "nsContentUtils.h"
 #include "nsDOMClassInfoID.h"
@@ -603,10 +604,11 @@ nsFrameMessageManager::SendMessage(const nsAString& aMessageName,
                                    JS::MutableHandle<JS::Value> aRetval,
                                    bool aIsSync)
 {
-  NS_LossyConvertUTF16toASCII messageNameCStr(aMessageName);
-  PROFILER_LABEL_DYNAMIC("nsFrameMessageManager", "SendMessage",
-                          js::ProfileEntry::Category::EVENTS,
-                          messageNameCStr.get());
+  if (profiler_is_active()) {
+    NS_LossyConvertUTF16toASCII messageNameCStr(aMessageName);
+    AUTO_PROFILER_LABEL_DYNAMIC("nsFrameMessageManager::SendMessage", EVENTS,
+                                messageNameCStr.get());
+  }
 
   NS_ASSERTION(!IsGlobal(), "Should not call SendSyncMessage in chrome");
   NS_ASSERTION(!IsBroadcaster(), "Should not call SendSyncMessage in chrome");
@@ -844,6 +846,13 @@ NS_IMETHODIMP
 nsFrameMessageManager::GetDocShell(nsIDocShell** aDocShell)
 {
   *aDocShell = nullptr;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsFrameMessageManager::GetTabEventTarget(nsIEventTarget** aTarget)
+{
+  *aTarget = nullptr;
   return NS_OK;
 }
 
@@ -1520,6 +1529,13 @@ void
 nsMessageManagerScriptExecutor::LoadScriptInternal(const nsAString& aURL,
                                                    bool aRunInGlobalScope)
 {
+  if (profiler_is_active()) {
+    NS_LossyConvertUTF16toASCII urlCStr(aURL);
+    AUTO_PROFILER_LABEL_DYNAMIC(
+      "nsMessageManagerScriptExecutor::LoadScriptInternal", OTHER,
+      urlCStr.get());
+  }
+
   if (!mGlobal || !sCachedScripts) {
     return;
   }
@@ -1743,6 +1759,7 @@ public:
   nsAsyncMessageToSameProcessChild(JS::RootingContext* aRootingCx,
                                    JS::Handle<JSObject*> aCpows)
     : nsSameProcessAsyncMessageBase(aRootingCx, aCpows)
+    , mozilla::Runnable("nsAsyncMessageToSameProcessChild")
   { }
   NS_IMETHOD Run() override
   {
@@ -2033,8 +2050,7 @@ nsFrameMessageManager::MarkForCC()
 
 nsSameProcessAsyncMessageBase::nsSameProcessAsyncMessageBase(JS::RootingContext* aRootingCx,
                                                              JS::Handle<JSObject*> aCpows)
-  : mRootingCx(aRootingCx)
-  , mCpows(aRootingCx, aCpows)
+  : mCpows(aRootingCx, aCpows)
 #ifdef DEBUG
   , mCalledInit(false)
 #endif
@@ -2068,7 +2084,7 @@ nsSameProcessAsyncMessageBase::ReceiveMessage(nsISupports* aTarget,
   // Make sure that we have called Init() and it has succeeded.
   MOZ_ASSERT(mCalledInit);
   if (aManager) {
-    SameProcessCpowHolder cpows(mRootingCx, mCpows);
+    SameProcessCpowHolder cpows(RootingCx(), mCpows);
 
     RefPtr<nsFrameMessageManager> mm = aManager;
     mm->ReceiveMessage(aTarget, aTargetFrameLoader, mMessage, false, &mData,

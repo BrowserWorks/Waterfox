@@ -123,11 +123,12 @@ GamepadServiceTest::AddGamepad(const nsAString& aID,
     return nullptr;
   }
 
-  GamepadAdded a(nsString(aID), 0,
-                 aMapping, aHand,
-                 GamepadServiceType::Standard,
+  // Only VR controllers has displayID, we give 0 to the general gamepads.
+  GamepadAdded a(nsString(aID),
+                 aMapping, aHand, 0,
                  aNumButtons, aNumAxes, aNumHaptics);
-  GamepadChangeEvent e(a);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(0, GamepadServiceType::Standard, body);
   nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
 
   RefPtr<Promise> p = Promise::Create(go, aRv);
@@ -153,8 +154,9 @@ GamepadServiceTest::RemoveGamepad(uint32_t aIndex)
     return;
   }
 
-  GamepadRemoved a(aIndex, GamepadServiceType::Standard);
-  GamepadChangeEvent e(a);
+  GamepadRemoved a;
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {
@@ -175,9 +177,9 @@ GamepadServiceTest::NewButtonEvent(uint32_t aIndex,
     return;
   }
 
-  GamepadButtonInformation a(aIndex, GamepadServiceType::Standard,
-                             aButton, aPressed ? 1.0 : 0, aPressed, aTouched);
-  GamepadChangeEvent e(a);
+  GamepadButtonInformation a(aButton, aPressed ? 1.0 : 0, aPressed, aTouched);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {
@@ -199,9 +201,9 @@ GamepadServiceTest::NewButtonValueEvent(uint32_t aIndex,
     return;
   }
 
-  GamepadButtonInformation a(aIndex, GamepadServiceType::Standard,
-                             aButton, aValue, aPressed, aTouched);
-  GamepadChangeEvent e(a);
+  GamepadButtonInformation a(aButton, aValue, aPressed, aTouched);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {
@@ -221,9 +223,9 @@ GamepadServiceTest::NewAxisMoveEvent(uint32_t aIndex,
     return;
   }
 
-  GamepadAxisInformation a(aIndex, GamepadServiceType::Standard,
-                           aAxis, aValue);
-  GamepadChangeEvent e(a);
+  GamepadAxisInformation a(aAxis, aValue);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {
@@ -304,9 +306,9 @@ GamepadServiceTest::NewPoseMove(uint32_t aIndex,
     poseState.linearAcceleration[2] = value.Data()[2];
   }
 
-  GamepadPoseInformation a(aIndex, GamepadServiceType::Standard,
-                           poseState);
-  GamepadChangeEvent e(a);
+  GamepadPoseInformation a(poseState);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {

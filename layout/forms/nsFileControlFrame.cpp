@@ -110,15 +110,15 @@ MakeAnonButton(nsIDocument* aDoc, const char* labelKey,
     HTMLButtonElement::FromContentOrNull(button);
 
   if (!aAccessKey.IsEmpty()) {
-    buttonElement->SetAccessKey(aAccessKey);
+    IgnoredErrorResult ignored;
+    buttonElement->SetAccessKey(aAccessKey, ignored);
   }
 
   // Both elements are given the same tab index so that the user can tab
   // to the file control at the correct index, and then between the two
   // buttons.
-  int32_t tabIndex;
-  aInputElement->GetTabIndex(&tabIndex);
-  buttonElement->SetTabIndex(tabIndex);
+  IgnoredErrorResult ignored;
+  buttonElement->SetTabIndex(aInputElement->TabIndex(), ignored);
 
   return button.forget();
 }
@@ -191,7 +191,7 @@ NS_QUERYFRAME_HEAD(nsFileControlFrame)
   NS_QUERYFRAME_ENTRY(nsIFormControlFrame)
 NS_QUERYFRAME_TAIL_INHERITING(nsBlockFrame)
 
-void 
+void
 nsFileControlFrame::SetFocus(bool aOn, bool aRepaint)
 {
 }
@@ -422,7 +422,7 @@ nsFileControlFrame::DnDListener::CanDropTheseFiles(nsIDOMDataTransfer* aDOMDataT
 }
 
 nscoord
-nsFileControlFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsFileControlFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);

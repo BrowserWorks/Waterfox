@@ -38,6 +38,7 @@ class gfxVarReceiver;
   _(UseWebRenderANGLE,          bool,             false)                \
   _(ScreenDepth,                int32_t,          0)                    \
   _(GREDirectory,               nsCString,        nsCString())          \
+  _(UseOMTP,                    bool,             false)                \
   _(AllowD3D11KeyedMutex,       bool,             false)                \
 
   /* Add new entries above this line. */
@@ -58,6 +59,10 @@ class gfxVarReceiver;
 class gfxVars final
 {
 public:
+  // These values will be used during the Initialize() call if set.  Any
+  // updates that come before initialization will get added to this array.
+  static void SetValuesForInitialize(const nsTArray<GfxVarUpdate>& aInitUpdates);
+
   static void Initialize();
   static void Shutdown();
 

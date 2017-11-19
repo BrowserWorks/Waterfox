@@ -80,6 +80,7 @@ class GmpInitDoneRunnable : public Runnable
 {
   public:
     explicit GmpInitDoneRunnable(const std::string& aPCHandle) :
+      Runnable("GmpInitDoneRunnable"),
       mResult(WEBRTC_VIDEO_CODEC_OK),
       mPCHandle(aPCHandle)
     {
@@ -123,6 +124,35 @@ class GmpInitDoneRunnable : public Runnable
     int32_t mResult;
     std::string mPCHandle;
     std::string mError;
+};
+
+// Hold a frame for later decode
+class GMPDecodeData
+{
+public:
+  GMPDecodeData(const webrtc::EncodedImage& aInputImage,
+                bool aMissingFrames,
+                int64_t aRenderTimeMs)
+    : mImage(aInputImage)
+    , mMissingFrames(aMissingFrames)
+    , mRenderTimeMs(aRenderTimeMs)
+  {
+    // We want to use this for queuing, and the calling code recycles the
+    // buffer on return from Decode()
+    mImage._length = aInputImage._length;
+    mImage._size = aInputImage._length +
+                   webrtc::EncodedImage::GetBufferPaddingBytes(webrtc::kVideoCodecH264);
+    mImage._buffer = new uint8_t[mImage._size];
+    memcpy(mImage._buffer, aInputImage._buffer, aInputImage._length);
+  }
+
+  ~GMPDecodeData() {
+    delete [] mImage._buffer;
+  }
+
+  webrtc::EncodedImage mImage;
+  bool mMissingFrames;
+  int64_t mRenderTimeMs;
 };
 
 class WebrtcGmpVideoEncoder : public GMPVideoEncoderCallbackProxy
@@ -376,8 +406,6 @@ public:
 
   virtual int32_t ReleaseGmp();
 
-  virtual int32_t Reset();
-
   // GMPVideoDecoderCallbackProxy
   virtual void Terminated() override;
 
@@ -452,6 +480,8 @@ private:
   GMPVideoDecoderProxy* mGMP; // Addref is held for us
   // Used to handle a race where Release() is called while init is in progress
   bool mInitting;
+  // Frames queued for decode while mInitting is true
+  nsTArray<UniquePtr<GMPDecodeData>> mQueuedFrames;
   GMPVideoHost* mHost;
   // Protects mCallback
   Mutex mCallbackMutex;
@@ -512,11 +542,6 @@ class WebrtcVideoDecoderProxy : public WebrtcVideoDecoder
     int32_t Release() override
     {
       return mDecoderImpl->ReleaseGmp();
-    }
-
-    int32_t Reset() override
-    {
-      return mDecoderImpl->Reset();
     }
 
   private:

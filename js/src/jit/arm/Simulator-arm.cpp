@@ -33,7 +33,6 @@
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/Likely.h"
 #include "mozilla/MathAlgorithms.h"
-#include "mozilla/SizePrintfMacros.h"
 
 #include "jit/arm/Assembler-arm.h"
 #include "jit/arm/disasm/Constants-arm.h"
@@ -1104,7 +1103,7 @@ Simulator::setLastDebuggerInput(char* input)
 /* static */ void
 SimulatorProcess::FlushICache(void* start_addr, size_t size)
 {
-    JitSpewCont(JitSpew_CacheFlush, "[%p %" PRIxSIZE "]", start_addr, size);
+    JitSpewCont(JitSpew_CacheFlush, "[%p %zx]", start_addr, size);
     if (!ICacheCheckingDisableCount) {
         AutoLockSimulatorCache als;
         js::jit::FlushICacheLocked(icache(), start_addr, size);
@@ -4793,6 +4792,19 @@ Simulator::disable_single_stepping()
     single_step_callback_arg_ = nullptr;
 }
 
+static void
+FakeInterruptHandler()
+{
+    JSContext* cx = TlsContext.get();
+    uint8_t* pc = cx->simulator()->get_pc_as<uint8_t*>();
+
+    const wasm::CodeSegment* cs = nullptr;
+    if (!wasm::InInterruptibleCode(cx, pc, &cs))
+        return;
+
+    cx->simulator()->trigger_wasm_interrupt();
+}
+
 template<bool EnableStopSimAt>
 void
 Simulator::execute()
@@ -4812,6 +4824,8 @@ Simulator::execute()
         } else {
             if (single_stepping_)
                 single_step_callback_(single_step_callback_arg_, this, (void*)program_counter);
+            if (MOZ_UNLIKELY(JitOptions.simulatorAlwaysInterrupt))
+                FakeInterruptHandler();
             SimInstruction* instr = reinterpret_cast<SimInstruction*>(program_counter);
             instructionDecode(instr);
             icount_++;

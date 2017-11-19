@@ -39,11 +39,16 @@ enum JsepSdpType {
   kJsepSdpRollback
 };
 
+enum JsepDescriptionPendingOrCurrent {
+  kJsepDescriptionCurrent,
+  kJsepDescriptionPending,
+  kJsepDescriptionPendingOrCurrent
+};
+
 struct JsepOAOptions {};
 struct JsepOfferOptions : public JsepOAOptions {
   Maybe<size_t> mOfferToReceiveAudio;
   Maybe<size_t> mOfferToReceiveVideo;
-  Maybe<bool> mDontOfferDataChannel;
   Maybe<bool> mIceRestart; // currently ignored by JsepSession
 };
 struct JsepAnswerOptions : public JsepOAOptions {};
@@ -169,8 +174,10 @@ public:
                                std::string* offer) = 0;
   virtual nsresult CreateAnswer(const JsepAnswerOptions& options,
                                 std::string* answer) = 0;
-  virtual std::string GetLocalDescription() const = 0;
-  virtual std::string GetRemoteDescription() const = 0;
+  virtual std::string GetLocalDescription(JsepDescriptionPendingOrCurrent type)
+                                          const = 0;
+  virtual std::string GetRemoteDescription(JsepDescriptionPendingOrCurrent type)
+                                           const = 0;
   virtual nsresult SetLocalDescription(JsepSdpType type,
                                        const std::string& sdp) = 0;
   virtual nsresult SetRemoteDescription(JsepSdpType type,

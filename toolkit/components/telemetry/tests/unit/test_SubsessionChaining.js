@@ -3,7 +3,6 @@
 */
 
 Cu.import("resource://gre/modules/Preferences.jsm", this);
-Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/TelemetryArchive.jsm", this);
 Cu.import("resource://gre/modules/TelemetryController.jsm", this);
 Cu.import("resource://gre/modules/TelemetryEnvironment.jsm", this);
@@ -14,7 +13,6 @@ const MS_IN_ONE_HOUR  = 60 * 60 * 1000;
 const MS_IN_ONE_DAY   = 24 * MS_IN_ONE_HOUR;
 
 const PREF_BRANCH = "toolkit.telemetry.";
-const PREF_ARCHIVE_ENABLED = PREF_BRANCH + "archive.enabled";
 
 const REASON_ABORTED_SESSION = "aborted-session";
 const REASON_DAILY = "daily";
@@ -89,10 +87,11 @@ add_task(async function test_setup() {
   // Addon manager needs a profile directory
   do_get_profile();
   loadAddonManager("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
+  finishAddonManagerStartup();
   // Make sure we don't generate unexpected pings due to pref changes.
   await setEmptyPrefWatchlist();
 
-  Preferences.set(PREF_TELEMETRY_ENABLED, true);
+  Preferences.set(TelemetryUtils.Preferences.TelemetryEnabled, true);
 });
 
 add_task(async function test_subsessionsChaining() {

@@ -22,14 +22,14 @@ public:
   /* query */
   bool HasAnyCA();
   bool HasAnyUser();
-  bool HasPeer(bool checkSSL = true, 
-                 bool checkEmail = true,  
+  bool HasPeer(bool checkSSL = true,
+                 bool checkEmail = true,
                  bool checkObjSign = true);
-  bool HasTrustedCA(bool checkSSL = true, 
-                      bool checkEmail = true,  
+  bool HasTrustedCA(bool checkSSL = true,
+                      bool checkEmail = true,
                       bool checkObjSign = true);
-  bool HasTrustedPeer(bool checkSSL = true, 
-                        bool checkEmail = true,  
+  bool HasTrustedPeer(bool checkSSL = true,
+                        bool checkEmail = true,
                         bool checkObjSign = true);
 
   /* common defaults */
@@ -42,7 +42,7 @@ public:
   /* read: "p, P, c, C, T, u, w" */
   void SetSSLTrust(bool peer, bool tPeer,
                    bool ca,   bool tCA, bool tClientCA,
-                   bool user, bool warn); 
+                   bool user, bool warn);
 
   void SetEmailTrust(bool peer, bool tPeer,
                      bool ca,   bool tCA, bool tClientCA,
@@ -57,8 +57,7 @@ public:
   /* set p <--> P */
   void AddPeerTrust(bool ssl, bool email, bool objSign);
 
-  /* get it (const?) (shallow?) */
-  CERTCertTrust * GetTrust() { return &mTrust; }
+  CERTCertTrust& GetTrust() { return mTrust; }
 
 private:
   void addTrust(unsigned int *t, unsigned int v);

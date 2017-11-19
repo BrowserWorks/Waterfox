@@ -320,8 +320,8 @@ body[narrow] #restorePreviousSession::before {
   display: block;
   position: absolute;
   top: 12px;
-  right: 69px;
-  width: 69px;
+  offset-inline-end: 12px;
+  width: 67px;
   height: 19px;
 }
 
@@ -394,4 +394,3 @@ body[narrow] #restorePreviousSession::before {
     transform-origin: top center;
   }
 }
-

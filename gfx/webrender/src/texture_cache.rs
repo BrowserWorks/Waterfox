@@ -5,8 +5,9 @@
 use device::TextureFilter;
 use fnv::FnvHasher;
 use freelist::{FreeList, FreeListItem, FreeListItemId};
-use internal_types::{TextureUpdate, TextureUpdateOp};
-use internal_types::{CacheTextureId, RenderTargetMode, TextureUpdateList, RectUv};
+use gpu_cache::GpuCacheHandle;
+use internal_types::{TextureUpdate, TextureUpdateOp, UvRect};
+use internal_types::{CacheTextureId, RenderTargetMode, TextureUpdateList};
 use profiler::TextureCacheProfileCounters;
 use std::cmp;
 use std::collections::HashMap;
@@ -16,9 +17,9 @@ use std::mem;
 use std::slice::Iter;
 use time;
 use util;
-use webrender_traits::{ExternalImageType, ImageData, ImageFormat, DevicePixel, DeviceIntPoint};
-use webrender_traits::{DeviceUintRect, DeviceUintSize, DeviceUintPoint};
-use webrender_traits::ImageDescriptor;
+use api::{ExternalImageType, ImageData, ImageFormat};
+use api::{DeviceUintRect, DeviceUintSize, DeviceUintPoint};
+use api::{DevicePoint, ImageDescriptor};
 
 /// The number of bytes we're allowed to use for a texture.
 const MAX_BYTES_PER_TEXTURE: u32 = 1024 * 1024 * 256;  // 256MB
@@ -76,8 +77,8 @@ pub struct TexturePage {
 impl TexturePage {
     pub fn new(texture_id: CacheTextureId, texture_size: DeviceUintSize) -> TexturePage {
         let mut page = TexturePage {
-            texture_id: texture_id,
-            texture_size: texture_size,
+            texture_id,
+            texture_size,
             free_list: FreeRectList::new(),
             coalesce_vec: Vec::new(),
             allocations: 0,
@@ -443,13 +444,20 @@ pub struct TextureCacheItem {
     pub texture_id: CacheTextureId,
 
     // The texture coordinates for this item
-    pub pixel_rect: RectUv<i32, DevicePixel>,
-
-    // The size of the entire texture (not just the allocated rectangle)
-    pub texture_size: DeviceUintSize,
+    pub uv_rect: UvRect,
 
     // The size of the allocated rectangle.
     pub allocated_rect: DeviceUintRect,
+
+    // Handle to the location of the UV rect for this item in GPU cache.
+    pub uv_rect_handle: GpuCacheHandle,
+
+    pub format: ImageFormat,
+
+    // Some arbitrary data associated with this item.
+    // In the case of glyphs, it is the top / left offset
+    // from the rasterized glyph.
+    pub user_data: [f32; 2],
 }
 
 // Structure squat the width/height fields to maintain the free list information :)
@@ -487,22 +495,21 @@ impl FreeListItem for TextureCacheItem {
 impl TextureCacheItem {
     fn new(texture_id: CacheTextureId,
            rect: DeviceUintRect,
-           texture_size: &DeviceUintSize)
+           format: ImageFormat,
+           user_data: [f32; 2])
            -> TextureCacheItem {
         TextureCacheItem {
-            texture_id: texture_id,
-            texture_size: *texture_size,
-            pixel_rect: RectUv {
-                top_left: DeviceIntPoint::new(rect.origin.x as i32,
-                                              rect.origin.y as i32),
-                top_right: DeviceIntPoint::new((rect.origin.x + rect.size.width) as i32,
-                                                rect.origin.y as i32),
-                bottom_left: DeviceIntPoint::new(rect.origin.x as i32,
-                                                (rect.origin.y + rect.size.height) as i32),
-                bottom_right: DeviceIntPoint::new((rect.origin.x + rect.size.width) as i32,
-                                                  (rect.origin.y + rect.size.height) as i32)
+            texture_id,
+            uv_rect: UvRect {
+                uv0: DevicePoint::new(rect.origin.x as f32,
+                                      rect.origin.y as f32),
+                uv1: DevicePoint::new((rect.origin.x + rect.size.width) as f32,
+                                      (rect.origin.y + rect.size.height) as f32),
             },
             allocated_rect: rect,
+            uv_rect_handle: GpuCacheHandle::new(),
+            format,
+            user_data,
         }
     }
 }
@@ -583,6 +590,7 @@ pub enum AllocationKind {
 
 #[derive(Debug)]
 pub struct AllocationResult {
+    image_id: TextureCacheItemId,
     kind: AllocationKind,
     item: TextureCacheItem,
 }
@@ -599,7 +607,7 @@ impl TextureCache {
             items: FreeList::new(),
             pending_updates: TextureUpdateList::new(),
             arena: TextureCacheArena::new(),
-            max_texture_size: max_texture_size,
+            max_texture_size,
         }
     }
 
@@ -611,24 +619,37 @@ impl TextureCache {
         mem::replace(&mut self.pending_updates, TextureUpdateList::new())
     }
 
-    // TODO(gw): This API is a bit ugly (having to allocate an ID and
-    //           then use it). But it has to be that way for now due to
-    //           how the raster_jobs code works.
-    pub fn new_item_id(&mut self) -> TextureCacheItemId {
-        let new_item = TextureCacheItem::new(CacheTextureId(0),
-                                             DeviceUintRect::zero(),
-                                             &DeviceUintSize::zero());
-        self.items.insert(new_item)
+    pub fn allocate(
+        &mut self,
+        requested_width: u32,
+        requested_height: u32,
+        format: ImageFormat,
+        filter: TextureFilter,
+        user_data: [f32; 2],
+        profile: &mut TextureCacheProfileCounters
+    ) -> AllocationResult {
+        self.allocate_impl(
+            requested_width,
+            requested_height,
+            format,
+            filter,
+            user_data,
+            profile,
+            None,
+        )
     }
 
-    pub fn allocate(&mut self,
-                    image_id: TextureCacheItemId,
-                    requested_width: u32,
-                    requested_height: u32,
-                    format: ImageFormat,
-                    filter: TextureFilter,
-                    profile: &mut TextureCacheProfileCounters)
-                    -> AllocationResult {
+    // If item_id is None, create a new id, otherwise reuse it.
+    fn allocate_impl(
+        &mut self,
+        requested_width: u32,
+        requested_height: u32,
+        format: ImageFormat,
+        filter: TextureFilter,
+        user_data: [f32; 2],
+        profile: &mut TextureCacheProfileCounters,
+        item_id: Option<TextureCacheItemId>
+    ) -> AllocationResult {
         let requested_size = DeviceUintSize::new(requested_width, requested_height);
 
         // TODO(gw): For now, anything that requests nearest filtering
@@ -642,19 +663,26 @@ impl TextureCache {
             let cache_item = TextureCacheItem::new(
                 texture_id,
                 DeviceUintRect::new(DeviceUintPoint::zero(), requested_size),
-                &requested_size);
-            *self.items.get_mut(image_id) = cache_item;
+                format,
+                user_data
+            );
+
+            let image_id = match item_id {
+                Some(id) => id,
+                None => self.items.insert(cache_item.clone()),
+            };
 
             return AllocationResult {
                 item: self.items.get(image_id).clone(),
                 kind: AllocationKind::Standalone,
+                image_id,
             }
         }
 
         let mode = RenderTargetMode::SimpleRenderTarget;
         let (page_list, page_profile) = match format {
             ImageFormat::A8 => (&mut self.arena.pages_a8, &mut profile.pages_a8),
-            ImageFormat::RGBA8 => (&mut self.arena.pages_rgba8, &mut profile.pages_rgba8),
+            ImageFormat::BGRA8 => (&mut self.arena.pages_rgba8, &mut profile.pages_rgba8),
             ImageFormat::RGB8 => (&mut self.arena.pages_rgb8, &mut profile.pages_rgb8),
             ImageFormat::RG8 => (&mut self.arena.pages_rg8, &mut profile.pages_rg8),
             ImageFormat::Invalid | ImageFormat::RGBAF32 => unreachable!(),
@@ -691,12 +719,6 @@ impl TextureCache {
 
                 page.grow(texture_size);
 
-                self.items.for_each_item(|item| {
-                    if item.texture_id == page.texture_id {
-                        item.texture_size = texture_size;
-                    }
-                });
-
                 if page.can_allocate(&requested_size) {
                     page_id = Some(i);
                     break;
@@ -728,7 +750,7 @@ impl TextureCache {
                     self.pending_updates.push(update_op);
 
                     free_texture_levels.push(FreeTextureLevel {
-                        texture_id: texture_id,
+                        texture_id,
                     });
                 }
                 let free_texture_level = free_texture_levels.pop().unwrap();
@@ -742,27 +764,56 @@ impl TextureCache {
 
         let location = page.allocate(&requested_size)
                            .expect("All the checks have passed till now, there is no way back.");
-        let cache_item = TextureCacheItem::new(page.texture_id,
-                                               DeviceUintRect::new(location, requested_size),
-                                               &page.texture_size);
-        *self.items.get_mut(image_id) = cache_item.clone();
+        let cache_item = TextureCacheItem::new(
+            page.texture_id,
+            DeviceUintRect::new(location, requested_size),
+            format,
+            user_data
+        );
+
+        let image_id = match item_id {
+            Some(id) => id,
+            None => self.items.insert(cache_item.clone()),
+        };
 
         AllocationResult {
             item: cache_item,
             kind: AllocationKind::TexturePage,
+            image_id,
         }
     }
 
-    pub fn update(&mut self,
-                  image_id: TextureCacheItemId,
-                  descriptor: ImageDescriptor,
-                  data: ImageData,
-                  dirty_rect: Option<DeviceUintRect>) {
-        let existing_item = self.items.get(image_id);
+    pub fn update(
+        &mut self,
+        image_id: TextureCacheItemId,
+        descriptor: ImageDescriptor,
+        filter: TextureFilter,
+        data: ImageData,
+        mut dirty_rect: Option<DeviceUintRect>,
+    ) {
+        let mut existing_item = self.items.get(image_id).clone();
 
-        // TODO(gw): Handle updates to size/format!
-        debug_assert_eq!(existing_item.allocated_rect.size.width, descriptor.width);
-        debug_assert_eq!(existing_item.allocated_rect.size.height, descriptor.height);
+        if existing_item.allocated_rect.size.width != descriptor.width ||
+           existing_item.allocated_rect.size.height != descriptor.height ||
+           existing_item.format != descriptor.format {
+
+            self.free_item_rect(existing_item.clone());
+
+            self.allocate_impl(
+                descriptor.width,
+                descriptor.height,
+                descriptor.format,
+                filter,
+                existing_item.user_data,
+                &mut TextureCacheProfileCounters::new(),
+                Some(image_id),
+            );
+
+            // Fetch the item again because the rect most likely changed during reallocation.
+            existing_item = self.items.get(image_id).clone();
+            // If we reallocated, we need to upload the whole item again.
+            dirty_rect = None;
+        }
 
         let op = match data {
             ImageData::External(..) => {
@@ -783,7 +834,7 @@ impl TextureCache {
                             height: dirty.size.height,
                             data: bytes,
                             stride: Some(stride),
-                            offset: offset,
+                            offset,
                         }
                     }
                     None => {
@@ -803,18 +854,18 @@ impl TextureCache {
 
         let update_op = TextureUpdate {
             id: existing_item.texture_id,
-            op: op,
+            op,
         };
 
         self.pending_updates.push(update_op);
     }
 
     pub fn insert(&mut self,
-                  image_id: TextureCacheItemId,
                   descriptor: ImageDescriptor,
                   filter: TextureFilter,
                   data: ImageData,
-                  profile: &mut TextureCacheProfileCounters) {
+                  user_data: [f32; 2],
+                  profile: &mut TextureCacheProfileCounters) -> TextureCacheItemId {
         if let ImageData::Blob(..) = data {
             panic!("must rasterize the vector image before adding to the cache");
         }
@@ -831,11 +882,11 @@ impl TextureCache {
             assert!(vec.len() >= finish as usize);
         }
 
-        let result = self.allocate(image_id,
-                                   width,
+        let result = self.allocate(width,
                                    height,
                                    format,
                                    filter,
+                                   user_data,
                                    profile);
 
         match result.kind {
@@ -855,7 +906,7 @@ impl TextureCache {
                                         rect: result.item.allocated_rect,
                                         id: ext_image.id,
                                         channel_index: ext_image.channel_index,
-                                        stride: stride,
+                                        stride,
                                         offset: descriptor.offset,
                                     },
                                 };
@@ -876,7 +927,7 @@ impl TextureCache {
                                 width: result.item.allocated_rect.size.width,
                                 height: result.item.allocated_rect.size.height,
                                 data: bytes,
-                                stride: stride,
+                                stride,
                                 offset: descriptor.offset,
                             },
                         };
@@ -898,10 +949,10 @@ impl TextureCache {
                                 let update_op = TextureUpdate {
                                     id: result.item.texture_id,
                                     op: TextureUpdateOp::Create {
-                                        width: width,
-                                        height: height,
-                                        format: format,
-                                        filter: filter,
+                                        width,
+                                        height,
+                                        format,
+                                        filter,
                                         mode: RenderTargetMode::None,
                                         data: Some(data),
                                     },
@@ -915,10 +966,10 @@ impl TextureCache {
                         let update_op = TextureUpdate {
                             id: result.item.texture_id,
                             op: TextureUpdateOp::Create {
-                                width: width,
-                                height: height,
-                                format: format,
-                                filter: filter,
+                                width,
+                                height,
+                                format,
+                                filter,
                                 mode: RenderTargetMode::None,
                                 data: Some(data),
                             },
@@ -929,14 +980,24 @@ impl TextureCache {
                 }
             }
         }
+
+        result.image_id
     }
 
     pub fn get(&self, id: TextureCacheItemId) -> &TextureCacheItem {
         self.items.get(id)
     }
 
+    pub fn get_mut(&mut self, id: TextureCacheItemId) -> &mut TextureCacheItem {
+        self.items.get_mut(id)
+    }
+
     pub fn free(&mut self, id: TextureCacheItemId) {
         let item = self.items.free(id);
+        self.free_item_rect(item);
+    }
+
+    fn free_item_rect(&mut self, item: TextureCacheItem) {
         match self.arena.texture_page_for_id(item.texture_id) {
             Some(texture_page) => texture_page.free(&item.allocated_rect),
             None => {
@@ -957,9 +1018,9 @@ fn texture_create_op(texture_size: DeviceUintSize, format: ImageFormat, mode: Re
     TextureUpdateOp::Create {
         width: texture_size.width,
         height: texture_size.height,
-        format: format,
+        format,
         filter: TextureFilter::Linear,
-        mode: mode,
+        mode,
         data: None,
     }
 }
@@ -971,9 +1032,9 @@ fn texture_grow_op(texture_size: DeviceUintSize,
     TextureUpdateOp::Grow {
         width: texture_size.width,
         height: texture_size.height,
-        format: format,
+        format,
         filter: TextureFilter::Linear,
-        mode: mode,
+        mode,
     }
 }
 

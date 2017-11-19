@@ -5,6 +5,7 @@
 
 #include "nsComboboxControlFrame.h"
 
+#include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/PathHelpers.h"
@@ -38,7 +39,6 @@
 #include "nsDisplayList.h"
 #include "nsITheme.h"
 #include "nsThemeConstants.h"
-#include "nsRenderingContext.h"
 #include "mozilla/Likely.h"
 #include <algorithm>
 #include "nsTextNode.h"
@@ -383,7 +383,8 @@ class nsResizeDropdownAtFinalPosition final
 {
 public:
   explicit nsResizeDropdownAtFinalPosition(nsComboboxControlFrame* aFrame)
-    : mFrame(aFrame)
+    : mozilla::Runnable("nsResizeDropdownAtFinalPosition")
+    , mFrame(aFrame)
   {
   }
 
@@ -519,7 +520,11 @@ nsComboboxControlFrame::GetCSSTransformTranslation()
 class nsAsyncRollup : public Runnable
 {
 public:
-  explicit nsAsyncRollup(nsComboboxControlFrame* aFrame) : mFrame(aFrame) {}
+  explicit nsAsyncRollup(nsComboboxControlFrame* aFrame)
+    : mozilla::Runnable("nsAsyncRollup")
+    , mFrame(aFrame)
+  {
+  }
   NS_IMETHOD Run() override
   {
     if (mFrame.IsAlive()) {
@@ -534,7 +539,11 @@ public:
 class nsAsyncResize : public Runnable
 {
 public:
-  explicit nsAsyncResize(nsComboboxControlFrame* aFrame) : mFrame(aFrame) {}
+  explicit nsAsyncResize(nsComboboxControlFrame* aFrame)
+    : mozilla::Runnable("nsAsyncResize")
+    , mFrame(aFrame)
+  {
+  }
   NS_IMETHOD Run() override
   {
     if (mFrame.IsAlive()) {
@@ -735,7 +744,7 @@ static void printSize(char * aDesc, nscoord aSize)
 //-------------------------------------------------------------------
 
 nscoord
-nsComboboxControlFrame::GetIntrinsicISize(nsRenderingContext* aRenderingContext,
+nsComboboxControlFrame::GetIntrinsicISize(gfxContext* aRenderingContext,
                                           nsLayoutUtils::IntrinsicISizeType aType)
 {
   // get the scrollbar width, we'll use this later
@@ -791,7 +800,7 @@ nsComboboxControlFrame::GetIntrinsicISize(nsRenderingContext* aRenderingContext,
 }
 
 nscoord
-nsComboboxControlFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsComboboxControlFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord minISize;
   DISPLAY_MIN_WIDTH(this, minISize);
@@ -800,7 +809,7 @@ nsComboboxControlFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 nscoord
-nsComboboxControlFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsComboboxControlFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord prefISize;
   DISPLAY_PREF_WIDTH(this, prefISize);
@@ -1010,9 +1019,8 @@ nsComboboxControlFrame::RedisplayText()
                  "If we happen to run our redisplay event now, we might kill "
                  "ourselves!");
 
-    RefPtr<RedisplayTextEvent> event = new RedisplayTextEvent(this);
-    mRedisplayTextEvent = event;
-    nsContentUtils::AddScriptRunner(event);
+    mRedisplayTextEvent = new RedisplayTextEvent(this);
+    nsContentUtils::AddScriptRunner(mRedisplayTextEvent.get());
   }
   return rv;
 }
@@ -1189,15 +1197,10 @@ nsComboboxControlFrame::GetContentInsertionFrame() {
 }
 
 void
-nsComboboxControlFrame::DoUpdateStyleOfOwnedAnonBoxes(
-  ServoStyleSet& aStyleSet,
-  nsStyleChangeList& aChangeList,
-  nsChangeHint aHintForThisFrame)
+nsComboboxControlFrame::AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult)
 {
-  UpdateStyleOfChildAnonBox(mDropdownFrame, aStyleSet, aChangeList,
-                            aHintForThisFrame);
-  UpdateStyleOfChildAnonBox(mDisplayFrame, aStyleSet, aChangeList,
-                            aHintForThisFrame);
+  aResult.AppendElement(OwnedAnonBox(mDropdownFrame));
+  aResult.AppendElement(OwnedAnonBox(mDisplayFrame));
 }
 
 nsresult
@@ -1539,12 +1542,12 @@ public:
 #endif
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("ComboboxFocus", TYPE_COMBOBOX_FOCUS)
 };
 
 void nsDisplayComboboxFocus::Paint(nsDisplayListBuilder* aBuilder,
-                                   nsRenderingContext* aCtx)
+                                   gfxContext* aCtx)
 {
   static_cast<nsComboboxControlFrame*>(mFrame)
     ->PaintFocus(*aCtx->GetDrawTarget(), ToReferenceFrame());
@@ -1677,6 +1680,7 @@ nsComboboxControlFrame::SaveState(nsPresState** aState)
   MOZ_ASSERT(!(*aState));
   (*aState) = new nsPresState();
   (*aState)->SetDroppedDown(mDroppedDown);
+  (*aState)->SetPreviewText(mPreviewText);
   return NS_OK;
 }
 
@@ -1686,6 +1690,7 @@ nsComboboxControlFrame::RestoreState(nsPresState* aState)
   if (!aState) {
     return NS_ERROR_FAILURE;
   }
+  aState->GetPreviewText(mPreviewText);
   ShowList(aState->GetDroppedDown()); // might destroy us
   return NS_OK;
 }

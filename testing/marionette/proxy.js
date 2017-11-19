@@ -6,13 +6,21 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-Cu.import("chrome://marionette/content/error.js");
+Cu.import("resource://gre/modules/Log.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+
+const {
+  error,
+  WebDriverError,
+} = Cu.import("chrome://marionette/content/error.js", {});
 Cu.import("chrome://marionette/content/modal.js");
 
 this.EXPORTED_SYMBOLS = ["proxy"];
 
 const uuidgen = Cc["@mozilla.org/uuid-generator;1"]
     .getService(Ci.nsIUUIDGenerator);
+
+const logger = Log.repository.getLogger("Marionette");
 
 // Proxy handler that traps requests to get a property.  Will prioritise
 // properties that exist on the object's own prototype.
@@ -22,9 +30,10 @@ var ownPriorityGetterTrap = {
       return obj[prop];
     }
     return (...args) => obj.send(prop, args);
-  }
+  },
 };
 
+/** @namespace */
 this.proxy = {};
 
 /**
@@ -44,8 +53,9 @@ this.proxy = {};
  * @param {function(string, Object, number)} sendAsyncFn
  *     Callback for sending async messages.
  */
-proxy.toListener = function (mmFn, sendAsyncFn) {
-  let sender = new proxy.AsyncMessageChannel(mmFn, sendAsyncFn);
+proxy.toListener = function(mmFn, sendAsyncFn, browserFn) {
+  let sender = new proxy.AsyncMessageChannel(
+      mmFn, sendAsyncFn, browserFn);
   return new Proxy(sender, ownPriorityGetterTrap);
 };
 
@@ -58,14 +68,21 @@ proxy.toListener = function (mmFn, sendAsyncFn) {
  * that gets resolved when the message handler calls {@code .reply(...)}.
  */
 proxy.AsyncMessageChannel = class {
-  constructor(mmFn, sendAsyncFn) {
+  constructor(mmFn, sendAsyncFn, browserFn) {
+    this.mmFn_ = mmFn;
     this.sendAsync = sendAsyncFn;
+    this.browserFn_ = browserFn;
+
     // TODO(ato): Bug 1242595
     this.activeMessageId = null;
 
-    this.mmFn_ = mmFn;
     this.listeners_ = new Map();
     this.dialogueObserver_ = null;
+    this.closeHandler = null;
+  }
+
+  get browser() {
+    return this.browserFn_();
   }
 
   get mm() {
@@ -85,8 +102,8 @@ proxy.AsyncMessageChannel = class {
    * @param {string} name
    *     Function to call in the listener, e.g. for the message listener
    *     "Marionette:foo8", use "foo".
-   * @param {Array.<?>=} args
-   *     Argument list to pass the function.  If args has a single entry
+   * @param {Array.<?>=} args
+   *     Argument list to pass the function. If args has a single entry
    *     that is an object, we assume it's an old style dispatch, and
    *     the object will passed literally.
    *
@@ -124,19 +141,78 @@ proxy.AsyncMessageChannel = class {
         }
       };
 
+      // The currently selected tab or window has been closed. No clean-up
+      // is necessary to do because all loaded listeners are gone.
+      this.closeHandler = event => {
+        logger.debug(`Received DOM event ${event.type} for ${event.target}`);
+
+        switch (event.type) {
+          case "TabClose":
+          case "unload":
+            this.removeHandlers();
+            resolve();
+            break;
+        }
+      };
+
+      // A modal or tab modal dialog has been opened. To be able to handle it,
+      // the active command has to be aborted. Therefore remove all handlers,
+      // and cancel any ongoing requests in the listener.
       this.dialogueObserver_ = (subject, topic) => {
-        this.cancelAll();
+        logger.debug(`Received observer notification "${topic}"`);
+
+        this.removeAllListeners_();
+        // TODO(ato): It's not ideal to have listener specific behaviour here:
+        this.sendAsync("cancelRequest");
+
+        this.removeHandlers();
         resolve();
       };
 
-      // start content message listener
-      // and install observers for global- and tab modal dialogues
+      // start content message listener, and install handlers for
+      // modal dialogues, and window/tab state changes.
       this.addListener_(path, cb);
-      modal.addHandler(this.dialogueObserver_);
+      this.addHandlers();
 
       // sendAsync is GeckoDriver#sendAsync
       this.sendAsync(name, marshal(args), uuid);
     });
+  }
+
+  /**
+   * Add all necessary handlers for events and observer notifications.
+   */
+  addHandlers() {
+    modal.addHandler(this.dialogueObserver_);
+
+    // Register event handlers in case the command closes the current
+    // tab or window, and the promise has to be escaped.
+    if (this.browser) {
+      this.browser.window.addEventListener("unload", this.closeHandler);
+
+      if (this.browser.tab) {
+        let node = this.browser.tab.addEventListener ?
+            this.browser.tab : this.browser.contentBrowser;
+        node.addEventListener("TabClose", this.closeHandler);
+      }
+    }
+  }
+
+  /**
+   * Remove all registered handlers for events and observer notifications.
+   */
+  removeHandlers() {
+    modal.removeHandler(this.dialogueObserver_);
+
+    if (this.browser) {
+      this.browser.window.removeEventListener("unload", this.closeHandler);
+
+      if (this.browser.tab) {
+        let node = this.browser.tab.addEventListener ?
+            this.browser.tab : this.browser.contentBrowser;
+        node.removeEventListener("TabClose", this.closeHandler);
+      }
+    }
   }
 
   /**
@@ -147,6 +223,7 @@ proxy.AsyncMessageChannel = class {
    *
    * Usage:
    *
+   * <pre><code>
    *     let channel = proxy.AsyncMessageChannel(
    *         messageManager, sendAsyncMessage.bind(this));
    *
@@ -158,10 +235,11 @@ proxy.AsyncMessageChannel = class {
    *
    *     // returns with undefined:
    *     channel.reply(uuid);
+   * </pre></code>
    *
    * @param {UUID} uuid
    *     Unique identifier of the request.
-   * @param {?=} obj
+   * @param {*} obj
    *     Message data to reply with.
    */
   reply(uuid, obj = undefined) {
@@ -188,7 +266,7 @@ proxy.AsyncMessageChannel = class {
       payload = data;
     }
 
-    const msg = {type: type, data: payload};
+    const msg = {type, data: payload};
 
     // here sendAsync is actually the content frame's
     // sendAsyncMessage(path, message) global
@@ -209,21 +287,10 @@ proxy.AsyncMessageChannel = class {
     return "Marionette:asyncReply:" + uuid;
   }
 
-  /**
-   * Abort listening for responses, remove all modal dialogue handlers,
-   * and cancel any ongoing requests in the listener.
-   */
-  cancelAll() {
-    this.removeAllListeners_();
-    modal.removeHandler(this.dialogueObserver_);
-    // TODO(ato): It's not ideal to have listener specific behaviour here:
-    this.sendAsync("cancelRequest");
-  }
-
   addListener_(path, callback) {
     let autoRemover = msg => {
       this.removeListener_(path);
-      modal.removeHandler(this.dialogueObserver_);
+      this.removeHandlers();
       callback(msg);
     };
 
@@ -243,7 +310,7 @@ proxy.AsyncMessageChannel = class {
 
   removeAllListeners_() {
     let ok = true;
-    for (let [p, cb] of this.listeners_) {
+    for (let [p] of this.listeners_) {
       ok |= this.removeListener_(p);
     }
     return ok;
@@ -263,7 +330,7 @@ proxy.AsyncMessageChannel.ReplyType = {
  *     The content frame's message manager, which itself is usually an
  *     implementor of.
  */
-proxy.toChromeAsync = function (frameMessageManager) {
+proxy.toChromeAsync = function(frameMessageManager) {
   let sender = new AsyncChromeSender(frameMessageManager);
   return new Proxy(sender, ownPriorityGetterTrap);
 };
@@ -278,7 +345,7 @@ proxy.toChromeAsync = function (frameMessageManager) {
  *     let promise = sender.send("runEmulatorCmd", "my command");
  *     let rv = yield promise;
  */
-this.AsyncChromeSender = class {
+class AsyncChromeSender {
   constructor(frameMessageManager) {
     this.mm = frameMessageManager;
   }
@@ -289,7 +356,7 @@ this.AsyncChromeSender = class {
    * @param {string} name
    *     Function to call in the chrome, e.g. for "Marionette:foo", use
    *     "foo".
-   * @param {?} args
+   * @param {*} args
    *     Argument list to pass the function.  Must be JSON serialisable.
    *
    * @return {Promise}
@@ -325,7 +392,7 @@ this.AsyncChromeSender = class {
 
     return proxy;
   }
-};
+}
 
 /**
  * Creates a transparent interface from the content- to the chrome context.
@@ -342,7 +409,7 @@ this.AsyncChromeSender = class {
  * @param {nsISyncMessageSender} sendSyncMessageFn
  *     The frame message manager's sendSyncMessage function.
  */
-proxy.toChrome = function (sendSyncMessageFn) {
+proxy.toChrome = function(sendSyncMessageFn) {
   let sender = new proxy.SyncChromeSender(sendSyncMessageFn);
   return new Proxy(sender, ownPriorityGetterTrap);
 };
@@ -368,7 +435,7 @@ proxy.SyncChromeSender = class {
   }
 };
 
-var marshal = function (args) {
+var marshal = function(args) {
   if (args.length == 1 && typeof args[0] == "object") {
     return args[0];
   }

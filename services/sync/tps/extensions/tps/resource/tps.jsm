@@ -21,6 +21,7 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/main.js");
@@ -129,6 +130,7 @@ var TPS = {
   shouldValidateBookmarks: false,
   shouldValidatePasswords: false,
   shouldValidateForms: false,
+  _windowsUpDeferred: PromiseUtils.defer(),
 
   _init: function TPS__init() {
     this.delayAutoSync();
@@ -176,14 +178,7 @@ var TPS = {
           break;
 
         case "sessionstore-windows-restored":
-          // This is a terrible hack, but fixes cases where tps (usually cleanup)
-          // fails because of sessionstore restoring windows before tps is able
-          // to initialize. This used to take only 1 tick, but at some point
-          // session store started restoring windows sooner, or tps started
-          // initializing later.
-          setTimeout(() => {
-            this.RunNextTestAction();
-          }, 1000);
+          this._windowsUpDeferred.resolve();
           break;
 
         case "weave:service:setup-complete":
@@ -325,11 +320,11 @@ var TPS = {
             if (that._tabsFinished == that._tabsAdded) {
               Logger.logInfo("all tabs loaded, continuing...");
 
-              // Wait a second before continuing to be sure tabs can be synced,
-              // otherwise we can get 'error locating tab'
+              // Wait some time before continuing to be sure tabs can be synced,
+              // otherwise we can get 'error locating tab' (bug 1383832).
               Utils.namedTimer(function() {
                 that.FinishAsyncOperation();
-              }, 1000, this, "postTabsOpening");
+              }, 2500, this, "postTabsOpening");
             }
           });
           break;
@@ -615,17 +610,19 @@ var TPS = {
    */
   ValidateBookmarks() {
 
-    let getServerBookmarkState = () => {
+    let getServerBookmarkState = async () => {
       let bookmarkEngine = Weave.Service.engineManager.get("bookmarks");
       let collection = bookmarkEngine.itemSource();
       let collectionKey = bookmarkEngine.service.collectionKeys.keyForCollection(bookmarkEngine.name);
       collection.full = true;
       let items = [];
-      collection.recordHandler = function(item) {
-        item.decrypt(collectionKey);
-        items.push(item.cleartext);
-      };
-      Async.promiseSpinningly(collection.get());
+      let resp = await collection.get();
+      for (let json of resp.obj) {
+        let record = new collection._recordObj();
+        record.deserialize(json);
+        record.decrypt(collectionKey);
+        items.push(record.cleartext);
+      }
       return items;
     };
     let serverRecordDumpStr;
@@ -634,7 +631,7 @@ var TPS = {
       let clientTree = Async.promiseSpinningly(PlacesUtils.promiseBookmarksTree("", {
         includeItemIds: true
       }));
-      let serverRecords = getServerBookmarkState();
+      let serverRecords = Async.promiseSpinningly(getServerBookmarkState());
       // We can't wait until catch to stringify this, since at that point it will have cycles.
       serverRecordDumpStr = JSON.stringify(serverRecords);
 
@@ -693,7 +690,7 @@ var TPS = {
         // as above
         serverRecordDumpStr = "<Cyclic value>";
       }
-      let { problemData } = validator.compareClientWithServer(clientRecords, serverRecords);
+      let { problemData } = Async.promiseSpinningly(validator.compareClientWithServer(clientRecords, serverRecords));
       for (let { name, count } of problemData.getSummary()) {
         if (count) {
           Logger.logInfo(`Validation problem: "${name}": ${JSON.stringify(problemData[name])}`);
@@ -929,7 +926,6 @@ var TPS = {
         for (let name of this._enabledEngines) {
           names[name] = true;
         }
-
         for (let engine of Weave.Service.engineManager.getEnabled()) {
           if (!(engine.name in names)) {
             Logger.logInfo("Unregistering unused engine: " + engine.name);
@@ -946,6 +942,9 @@ var TPS = {
 
       // start processing the test actions
       this._currentAction = 0;
+      this._windowsUpDeferred.promise.then(() => {
+        this.RunNextTestAction();
+      });
     } catch (e) {
       this.DumpError("_executeTestPhase failed", e);
     }
@@ -1179,7 +1178,7 @@ var TPS = {
 
     this._triggeredSync = true;
     this.StartAsyncOperation();
-    Weave.Service.sync();
+    Async.promiseSpinningly(Weave.Service.sync());
     Logger.logInfo("Sync is complete");
   },
 
@@ -1187,8 +1186,8 @@ var TPS = {
     Logger.logInfo("Wiping data from server.");
 
     this.Login(false);
-    Weave.Service.login();
-    Weave.Service.wipeServer();
+    Async.promiseSpinningly(Weave.Service.login());
+    Async.promiseSpinningly(Weave.Service.wipeServer());
   },
 
   /**

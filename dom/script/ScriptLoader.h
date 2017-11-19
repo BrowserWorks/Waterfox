@@ -9,7 +9,7 @@
 
 #include "nsCOMPtr.h"
 #include "nsRefPtrHashtable.h"
-#include "nsIUnicodeDecoder.h"
+#include "mozilla/Encoding.h"
 #include "nsIScriptElement.h"
 #include "nsCOMArray.h"
 #include "nsCycleCollectionParticipant.h"
@@ -300,7 +300,7 @@ public:
                           const nsAString& aType,
                           const nsAString& aCrossOrigin,
                           const nsAString& aIntegrity,
-                          bool aScriptFromHead,
+                          bool aScriptFromHead, bool aAsync, bool aDefer,
                           const mozilla::net::ReferrerPolicy aReferrerPolicy);
 
   /**

@@ -77,6 +77,18 @@ class BaselineInspector
         return ent;
     }
 
+    BaselineICEntry* maybeICEntryFromPC(jsbytecode* pc) {
+        MOZ_ASSERT(hasBaselineScript());
+        MOZ_ASSERT(isValidPC(pc));
+        BaselineICEntry* ent =
+            baselineScript()->maybeICEntryFromPCOffset(script->pcToOffset(pc), prevLookedUpEntry);
+        if (!ent)
+            return nullptr;
+        MOZ_ASSERT(ent->isForOp());
+        prevLookedUpEntry = ent;
+        return ent;
+    }
+
     template <typename ICInspectorType>
     ICInspectorType makeICInspector(jsbytecode* pc, ICStub::Kind expectedFallbackKind) {
         BaselineICEntry* ent = nullptr;
@@ -110,8 +122,8 @@ class BaselineInspector
     bool hasSeenDoubleResult(jsbytecode* pc);
     bool hasSeenNonStringIterMore(jsbytecode* pc);
 
-    MOZ_MUST_USE bool isOptimizableCallStringSplit(jsbytecode* pc, JSString** strOut,
-                                                   JSString** sepOut, JSObject** objOut);
+    MOZ_MUST_USE bool isOptimizableConstStringSplit(jsbytecode* pc, JSString** strOut,
+                                                    JSString** sepOut, JSObject** objOut);
     JSObject* getTemplateObject(jsbytecode* pc);
     JSObject* getTemplateObjectForNative(jsbytecode* pc, Native native);
     JSObject* getTemplateObjectForClassHook(jsbytecode* pc, const Class* clasp);

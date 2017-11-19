@@ -14,11 +14,16 @@ class SpliceableJSONWriter;
 class ThreadInfo;
 class UniqueStacks;
 
+namespace mozilla {
+class TimeStamp;
+}
+
 // ProfilerBacktrace encapsulates a synchronous sample.
 class ProfilerBacktrace
 {
 public:
-  ProfilerBacktrace(const char* aName, int aThreadId, ProfileBuffer* aBuffer);
+  ProfilerBacktrace(const char* aName, int aThreadId,
+                    mozilla::UniquePtr<ProfileBuffer> aBuffer);
   ~ProfilerBacktrace();
 
   // ProfilerBacktraces' stacks are deduplicated in the context of the
@@ -37,7 +42,7 @@ private:
 
   mozilla::UniqueFreePtr<char> mName;
   int mThreadId;
-  ProfileBuffer* mBuffer;
+  mozilla::UniquePtr<ProfileBuffer> mBuffer;
 };
 
 #endif // __PROFILER_BACKTRACE_H

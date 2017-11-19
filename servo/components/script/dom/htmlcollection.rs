@@ -11,7 +11,7 @@ use dom::bindings::str::DOMString;
 use dom::bindings::trace::JSTraceable;
 use dom::bindings::xmlname::namespace_from_domstring;
 use dom::element::Element;
-use dom::node::Node;
+use dom::node::{Node, document_from_node};
 use dom::window::Window;
 use dom_struct::dom_struct;
 use html5ever::{LocalName, QualName};
@@ -152,7 +152,7 @@ impl HTMLCollection {
     }
 
     fn match_element(elem: &Element, qualified_name: &LocalName) -> bool {
-        match elem.prefix() {
+        match elem.prefix().as_ref() {
             None => elem.local_name() == qualified_name,
             Some(prefix) => qualified_name.starts_with(&**prefix) &&
                 qualified_name.find(":") == Some(prefix.len()) &&
@@ -199,7 +199,10 @@ impl HTMLCollection {
         }
         impl CollectionFilter for ClassNameFilter {
             fn filter(&self, elem: &Element, _root: &Node) -> bool {
-                self.classes.iter().all(|class| elem.has_class(class))
+                let case_sensitivity = document_from_node(elem)
+                    .quirks_mode()
+                    .classes_and_ids_case_sensitivity();
+                self.classes.iter().all(|class| elem.has_class(class, case_sensitivity))
             }
         }
         let filter = ClassNameFilter {
@@ -221,11 +224,9 @@ impl HTMLCollection {
 
     pub fn elements_iter_after<'a>(&'a self, after: &'a Node) -> impl Iterator<Item=Root<Element>> + 'a {
         // Iterate forwards from a node.
-        HTMLCollectionElementsIter {
-            node_iter: after.following_nodes(&self.root),
-            root: Root::from_ref(&self.root),
-            filter: &self.filter,
-        }
+        after.following_nodes(&self.root)
+            .filter_map(Root::downcast)
+            .filter(move |element| self.filter.filter(&element, &self.root))
     }
 
     pub fn elements_iter<'a>(&'a self) -> impl Iterator<Item=Root<Element>> + 'a {
@@ -235,35 +236,13 @@ impl HTMLCollection {
 
     pub fn elements_iter_before<'a>(&'a self, before: &'a Node) -> impl Iterator<Item=Root<Element>> + 'a {
         // Iterate backwards from a node.
-        HTMLCollectionElementsIter {
-            node_iter: before.preceding_nodes(&self.root),
-            root: Root::from_ref(&self.root),
-            filter: &self.filter,
-        }
+        before.preceding_nodes(&self.root)
+            .filter_map(Root::downcast)
+            .filter(move |element| self.filter.filter(&element, &self.root))
     }
 
     pub fn root_node(&self) -> Root<Node> {
         Root::from_ref(&self.root)
-    }
-}
-
-// TODO: Make this generic, and avoid code duplication
-struct HTMLCollectionElementsIter<'a, I> {
-    node_iter: I,
-    root: Root<Node>,
-    filter: &'a Box<CollectionFilter>,
-}
-
-impl<'a, I: Iterator<Item=Root<Node>>> Iterator for HTMLCollectionElementsIter<'a, I> {
-    type Item = Root<Element>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let filter = &self.filter;
-        let root = &self.root;
-        self.node_iter.by_ref()
-                      .filter_map(Root::downcast)
-                      .filter(|element| filter.filter(&element, root))
-                      .next()
     }
 }
 

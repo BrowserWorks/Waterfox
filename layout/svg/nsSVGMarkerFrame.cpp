@@ -75,7 +75,7 @@ nsSVGMarkerFrame::GetCanvasTM()
   }
 
   SVGMarkerElement *content = static_cast<SVGMarkerElement*>(mContent);
-  
+
   mInUse2 = true;
   gfxMatrix markedTM = mMarkedFrame->GetCanvasTM();
   mInUse2 = false;
@@ -201,13 +201,9 @@ nsSVGMarkerFrame::SetParentCoordCtxProvider(SVGSVGElement *aContext)
 }
 
 void
-nsSVGMarkerFrame::DoUpdateStyleOfOwnedAnonBoxes(
-  mozilla::ServoStyleSet& aStyleSet,
-  nsStyleChangeList& aChangeList,
-  nsChangeHint aHintForThisFrame)
+nsSVGMarkerFrame::AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult)
 {
-  UpdateStyleOfChildAnonBox(GetAnonymousChildFrame(this), aStyleSet,
-                            aChangeList, aHintForThisFrame);
+  aResult.AppendElement(OwnedAnonBox(GetAnonymousChildFrame(this)));
 }
 
 //----------------------------------------------------------------------

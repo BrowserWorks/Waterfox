@@ -52,8 +52,8 @@ interface nsITelemetry : nsISupports
 
 
   /**
-   * An object containing a snapshot from all of the currently registered histograms.
-   * { name1: {data1}, name2:{data2}...}
+   * An object containing a snapshot from all of the currently registered histograms from all processes.
+   * { process1: {name1: {data1}, name2:{data2}...} }
    * where data is consists of the following properties:
    *   min - Minimal bucket size
    *   max - Maximum bucket size
@@ -257,11 +257,19 @@ interface nsITelemetry : nsISupports
 
   /*
    * An object containing a snapshot from all of the currently registered keyed histograms.
-   * { name1: {histogramData1}, name2:{histogramData2}...}
+   * { process1: {name1: {histogramData1}, name2:{histogramData2}...}}
    * where the histogramData is as described in histogramSnapshots.
    */
   [implicit_jscontext]
   readonly attribute jsval keyedHistogramSnapshots;
+
+  /**
+   * Get a snapshot of the internally duplicated subsession keyed histograms.
+   * @param clear Whether to clear out the subsession histograms after snapshotting.
+   * @return An object as histogramSnapshots, except this contains the internally duplicated keyed histograms for subsession telemetry.
+   */
+  [implicit_jscontext]
+  jsval snapshotSubsessionKeyedHistograms([optional] in boolean clear);
 
   /**
    * Returns an array whose values are the names of histograms defined
@@ -490,7 +498,35 @@ interface nsITelemetry : nsISupports
    * @param [aClear=false] Whether to clear out the scalars after snapshotting.
    */
   [implicit_jscontext, optional_argc]
-  jsval snapshotBuiltinEvents(in uint32_t aDataset, [optional] in boolean aClear);
+  jsval snapshotEvents(in uint32_t aDataset, [optional] in boolean aClear);
+
+  /**
+   * Register new events to record them from addons. This allows registering multiple
+   * events for a category. They will be valid only for the current Firefox session.
+   * Note that events shipping in Firefox should be registered in Events.yaml.
+   *
+   * @param aCategory The unique category the events are registered in.
+   * @param aEventData An object that contains registration data for 1-N events of the form:
+   *   {
+   *     "categoryName": {
+   *       "methods": ["test1"],
+   *       "objects": ["object1"],
+   *       "record_on_release": false,
+   *       "extra_keys": ["key1", "key2"], // optional
+   *       "expired": false // optional, defaults to false.
+   *     },
+   *     ...
+   *   }
+   * @param aEventData.<name>.methods List of methods for this event entry.
+   * @param aEventData.<name>.objects List of objects for this event entry.
+   * @param aEventData.<name>.extra_keys Optional, list of allowed extra keys for this event entry.
+   * @param aEventData.<name>.record_on_release Optional, whether to record this data on release.
+   *                                            Defaults to false.
+   * @param aEventData.<name>.expired Optional, whether this event entry is expired. This allows
+   *                                  recording it without error, but it will be discarded. Defaults to false.
+   */
+  [implicit_jscontext]
+  void registerEvents(in ACString aCategory, in jsval aEventData);
 
   /**
    * Resets all the stored events. This is intended to be only used in tests.

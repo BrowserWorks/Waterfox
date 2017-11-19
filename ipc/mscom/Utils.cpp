@@ -16,6 +16,11 @@
 
 #include <objbase.h>
 #include <objidl.h>
+#include <winnt.h>
+
+#if defined(_MSC_VER)
+extern "C" IMAGE_DOS_HEADER __ImageBase;
+#endif
 
 namespace mozilla {
 namespace mscom {
@@ -76,6 +81,23 @@ IsValidGUID(REFGUID aCheckGuid)
   return version == 1 || version == 4;
 }
 
+uintptr_t
+GetContainingModuleHandle()
+{
+  HMODULE thisModule = nullptr;
+#if defined(_MSC_VER)
+  thisModule = reinterpret_cast<HMODULE>(&__ImageBase);
+#else
+  if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                         GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                         reinterpret_cast<LPCTSTR>(&GetContainingModuleHandle),
+                         &thisModule)) {
+    return 0;
+  }
+#endif
+  return reinterpret_cast<uintptr_t>(thisModule);
+}
+
 #if defined(MOZILLA_INTERNAL_API)
 
 void
@@ -85,7 +107,7 @@ GUIDToString(REFGUID aGuid, nsAString& aOutString)
   // to include curly braces and dashes.
   const int kBufLenWithNul = 39;
   aOutString.SetLength(kBufLenWithNul);
-  int result = StringFromGUID2(aGuid, wwc(aOutString.BeginWriting()), kBufLenWithNul);
+  int result = StringFromGUID2(aGuid, char16ptr_t(aOutString.BeginWriting()), kBufLenWithNul);
   MOZ_ASSERT(result);
   if (result) {
     // Truncate the terminator

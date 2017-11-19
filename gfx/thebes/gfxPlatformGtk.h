@@ -84,13 +84,6 @@ public:
                                            uint32_t aLength) override;
 
     /**
-     * Check whether format is supported on a platform or not (if unclear,
-     * returns true).
-     */
-    virtual bool IsFontFormatSupported(nsIURI *aFontURI,
-                                         uint32_t aFormatFlags) override;
-
-    /**
      * Calls XFlush if xrender is enabled.
      */
     virtual void FlushContentDrawing() override;
@@ -103,8 +96,8 @@ public:
     static GdkDrawable *GetGdkDrawable(cairo_surface_t *target);
 #endif
 
-    static int32_t GetDPI();
-    static double  GetDPIScale();
+    static int32_t GetFontScaleDPI();
+    static double  GetFontScaleFactor();
 
 #ifdef MOZ_X11
     virtual void GetAzureBackendInfo(mozilla::widget::InfoObject &aObj) override {

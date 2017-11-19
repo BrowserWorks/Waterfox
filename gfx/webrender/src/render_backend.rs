@@ -4,7 +4,8 @@
 
 use frame::Frame;
 use frame_builder::FrameBuilderConfig;
-use internal_types::{FontTemplate, SourceTexture, ResultMsg, RendererFrame};
+use gpu_cache::GpuCache;
+use internal_types::{SourceTexture, ResultMsg, RendererFrame};
 use profiler::{BackendProfileCounters, GpuCacheProfileCounters, TextureCacheProfileCounters};
 use record::ApiRecordingReceiver;
 use resource_cache::ResourceCache;
@@ -17,12 +18,13 @@ use time::precise_time_ns;
 use thread_profiler::register_thread_with_profiler;
 use rayon::ThreadPool;
 use webgl_types::{GLContextHandleWrapper, GLContextWrapper};
-use webrender_traits::channel::{MsgReceiver, PayloadReceiver, PayloadReceiverHelperMethods};
-use webrender_traits::channel::{PayloadSender, PayloadSenderHelperMethods};
-use webrender_traits::{ApiMsg, BlobImageRenderer, BuiltDisplayList, DeviceIntPoint};
-use webrender_traits::{DeviceUintPoint, DeviceUintRect, DeviceUintSize, IdNamespace, ImageData};
-use webrender_traits::{LayerPoint, PipelineId, RenderDispatcher, RenderNotifier};
-use webrender_traits::{VRCompositorCommand, VRCompositorHandler, WebGLCommand, WebGLContextId};
+use api::channel::{MsgReceiver, PayloadReceiver, PayloadReceiverHelperMethods};
+use api::channel::{PayloadSender, PayloadSenderHelperMethods};
+use api::{ApiMsg, BlobImageRenderer, BuiltDisplayList, DeviceIntPoint};
+use api::{DeviceUintPoint, DeviceUintRect, DeviceUintSize, IdNamespace, ImageData};
+use api::{LayerPoint, PipelineId, RenderDispatcher, RenderNotifier};
+use api::{VRCompositorCommand, VRCompositorHandler, WebGLCommand, WebGLContextId};
+use api::{FontTemplate};
 
 #[cfg(feature = "webgl")]
 use offscreen_gl_context::GLContextDispatcher;
@@ -49,6 +51,7 @@ pub struct RenderBackend {
     inner_rect: DeviceUintRect,
     next_namespace_id: IdNamespace,
 
+    gpu_cache: GpuCache,
     resource_cache: ResourceCache,
 
     scene: Scene,
@@ -63,7 +66,16 @@ pub struct RenderBackend {
 
     next_webgl_id: usize,
 
-    vr_compositor_handler: Arc<Mutex<Option<Box<VRCompositorHandler>>>>
+    vr_compositor_handler: Arc<Mutex<Option<Box<VRCompositorHandler>>>>,
+
+    enable_render_on_scroll: bool,
+
+    // A helper switch to prevent any frames rendering triggered by scrolling
+    // messages between `SetDisplayList` and `GenerateFrame`.
+    // If we allow them, then a reftest that scrolls a few layers before generating
+    // the first frame would produce inconsistent rendering results, because
+    // scroll events are not necessarily received in deterministic order.
+    render_on_scroll: bool,
 }
 
 impl RenderBackend {
@@ -81,35 +93,50 @@ impl RenderBackend {
                main_thread_dispatcher: Arc<Mutex<Option<Box<RenderDispatcher>>>>,
                blob_image_renderer: Option<Box<BlobImageRenderer>>,
                vr_compositor_handler: Arc<Mutex<Option<Box<VRCompositorHandler>>>>,
-               initial_window_size: DeviceUintSize) -> RenderBackend {
+               initial_window_size: DeviceUintSize,
+               enable_render_on_scroll: bool) -> RenderBackend {
 
         let resource_cache = ResourceCache::new(texture_cache, workers, blob_image_renderer);
 
         register_thread_with_profiler("Backend".to_string());
 
         RenderBackend {
-            api_rx: api_rx,
-            payload_rx: payload_rx,
-            payload_tx: payload_tx,
-            result_tx: result_tx,
-            hidpi_factor: hidpi_factor,
+            api_rx,
+            payload_rx,
+            payload_tx,
+            result_tx,
+            hidpi_factor,
             page_zoom_factor: 1.0,
             pinch_zoom_factor: 1.0,
             pan: DeviceIntPoint::zero(),
-            resource_cache: resource_cache,
+            resource_cache,
+            gpu_cache: GpuCache::new(),
             scene: Scene::new(),
             frame: Frame::new(config),
             next_namespace_id: IdNamespace(1),
-            notifier: notifier,
-            webrender_context_handle: webrender_context_handle,
+            notifier,
+            webrender_context_handle,
             webgl_contexts: HashMap::new(),
             current_bound_webgl_context_id: None,
-            recorder: recorder,
-            main_thread_dispatcher: main_thread_dispatcher,
+            recorder,
+            main_thread_dispatcher,
             next_webgl_id: 0,
-            vr_compositor_handler: vr_compositor_handler,
+            vr_compositor_handler,
             window_size: initial_window_size,
             inner_rect: DeviceUintRect::new(DeviceUintPoint::zero(), initial_window_size),
+            enable_render_on_scroll,
+            render_on_scroll: false,
+        }
+    }
+
+    fn scroll_frame(&mut self, frame_maybe: Option<RendererFrame>,
+                    profile_counters: &mut BackendProfileCounters) {
+        match frame_maybe {
+            Some(frame) => {
+                self.publish_frame(frame, profile_counters);
+                self.notify_compositor_of_new_scroll_frame(true)
+            }
+            None => self.notify_compositor_of_new_scroll_frame(false),
         }
     }
 
@@ -137,13 +164,21 @@ impl RenderBackend {
                         ApiMsg::DeleteFont(id) => {
                             self.resource_cache.delete_font_template(id);
                         }
-                        ApiMsg::GetGlyphDimensions(glyph_keys, tx) => {
+                        ApiMsg::GetGlyphDimensions(font, glyph_keys, tx) => {
                             let mut glyph_dimensions = Vec::with_capacity(glyph_keys.len());
                             for glyph_key in &glyph_keys {
-                                let glyph_dim = self.resource_cache.get_glyph_dimensions(glyph_key);
+                                let glyph_dim = self.resource_cache.get_glyph_dimensions(&font, glyph_key);
                                 glyph_dimensions.push(glyph_dim);
                             };
                             tx.send(glyph_dimensions).unwrap();
+                        }
+                        ApiMsg::GetGlyphIndices(font_key, text, tx) => {
+                            let mut glyph_indices = Vec::new();
+                            for ch in text.chars() {
+                                let index = self.resource_cache.get_glyph_index(font_key, ch);
+                                glyph_indices.push(index);
+                            };
+                            tx.send(glyph_indices).unwrap();
                         }
                         ApiMsg::AddImage(id, descriptor, data, tiling) => {
                             if let ImageData::Raw(ref bytes) = data {
@@ -214,7 +249,7 @@ impl RenderBackend {
                             }
 
                             let display_list_len = built_display_list.data().len();
-                            let (builder_start_time, builder_finish_time) = built_display_list.times();
+                            let (builder_start_time, builder_finish_time, send_start_time) = built_display_list.times();
 
                             let display_list_received_time = precise_time_ns();
 
@@ -228,13 +263,18 @@ impl RenderBackend {
                                 self.build_scene();
                             });
 
+                            self.render_on_scroll = false; //wait for `GenerateFrame`
+
                             // Note: this isn't quite right as auxiliary values will be
                             // pulled out somewhere in the prim_store, but aux values are
                             // really simple and cheap to access, so it's not a big deal.
                             let display_list_consumed_time = precise_time_ns();
 
-                            profile_counters.ipc.set(builder_start_time, builder_finish_time,
-                                                     display_list_received_time, display_list_consumed_time,
+                            profile_counters.ipc.set(builder_start_time,
+                                                     builder_finish_time,
+                                                     send_start_time,
+                                                     display_list_received_time,
+                                                     display_list_consumed_time,
                                                      display_list_len);
                         }
                         ApiMsg::SetRootPipeline(pipeline_id) => {
@@ -255,7 +295,7 @@ impl RenderBackend {
                                 let counters = &mut profile_counters.resources.texture_cache;
                                 let gpu_cache_counters = &mut profile_counters.resources.gpu_cache;
                                 profile_counters.total_time.profile(|| {
-                                    if self.frame.scroll(delta, cursor, move_phase) {
+                                    if self.frame.scroll(delta, cursor, move_phase) && self.render_on_scroll {
                                         Some(self.render(counters, gpu_cache_counters))
                                     } else {
                                         None
@@ -263,13 +303,7 @@ impl RenderBackend {
                                 })
                             };
 
-                            match frame {
-                                Some(frame) => {
-                                    self.publish_frame(frame, &mut profile_counters);
-                                    self.notify_compositor_of_new_scroll_frame(true)
-                                }
-                                None => self.notify_compositor_of_new_scroll_frame(false),
-                            }
+                            self.scroll_frame(frame, &mut profile_counters);
                         }
                         ApiMsg::ScrollNodeWithId(origin, id, clamp) => {
                             profile_scope!("ScrollNodeWithScrollId");
@@ -277,7 +311,7 @@ impl RenderBackend {
                                 let counters = &mut profile_counters.resources.texture_cache;
                                 let gpu_cache_counters = &mut profile_counters.resources.gpu_cache;
                                 profile_counters.total_time.profile(|| {
-                                    if self.frame.scroll_node(origin, id, clamp) {
+                                    if self.frame.scroll_node(origin, id, clamp) && self.render_on_scroll {
                                         Some(self.render(counters, gpu_cache_counters))
                                     } else {
                                         None
@@ -285,14 +319,7 @@ impl RenderBackend {
                                 })
                             };
 
-                            match frame {
-                                Some(frame) => {
-                                    self.publish_frame(frame, &mut profile_counters);
-                                    self.notify_compositor_of_new_scroll_frame(true)
-                                }
-                                None => self.notify_compositor_of_new_scroll_frame(false),
-                            }
-
+                            self.scroll_frame(frame, &mut profile_counters);
                         }
                         ApiMsg::TickScrollingBounce => {
                             profile_scope!("TickScrollingBounce");
@@ -301,14 +328,18 @@ impl RenderBackend {
                                 let gpu_cache_counters = &mut profile_counters.resources.gpu_cache;
                                 profile_counters.total_time.profile(|| {
                                     self.frame.tick_scrolling_bounce_animations();
-                                    self.render(counters, gpu_cache_counters)
+                                    if self.render_on_scroll {
+                                        Some(self.render(counters, gpu_cache_counters))
+                                    } else {
+                                        None
+                                    }
                                 })
                             };
 
-                            self.publish_frame_and_notify_compositor(frame, &mut profile_counters);
+                            self.scroll_frame(frame, &mut profile_counters);
                         }
                         ApiMsg::TranslatePointToLayerSpace(..) => {
-                            panic!("unused api - remove from webrender_traits");
+                            panic!("unused api - remove from webrender_api");
                         }
                         ApiMsg::GetScrollNodeState(tx) => {
                             profile_scope!("GetScrollNodeState");
@@ -409,6 +440,8 @@ impl RenderBackend {
                                 });
                             }
 
+                            self.render_on_scroll = self.enable_render_on_scroll;
+
                             let frame = {
                                 let counters = &mut profile_counters.resources.texture_cache;
                                 let gpu_cache_counters = &mut profile_counters.resources.gpu_cache;
@@ -427,6 +460,9 @@ impl RenderBackend {
                                     .as_mut()
                                     .unwrap()
                                     .external_event(evt);
+                        }
+                        ApiMsg::ClearNamespace(namespace) => {
+                            self.resource_cache.clear_namespace(namespace);
                         }
                         ApiMsg::ShutDown => {
                             let notifier = self.notifier.lock();
@@ -494,6 +530,7 @@ impl RenderBackend {
         let pan = LayerPoint::new(self.pan.x as f32 / accumulated_scale_factor,
                                   self.pan.y as f32 / accumulated_scale_factor);
         let frame = self.frame.build(&mut self.resource_cache,
+                                     &mut self.gpu_cache,
                                      &self.scene.display_lists,
                                      accumulated_scale_factor,
                                      pan,
@@ -536,7 +573,7 @@ impl RenderBackend {
     fn handle_vr_compositor_command(&mut self, ctx_id: WebGLContextId, cmd: VRCompositorCommand) {
         let texture = match cmd {
             VRCompositorCommand::SubmitFrame(..) => {
-                    match self.resource_cache.get_webgl_texture(&ctx_id).texture_id {
+                    match self.resource_cache.get_webgl_texture(&ctx_id).id {
                         SourceTexture::WebGL(texture_id) => {
                             let size = self.resource_cache.get_webgl_texture_size(&ctx_id);
                             Some((texture_id, size))

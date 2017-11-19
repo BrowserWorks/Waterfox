@@ -29,6 +29,7 @@
 #include "mozilla/dom/ipc/IPCBlobInputStreamParent.h"
 #include "mozilla/dom/ipc/PendingIPCBlobParent.h"
 #include "mozilla/dom/quota/ActorsParent.h"
+#include "mozilla/dom/StorageIPC.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/IPCStreamAlloc.h"
@@ -242,6 +243,64 @@ BackgroundParentImpl::RecvFlushPendingFileDeletions()
   return IPC_OK();
 }
 
+auto
+BackgroundParentImpl::AllocPBackgroundStorageParent(const nsString& aProfilePath)
+  -> PBackgroundStorageParent*
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  return mozilla::dom::AllocPBackgroundStorageParent(aProfilePath);
+}
+
+mozilla::ipc::IPCResult
+BackgroundParentImpl::RecvPBackgroundStorageConstructor(
+                                               PBackgroundStorageParent* aActor,
+                                               const nsString& aProfilePath)
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aActor);
+
+  return mozilla::dom::RecvPBackgroundStorageConstructor(aActor, aProfilePath);
+}
+
+bool
+BackgroundParentImpl::DeallocPBackgroundStorageParent(
+                                               PBackgroundStorageParent* aActor)
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aActor);
+
+  return mozilla::dom::DeallocPBackgroundStorageParent(aActor);
+}
+
+mozilla::ipc::IPCResult
+BackgroundParentImpl::RecvBroadcastLocalStorageChange(
+                                            const nsString& aDocumentURI,
+                                            const nsString& aKey,
+                                            const nsString& aOldValue,
+                                            const nsString& aNewValue,
+                                            const PrincipalInfo& aPrincipalInfo,
+                                            const bool& aIsPrivate)
+{
+  nsTArray<PBackgroundParent*> liveActorArray;
+  if (NS_WARN_IF(!BackgroundParent::GetLiveActorArray(this, liveActorArray))) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+
+  for (auto* liveActor : liveActorArray) {
+    if (liveActor != this) {
+      Unused << liveActor->SendDispatchLocalStorageChange(
+        nsString(aDocumentURI), nsString(aKey), nsString(aOldValue),
+        nsString(aNewValue), aPrincipalInfo, aIsPrivate);
+    }
+  }
+
+  return IPC_OK();
+}
+
 PPendingIPCBlobParent*
 BackgroundParentImpl::AllocPPendingIPCBlobParent(const IPCBlob& aBlob)
 {
@@ -397,41 +456,6 @@ BackgroundParentImpl::DeallocPCamerasParent(camera::PCamerasParent *aActor)
   return true;
 }
 
-namespace {
-
-class InitUDPSocketParentCallback final : public Runnable
-{
-public:
-  InitUDPSocketParentCallback(UDPSocketParent* aActor,
-                              const nsACString& aFilter)
-    : mActor(aActor)
-    , mFilter(aFilter)
-  {
-    AssertIsInMainProcess();
-    AssertIsOnBackgroundThread();
-  }
-
-  NS_IMETHOD
-  Run() override
-  {
-    AssertIsInMainProcess();
-
-    IPC::Principal principal;
-    if (!mActor->Init(principal, mFilter)) {
-      MOZ_CRASH("UDPSocketCallback - failed init");
-    }
-    return NS_OK;
-  }
-
-private:
-  ~InitUDPSocketParentCallback() override = default;
-
-  RefPtr<UDPSocketParent> mActor;
-  nsCString mFilter;
-};
-
-} // namespace
-
 auto
 BackgroundParentImpl::AllocPUDPSocketParent(const OptionalPrincipalInfo& /* unused */,
                                             const nsCString& /* unused */)
@@ -528,7 +552,8 @@ public:
   CheckPrincipalRunnable(already_AddRefed<ContentParent> aParent,
                          const PrincipalInfo& aPrincipalInfo,
                          const nsCString& aOrigin)
-    : mContentParent(aParent)
+    : Runnable("ipc::CheckPrincipalRunnable")
+    , mContentParent(aParent)
     , mPrincipalInfo(aPrincipalInfo)
     , mOrigin(aOrigin)
   {

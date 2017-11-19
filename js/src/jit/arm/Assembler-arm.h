@@ -1384,15 +1384,9 @@ class Assembler : public AssemblerShared
 
     static uintptr_t GetPointer(uint8_t*);
     template <class Iter>
-    static const uint32_t* GetPtr32Target(Iter* iter, Register* dest = nullptr, RelocStyle* rs = nullptr);
+    static const uint32_t* GetPtr32Target(Iter iter, Register* dest = nullptr, RelocStyle* rs = nullptr);
 
     bool oom() const;
-
-    void disableProtection() {}
-    void enableProtection() {}
-    void setLowerBoundForProtection(size_t) {}
-    void unprotectRegion(unsigned char*, size_t) {}
-    void reprotectRegion(unsigned char*, size_t) {}
 
     void setPrinter(Sprinter* sp) {
 #ifdef JS_DISASM_ARM

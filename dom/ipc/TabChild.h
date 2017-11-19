@@ -45,8 +45,10 @@
 
 class nsIDOMWindowUtils;
 class nsIHttpChannel;
+class nsISerialEventTarget;
 
 namespace mozilla {
+class AbstractThread;
 namespace layout {
 class RenderFrameChild;
 } // namespace layout
@@ -69,7 +71,6 @@ class TabChild;
 class TabGroup;
 class ClonedMessageData;
 class CoalescedWheelData;
-class TabChildBase;
 
 class TabChildGlobal : public DOMEventTargetHelper,
                        public nsIContentFrameMessageManager,
@@ -78,7 +79,7 @@ class TabChildGlobal : public DOMEventTargetHelper,
                        public nsSupportsWeakReference
 {
 public:
-  explicit TabChildGlobal(TabChildBase* aTabChild);
+  explicit TabChildGlobal(TabChild* aTabChild);
   void Init();
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(TabChildGlobal, DOMEventTargetHelper)
@@ -113,6 +114,7 @@ public:
   }
   NS_IMETHOD GetContent(mozIDOMWindowProxy** aContent) override;
   NS_IMETHOD GetDocShell(nsIDocShell** aDocShell) override;
+  NS_IMETHOD GetTabEventTarget(nsIEventTarget** aTarget) override;
 
   nsresult AddEventListener(const nsAString& aType,
                             nsIDOMEventListener* aListener,
@@ -149,8 +151,18 @@ public:
     MOZ_CRASH("TabChildGlobal doesn't use DOM bindings!");
   }
 
+  // Dispatch a runnable related to the global.
+  virtual nsresult Dispatch(mozilla::TaskCategory aCategory,
+                            already_AddRefed<nsIRunnable>&& aRunnable) override;
+
+  virtual nsISerialEventTarget*
+  EventTargetFor(mozilla::TaskCategory aCategory) const override;
+
+  virtual AbstractThread*
+  AbstractMainThreadFor(mozilla::TaskCategory aCategory) override;
+
   nsCOMPtr<nsIContentFrameMessageManager> mMessageManager;
-  RefPtr<TabChildBase> mTabChild;
+  RefPtr<TabChild> mTabChild;
 
 protected:
   ~TabChildGlobal();
@@ -350,11 +362,7 @@ public:
                     PRenderFrameChild* aRenderFrame) override;
 
   virtual mozilla::ipc::IPCResult
-  RecvUpdateDimensions(const CSSRect& aRect,
-                       const CSSSize& aSize,
-                       const ScreenOrientationInternal& aOrientation,
-                       const LayoutDeviceIntPoint& aClientOffset,
-                       const LayoutDeviceIntPoint& aChromeDisp) override;
+  RecvUpdateDimensions(const mozilla::dom::DimensionInfo& aDimensionInfo) override;
   virtual mozilla::ipc::IPCResult
   RecvSizeModeChanged(const nsSizeMode& aSizeMode) override;
 
@@ -494,13 +502,6 @@ public:
 
   virtual PuppetWidget* WebWidget() override { return mPuppetWidget; }
 
-  /** Return the DPI of the widget this TabChild draws to. */
-  void GetDPI(float* aDPI);
-
-  void GetDefaultScale(double *aScale);
-
-  void GetWidgetRounding(int32_t* aRounding);
-
   bool IsTransparent() const { return mIsTransparent; }
 
   void GetMaxTouchPoints(uint32_t* aTouchPoints)
@@ -594,9 +595,9 @@ public:
   virtual mozilla::ipc::IPCResult
   RecvThemeChanged(nsTArray<LookAndFeelInt>&& aLookAndFeelIntCache) override;
 
-  virtual mozilla::ipc::IPCResult RecvHandleAccessKey(const WidgetKeyboardEvent& aEvent,
-                                                      nsTArray<uint32_t>&& aCharCodes,
-                                                      const int32_t& aModifierMask) override;
+  virtual mozilla::ipc::IPCResult
+  RecvHandleAccessKey(const WidgetKeyboardEvent& aEvent,
+                      nsTArray<uint32_t>&& aCharCodes) override;
 
   virtual mozilla::ipc::IPCResult RecvSetUseGlobalHistory(const bool& aUse) override;
 
@@ -698,6 +699,15 @@ public:
   }
 #endif
 
+  void AddPendingDocShellBlocker();
+  void RemovePendingDocShellBlocker();
+
+  // The HANDLE object for the widget this TabChild in.
+  WindowsHandle WidgetNativeData()
+  {
+    return mWidgetNativeData;
+  }
+
 protected:
   virtual ~TabChild();
 
@@ -738,6 +748,8 @@ protected:
   virtual mozilla::ipc::IPCResult RecvSetWindowName(const nsString& aName) override;
 
   virtual mozilla::ipc::IPCResult RecvSetOriginAttributes(const OriginAttributes& aOriginAttributes) override;
+
+  virtual mozilla::ipc::IPCResult RecvSetWidgetNativeData(const WindowsHandle& aWidgetNativeData) override;
 
 private:
   void HandleDoubleTap(const CSSPoint& aPoint, const Modifiers& aModifiers,
@@ -790,9 +802,17 @@ private:
 
   void MaybeDispatchCoalescedWheelEvent();
 
+  /**
+   * Dispatch aEvent on aEvent.mWidget.
+   */
+  nsEventStatus DispatchWidgetEventViaAPZ(WidgetGUIEvent& aEvent);
+
   void DispatchWheelEvent(const WidgetWheelEvent& aEvent,
                           const ScrollableLayerGuid& aGuid,
                           const uint64_t& aInputBlockId);
+
+  void InternalSetDocShellIsActive(bool aIsActive,
+                                   bool aPreserveLayers);
 
   class DelayedDeleteRunnable;
 
@@ -833,9 +853,6 @@ private:
   Maybe<mozilla::layers::CompositorOptions> mCompositorOptions;
 
   friend class ContentChild;
-  float mDPI;
-  int32_t mRounding;
-  double mDefaultScale;
 
   bool mIsTransparent;
 
@@ -873,6 +890,13 @@ private:
 #if defined(ACCESSIBILITY)
   PDocAccessibleChild* mTopLevelDocAccessibleChild;
 #endif
+
+  bool mPendingDocShellIsActive;
+  bool mPendingDocShellPreserveLayers;
+  bool mPendingDocShellReceivedMessage;
+  uint32_t mPendingDocShellBlockers;
+
+  WindowsHandle mWidgetNativeData;
 
   DISALLOW_EVIL_CONSTRUCTORS(TabChild);
 };

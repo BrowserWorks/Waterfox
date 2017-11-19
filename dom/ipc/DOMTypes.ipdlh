@@ -18,6 +18,12 @@ using LayoutDeviceIntRect from "Units.h";
 using DesktopIntRect from "Units.h";
 using DesktopToLayoutDeviceScale from "Units.h";
 using CSSToLayoutDeviceScale from "Units.h";
+using CSSRect from "Units.h";
+using CSSSize from "Units.h";
+using mozilla::LayoutDeviceIntPoint from "Units.h";
+using mozilla::dom::ScreenOrientationInternal from "mozilla/dom/ScreenOrientation.h";
+using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
+using mozilla::layers::CompositorOptions from "mozilla/layers/CompositorOptions.h";
 
 namespace mozilla {
 namespace dom {
@@ -81,6 +87,38 @@ struct ScreenDetails {
   int32_t colorDepth;
   DesktopToLayoutDeviceScale contentsScaleFactor;
   CSSToLayoutDeviceScale defaultCSSScaleFactor;
+  float dpi;
+};
+
+struct DimensionInfo
+{
+  CSSRect rect;
+  CSSSize size;
+  ScreenOrientationInternal orientation;
+  LayoutDeviceIntPoint clientOffset;
+  LayoutDeviceIntPoint chromeDisp;
+};
+
+struct FrameScriptInfo
+{
+  nsString url;
+  bool runInGlobalScope;
+};
+
+/**
+ * The information required to complete a window creation request.
+ */
+struct CreatedWindowInfo
+{
+  nsresult rv;
+  bool windowOpened;
+  FrameScriptInfo[] frameScripts;
+  nsCString urlToLoad;
+  TextureFactoryIdentifier textureFactoryIdentifier;
+  uint64_t layersId;
+  CompositorOptions compositorOptions;
+  uint32_t maxTouchPoints;
+  DimensionInfo dimensions;
 };
 
 } // namespace dom

@@ -78,8 +78,7 @@ use compositing::compositor_thread::CompositorProxy;
 use compositing::compositor_thread::Msg as ToCompositorMsg;
 use debugger;
 use devtools_traits::{ChromeToDevtoolsControlMsg, DevtoolsControlMsg};
-use euclid::scale_factor::ScaleFactor;
-use euclid::size::{Size2D, TypedSize2D};
+use euclid::{Size2D, TypedSize2D, ScaleFactor};
 use event_loop::EventLoop;
 use gfx::font_cache_thread::FontCacheThread;
 use gfx_traits::Epoch;
@@ -129,7 +128,7 @@ use style_traits::CSSPixel;
 use style_traits::cursor::Cursor;
 use style_traits::viewport::ViewportConstraints;
 use timer_scheduler::TimerScheduler;
-use webrender_traits;
+use webrender_api;
 use webvr_traits::{WebVREvent, WebVRMsg};
 
 /// The `Constellation` itself. In the servo browser, there is one
@@ -229,9 +228,12 @@ pub struct Constellation<Message, LTF, STF> {
     /// timer thread.
     scheduler_chan: IpcSender<TimerSchedulerMsg>,
 
+    /// A single WebRender document the constellation operates on.
+    webrender_document: webrender_api::DocumentId,
+
     /// A channel for the constellation to send messages to the
-    /// Webrender thread.
-    webrender_api_sender: webrender_traits::RenderApiSender,
+    /// WebRender thread.
+    webrender_api_sender: webrender_api::RenderApiSender,
 
     /// The set of all event loops in the browser. We generate a new
     /// event loop for each registered domain name (aka eTLD+1) in
@@ -326,8 +328,11 @@ pub struct InitialConstellationState {
     /// A channel to the memory profiler thread.
     pub mem_profiler_chan: mem::ProfilerChan,
 
+    /// Webrender document ID.
+    pub webrender_document: webrender_api::DocumentId,
+
     /// Webrender API.
-    pub webrender_api_sender: webrender_traits::RenderApiSender,
+    pub webrender_api_sender: webrender_api::RenderApiSender,
 
     /// Whether the constellation supports the clipboard.
     /// TODO: this field is not used, remove it?
@@ -480,7 +485,7 @@ const WARNINGS_BUFFER_SIZE: usize = 32;
 /// but does not panic on deserializtion errors.
 fn route_ipc_receiver_to_new_mpsc_receiver_preserving_errors<T>(ipc_receiver: IpcReceiver<T>)
     -> Receiver<Result<T, IpcError>>
-    where T: Deserialize + Serialize + Send + 'static
+    where T: for<'de> Deserialize<'de> + Serialize + Send + 'static
 {
         let (mpsc_sender, mpsc_receiver) = channel();
         ROUTER.add_route(ipc_receiver.to_opaque(), Box::new(move |message| {
@@ -562,6 +567,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                 webdriver: WebDriverData::new(),
                 scheduler_chan: TimerScheduler::start(),
                 document_states: HashMap::new(),
+                webrender_document: state.webrender_document,
                 webrender_api_sender: state.webrender_api_sender,
                 shutting_down: false,
                 handled_warnings: VecDeque::new(),
@@ -665,9 +671,9 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
 
         let result = Pipeline::spawn::<Message, LTF, STF>(InitialPipelineState {
             id: pipeline_id,
-            browsing_context_id: browsing_context_id,
-            top_level_browsing_context_id: top_level_browsing_context_id,
-            parent_info: parent_info,
+            browsing_context_id,
+            top_level_browsing_context_id,
+            parent_info,
             constellation_chan: self.script_sender.clone(),
             layout_to_constellation_chan: self.layout_sender.clone(),
             scheduler_chan: self.scheduler_chan.clone(),
@@ -676,17 +682,18 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             bluetooth_thread: self.bluetooth_thread.clone(),
             swmanager_thread: self.swmanager_sender.clone(),
             font_cache_thread: self.font_cache_thread.clone(),
-            resource_threads: resource_threads,
+            resource_threads,
             time_profiler_chan: self.time_profiler_chan.clone(),
             mem_profiler_chan: self.mem_profiler_chan.clone(),
             window_size: initial_window_size,
-            event_loop: event_loop,
-            load_data: load_data,
+            event_loop,
+            load_data,
             device_pixel_ratio: self.window_size.device_pixel_ratio,
             pipeline_namespace_id: self.next_pipeline_namespace_id(),
-            prev_visibility: prev_visibility,
+            prev_visibility,
             webrender_api_sender: self.webrender_api_sender.clone(),
-            is_private: is_private,
+            webrender_document: self.webrender_document,
+            is_private,
             webvr_thread: self.webvr_thread.clone()
         });
 
@@ -919,10 +926,6 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                     .and_then(|pipeline_id| self.pipelines.get(&pipeline_id))
                     .map(|pipeline| pipeline.top_level_browsing_context_id);
                 let _ = resp_chan.send(focus_browsing_context);
-            }
-            FromCompositorMsg::GetPipelineTitle(pipeline_id) => {
-                debug!("constellation got get-pipeline-title message");
-                self.handle_get_pipeline_title_msg(pipeline_id);
             }
             FromCompositorMsg::KeyEvent(ch, key, state, modifiers) => {
                 debug!("constellation got key event message");
@@ -1577,22 +1580,21 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         };
 
         // Create the new pipeline, attached to the parent and push to pending changes
-        self.add_pending_change(SessionHistoryChange {
-            top_level_browsing_context_id: load_info.info.top_level_browsing_context_id,
-            browsing_context_id: load_info.info.browsing_context_id,
-            new_pipeline_id: load_info.info.new_pipeline_id,
-            load_data: load_data.clone(),
-            replace_instant: replace_instant,
-        });
-
         self.new_pipeline(load_info.info.new_pipeline_id,
                           load_info.info.browsing_context_id,
                           load_info.info.top_level_browsing_context_id,
                           Some((load_info.info.parent_pipeline_id, load_info.info.frame_type)),
                           window_size,
-                          load_data,
+                          load_data.clone(),
                           load_info.sandbox,
                           is_private);
+        self.add_pending_change(SessionHistoryChange {
+            top_level_browsing_context_id: load_info.info.top_level_browsing_context_id,
+            browsing_context_id: load_info.info.browsing_context_id,
+            new_pipeline_id: load_info.info.new_pipeline_id,
+            load_data: load_data,
+            replace_instant: replace_instant,
+        });
     }
 
     fn handle_script_new_iframe(&mut self,
@@ -1793,21 +1795,21 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
                 let new_pipeline_id = PipelineId::new();
                 let sandbox = IFrameSandboxState::IFrameUnsandboxed;
                 let replace_instant = if replace { Some(timestamp) } else { None };
-                self.add_pending_change(SessionHistoryChange {
-                    top_level_browsing_context_id: top_level_id,
-                    browsing_context_id: browsing_context_id,
-                    new_pipeline_id: new_pipeline_id,
-                    load_data: load_data.clone(),
-                    replace_instant: replace_instant,
-                });
                 self.new_pipeline(new_pipeline_id,
                                   browsing_context_id,
                                   top_level_id,
                                   None,
                                   window_size,
-                                  load_data,
+                                  load_data.clone(),
                                   sandbox,
                                   false);
+                self.add_pending_change(SessionHistoryChange {
+                    top_level_browsing_context_id: top_level_id,
+                    browsing_context_id: browsing_context_id,
+                    new_pipeline_id: new_pipeline_id,
+                    load_data: load_data,
+                    replace_instant: replace_instant,
+                });
                 Some(new_pipeline_id)
             }
         }
@@ -1911,16 +1913,6 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         let result = match self.pipelines.get(&pipeline_id) {
             None => return warn!("Pipeline {} got reload event after closure.", pipeline_id),
             Some(pipeline) => pipeline.event_loop.send(msg),
-        };
-        if let Err(e) = result {
-            self.handle_send_error(pipeline_id, e);
-        }
-    }
-
-    fn handle_get_pipeline_title_msg(&mut self, pipeline_id: PipelineId) {
-        let result = match self.pipelines.get(&pipeline_id) {
-            None => return self.compositor_proxy.send(ToCompositorMsg::ChangePageTitle(pipeline_id, None)),
-            Some(pipeline) => pipeline.event_loop.send(ConstellationControlMsg::GetTitle(pipeline_id)),
         };
         if let Err(e) = result {
             self.handle_send_error(pipeline_id, e);
@@ -2053,7 +2045,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
             let visibility_msg = ConstellationControlMsg::NotifyVisibilityChange(parent_pipeline_id,
                                                                                  browsing_context_id,
                                                                                  visibility);
-            let  result = match self.pipelines.get(&parent_pipeline_id) {
+            let result = match self.pipelines.get(&parent_pipeline_id) {
                 None => return warn!("Parent pipeline {:?} closed", parent_pipeline_id),
                 Some(parent_pipeline) => parent_pipeline.event_loop.send(visibility_msg),
             };
@@ -2871,13 +2863,7 @@ impl<Message, LTF, STF> Constellation<Message, LTF, STF>
         // with low-resource scenarios.
         debug!("Sending frame tree for browsing context {}.", browsing_context_id);
         if let Some(frame_tree) = self.browsing_context_to_sendable(browsing_context_id) {
-            let (chan, port) = ipc::channel().expect("Failed to create IPC channel!");
-            self.compositor_proxy.send(ToCompositorMsg::SetFrameTree(frame_tree,
-                                                                     chan));
-            if port.recv().is_err() {
-                warn!("Compositor has discarded SetFrameTree");
-                return; // Our message has been discarded, probably shutting down.
-            }
+            self.compositor_proxy.send(ToCompositorMsg::SetFrameTree(frame_tree));
         }
     }
 

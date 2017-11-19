@@ -451,8 +451,22 @@ channel_layout_to_mask(cubeb_channel_layout layout)
 }
 
 cubeb_channel_layout
-mask_to_channel_layout(DWORD mask)
+mask_to_channel_layout(WAVEFORMATEX const * fmt)
 {
+  DWORD mask = 0;
+
+  if (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+    WAVEFORMATEXTENSIBLE const * ext = reinterpret_cast<WAVEFORMATEXTENSIBLE const *>(fmt);
+    mask = ext->dwChannelMask;
+  } else if (fmt->wFormatTag == WAVE_FORMAT_PCM ||
+             fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT) {
+    if (fmt->nChannels == 1) {
+      mask = MASK_MONO;
+    } else if (fmt->nChannels == 2) {
+      mask = MASK_STEREO;
+    }
+  }
+
   switch (mask) {
     // MASK_DUAL_MONO(_LFE) is same as STEREO(_LFE), so we skip it.
     case MASK_MONO: return CUBEB_LAYOUT_MONO;
@@ -483,27 +497,21 @@ get_rate(cubeb_stream * stm)
 }
 
 uint32_t
-hns_to_ms(REFERENCE_TIME hns)
+hns_to_frames(uint32_t rate, REFERENCE_TIME hns)
 {
-  return static_cast<uint32_t>(hns / 10000);
+  return std::ceil(hns / 10000000.0 * rate);
 }
 
 uint32_t
 hns_to_frames(cubeb_stream * stm, REFERENCE_TIME hns)
 {
-  return hns_to_ms(hns * get_rate(stm)) / 1000;
-}
-
-uint32_t
-hns_to_frames(uint32_t rate, REFERENCE_TIME hns)
-{
-  return hns_to_ms(hns * rate) / 1000;
+  return hns_to_frames(get_rate(stm), hns);
 }
 
 REFERENCE_TIME
 frames_to_hns(cubeb_stream * stm, uint32_t frames)
 {
-   return frames * 1000 / get_rate(stm);
+  return std::ceil(frames * 10000000.0 / get_rate(stm));
 }
 
 /* This returns the size of a frame in the stream, before the eventual upmix
@@ -1374,8 +1382,7 @@ wasapi_get_preferred_channel_layout(cubeb * context, cubeb_channel_layout * layo
   }
   com_heap_ptr<WAVEFORMATEX> mix_format(tmp);
 
-  WAVEFORMATEXTENSIBLE * format_pcm = reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mix_format.get());
-  *layout = mask_to_channel_layout(format_pcm->dwChannelMask);
+  *layout = mask_to_channel_layout(mix_format.get());
 
   LOG("Preferred channel layout: %s", CUBEB_CHANNEL_LAYOUT_MAPS[*layout].name);
 
@@ -1434,6 +1441,7 @@ handle_channel_layout(cubeb_stream * stm,  EDataFlow direction, com_heap_ptr<WAV
        and handle the eventual upmix/downmix ourselves. Ignore the subformat of
        the suggestion, since it seems to always be IEEE_FLOAT. */
     LOG("Using WASAPI suggested format: channels: %d", closest->nChannels);
+    XASSERT(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE);
     WAVEFORMATEXTENSIBLE * closest_pcm = reinterpret_cast<WAVEFORMATEXTENSIBLE *>(closest);
     format_pcm->dwChannelMask = closest_pcm->dwChannelMask;
     mix_format->nChannels = closest->nChannels;
@@ -1442,6 +1450,7 @@ handle_channel_layout(cubeb_stream * stm,  EDataFlow direction, com_heap_ptr<WAV
     /* Not supported, no suggestion. This should not happen, but it does in the
        field with some sound cards. We restore the mix format, and let the rest
        of the code figure out the right conversion path. */
+    XASSERT(mix_format->wFormatTag == WAVE_FORMAT_EXTENSIBLE);
     *reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mix_format.get()) = hw_mix_format;
   } else if (hr == S_OK) {
     LOG("Requested format accepted by WASAPI.");
@@ -1520,21 +1529,23 @@ int setup_wasapi_stream_one_side(cubeb_stream * stm,
   }
   com_heap_ptr<WAVEFORMATEX> mix_format(tmp);
 
-  WAVEFORMATEXTENSIBLE * format_pcm = reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mix_format.get());
   mix_format->wBitsPerSample = stm->bytes_per_sample * 8;
-  format_pcm->SubFormat = stm->waveformatextensible_sub_format;
+  if (mix_format->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+    WAVEFORMATEXTENSIBLE * format_pcm = reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mix_format.get());
+    format_pcm->SubFormat = stm->waveformatextensible_sub_format;
+  }
   waveformatex_update_derived_properties(mix_format.get());
   /* Set channel layout only when there're more than two channels. Otherwise,
    * use the default setting retrieved from the stream format of the audio
    * engine's internal processing by GetMixFormat. */
   if (mix_format->nChannels > 2) {
-    handle_channel_layout(stm, direction ,mix_format, stream_params);
+    handle_channel_layout(stm, direction, mix_format, stream_params);
   }
 
   mix_params->format = stream_params->format;
   mix_params->rate = mix_format->nSamplesPerSec;
   mix_params->channels = mix_format->nChannels;
-  mix_params->layout = mask_to_channel_layout(format_pcm->dwChannelMask);
+  mix_params->layout = mask_to_channel_layout(mix_format.get());
   if (mix_params->layout == CUBEB_LAYOUT_UNDEFINED) {
     LOG("Output using undefined layout!\n");
   } else if (mix_format->nChannels != CUBEB_CHANNEL_LAYOUT_MAPS[mix_params->layout].channels) {
@@ -1769,7 +1780,8 @@ wasapi_stream_init(cubeb * context, cubeb_stream ** stream,
     stm->output_stream_params = *output_stream_params;
     stm->output_device = utf8_to_wstr(reinterpret_cast<char const *>(output_device));
     // Make sure the layout matches the channel count.
-    XASSERT(stm->output_stream_params.channels == CUBEB_CHANNEL_LAYOUT_MAPS[stm->output_stream_params.layout].channels);
+    XASSERT(stm->output_stream_params.layout == CUBEB_LAYOUT_UNDEFINED ||
+            stm->output_stream_params.channels == CUBEB_CHANNEL_LAYOUT_MAPS[stm->output_stream_params.layout].channels);
   }
 
   switch (output_stream_params ? output_stream_params->format : input_stream_params->format) {
@@ -2010,6 +2022,17 @@ int wasapi_stream_stop(cubeb_stream * stm)
     return CUBEB_ERROR;
   }
 
+  return CUBEB_OK;
+}
+
+int wasapi_stream_reset_default_device(cubeb_stream * stm)
+{
+  XASSERT(stm && stm->reconfigure_event);
+  BOOL ok = SetEvent(stm->reconfigure_event);
+  if (!ok) {
+    LOG("SetEvent on reconfigure_event failed: %lx", GetLastError());
+    return CUBEB_ERROR;
+  }
   return CUBEB_OK;
 }
 
@@ -2337,6 +2360,7 @@ cubeb_ops const wasapi_ops = {
   /*.stream_destroy =*/ wasapi_stream_destroy,
   /*.stream_start =*/ wasapi_stream_start,
   /*.stream_stop =*/ wasapi_stream_stop,
+  /*.stream_reset_default_device =*/ wasapi_stream_reset_default_device,
   /*.stream_get_position =*/ wasapi_stream_get_position,
   /*.stream_get_latency =*/ wasapi_stream_get_latency,
   /*.stream_set_volume =*/ wasapi_stream_set_volume,

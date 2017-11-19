@@ -8,8 +8,7 @@ const Cr = Components.results;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-    "resource://gre/modules/Promise.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 
 
 do_get_profile();
@@ -72,10 +71,8 @@ function asyncCleanup() {
   print("*** Storage Tests: Trying to asyncClose!");
   getOpenedDatabase().asyncClose(function() { closed = true; });
 
-  let curThread = Components.classes["@mozilla.org/thread-manager;1"]
-                            .getService().currentThread;
-  while (!closed)
-    curThread.processNextEvent(true);
+  let tm = Cc["@mozilla.org/thread-manager;1"].getService();
+  tm.spinEventLoopUntil(() => closed);
 
   // we need to null out the database variable to get a new connection the next
   // time getOpenedDatabase is called
@@ -248,103 +245,103 @@ function getTableRowCount(aTableName) {
 // Promise-Returning Functions
 
 function asyncClone(db, readOnly) {
-  let deferred = Promise.defer();
-  db.asyncClone(readOnly, function(status, db2) {
-    if (Components.isSuccessCode(status)) {
-      deferred.resolve(db2);
-    } else {
-      deferred.reject(status);
-    }
+  return new Promise((resolve, reject) => {
+    db.asyncClone(readOnly, function(status, db2) {
+      if (Components.isSuccessCode(status)) {
+        resolve(db2);
+      } else {
+        reject(status);
+      }
+    });
   });
-  return deferred.promise;
 }
 
 function asyncClose(db) {
-  let deferred = Promise.defer();
-  db.asyncClose(function(status) {
-    if (Components.isSuccessCode(status)) {
-      deferred.resolve();
-    } else {
-      deferred.reject(status);
-    }
+  return new Promise((resolve, reject) => {
+    db.asyncClose(function(status) {
+      if (Components.isSuccessCode(status)) {
+        resolve();
+      } else {
+        reject(status);
+      }
+    });
   });
-  return deferred.promise;
 }
 
 function openAsyncDatabase(file, options) {
-  let deferred = Promise.defer();
-  let properties;
-  if (options) {
-    properties = Cc["@mozilla.org/hash-property-bag;1"].
-        createInstance(Ci.nsIWritablePropertyBag);
-    for (let k in options) {
-      properties.setProperty(k, options[k]);
+  return new Promise((resolve, reject) => {
+    let properties;
+    if (options) {
+      properties = Cc["@mozilla.org/hash-property-bag;1"].
+          createInstance(Ci.nsIWritablePropertyBag);
+      for (let k in options) {
+        properties.setProperty(k, options[k]);
+      }
     }
-  }
-  getService().openAsyncDatabase(file, properties, function(status, db) {
-    if (Components.isSuccessCode(status)) {
-      deferred.resolve(db.QueryInterface(Ci.mozIStorageAsyncConnection));
-    } else {
-      deferred.reject(status);
-    }
+    getService().openAsyncDatabase(file, properties, function(status, db) {
+      if (Components.isSuccessCode(status)) {
+        resolve(db.QueryInterface(Ci.mozIStorageAsyncConnection));
+      } else {
+        reject(status);
+      }
+    });
   });
-  return deferred.promise;
 }
 
 function executeAsync(statement, onResult) {
-  let deferred = Promise.defer();
-  statement.executeAsync({
-    handleError(error) {
-      deferred.reject(error);
-    },
-    handleResult(result) {
-      if (onResult) {
-        onResult(result);
+  return new Promise((resolve, reject) => {
+    statement.executeAsync({
+      handleError(error) {
+        reject(error);
+      },
+      handleResult(result) {
+        if (onResult) {
+          onResult(result);
+        }
+      },
+      handleCompletion(result) {
+        resolve(result);
       }
-    },
-    handleCompletion(result) {
-      deferred.resolve(result);
-    }
+    });
   });
-  return deferred.promise;
 }
 
 function executeMultipleStatementsAsync(db, statements, onResult) {
-  let deferred = Promise.defer();
-  db.executeAsync(statements, statements.length, {
-    handleError(error) {
-      deferred.reject(error);
-    },
-    handleResult(result) {
-      if (onResult) {
-        onResult(result);
+  return new Promise((resolve, reject) => {
+    db.executeAsync(statements, statements.length, {
+      handleError(error) {
+        reject(error);
+      },
+      handleResult(result) {
+        if (onResult) {
+          onResult(result);
+        }
+      },
+      handleCompletion(result) {
+        resolve(result);
       }
-    },
-    handleCompletion(result) {
-      deferred.resolve(result);
-    }
+    });
   });
-  return deferred.promise;
 }
 
 function executeSimpleSQLAsync(db, query, onResult) {
-  let deferred = Promise.defer();
-  db.executeSimpleSQLAsync(query, {
-    handleError(error) {
-      deferred.reject(error);
-    },
-    handleResult(result) {
-      if (onResult) {
-        onResult(result);
-      } else {
-        do_throw("No results were expected");
+  return new Promise((resolve, reject) => {
+    db.executeSimpleSQLAsync(query, {
+      handleError(error) {
+        reject(error);
+      },
+      handleResult(result) {
+        if (onResult) {
+          onResult(result);
+        } else {
+          do_throw("No results were expected");
+        }
+      },
+      handleCompletion(result) {
+        resolve(result);
       }
-    },
-    handleCompletion(result) {
-      deferred.resolve(result);
-    }
+    });
   });
-  return deferred.promise;
 }
 
 cleanup();

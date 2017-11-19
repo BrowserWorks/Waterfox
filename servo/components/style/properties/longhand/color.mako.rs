@@ -11,6 +11,7 @@
 <%helpers:longhand name="color" need_clone="True"
                    animation_value_type="IntermediateRGBA"
                    ignored_when_colors_disabled="True"
+                   flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER"
                    spec="https://drafts.csswg.org/css-color/#color">
     use cssparser::RGBA;
     use values::specified::{AllowQuirks, Color};
@@ -21,7 +22,7 @@
         #[inline]
         fn to_computed_value(&self, context: &Context) -> computed_value::T {
             self.0.to_computed_value(context)
-                .to_rgba(context.inherited_style.get_color().clone_color())
+                .to_rgba(context.builder.get_parent_color().clone_color())
         }
 
         #[inline]
@@ -68,6 +69,7 @@
                                -moz-mac-disabledtoolbartext -moz-mac-secondaryhighlight
                                -moz-menuhover -moz-menuhovertext -moz-menubartext -moz-menubarhovertext
                                -moz-oddtreerow -moz-win-mediatext -moz-win-communicationstext
+                               -moz-win-accentcolor -moz-win-accentcolortext
                                -moz-nativehyperlinktext -moz-comboboxtext -moz-combobox""".split()
 
             # These are not parsed but must be serialized
@@ -108,7 +110,7 @@
             fn to_computed_value(&self, cx: &Context) -> Self::ComputedValue {
                 unsafe {
                     Gecko_GetLookAndFeelSystemColor(*self as i32,
-                                                    &*cx.device.pres_context)
+                                                    cx.device().pres_context())
                 }
             }
 
@@ -120,21 +122,20 @@
 
         impl SystemColor {
             pub fn parse<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-                #[cfg(feature = "gecko")]
-                use std::ascii::AsciiExt;
-                static PARSE_ARRAY: &'static [(&'static str, SystemColor); ${len(system_colors)}] = &[
-                    % for color in system_colors:
-                        ("${color}", LookAndFeel_ColorID::eColorID_${to_rust_ident(color)}),
-                    % endfor
-                ];
-
-                let ident = input.expect_ident()?;
-                for &(name, color) in PARSE_ARRAY.iter() {
-                    if name.eq_ignore_ascii_case(&ident) {
-                        return Ok(color)
+                ascii_case_insensitive_phf_map! {
+                    color_name -> SystemColor = {
+                        % for color in system_colors:
+                            "${color}" => LookAndFeel_ColorID::eColorID_${to_rust_ident(color)},
+                        % endfor
                     }
                 }
-                Err(SelectorParseError::UnexpectedIdent(ident).into())
+
+                let ident = input.expect_ident()?;
+                if let Some(color) = color_name(&ident) {
+                    Ok(*color)
+                } else {
+                    Err(SelectorParseError::UnexpectedIdent(ident.clone()).into())
+                }
             }
         }
     % endif

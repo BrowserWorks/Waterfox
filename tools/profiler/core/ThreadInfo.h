@@ -8,14 +8,12 @@
 #define ThreadInfo_h
 
 #include "mozilla/NotNull.h"
+#include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtrExtensions.h"
 
 #include "platform.h"
 #include "ProfileBuffer.h"
 #include "js/ProfilingStack.h"
-
-// Stub eventMarker function for js-engine event generation.
-void ProfilerJSEventMarker(const char* aEvent);
 
 // This class contains the info for a single thread that is accessible without
 // protection from gPSMutex in platform.cpp. Because there is no external
@@ -55,9 +53,11 @@ public:
   }
 
   void AddPendingMarker(const char* aMarkerName,
-                        ProfilerMarkerPayload* aPayload, double aTime)
+                        mozilla::UniquePtr<ProfilerMarkerPayload> aPayload,
+                        double aTime)
   {
-    ProfilerMarker* marker = new ProfilerMarker(aMarkerName, aPayload, aTime);
+    ProfilerMarker* marker =
+      new ProfilerMarker(aMarkerName, Move(aPayload), aTime);
     mPendingMarkers.insert(marker);
   }
 
@@ -157,6 +157,13 @@ private:
 };
 
 // This class contains the info for a single thread.
+//
+// Note: A thread's ThreadInfo can be held onto after the thread itself exits,
+// because we may need to output profiling information about that thread. But
+// some of the fields in this class are only relevant while the thread is
+// alive. It's possible that this class could be refactored so there is a
+// clearer split between those fields and the fields that are still relevant
+// after the thread exists.
 class ThreadInfo final
 {
 public:
@@ -176,6 +183,8 @@ public:
   void StopProfiling();
   bool IsBeingProfiled() { return mIsBeingProfiled; }
 
+  void NotifyUnregistered() { mUnregisterTime = TimeStamp::Now(); }
+
   PlatformData* GetPlatformData() const { return mPlatformData.get(); }
   void* StackTop() const { return mStackTop; }
 
@@ -185,6 +194,8 @@ public:
 
 private:
   mozilla::UniqueFreePtr<char> mName;
+  mozilla::TimeStamp mRegisterTime;
+  mozilla::TimeStamp mUnregisterTime;
   int mThreadId;
   const bool mIsMainThread;
 
@@ -203,14 +214,15 @@ private:
   //
 
 public:
-  void StreamJSON(ProfileBuffer* aBuffer, SpliceableJSONWriter& aWriter,
-                  const mozilla::TimeStamp& aProcessStartTime,
-                  double aSinceTime);
+  // Returns the time of the first sample.
+  double StreamJSON(const ProfileBuffer& aBuffer, SpliceableJSONWriter& aWriter,
+                    const mozilla::TimeStamp& aProcessStartTime,
+                    double aSinceTime);
 
   // Call this method when the JS entries inside the buffer are about to
   // become invalid, i.e., just before JS shutdown.
-  void FlushSamplesAndMarkers(ProfileBuffer* aBuffer,
-                              const mozilla::TimeStamp& aProcessStartTime);
+  void FlushSamplesAndMarkers(const mozilla::TimeStamp& aProcessStartTime,
+                              ProfileBuffer& aBuffer);
 
   // Returns nullptr if this is not the main thread or if this thread is not
   // being profiled.
@@ -281,8 +293,7 @@ public:
       if (mJSSampling == ACTIVE_REQUESTED) {
         mJSSampling = ACTIVE;
         js::EnableContextProfilingStack(mContext, true);
-        js::RegisterContextProfilingEventMarker(mContext,
-                                                &ProfilerJSEventMarker);
+        js::RegisterContextProfilingEventMarker(mContext, profiler_add_marker);
 
       } else if (mJSSampling == INACTIVE_REQUESTED) {
         mJSSampling = INACTIVE;
@@ -299,6 +310,7 @@ private:
   // FlushSamplesAndMarkers should be called to save them. These are spliced
   // into the final stream.
   mozilla::UniquePtr<char[]> mSavedStreamedSamples;
+  double mFirstSavedStreamedSampleTime;
   mozilla::UniquePtr<char[]> mSavedStreamedMarkers;
   mozilla::Maybe<UniqueStacks> mUniqueStacks;
 
@@ -358,19 +370,23 @@ private:
     INACTIVE_REQUESTED = 3,
   } mJSSampling;
 
-  // When sampling, this holds the generation number and offset in PS::mBuffer
-  // of the most recent sample for this thread.
+  // When sampling, this holds the generation number and offset in
+  // ActivePS::mBuffer of the most recent sample for this thread.
   ProfileBuffer::LastSample mLastSample;
 };
 
 void
 StreamSamplesAndMarkers(const char* aName, int aThreadId,
-                        ProfileBuffer* aBuffer,
+                        const ProfileBuffer& aBuffer,
                         SpliceableJSONWriter& aWriter,
                         const mozilla::TimeStamp& aProcessStartTime,
+                        const TimeStamp& aRegisterTime,
+                        const TimeStamp& aUnregisterTime,
                         double aSinceTime,
+                        double* aOutFirstSampleTime,
                         JSContext* aContext,
                         char* aSavedStreamedSamples,
+                        double aFirstSavedStreamedSampleTime,
                         char* aSavedStreamedMarkers,
                         UniqueStacks& aUniqueStacks);
 

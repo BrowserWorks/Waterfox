@@ -9,6 +9,7 @@
 #define nsPresContext_h___
 
 #include "mozilla/Attributes.h"
+#include "mozilla/NotNull.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
 #include "nsColor.h"
@@ -28,7 +29,7 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsChangeHint.h"
 #include <algorithm>
-// This also pulls in gfxTypes.h, which we cannot include directly.
+#include "gfxTypes.h"
 #include "gfxRect.h"
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
@@ -71,6 +72,7 @@ class gfxMissingFontRecorder;
 
 namespace mozilla {
 class EffectCompositor;
+class Encoding;
 class EventStateManager;
 class CounterStyleManager;
 class RestyleManager;
@@ -125,6 +127,8 @@ class nsRootPresContext;
 class nsPresContext : public nsIObserver,
                       public mozilla::SupportsWeakPtr<nsPresContext> {
 public:
+  using Encoding = mozilla::Encoding;
+  template <typename T> using NotNull = mozilla::NotNull<T>;
   typedef mozilla::LangGroupFontPrefs LangGroupFontPrefs;
   typedef mozilla::ScrollbarStyles ScrollbarStyles;
   typedef mozilla::StaticPresData StaticPresData;
@@ -1033,6 +1037,7 @@ public:
    * Returns the RestyleManager's restyle generation counter.
    */
   uint64_t GetRestyleGeneration() const;
+  uint64_t GetUndisplayedRestyleGeneration() const;
 
   /**
    * Returns whether there are any pending restyles or reflows.
@@ -1148,14 +1153,6 @@ public:
     mUsesExChUnits = aValue;
   }
 
-  bool UsesViewportUnits() const {
-    return mUsesViewportUnits;
-  }
-
-  void SetUsesViewportUnits(bool aValue) {
-    mUsesViewportUnits = aValue;
-  }
-
   // true if there are OMTA transition updates for the current document which
   // have been throttled, and therefore some style information may not be up
   // to date
@@ -1228,12 +1225,12 @@ protected:
     return StaticPresData::Get()->GetFontPrefsForLangHelper(lang, &mLangGroupFontPrefs, aNeedsToCache);
   }
 
-  void UpdateCharSet(const nsCString& aCharSet);
+  void UpdateCharSet(NotNull<const Encoding*> aCharSet);
 
   static bool NotifyDidPaintSubdocumentCallback(nsIDocument* aDocument, void* aData);
 
 public:
-  void DoChangeCharSet(const nsCString& aCharSet);
+  void DoChangeCharSet(NotNull<const Encoding*> aCharSet);
 
   /**
    * Checks for MozAfterPaint listeners on the document
@@ -1462,8 +1459,6 @@ protected:
   unsigned              mUsesRootEMUnits : 1;
   // Does the associated document use ex or ch units?
   unsigned              mUsesExChUnits : 1;
-  // Does the associated document use viewport units (vw/vh/vmin/vmax)?
-  unsigned              mUsesViewportUnits : 1;
 
   // Has there been a change to the viewport's dimensions?
   unsigned              mPendingViewportChange : 1;
@@ -1504,11 +1499,11 @@ protected:
 
 #ifdef RESTYLE_LOGGING
   // Should we output debug information about restyling for this document?
-  bool                  mRestyleLoggingEnabled;
+  unsigned mRestyleLoggingEnabled : 1;
 #endif
 
 #ifdef DEBUG
-  bool                  mInitialized;
+  unsigned mInitialized : 1;
 #endif
 
 

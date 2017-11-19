@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('*Selection*'):
+    BUG_COMPONENT = ('Core', 'Selection')
+
 with Files("**"):
     BUG_COMPONENT = ("Core", "DOM")
 
@@ -81,6 +84,7 @@ EXPORTS += [
     'nsIContentInlines.h',
     'nsIContentIterator.h',
     'nsIContentSerializer.h',
+    'nsIdentifierMapEntry.h',
     'nsIDocument.h',
     'nsIDocumentInlines.h',
     'nsIDocumentObserver.h',
@@ -124,6 +128,7 @@ EXPORTS += [
     'nsWrapperCache.h',
     'nsWrapperCacheInlines.h',
     'nsXMLNameSpaceMap.h',
+    'XPathGenerator.h',
 ]
 
 if CONFIG['MOZ_WEBRTC']:
@@ -181,7 +186,6 @@ EXPORTS.mozilla.dom += [
     'IdleRequest.h',
     'ImageEncoder.h',
     'ImageTracker.h',
-    'ImportManager.h',
     'Link.h',
     'Location.h',
     'NameSpaceConstants.h',
@@ -195,6 +199,7 @@ EXPORTS.mozilla.dom += [
     'ResponsiveImageSelector.h',
     'SameProcessMessageQueue.h',
     'ScreenOrientation.h',
+    'Selection.h',
     'ShadowRoot.h',
     'StructuredCloneBlob.h',
     'StructuredCloneHolder.h',
@@ -254,7 +259,6 @@ UNIFIED_SOURCES += [
     'IdleRequest.cpp',
     'ImageEncoder.cpp',
     'ImageTracker.cpp',
-    'ImportManager.cpp',
     'Link.cpp',
     'Location.cpp',
     'Navigator.cpp',
@@ -338,6 +342,8 @@ UNIFIED_SOURCES += [
     'ResponsiveImageSelector.cpp',
     'SameProcessMessageQueue.cpp',
     'ScreenOrientation.cpp',
+    'Selection.cpp',
+    'SelectionChangeListener.cpp',
     'ShadowRoot.cpp',
     'StructuredCloneBlob.cpp',
     'StructuredCloneHolder.cpp',
@@ -348,6 +354,7 @@ UNIFIED_SOURCES += [
     'TextInputProcessor.cpp',
     'ThirdPartyUtil.cpp',
     'Timeout.cpp',
+    'TimeoutBudgetManager.cpp',
     'TimeoutExecutor.cpp',
     'TimeoutHandler.cpp',
     'TimeoutManager.cpp',
@@ -356,6 +363,7 @@ UNIFIED_SOURCES += [
     'WebSocket.cpp',
     'WindowNamedPropertiesHandler.cpp',
     'WindowOrientationObserver.cpp',
+    'XPathGenerator.cpp',
 ]
 
 if CONFIG['MOZ_WEBRTC']:

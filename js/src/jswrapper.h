@@ -78,8 +78,7 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
                                  AutoIdVector& props) const override;
     virtual bool delete_(JSContext* cx, HandleObject proxy, HandleId id,
                          ObjectOpResult& result) const override;
-    virtual bool enumerate(JSContext* cx, HandleObject proxy,
-                           MutableHandleObject objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, HandleObject proxy) const override;
     virtual bool getPrototype(JSContext* cx, HandleObject proxy,
                               MutableHandleObject protop) const override;
     virtual bool setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
@@ -116,9 +115,8 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
                          JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
     virtual JSString* fun_toString(JSContext* cx, HandleObject proxy,
-                                   unsigned indent) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy,
-                                 MutableHandle<RegExpShared*> shared) const override;
+                                   bool isToSource) const override;
+    virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy,
                                   MutableHandleValue vp) const override;
     virtual bool isCallable(JSObject* obj) const override;
@@ -178,7 +176,7 @@ class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
                                  AutoIdVector& props) const override;
     virtual bool delete_(JSContext* cx, HandleObject wrapper, HandleId id,
                          ObjectOpResult& result) const override;
-    virtual bool enumerate(JSContext* cx, HandleObject wrapper, MutableHandleObject objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, HandleObject wrapper) const override;
     virtual bool getPrototype(JSContext* cx, HandleObject proxy,
                               MutableHandleObject protop) const override;
     virtual bool setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
@@ -211,9 +209,8 @@ class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
                              bool* bp) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
     virtual JSString* fun_toString(JSContext* cx, HandleObject wrapper,
-                                   unsigned indent) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy,
-                                 MutableHandle<RegExpShared*> shared) const override;
+                                   bool isToSource) const override;
+    virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const override;
 
     // Allocate CrossCompartmentWrappers in the nursery.
@@ -239,8 +236,7 @@ class JS_FRIEND_API(OpaqueCrossCompartmentWrapper) : public CrossCompartmentWrap
                                  AutoIdVector& props) const override;
     virtual bool delete_(JSContext* cx, HandleObject wrapper, HandleId id,
                          ObjectOpResult& result) const override;
-    virtual bool enumerate(JSContext* cx, HandleObject wrapper,
-                           MutableHandleObject objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, HandleObject wrapper) const override;
     virtual bool getPrototype(JSContext* cx, HandleObject wrapper,
                               MutableHandleObject protop) const override;
     virtual bool setPrototype(JSContext* cx, HandleObject wrapper, HandleObject proto,
@@ -272,7 +268,8 @@ class JS_FRIEND_API(OpaqueCrossCompartmentWrapper) : public CrossCompartmentWrap
     virtual bool isArray(JSContext* cx, HandleObject obj,
                          JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject wrapper) const override;
-    virtual JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const override;
+    virtual JSString* fun_toString(JSContext* cx, HandleObject proxy,
+                                   bool isToSource) const override;
 
     static const OpaqueCrossCompartmentWrapper singleton;
 };
@@ -311,8 +308,7 @@ class JS_FRIEND_API(SecurityWrapper) : public Base
                             const CallArgs& args) const override;
     virtual bool getBuiltinClass(JSContext* cx, HandleObject wrapper, ESClass* cls) const override;
     virtual bool isArray(JSContext* cx, HandleObject wrapper, JS::IsArrayAnswer* answer) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy,
-                                 MutableHandle<RegExpShared*> shared) const override;
+    virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const override;
 
     // Allow isCallable and isConstructor. They used to be class-level, and so could not be guarded

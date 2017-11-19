@@ -13,7 +13,7 @@
 
 const {template} = require("devtools/shared/gcli/templater");
 
-const TEST_URI = TEST_URI_ROOT + "browser_templater_basic.html";
+const TEST_URI = TEST_URI_ROOT + "doc_templater_basic.html";
 
 var test = Task.async(function* () {
   yield addTab("about:blank");
@@ -29,6 +29,7 @@ function runTest(index, host, doc) {
   holder.id = options.name;
   let body = doc.body;
   body.appendChild(holder);
+  // eslint-disable-next-line no-unsanitized/property
   holder.innerHTML = options.template;
 
   info("Running " + options.name);

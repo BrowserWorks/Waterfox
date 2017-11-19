@@ -431,3 +431,92 @@ TEST(Hashtables, InterfaceHashtable)
   }
   ASSERT_EQ(count, uint32_t(0));
 }
+
+TEST(Hashtables, DataHashtable_LookupForAdd)
+{
+  // check LookupForAdd/OrInsert
+  nsDataHashtable<nsUint32HashKey,const char*> UniToEntity(ENTITY_COUNT);
+
+  for (auto& entity : gEntities) {
+    auto entry = UniToEntity.LookupForAdd(entity.mUnicode);
+    const char* val = entry.OrInsert([&entity] () { return entity.mStr; });
+    ASSERT_FALSE(entry);
+    ASSERT_TRUE(val == entity.mStr);
+    ASSERT_TRUE(entry.Data() == entity.mStr);
+  }
+
+  for (auto& entity : gEntities) {
+    ASSERT_TRUE(UniToEntity.LookupForAdd(entity.mUnicode));
+  }
+
+  // 0 should not be found
+  size_t count = UniToEntity.Count();
+  UniToEntity.Lookup(0U).Remove();
+  ASSERT_TRUE(count == UniToEntity.Count());
+
+  // Lookup should find all entries
+  count = 0;
+  for (auto& entity : gEntities) {
+    if (UniToEntity.Lookup(entity.mUnicode)) {
+      count++;
+    }
+  }
+  ASSERT_TRUE(count == UniToEntity.Count());
+
+  for (auto& entity : gEntities) {
+    ASSERT_TRUE(UniToEntity.LookupForAdd(entity.mUnicode));
+  }
+
+  // Lookup().Remove() should remove all entries.
+  for (auto& entity : gEntities) {
+    if (auto entry = UniToEntity.Lookup(entity.mUnicode)) {
+      entry.Remove();
+    }
+  }
+  ASSERT_TRUE(0 == UniToEntity.Count());
+}
+
+TEST(Hashtables, ClassHashtable_LookupForAdd)
+{
+  // check a class-hashtable LookupForAdd with null values
+  nsClassHashtable<nsCStringHashKey,TestUniChar> EntToUniClass(ENTITY_COUNT);
+
+  for (auto& entity : gEntities) {
+    auto entry = EntToUniClass.LookupForAdd(nsDependentCString(entity.mStr));
+    const TestUniChar* val = entry.OrInsert([] () { return nullptr; });
+    ASSERT_FALSE(entry);
+    ASSERT_TRUE(val == nullptr);
+    ASSERT_TRUE(entry.Data() == nullptr);
+  }
+
+  for (auto& entity : gEntities) {
+    ASSERT_TRUE(EntToUniClass.LookupForAdd(nsDependentCString(entity.mStr)));
+    ASSERT_TRUE(EntToUniClass.LookupForAdd(nsDependentCString(entity.mStr)).Data() == nullptr);
+  }
+
+  // "" should not be found
+  size_t count = EntToUniClass.Count();
+  EntToUniClass.Lookup(nsDependentCString("")).Remove();
+  ASSERT_TRUE(count == EntToUniClass.Count());
+
+  // Lookup should find all entries.
+  count = 0;
+  for (auto& entity : gEntities) {
+    if (EntToUniClass.Lookup(nsDependentCString(entity.mStr))) {
+      count++;
+    }
+  }
+  ASSERT_TRUE(count == EntToUniClass.Count());
+
+  for (auto& entity : gEntities) {
+    ASSERT_TRUE(EntToUniClass.LookupForAdd(nsDependentCString(entity.mStr)));
+  }
+
+  // Lookup().Remove() should remove all entries.
+  for (auto& entity : gEntities) {
+    if (auto entry = EntToUniClass.Lookup(nsDependentCString(entity.mStr))) {
+      entry.Remove();
+    }
+  }
+  ASSERT_TRUE(0 == EntToUniClass.Count());
+}

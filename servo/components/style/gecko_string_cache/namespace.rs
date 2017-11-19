@@ -6,14 +6,15 @@
 
 use gecko_bindings::structs::nsIAtom;
 use precomputed_hash::PrecomputedHash;
-use std::borrow::{Borrow, Cow};
+use std::borrow::Borrow;
 use std::fmt;
 use std::ops::Deref;
 use string_cache::{Atom, WeakAtom};
 
 #[macro_export]
 macro_rules! ns {
-    () => { $crate::string_cache::Namespace(atom!("")) }
+    () => { $crate::string_cache::Namespace(atom!("")) };
+    ($s: tt) => { $crate::string_cache::Namespace(atom!($s)) };
 }
 
 /// A Gecko namespace is just a wrapped atom.
@@ -53,8 +54,8 @@ impl Deref for Namespace {
     }
 }
 
-impl<'a> From<Cow<'a, str>> for Namespace {
-    fn from(s: Cow<'a, str>) -> Self {
+impl<'a> From<&'a str> for Namespace {
+    fn from(s: &'a str) -> Self {
         Namespace(Atom::from(s))
     }
 }

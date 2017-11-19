@@ -77,9 +77,9 @@ public:
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
 
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
 
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
 
   virtual void Reflow(nsPresContext*           aCX,
                       ReflowOutput&     aDesiredSize,
@@ -117,10 +117,8 @@ public:
 
   virtual nsContainerFrame* GetContentInsertionFrame() override;
 
-  // Update the style on the block wrappers around our kids.
-  void DoUpdateStyleOfOwnedAnonBoxes(mozilla::ServoStyleSet& aStyleSet,
-                                     nsStyleChangeList& aChangeList,
-                                     nsChangeHint aHintForThisFrame) override;
+  // Return the dropdown and display frame.
+  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
 
   // nsIFormControlFrame
   virtual nsresult SetFormProperty(nsIAtom* aName, const nsAString& aValue) override;
@@ -235,7 +233,7 @@ protected:
   friend class nsResizeDropdownAtFinalPosition;
 
   // Utilities
-  void ReflowDropdown(nsPresContext*          aPresContext, 
+  void ReflowDropdown(nsPresContext*          aPresContext,
                       const ReflowInput& aReflowInput);
 
   enum DropDownPositionState {
@@ -249,18 +247,22 @@ protected:
   DropDownPositionState AbsolutelyPositionDropDown();
 
   // Helper for GetMinISize/GetPrefISize
-  nscoord GetIntrinsicISize(nsRenderingContext* aRenderingContext,
+  nscoord GetIntrinsicISize(gfxContext* aRenderingContext,
                             nsLayoutUtils::IntrinsicISizeType aType);
 
   class RedisplayTextEvent : public mozilla::Runnable {
   public:
     NS_DECL_NSIRUNNABLE
-    explicit RedisplayTextEvent(nsComboboxControlFrame *c) : mControlFrame(c) {}
+    explicit RedisplayTextEvent(nsComboboxControlFrame* c)
+      : mozilla::Runnable("nsComboboxControlFrame::RedisplayTextEvent")
+      , mControlFrame(c)
+    {
+    }
     void Revoke() { mControlFrame = nullptr; }
   private:
     nsComboboxControlFrame *mControlFrame;
   };
-  
+
   /**
    * Show or hide the dropdown list.
    * @note This method might destroy |this|.
@@ -297,7 +299,7 @@ protected:
   // The inline size of our display area.  Used by that frame's reflow
   // to size to the full inline size except the drop-marker.
   nscoord mDisplayISize;
-  
+
   nsRevocableEventPtr<RedisplayTextEvent> mRedisplayTextEvent;
 
   int32_t               mRecentSelectedIndex;

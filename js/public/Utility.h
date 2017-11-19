@@ -67,6 +67,7 @@ enum ThreadType {
     THREAD_TYPE_GCHELPER,       // 6
     THREAD_TYPE_GCPARALLEL,     // 7
     THREAD_TYPE_PROMISE_TASK,   // 8
+    THREAD_TYPE_ION_FREE,       // 9
     THREAD_TYPE_MAX             // Used to check shell function arguments
 };
 
@@ -77,7 +78,7 @@ enum ThreadType {
 # if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
 extern bool InitThreadType(void);
 extern void SetThreadType(ThreadType);
-extern uint32_t GetThreadType(void);
+extern JS_FRIEND_API(uint32_t) GetThreadType(void);
 # else
 inline bool InitThreadType(void) { return true; }
 inline void SetThreadType(ThreadType t) {};

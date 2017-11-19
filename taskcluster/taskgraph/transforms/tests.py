@@ -35,8 +35,6 @@ from voluptuous import (
 
 import copy
 import logging
-import requests
-from collections import defaultdict
 
 # default worker types keyed by instance-size
 LINUX_WORKER_TYPES = {
@@ -46,15 +44,82 @@ LINUX_WORKER_TYPES = {
     'default': 'aws-provisioner-v1/gecko-t-linux-large',
 }
 
-# windows / os x worker types keyed by test-platform
+# windows worker types keyed by test-platform and virtualization
 WINDOWS_WORKER_TYPES = {
-    'windows7-32-vm': 'aws-provisioner-v1/gecko-t-win7-32',
-    'windows7-32': 'aws-provisioner-v1/gecko-t-win7-32-gpu',
-    'windows10-64-vm': 'aws-provisioner-v1/gecko-t-win10-64',
-    'windows10-64': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
-    'windows10-64-asan': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+    'windows7-32': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win7-32',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win7-32-gpu',
+      'hardware': 'releng-hardware/gecko-t-win7-32-hw',
+    },
+    'windows7-32-pgo': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win7-32',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win7-32-gpu',
+      'hardware': 'releng-hardware/gecko-t-win7-32-hw',
+    },
+    'windows7-32-nightly': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win7-32',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win7-32-gpu',
+      'hardware': 'releng-hardware/gecko-t-win7-32-hw',
+    },
+    'windows7-32-devedition': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win7-32',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win7-32-gpu',
+      'hardware': 'releng-hardware/gecko-t-win7-32-hw',
+    },
+    'windows7-32-stylo': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win7-32',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win7-32-gpu',
+      'hardware': 'releng-hardware/gecko-t-win7-32-hw',
+    },
+    'windows10-64': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    'windows10-64-pgo': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    'windows10-64-devedition': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    'windows10-64-nightly': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    'windows10-64-stylo': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    'windows10-64-asan': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    # These values don't really matter since BBB will be executing them
+    'windows8-64': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    'windows8-64-pgo': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    'windows8-64-nightly': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
 }
 
+# os x worker types keyed by test-platform
 MACOSX_WORKER_TYPES = {
     'macosx64': 'releng-hardware/gecko-t-osx-1010',
 }
@@ -144,6 +209,11 @@ test_description_schema = Schema({
     Required('instance-size', default='default'): optionally_keyed_by(
         'test-platform',
         Any('default', 'large', 'xlarge', 'legacy')),
+
+    # type of virtualization or hardware required by test.
+    Required('virtualization', default='virtual'): optionally_keyed_by(
+        'test-platform',
+        Any('virtual', 'virtual-with-gpu', 'hardware')),
 
     # Whether the task requires loopback audio or video (whatever that may mean
     # on the platform)
@@ -251,6 +321,10 @@ test_description_schema = Schema({
             # chunking-args = test-suite-suffix; "<CHUNK>" in this string will
             # be replaced with the chunk number.
             Optional('chunk-suffix'): basestring,
+
+            Required('requires-signed-builds', default=False): optionally_keyed_by(
+                'test-platform',
+                bool),
         }
     ),
 
@@ -271,6 +345,10 @@ test_description_schema = Schema({
     # the label of the build task generating the materials to test
     'build-label': basestring,
 
+    # the label of the signing task generating the materials to test.
+    # Signed builds are used in xpcshell tests on Windows, for instance.
+    Optional('build-signing-label'): basestring,
+
     # the build's attributes
     'build-attributes': {basestring: object},
 
@@ -287,6 +365,11 @@ test_description_schema = Schema({
     Optional('when'): Any({
         Optional('files-changed'): [basestring],
     }),
+
+    Optional('worker-type'): optionally_keyed_by(
+        'test-platform',
+        Any(basestring, None),
+    ),
 
 }, required=True)
 
@@ -378,13 +461,7 @@ def set_target(config, tests):
     for test in tests:
         build_platform = test['build-platform']
         if build_platform.startswith('macosx'):
-            if build_platform.split('/')[1] == 'opt':
-                target = 'firefox-{}.en-US.{}.dmg'.format(
-                    get_firefox_version(),
-                    'mac',
-                )
-            else:
-                target = 'target.dmg'
+            target = 'target.dmg'
         elif build_platform.startswith('android'):
             if 'geckoview' in test['test-name']:
                 target = 'geckoview_example.apk'
@@ -395,6 +472,7 @@ def set_target(config, tests):
         else:
             target = 'target.tar.bz2'
         test['mozharness']['build-artifact-name'] = 'public/build/' + target
+
         yield test
 
 
@@ -409,16 +487,28 @@ def set_treeherder_machine_platform(config, tests):
         'macosx64/debug': 'osx-10-10/debug',
         'macosx64/opt': 'osx-10-10/opt',
         'win64-asan/opt': 'windows10-64/asan',
+        'win32-pgo/opt': 'windows7-32/pgo',
+        'win64-pgo/opt': 'windows10-64/pgo',
         # The build names for Android platforms have partially evolved over the
         # years and need to be translated.
-        'android-api-15/debug': 'android-4-3-armv7-api15/debug',
-        'android-api-15/opt': 'android-4-3-armv7-api15/opt',
+        'android-api-16/debug': 'android-4-3-armv7-api16/debug',
+        'android-api-16/opt': 'android-4-3-armv7-api16/opt',
         'android-x86/opt': 'android-4-2-x86/opt',
-        'android-api-15-gradle/opt': 'android-api-15-gradle/opt',
+        'android-api-16-gradle/opt': 'android-api-16-gradle/opt',
     }
     for test in tests:
-        test['treeherder-machine-platform'] = translation.get(
-            test['build-platform'], test['test-platform'])
+        # For most desktop platforms, the above table is not used for "regular"
+        # builds, so we'll always pick the test platform here.
+        # On macOS though, the regular builds are in the table.  This causes a
+        # conflict in `verify_task_graph_symbol` once you add a new test
+        # platform based on regular macOS builds, such as for Stylo.
+        # Since it's unclear if the regular macOS builds can be removed from
+        # the table, workaround the issue for Stylo.
+        if '-stylo' in test['test-platform']:
+            test['treeherder-machine-platform'] = test['test-platform']
+        else:
+            test['treeherder-machine-platform'] = translation.get(
+                test['build-platform'], test['test-platform'])
         yield test
 
 
@@ -442,10 +532,20 @@ def set_tier(config, tests):
                                          'linux64-pgo/opt',
                                          'linux64-devedition/opt',
                                          'linux64-asan/opt',
+                                         'windows7-32/debug',
+                                         'windows7-32/opt',
+                                         'windows7-32-pgo/opt',
+                                         'windows7-32-devedition/opt',
+                                         'windows7-32-nightly/opt',
+                                         'windows10-64/debug',
+                                         'windows10-64/opt',
+                                         'windows10-64-pgo/opt',
+                                         'windows10-64-devedition/opt',
+                                         'windows10-64-nightly/opt',
                                          'macosx64/opt',
                                          'macosx64/debug',
-                                         'android-4.3-arm7-api-15/opt',
-                                         'android-4.3-arm7-api-15/debug',
+                                         'android-4.3-arm7-api-16/opt',
+                                         'android-4.3-arm7-api-16/debug',
                                          'android-4.2-x86/opt']:
                 test['tier'] = 1
             else:
@@ -498,6 +598,8 @@ def handle_keyed_by(config, tests):
         'mozharness.chunked',
         'mozharness.config',
         'mozharness.extra-options',
+        'mozharness.requires-signed-builds',
+        'worker-type',
     ]
     for test in tests:
         for field in fields:
@@ -514,9 +616,22 @@ def enable_code_coverage(config, tests):
             test['mozharness'].setdefault('extra-options', []).append('--code-coverage')
             test['when'] = {}
             test['instance-size'] = 'xlarge'
-            test['run-on-projects'] = []
+            test['run-on-projects'] = ['mozilla-central']
+
+            if test['test-name'].startswith('talos'):
+                test['max-run-time'] = 7200
+                test['docker-image'] = {"in-tree": "desktop1604-test"}
+                test['mozharness']['config'] = ['talos/linux64_config_taskcluster.py']
+                test['mozharness']['extra-options'].append('--add-option')
+                test['mozharness']['extra-options'].append('--cycles,1')
+                test['mozharness']['extra-options'].append('--add-option')
+                test['mozharness']['extra-options'].append('--tppagecycles,1')
+                test['mozharness']['extra-options'].append('--add-option')
+                test['mozharness']['extra-options'].append('--no-upload-results')
+                test['mozharness']['extra-options'].append('--add-option')
+                test['mozharness']['extra-options'].append('--tptimeout,15000')
         elif test['build-platform'] == 'linux64-jsdcov/opt':
-            test['run-on-projects'] = []
+            test['run-on-projects'] = ['mozilla-central']
         yield test
 
 
@@ -644,19 +759,6 @@ def set_tag(config, tests):
 
 
 @transforms.add
-def remove_linux_pgo_try_talos(config, tests):
-    """linux64-pgo talos tests don't run on try."""
-    def predicate(test):
-        return not(
-            test['test-platform'] == 'linux64-pgo/opt' and
-            (test['suite'] == 'talos' or test['suite'] == 'awsy') and
-            config.params['project'] == 'try'
-        )
-    for test in filter(predicate, tests):
-        yield test
-
-
-@transforms.add
 def set_test_type(config, tests):
     for test in tests:
         for test_type in ['mochitest', 'reftest']:
@@ -666,51 +768,58 @@ def set_test_type(config, tests):
 
 
 @transforms.add
-def parallel_stylo_tests(config, tests):
-    """Ensure that any stylo tests running with e10s enabled also test
-    parallel traversal in the style system."""
-
+def enable_stylo(config, tests):
+    """
+    Force Stylo on for all its tests, except Stylo vs. Gecko reftests where the
+    test harness will handle this.
+    """
     for test in tests:
-        if (not test['test-platform'].startswith('linux64-stylo/')) and \
-           (not test['test-platform'].startswith('linux64-stylo-sequential/')):
+        if '-stylo' not in test['test-platform']:
             yield test
             continue
 
-        e10s = test['e10s']
-        # We should have already handled 'both' in an earlier transform.
-        assert e10s != 'both'
-        if not e10s:
+        if 'reftest-stylo' not in test['suite']:
+            test['mozharness'].setdefault('extra-options', []).append('--enable-stylo')
+
+        yield test
+
+
+@transforms.add
+def single_stylo_traversal_tests(config, tests):
+    """Enable single traversal for all tests on the sequential Stylo platform."""
+
+    for test in tests:
+        if not test['test-platform'].startswith('linux64-stylo-sequential/'):
             yield test
             continue
 
         # Bug 1356122 - Run Stylo tests in sequential mode
-        if test['test-platform'].startswith('linux64-stylo-sequential/'):
-            yield test
-
-        if test['test-platform'].startswith('linux64-stylo/'):
-            # add parallel stylo tests
-            test['mozharness'].setdefault('extra-options', [])\
-                              .append('--parallel-stylo-traversal')
-            yield test
+        test['mozharness'].setdefault('extra-options', [])\
+                          .append('--single-stylo-traversal')
+        yield test
 
 
 @transforms.add
 def set_worker_type(config, tests):
     """Set the worker type based on the test platform."""
     for test in tests:
-        # during the taskcluuster migration, this is a bit tortured, but it
+        # during the taskcluster migration, this is a bit tortured, but it
         # will get simpler eventually!
         test_platform = test['test-platform']
-        if test_platform.startswith('macosx'):
-            # note that some portion of these will be allocated to BBB below
+        if test.get('worker-type'):
+            # This test already has its worker type defined, so just use that (yields below)
+            pass
+        elif test_platform.startswith('macosx'):
             test['worker-type'] = MACOSX_WORKER_TYPES['macosx64']
         elif test_platform.startswith('win'):
-            if test.get('suite', '') == 'talos':
+            if test.get('suite', '') == 'talos' and \
+                    not any('taskcluster' in cfg for cfg in test['mozharness']['config']):
                 test['worker-type'] = 'buildbot-bridge/buildbot-bridge'
             else:
-                test['worker-type'] = WINDOWS_WORKER_TYPES[test_platform.split('/')[0]]
+                test['worker-type'] = \
+                    WINDOWS_WORKER_TYPES[test_platform.split('/')[0]][test['virtualization']]
         elif test_platform.startswith('linux') or test_platform.startswith('android'):
-            if test.get('suite', '') == 'talos':
+            if test.get('suite', '') == 'talos' and test['build-platform'] != 'linux64-ccov/opt':
                 if config.config['args'].taskcluster_worker:
                     test['worker-type'] = 'releng-hardware/gecko-t-linux-talos'
                 else:
@@ -724,30 +833,15 @@ def set_worker_type(config, tests):
 
 
 @transforms.add
-def allocate_to_bbb(config, tests):
-    """Make the load balancing between taskcluster and buildbot"""
-    j = get_load_balacing_settings()
-
-    tests_set = defaultdict(list)
+def skip_win10_hardware(config, tests):
+    """Windows 10 hardware isn't ready yet, don't even bother scheduling
+    unless we're on try"""
     for test in tests:
-        tests_set[test['test-platform']].append(test)
-
-    # Make the load balancing between taskcluster and buildbot
-    for test_platform, t in tests_set.iteritems():
-        # We sort the list to make the order of the tasks deterministic
-        t.sort(key=lambda x: (x['test-name'], x.get('this_chunk', 1)))
-        # The json file tells the percentage of tasks that run on
-        # taskcluster. The logic here is inverted, as tasks have been
-        # previously assigned to taskcluster. Therefore we assign the
-        # 1-p tasks to buildbot-bridge.
-        n = j.get(test_platform, 1.0)
-        if not (test_platform.startswith('mac')
-                and config.config['args'].taskcluster_worker):
-            for i in range(int(n * len(t)), len(t)):
-                t[i]['worker-type'] = 'buildbot-bridge/buildbot-bridge'
-
-        for y in t:
-            yield y
+        if 'releng-hardware/gecko-t-win10-64-hw' not in test['worker-type']:
+            yield test
+        if config.params == 'try':
+            yield test
+        # Silently drop the test on the floor if its win10 hardware and we're not try
 
 
 @transforms.add
@@ -795,6 +889,10 @@ def make_job_description(config, tests):
         jobdesc['when'] = test.get('when', {})
         jobdesc['attributes'] = attributes
         jobdesc['dependencies'] = {'build': build_label}
+
+        if test['mozharness']['requires-signed-builds'] is True:
+            jobdesc['dependencies']['build-signing'] = test['build-signing-label']
+
         jobdesc['expires-after'] = test['expires-after']
         jobdesc['routes'] = []
         jobdesc['run-on-projects'] = test['run-on-projects']
@@ -838,11 +936,3 @@ def normpath(path):
 def get_firefox_version():
     with open('browser/config/version.txt', 'r') as f:
         return f.readline().strip()
-
-
-def get_load_balacing_settings():
-    url = "https://s3.amazonaws.com/taskcluster-graph-scheduling/tests-load.json"
-    try:
-        return requests.get(url).json()
-    except Exception:
-        return {}

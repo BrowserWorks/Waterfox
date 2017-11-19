@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { interfaces: Ci, utils: Cu } = Components;
+const { interfaces: Ci, utils: Cu, classes: Cc } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
@@ -14,7 +14,7 @@ const FRAME_SCRIPT = "chrome://talos-powers/content/talos-powers-content.js";
 
 function TalosPowersService() {
   this.wrappedJSObject = this;
-};
+}
 
 TalosPowersService.prototype = {
   classDescription: "Talos Powers",
@@ -23,7 +23,7 @@ TalosPowersService.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
 
   observe(subject, topic, data) {
-    switch(topic) {
+    switch (topic) {
       case "profile-after-change":
         // Note that this observation is registered in the chrome.manifest
         // for this add-on.
@@ -50,7 +50,7 @@ TalosPowersService.prototype = {
   },
 
   receiveMessage(message) {
-    switch(message.name) {
+    switch (message.name) {
       case "Talos:ForceQuit": {
         this.forceQuit(message.data);
         break;
@@ -122,6 +122,7 @@ TalosPowersService.prototype = {
         }).then(() => {
           Services.profiler.StopProfiler();
           resolve();
+          Services.obs.notifyObservers(null, "talos-profile-gathered");
         });
       }, (error) => {
         Cu.reportError("Failed to gather profile: " + error);
@@ -139,7 +140,7 @@ TalosPowersService.prototype = {
    * @param marker (string, optional)
    *        A marker to set before pausing.
    */
-  profilerPause(marker=null) {
+  profilerPause(marker = null) {
     if (marker) {
       Services.profiler.AddMarker(marker);
     }
@@ -154,7 +155,7 @@ TalosPowersService.prototype = {
    * @param marker (string, optional)
    *        A marker to set after resuming.
    */
-  profilerResume(marker=null) {
+  profilerResume(marker = null) {
     Services.profiler.ResumeSampling();
 
     if (marker) {
@@ -175,7 +176,7 @@ TalosPowersService.prototype = {
     let name = message.data.name;
     let data = message.data.data;
 
-    switch(name) {
+    switch (name) {
       case "Profiler:Begin": {
         this.profilerBegin(data);
         // profilerBegin will cause the parent to send an async message to any
@@ -188,7 +189,6 @@ TalosPowersService.prototype = {
 
       case "Profiler:Finish": {
         // The test is done. Dump the profile.
-        let profileFile = data.profileFile;
         this.profilerFinish(data.profileFile).then(() => {
           mm.sendAsyncMessage(ACK_NAME, { name });
         });
@@ -235,8 +235,8 @@ TalosPowersService.prototype = {
 
     try {
       Services.startup.quit(Services.startup.eForceQuit);
-    } catch(e) {
-      dump('Force Quit failed: ' + e);
+    } catch (e) {
+      dump("Force Quit failed: " + e);
     }
   },
 
@@ -281,7 +281,7 @@ TalosPowersService.prototype = {
   ParentExecServices: {
 
     // arg: ignored. return: handle (number) for use with stopFrameTimeRecording
-    startFrameTimeRecording: function(arg, callback, win) {
+    startFrameTimeRecording(arg, callback, win) {
       var rv = win.QueryInterface(Ci.nsIInterfaceRequestor)
                   .getInterface(Ci.nsIDOMWindowUtils)
                   .startFrameTimeRecording();
@@ -289,11 +289,25 @@ TalosPowersService.prototype = {
     },
 
     // arg: handle from startFrameTimeRecording. return: array with composition intervals
-    stopFrameTimeRecording: function(arg, callback, win) {
+    stopFrameTimeRecording(arg, callback, win) {
       var rv = win.QueryInterface(Ci.nsIInterfaceRequestor)
                   .getInterface(Ci.nsIDOMWindowUtils)
                   .stopFrameTimeRecording(arg);
       callback(rv);
+    },
+
+    requestDumpCoverageCounters(arg, callback, win) {
+      let codeCoverage = Cc["@mozilla.org/tools/code-coverage;1"].
+                         getService(Ci.nsICodeCoverage);
+      codeCoverage.dumpCounters();
+      callback();
+    },
+
+    requestResetCoverageCounters(arg, callback, win) {
+      let codeCoverage = Cc["@mozilla.org/tools/code-coverage;1"].
+                         getService(Ci.nsICodeCoverage);
+      codeCoverage.resetCounters();
+      callback();
     },
   },
 
@@ -302,7 +316,7 @@ TalosPowersService.prototype = {
       let mm = msg.target.messageManager;
       mm.sendAsyncMessage("TalosPowers:ParentExec:ReplyMsg", {
         id: msg.data.id,
-        result: result
+        result
       });
     }
 
