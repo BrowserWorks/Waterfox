@@ -8,8 +8,6 @@
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsArrayUtils.h"
 #include "nsCRT.h"
-#include "nsICryptoHash.h"
-#include "nsICryptoHMAC.h"
 #include "nsIDirectoryService.h"
 #include "nsIKeyModule.h"
 #include "nsIObserverService.h"
@@ -464,8 +462,6 @@ nsUrlClassifierDBServiceWorker::BeginStream(const nsACString &table)
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  mProtocolParser->Init(mCryptoHash);
-
   if (!table.IsEmpty()) {
     mProtocolParser->SetCurrentTable(table);
   }
@@ -806,7 +802,6 @@ nsUrlClassifierDBServiceWorker::CloseDb()
     mClassifier = nullptr;
   }
 
-  mCryptoHash = nullptr;
   LOG(("urlclassifier db closed\n"));
 
   return NS_OK;
@@ -941,9 +936,6 @@ nsUrlClassifierDBServiceWorker::OpenDb()
   }
 
   nsresult rv;
-  mCryptoHash = do_CreateInstance(NS_CRYPTO_HASH_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   nsAutoPtr<Classifier> classifier(new (fallible) Classifier());
   if (!classifier) {
     return NS_ERROR_OUT_OF_MEMORY;
