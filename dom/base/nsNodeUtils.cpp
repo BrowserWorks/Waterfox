@@ -591,7 +591,8 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
           }
           if (elem) {
             elem->NodeInfoChanged(newDoc);
-          }          if (wasRegistered) {
+          }
+          if (wasRegistered) {
             aNode->OwnerDoc()->RegisterActivityObserver(aNode->AsElement());
           }
           return rv;
@@ -600,11 +601,11 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
     }
   }
 
-  if (aNode->HasProperties()) {
-    bool ok = aNodesWithProperties.AppendObject(aNode);
+  if (aNodesWithProperties && aNode->HasProperties()) {
+    bool ok = aNodesWithProperties->AppendObject(aNode);
     MOZ_RELEASE_ASSERT(ok, "Out of memory");
     if (aClone) {
-      ok = aNodesWithProperties.AppendObject(clone);
+      ok = aNodesWithProperties->AppendObject(clone);
       MOZ_RELEASE_ASSERT(ok, "Out of memory");
     }
   }
