@@ -9,5 +9,4 @@
 		<Param name="c" value="web"/>
 		<Param name="q" value="{searchTerms}"/>
 	</Url>
-	<SearchForm>https://startpage.com/</SearchForm>
 </SearchPlugin>
