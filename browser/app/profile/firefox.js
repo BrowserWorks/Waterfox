@@ -725,7 +725,7 @@ pref("browser.preferences.instantApply", true);
 pref("browser.preferences.search", true);
 
 // Use the new in-content about:preferences in Nightly only for now
-pref("browser.preferences.useOldOrganization", false);
+pref("browser.preferences.useOldOrganization", true);
 
 // Once the Storage Management is completed.
 // (The Storage Management-related prefs are browser.storageManager.* )
