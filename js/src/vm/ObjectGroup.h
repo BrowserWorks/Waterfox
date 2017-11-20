@@ -391,7 +391,6 @@ class ObjectGroup : public gc::TenuredCell
 
     /* Get a property only if it already exists. */
     MOZ_ALWAYS_INLINE HeapTypeSet* maybeGetProperty(jsid id);
-    MOZ_ALWAYS_INLINE HeapTypeSet* maybeGetPropertyDontCheckGeneration(jsid id);
 
     /*
      * Iterate through the group's properties. getPropertyCount overapproximates
@@ -473,7 +472,6 @@ class ObjectGroup : public gc::TenuredCell
     }
 
     inline uint32_t basePropertyCount();
-    inline uint32_t basePropertyCountDontCheckGeneration();
 
   private:
     inline void setBasePropertyCount(uint32_t count);

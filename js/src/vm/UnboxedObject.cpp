@@ -363,7 +363,7 @@ UnboxedPlainObject::ensureExpando(JSContext* cx, Handle<UnboxedPlainObject*> obj
 bool
 UnboxedPlainObject::containsUnboxedOrExpandoProperty(JSContext* cx, jsid id) const
 {
-    if (layoutDontCheckGeneration().lookup(id))
+    if (layout().lookup(id))
         return true;
 
     if (maybeExpando() && maybeExpando()->containsShapeOrElement(cx, id))

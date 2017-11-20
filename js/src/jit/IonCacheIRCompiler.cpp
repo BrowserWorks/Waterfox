@@ -1309,9 +1309,9 @@ IonCacheIRCompiler::emitCallStringSplitResult()
 static bool
 GroupHasPropertyTypes(ObjectGroup* group, jsid* id, Value* v)
 {
-    if (group->unknownPropertiesDontCheckGeneration())
+    if (group->unknownProperties())
         return true;
-    HeapTypeSet* propTypes = group->maybeGetPropertyDontCheckGeneration(*id);
+    HeapTypeSet* propTypes = group->maybeGetProperty(*id);
     if (!propTypes)
         return true;
     if (!propTypes->nonConstantProperty())
