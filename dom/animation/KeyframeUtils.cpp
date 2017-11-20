@@ -5,7 +5,6 @@
 
 #include "mozilla/KeyframeUtils.h"
 
-#include "mozilla/AnimationUtils.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Move.h"
 #include "mozilla/RangedArray.h"
@@ -19,11 +18,13 @@
 #include "mozilla/dom/KeyframeEffectReadOnly.h" // For PropertyValuesPair etc.
 #include "jsapi.h" // For ForOfIterator etc.
 #include "nsClassHashtable.h"
-#include "nsContentUtils.h" // For GetContextForContent
+#include "nsContentUtils.h" // For GetContextForContent, and
+                            // AnimationsAPICoreEnabled
 #include "nsCSSParser.h"
 #include "nsCSSPropertyIDSet.h"
 #include "nsCSSProps.h"
 #include "nsCSSPseudoElements.h" // For CSSPseudoElementType
+#include "nsDocument.h" // For nsDocument::IsWebAnimationsEnabled
 #include "nsIScriptError.h"
 #include "nsStyleContext.h"
 #include "nsTArray.h"
@@ -437,7 +438,7 @@ KeyframeUtils::GetKeyframesFromObject(JSContext* aCx,
     return keyframes;
   }
 
-  if (!AnimationUtils::IsCoreAPIEnabled() &&
+  if (!nsDocument::IsWebAnimationsEnabled(aCx, nullptr) &&
       RequiresAdditiveAnimation(keyframes, aDocument)) {
     keyframes.Clear();
     aRv.Throw(NS_ERROR_DOM_ANIM_MISSING_PROPS_ERR);
@@ -1148,7 +1149,7 @@ HandleMissingInitialKeyframe(nsTArray<AnimationProperty>& aResult,
   // If the preference of the core Web Animations API is not enabled, don't fill
   // in the missing keyframe since the missing keyframe requires support for
   // additive animation which is guarded by this pref.
-  if (!AnimationUtils::IsCoreAPIEnabled()){
+  if (!nsContentUtils::AnimationsAPICoreEnabled()) {
     return nullptr;
   }
 
@@ -1171,7 +1172,7 @@ HandleMissingFinalKeyframe(nsTArray<AnimationProperty>& aResult,
   // If the preference of the core Web Animations API is not enabled, don't fill
   // in the missing keyframe since the missing keyframe requires support for
   // additive animation which is guarded by this pref.
-  if (!AnimationUtils::IsCoreAPIEnabled()){
+  if (!nsContentUtils::AnimationsAPICoreEnabled()) {
     // If we have already appended a new entry for the property so we have to
     // remove it.
     if (aCurrentAnimationProperty) {
@@ -1415,8 +1416,7 @@ GetKeyframeListFromPropertyIndexedKeyframe(JSContext* aCx,
     // If we only have one value, we should animate from the underlying value
     // using additive animation--however, we don't support additive animation
     // when the core animation API pref is switched off.
-    if ((!AnimationUtils::IsCoreAPIEnabled()) &&
-        count == 1) {
+    if (!nsContentUtils::AnimationsAPICoreEnabled() && count == 1) {
       aRv.Throw(NS_ERROR_DOM_ANIM_MISSING_PROPS_ERR);
       return;
     }

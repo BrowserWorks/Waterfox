@@ -3238,6 +3238,15 @@ nsDocument::IsWebAnimationsEnabled(JSContext* aCx, JSObject* /*unused*/)
          nsContentUtils::AnimationsAPICoreEnabled();
 }
 
+bool
+nsDocument::IsWebAnimationsEnabled(CallerType aCallerType)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  return aCallerType == dom::CallerType::System ||
+         nsContentUtils::AnimationsAPICoreEnabled();
+}
+
 DocumentTimeline*
 nsDocument::Timeline()
 {
