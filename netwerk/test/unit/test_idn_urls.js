@@ -287,6 +287,11 @@ const testcases = [
     ["เครื่องทําน้ําทําน้ําแข็ง",
                  "xn--22cdjb2fanb9fyepcbbb9dwh4a3igze4fdcd",
                                                      false, true, true]
+                                                     
+     // Arabic diacritic not allowed in Latin text (bug 1370497)
+     ["goo\u0650gle", "xn--google-yri", false, false, false],
+     // ...but Arabic diacritics are allowed on Arabic text
+     ["العَرَبِي", "xn--mgbc0a5a6cxbzabt", false, true, true],
 ];
 
 
