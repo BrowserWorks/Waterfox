@@ -463,7 +463,7 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     if (MinCapabilityMode())
         mGLMaxTextureUnits = MINVALUE_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS;
     else
-        gl->fGetIntegerv(LOCAL_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &mGLMaxTextureUnits);
+        mGLMaxTextureUnits = gl->GetIntAs<GLint>(LOCAL_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
     if (mGLMaxTextureUnits < 8) {
         const nsPrintfCString reason("GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS: %d is < 8!",
