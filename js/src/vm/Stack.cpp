@@ -508,8 +508,6 @@ FrameIter::popInterpreterFrame()
 void
 FrameIter::settleOnActivation()
 {
-    MOZ_ASSERT(!data_.cx_->inUnsafeCallWithABI);
-
     while (true) {
         if (data_.activations_.done()) {
             data_.state_ = DONE;
