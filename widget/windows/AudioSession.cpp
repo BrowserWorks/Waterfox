@@ -282,6 +282,7 @@ AudioSession::Start()
     return NS_ERROR_FAILURE;
   }
 
+  // Increments refcount of 'this'.
   hr = mAudioSessionControl->RegisterAudioSessionNotification(this);
   if (FAILED(hr)) {
     StopInternal();
@@ -298,6 +299,7 @@ AudioSession::StopInternal()
 {
   if (mAudioSessionControl &&
       (mState == STARTED || mState == STOPPED)) {
+    // Decrement refcount of 'this'
     mAudioSessionControl->UnregisterAudioSessionNotification(this);
   }
   mAudioSessionControl = nullptr;
@@ -421,6 +423,10 @@ AudioSession::OnSessionDisconnectedInternal()
   if (!mAudioSessionControl)
     return NS_OK;
 
+  // When successful, UnregisterAudioSessionNotification will decrement the
+  // refcount of 'this'.  Start will re-increment it.  In the interim,
+  // we'll need to reference ourselves.
+  RefPtr<AudioSession> kungFuDeathGrip(this);
   mAudioSessionControl->UnregisterAudioSessionNotification(this);
   mAudioSessionControl = nullptr;
 
