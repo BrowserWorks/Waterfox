@@ -156,13 +156,13 @@ skip-if(styloVsGecko) == anim-view-01.svg#view lime.svg # bug 1354406
 == anim-use-href-01.svg lime.svg
 
 # animate the class attribute
-fails-if(styloVsGecko||stylo) == anim-class-01.svg lime.svg
-fails-if(styloVsGecko||stylo) == anim-class-02.svg lime.svg
-fails-if(styloVsGecko||stylo) == anim-class-03.svg lime.svg
-fails-if(styloVsGecko||stylo) == anim-class-04.svg anim-class-04-ref.svg
+== anim-class-01.svg lime.svg
+== anim-class-02.svg lime.svg
+== anim-class-03.svg lime.svg
+== anim-class-04.svg anim-class-04-ref.svg
 
 # animate with some paint server values
-fails-if(styloVsGecko||stylo) == anim-paintserver-1.svg anim-paintserver-1-ref.svg
+== anim-paintserver-1.svg anim-paintserver-1-ref.svg
 
 # animate attributes on text content children
 == anim-text-attr-01.svg anim-text-attr-01-ref.svg
@@ -172,7 +172,7 @@ fails-if(styloVsGecko||stylo) == anim-paintserver-1.svg anim-paintserver-1-ref.s
 == anim-fill-overpaintserver-2.svg lime.svg
 
 # animate where we fallback from 'additive' animation to non-additive
-fails-if(styloVsGecko||stylo) == anim-additive-fallback-1.svg anim-standard-ref.svg
+== anim-additive-fallback-1.svg anim-standard-ref.svg
 
 == anim-remove-1.svg anim-standard-ref.svg
 == anim-remove-2.svg anim-standard-ref.svg
@@ -269,20 +269,20 @@ fuzzy-if(cocoaWidget&&layersGPUAccelerated,1,2) == anim-gradient-attr-presence-0
 == filtered-instance-time-1.svg anim-standard-ref.svg
 
 # Test animation using defs element
-fails-if(styloVsGecko||stylo) == anim-defs-gradient-property.svg lime.svg
+== anim-defs-gradient-property.svg lime.svg
 == anim-defs-gradient-attribute.svg lime.svg
 == anim-defs-fill.svg lime.svg
 == anim-defs-width.svg lime.svg
 
 # Test animation that changes 'display' attribute
-fails-if(styloVsGecko||stylo) == anim-display.svg lime.svg
-fails-if(styloVsGecko||stylo) == anim-display-in-g-element.svg lime.svg
+== anim-display.svg lime.svg
+skip-if(styloVsGecko||stylo) == anim-display-in-g-element.svg lime.svg # Bug 1385089
 
 # Test animation that change 'display' style value to 'none'
 == anim-change-display-none-for-ancestor-elem.html lime.html
 == anim-change-display-none-for-target-elem.html lime.html
 == anim-change-display-none-for-dynamically-appended-elem.html lime.html
-fails-if(styloVsGecko||stylo) == anim-change-display-block-for-dynamically-appended-elem.html anim-standard-ref.html
+== anim-change-display-block-for-dynamically-appended-elem.html anim-standard-ref.html
 
 pref(layout.css.clip-path-shapes.enabled,true) fuzzy(63,146) == anim-clipPath-viewBox.svg anim-clipPath-viewBox-ref.svg
 

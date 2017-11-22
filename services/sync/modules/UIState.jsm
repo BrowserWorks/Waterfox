@@ -72,6 +72,9 @@ const UIStateInternal = {
 
   init() {
     this._initialized = true;
+    if (!Services.prefs.prefHasUserValue("services.sync.username")) {
+      return;
+    }
     // Refresh the state in the background.
     this.refreshState().catch(e => {
       Cu.reportError(e);
@@ -104,9 +107,10 @@ const UIStateInternal = {
 
   // Builds a new state from scratch.
   async refreshState() {
-    this._state = {};
-    await this._refreshFxAState();
-    this._setLastSyncTime(this._state); // We want this in case we change accounts.
+    const newState = {};
+    await this._refreshFxAState(newState);
+    this._setLastSyncTime(newState); // We want this in case we change accounts.
+    this._state = newState;
 
     this.notifyStateUpdated();
     return this.state;
@@ -124,17 +128,17 @@ const UIStateInternal = {
     Services.obs.notifyObservers(null, ON_UPDATE);
   },
 
-  async _refreshFxAState() {
+  async _refreshFxAState(newState) {
     let userData = await this._getUserData();
-    this._populateWithUserData(this._state, userData);
-    if (this.state.status != STATUS_SIGNED_IN) {
+    this._populateWithUserData(newState, userData);
+    if (newState.status != STATUS_SIGNED_IN) {
       return;
     }
     let profile = await this._getProfile();
     if (!profile) {
       return;
     }
-    this._populateWithProfile(this._state, profile);
+    this._populateWithProfile(newState, profile);
   },
 
   _populateWithUserData(state, userData) {
@@ -157,6 +161,9 @@ const UIStateInternal = {
   _populateWithProfile(state, profile) {
     state.displayName = profile.displayName;
     state.avatarURL = profile.avatar;
+    // A hack to handle that the user's email address may have changed.
+    // This can probably be removed as part of bug 1383663.
+    state.email = profile.email;
   },
 
   async _getUserData() {

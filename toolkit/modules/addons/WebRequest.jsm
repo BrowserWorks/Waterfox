@@ -55,6 +55,12 @@ function getData(channel) {
   return extractFromChannel(channel, key) || attachToChannel(channel, key, {});
 }
 
+function getFinalChannelURI(channel) {
+  let {loadInfo} = channel;
+  // resultPrincipalURI may be null, but originalURI never will be.
+  return (loadInfo && loadInfo.resultPrincipalURI) || channel.originalURI;
+}
+
 var RequestId = {
   count: 1,
   create(channel = null) {
@@ -681,8 +687,8 @@ HttpObserverManager = {
 
   shouldRunListener(policyType, uri, filter) {
     // force the protocol to be ws again.
-    if (policyType == "websocket" && uri.startsWith("http")) {
-      uri = `ws${uri.substring(4)}`;
+    if (policyType == Ci.nsIContentPolicy.TYPE_WEBSOCKET && ["http", "https"].includes(uri.scheme)) {
+      uri = Services.io.newURI(`ws${uri.spec.substring(4)}`);
     }
     return WebRequestCommon.typeMatches(policyType, filter.types) &&
            WebRequestCommon.urlMatches(uri, filter.urls);
@@ -753,9 +759,10 @@ HttpObserverManager = {
   getRequestData(channel, loadContext, policyType, extraData) {
     let {loadInfo} = channel;
 
+    let URI = getFinalChannelURI(channel);
     let data = {
       requestId: RequestId.get(channel),
-      url: channel.URI.spec,
+      url: URI.spec,
       method: channel.requestMethod,
       browser: loadContext && loadContext.topFrameElement,
       type: WebRequestCommon.typeForPolicyType(policyType),
@@ -831,15 +838,22 @@ HttpObserverManager = {
   canModify(channel) {
     let {isHostPermitted} = AddonManagerPermissions;
 
-    if (isHostPermitted(channel.URI.host)) {
+    // Bug 1334550 introduced the possibility of having a JAR uri here,
+    // use the result uri if possible in that case.
+    let URI = getFinalChannelURI(channel);
+    if (URI && isHostPermitted(URI.host)) {
       return false;
     }
 
     let {loadInfo} = channel;
     if (loadInfo && loadInfo.loadingPrincipal) {
       let {loadingPrincipal} = loadInfo;
-
-      return loadingPrincipal.URI && !isHostPermitted(loadingPrincipal.URI.host);
+      try {
+        return loadingPrincipal.URI && !isHostPermitted(loadingPrincipal.URI.host);
+      } catch (e) {
+        // about:newtab and other non-host URIs will throw.  Those wont be in
+        // the host permitted list, so we pass on the error.
+      }
     }
 
     return true;
@@ -872,7 +886,7 @@ HttpObserverManager = {
 
       let canModify = this.canModify(channel);
       let commonData = null;
-      let uri = channel.URI;
+      let uri = getFinalChannelURI(channel);
       let requestBody;
       for (let [callback, opts] of this.listeners[kind].entries()) {
         if (!this.shouldRunListener(policyType, uri, opts.filter)) {
@@ -1055,8 +1069,10 @@ HttpObserverManager = {
   },
 
   onChannelReplaced(oldChannel, newChannel) {
+    // We want originalURI, this will provide a moz-ext rather than jar or file
+    // uri on redirects.
     this.runChannelListener(oldChannel, this.getLoadContext(oldChannel),
-                            "onRedirect", {redirectUrl: newChannel.URI.spec});
+                            "onRedirect", {redirectUrl: newChannel.originalURI.spec});
   },
 
   onStartRequest(channel, loadContext) {

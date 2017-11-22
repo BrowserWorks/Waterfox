@@ -67,12 +67,10 @@
 #define PROGRESS_EXECUTE_SIZE 75.0f
 #define PROGRESS_FINISH_SIZE   5.0f
 
-// Maximum amount of time in ms to wait for the parent process to close. The
-// value should be the same or larger than the application's watchdog timeout
-// which is 60 seconds plus 3 additional seconds (see nsTerminator.cpp). This
-// makes it so when the application has a shutdown hang it won't break launching
-// the application after it has been updated.
-#define PARENT_WAIT 70000
+// Maximum amount of time in ms to wait for the parent process to close. The 30
+// seconds is rather long but there have been bug reports where the parent
+// process has exited after 10 seconds and it is better to give it a chance.
+#define PARENT_WAIT 30000
 
 #if defined(XP_MACOSX)
 // These functions are defined in launchchild_osx.mm
@@ -2103,9 +2101,7 @@ LaunchCallbackApp(const NS_tchar *workingDir,
   putenv(const_cast<char*>("NO_EM_RESTART="));
   putenv(const_cast<char*>("MOZ_LAUNCHED_CHILD=1"));
 
-  // Run from the specified working directory (see bug 312360). This is not
-  // necessary on Windows CE since the application that launches the updater
-  // passes the working directory as an --environ: command line argument.
+  // Run from the specified working directory (see bug 312360).
   if (NS_tchdir(workingDir) != 0) {
     LOG(("Warning: chdir failed"));
   }
@@ -2853,17 +2849,9 @@ int NS_main(int argc, NS_tchar **argv)
 #endif
 
   // If there is a PID specified and it is not '0' then wait for the process to exit.
-#ifdef XP_WIN
-  __int64 pid = 0;
-#else
-  int pid = 0;
-#endif
+  NS_tpid pid = 0;
   if (argc > 4) {
-#ifdef XP_WIN
-    pid = _wtoi64(argv[4]);
-#else
-    pid = atoi(argv[4]);
-#endif
+    pid = NS_tatoi(argv[4]);
     if (pid == -1) {
       // This is a signal from the parent process that the updater should stage
       // the update.
@@ -3016,10 +3004,19 @@ int NS_main(int argc, NS_tchar **argv)
     // update.
     if (parent) {
       DWORD waitTime = PARENT_WAIT;
+#ifdef TEST_UPDATER
+      if (EnvHasValue("MOZ_TEST_SHORTER_WAIT_PID")) {
+        // Use a shorter time to wait for the PID to exit for the test.
+        waitTime = 100;
+      }
+#endif
       DWORD result = WaitForSingleObject(parent, waitTime);
       CloseHandle(parent);
       if (result != WAIT_OBJECT_0) {
-        return 1;
+        // Continue to update since the parent application sometimes doesn't
+        // exit (see bug 1375242) so any fixes to the parent application will
+        // be applied instead of leaving the client in a broken state.
+        LOG(("The parent process didn't exit! Continuing with update."));
       }
     }
   }
@@ -3701,7 +3698,7 @@ int NS_main(int argc, NS_tchar **argv)
 #elif XP_MACOSX
                                                 , isElevated
 #endif
-                                               );
+                                                );
 
   return retVal ? retVal : (gSucceeded ? 0 : 1);
 }

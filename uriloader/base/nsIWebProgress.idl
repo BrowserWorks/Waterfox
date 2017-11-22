@@ -7,6 +7,7 @@
 #include "nsISupports.idl"
 
 interface mozIDOMWindowProxy;
+interface nsIEventTarget;
 interface nsIWebProgressListener;
 
 /**
@@ -133,6 +134,7 @@ interface nsIWebProgress : nsISupports
    */
   readonly attribute mozIDOMWindowProxy DOMWindow;
   readonly attribute uint64_t DOMWindowID;
+  readonly attribute uint64_t innerDOMWindowID;
 
   /**
    * Indicates whether DOMWindow.top == DOMWindow.
@@ -150,4 +152,11 @@ interface nsIWebProgress : nsISupports
    * nsIDocShellLoadInfo.idl.
    */
   readonly attribute unsigned long loadType;
+
+  /**
+   * Main thread event target to which progress updates should be
+   * dispatched. This typically will be a SchedulerEventTarget
+   * corresponding to the tab requesting updates.
+   */
+  attribute nsIEventTarget target;
 };

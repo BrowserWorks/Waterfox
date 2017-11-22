@@ -52,7 +52,6 @@
 #include "plstr.h"
 #include "mozilla/Logging.h"
 #include "prprf.h"
-#include "prmem.h"
 #include "rdf.h"
 #include "nsCRT.h"
 #include "nsCRTGlue.h"
@@ -83,19 +82,19 @@ class BlobImpl;
 static void *
 DataSourceAllocTable(void *pool, size_t size)
 {
-    return PR_MALLOC(size);
+    return malloc(size);
 }
 
 static void
 DataSourceFreeTable(void *pool, void *item)
 {
-    PR_Free(item);
+    free(item);
 }
 
 static PLHashEntry *
 DataSourceAllocEntry(void *pool, const void *key)
 {
-    return PR_NEW(PLHashEntry);
+    return (PLHashEntry*) malloc(sizeof(PLHashEntry));
 }
 
 static void
@@ -103,7 +102,7 @@ DataSourceFreeEntry(void *pool, PLHashEntry *he, unsigned flag)
 {
     if (flag == HT_FREE_ENTRY) {
         PL_strfree((char*) he->key);
-        PR_Free(he);
+        free(he);
     }
 }
 
@@ -827,7 +826,7 @@ RDFServiceImpl::GetResource(const nsACString& aURI, nsIRDFResource** aResource)
     if (aURI.IsEmpty())
         return NS_ERROR_INVALID_ARG;
 
-    const nsAFlatCString& flatURI = PromiseFlatCString(aURI);
+    const nsCString& flatURI = PromiseFlatCString(aURI);
     MOZ_LOG(gLog, LogLevel::Debug, ("rdfserv get-resource %s", flatURI.get()));
 
     // First, check the cache to see if we've already created and

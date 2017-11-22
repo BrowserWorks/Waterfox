@@ -59,6 +59,11 @@ function compareLists(list1, list2, kind) {
   is(String(list1), String(list2), `${kind} URLs correct`);
 }
 
+add_task(async function setup() {
+  // Disable rcwn to make cache behavior deterministic.
+  await SpecialPowers.pushPrefEnv({set: [["network.http.rcwn.enabled", false]]});
+});
+
 add_task(async function filter_urls() {
   let filter = {urls: new MatchPattern("*://*/*_style_*")};
 

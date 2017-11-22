@@ -8,25 +8,26 @@
 
 #include "AudioSampleFormat.h"
 #include "ImageTypes.h"
-#include "nsSize.h"
-#include "mozilla/gfx/Rect.h"
-#include "nsRect.h"
-#include "nsIMemoryReporter.h"
 #include "SharedBuffer.h"
+#include "TimeUnits.h"
+#include "mozilla/CheckedInt.h"
+#include "mozilla/PodOperations.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Span.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/UniquePtrExtensions.h"
+#include "mozilla/gfx/Rect.h"
+#include "nsIMemoryReporter.h"
+#include "nsRect.h"
+#include "nsSize.h"
 #include "nsTArray.h"
-#include "mozilla/CheckedInt.h"
-#include "mozilla/PodOperations.h"
-#include "TimeUnits.h"
 
 namespace mozilla {
 
 namespace layers {
 class Image;
 class ImageContainer;
+class KnowsCompositor;
 } // namespace layers
 
 class MediaByteBuffer;
@@ -497,7 +498,8 @@ public:
     const YCbCrBuffer& aBuffer,
     bool aKeyframe,
     const media::TimeUnit& aTimecode,
-    const IntRect& aPicture);
+    const IntRect& aPicture,
+    layers::KnowsCompositor* aAllocator = nullptr);
 
   static already_AddRefed<VideoData> CreateAndCopyData(
     const VideoInfo& aInfo,
@@ -565,11 +567,22 @@ public:
   void UpdateDuration(const media::TimeUnit& aDuration);
   void UpdateTimestamp(const media::TimeUnit& aTimestamp);
 
+  void SetNextKeyFrameTime(const media::TimeUnit& aTime)
+  {
+    mNextKeyFrameTime = aTime;
+  }
+
+  const media::TimeUnit& NextKeyFrameTime() const
+  {
+    return mNextKeyFrameTime;
+  }
+
 protected:
   ~VideoData();
 
   bool mSentToCompositor;
   UniquePtr<Listener> mListener;
+  media::TimeUnit mNextKeyFrameTime;
 };
 
 class CryptoTrack
@@ -589,6 +602,8 @@ public:
   nsTArray<uint32_t> mEncryptedSizes;
   nsTArray<uint8_t> mIV;
   nsTArray<nsCString> mSessionIds;
+  nsTArray<nsTArray<uint8_t>> mInitDatas;
+  nsString mInitDataType;
 };
 
 // MediaRawData is a MediaData container used to store demuxed, still compressed

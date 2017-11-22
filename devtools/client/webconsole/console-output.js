@@ -16,7 +16,6 @@ loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools"
 loader.lazyRequireGetter(this, "TableWidget", "devtools/client/shared/widgets/TableWidget", true);
 loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/main", true);
 
-const { extend } = require("sdk/core/heritage");
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 const WebConsoleUtils = require("devtools/client/webconsole/utils").Utils;
@@ -25,6 +24,7 @@ const {Task} = require("devtools/shared/task");
 const l10n = require("devtools/client/webconsole/webconsole-l10n");
 const nodeConstants = require("devtools/shared/dom-node-constants");
 const {PluralForm} = require("devtools/shared/plural-form");
+const {extend} = require("devtools/shared/extend");
 
 const MAX_STRING_GRIP_LENGTH = 36;
 const {ELLIPSIS} = require("devtools/shared/l10n");
@@ -3072,7 +3072,7 @@ Widgets.ObjectRenderers.add({
     // the message is destroyed.
     this.message.widgets.add(this);
 
-    this.linkToInspector().then(null, e => console.error(e));
+    this.linkToInspector().catch(e => console.error(e));
   },
 
   /**
@@ -3160,7 +3160,7 @@ Widgets.ObjectRenderers.add({
   unhighlightDomNode: function () {
     return this.linkToInspector().then(() => {
       return this.toolbox.highlighterUtils.unhighlight();
-    }).then(null, e => console.error(e));
+    }).catch(e => console.error(e));
   },
 
   /**

@@ -48,7 +48,7 @@ void
 nsSVGContainerFrame::AppendFrames(ChildListID  aListID,
                                   nsFrameList& aFrameList)
 {
-  InsertFrames(aListID, mFrames.LastChild(), aFrameList);  
+  InsertFrames(aListID, mFrames.LastChild(), aFrameList);
 }
 
 void
@@ -166,7 +166,7 @@ nsSVGDisplayContainerFrame::InsertFrames(ChildListID aListID,
   nsIFrame* nextFrame = aPrevFrame ?
     aPrevFrame->GetNextSibling() : GetChildList(aListID).FirstChild();
   nsIFrame* firstNewFrame = aFrameList.FirstChild();
-  
+
   // Insert the new frames
   nsSVGContainerFrame::InsertFrames(aListID, aPrevFrame, aFrameList);
 
@@ -375,7 +375,7 @@ nsSVGDisplayContainerFrame::ReflowSVG()
   // come from transforms, which are accounted for by nsDisplayTransform.
   // Note that we rely on |overflow:visible| to allow display list items to be
   // created for our children.
-  MOZ_ASSERT(mContent->IsSVGElement(nsGkAtoms::svg) ||
+  MOZ_ASSERT(mContent->IsAnyOfSVGElements(nsGkAtoms::svg, nsGkAtoms::symbol) ||
              (mContent->IsSVGElement(nsGkAtoms::use) &&
               mRect.Size() == nsSize(0,0)) ||
              mRect.IsEqualEdges(nsRect()),
@@ -394,7 +394,7 @@ nsSVGDisplayContainerFrame::ReflowSVG()
   // invalidate on first reflow:
   mState &= ~(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY |
               NS_FRAME_HAS_DIRTY_CHILDREN);
-}  
+}
 
 void
 nsSVGDisplayContainerFrame::NotifySVGChanged(uint32_t aFlags)

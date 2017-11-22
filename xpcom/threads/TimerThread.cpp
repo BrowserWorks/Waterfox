@@ -58,7 +58,8 @@ class TimerObserverRunnable : public Runnable
 {
 public:
   explicit TimerObserverRunnable(nsIObserver* aObserver)
-    : mObserver(aObserver)
+    : mozilla::Runnable("TimerObserverRunnable")
+    , mObserver(aObserver)
   {
   }
 
@@ -147,7 +148,8 @@ public:
   NS_IMETHOD GetName(nsACString& aName) override;
 
   nsTimerEvent()
-    : mTimer()
+    : mozilla::CancelableRunnable("nsTimerEvent")
+    , mTimer()
     , mGeneration(0)
   {
     // Note: We override operator new for this class, and the override is
@@ -329,7 +331,7 @@ TimerThread::Shutdown()
     return NS_ERROR_NOT_INITIALIZED;
   }
 
-  nsTArray<UniquePtr<Entry>> timers;
+  nsTArray<RefPtr<nsTimerImpl>> timers;
   {
     // lock scope
     MonitorAutoLock lock(mMonitor);
@@ -348,12 +350,14 @@ TimerThread::Shutdown()
     // might potentially call some code reentering the same lock
     // that leads to unexpected behavior or deadlock.
     // See bug 422472.
-    mTimers.SwapElements(timers);
+    for (const UniquePtr<Entry>& entry : mTimers) {
+      timers.AppendElement(entry->Take());
+    }
+
+    mTimers.Clear();
   }
 
-  uint32_t timersCount = timers.Length();
-  for (uint32_t i = 0; i < timersCount; i++) {
-    RefPtr<nsTimerImpl> timer = timers[i]->Take();
+  for (const RefPtr<nsTimerImpl>& timer : timers) {
     if (timer) {
       timer->Cancel();
     }

@@ -49,21 +49,20 @@ DocGroup::~DocGroup()
   MOZ_ASSERT(mDocuments.IsEmpty());
   if (!NS_IsMainThread()) {
     nsIEventTarget* target = EventTargetFor(TaskCategory::Other);
-    NS_ProxyRelease(target, mReactionsStack.forget());
+    NS_ProxyRelease("DocGroup::mReactionsStack", target, mReactionsStack.forget());
   }
 
   mTabGroup->mDocGroups.RemoveEntry(mKey);
 }
 
 nsresult
-DocGroup::Dispatch(const char* aName,
-                   TaskCategory aCategory,
+DocGroup::Dispatch(TaskCategory aCategory,
                    already_AddRefed<nsIRunnable>&& aRunnable)
 {
-  return mTabGroup->Dispatch(aName, aCategory, Move(aRunnable));
+  return mTabGroup->Dispatch(aCategory, Move(aRunnable));
 }
 
-nsIEventTarget*
+nsISerialEventTarget*
 DocGroup::EventTargetFor(TaskCategory aCategory) const
 {
   return mTabGroup->EventTargetFor(aCategory);

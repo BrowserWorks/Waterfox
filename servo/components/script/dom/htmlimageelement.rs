@@ -35,7 +35,7 @@ use dom::values::UNSIGNED_LONG_MAX;
 use dom::virtualmethods::VirtualMethods;
 use dom::window::Window;
 use dom_struct::dom_struct;
-use euclid::point::Point2D;
+use euclid::Point2D;
 use html5ever::{LocalName, Prefix};
 use ipc_channel::ipc;
 use ipc_channel::router::ROUTER;
@@ -259,7 +259,7 @@ impl HTMLImageElement {
 
         let request = RequestInit {
             url: img_url.clone(),
-            origin: document.url().clone(),
+            origin: document.origin().immutable().clone(),
             type_: RequestType::Image,
             pipeline_id: Some(document.global().pipeline_id()),
             .. RequestInit::default()
@@ -493,6 +493,7 @@ impl HTMLImageElement {
         request.image = None;
         request.metadata = None;
         let document = document_from_node(self);
+        LoadBlocker::terminate(&mut request.blocker);
         request.blocker = Some(LoadBlocker::new(&*document, LoadType::Image(url.clone())));
     }
 
@@ -953,39 +954,37 @@ impl VirtualMethods for HTMLImageElement {
     }
 
     fn handle_event(&self, event: &Event) {
-       if event.type_() == atom!("click") {
-           let area_elements = self.areas();
-           let elements = if let Some(x) = area_elements {
-               x
-           } else {
+        if event.type_() != atom!("click") {
+            return
+        }
+
+       let area_elements = self.areas();
+       let elements = match area_elements {
+           Some(x) => x,
+           None => return,
+       };
+
+       // Fetch click coordinates
+       let mouse_event = match event.downcast::<MouseEvent>() {
+           Some(x) => x,
+           None => return,
+       };
+
+       let point = Point2D::new(mouse_event.ClientX().to_f32().unwrap(),
+                                mouse_event.ClientY().to_f32().unwrap());
+       let bcr = self.upcast::<Element>().GetBoundingClientRect();
+       let bcr_p = Point2D::new(bcr.X() as f32, bcr.Y() as f32);
+
+       // Walk HTMLAreaElements
+       for element in elements {
+           let shape = element.get_shape_from_coords();
+           let shp = match shape {
+               Some(x) => x.absolute_coords(bcr_p),
+               None => return,
+           };
+           if shp.hit_test(&point) {
+               element.activation_behavior(event, self.upcast());
                return
-           };
-
-           // Fetch click coordinates
-           let mouse_event = if let Some(x) = event.downcast::<MouseEvent>() {
-               x
-           } else {
-               return;
-           };
-
-           let point = Point2D::new(mouse_event.ClientX().to_f32().unwrap(),
-                                    mouse_event.ClientY().to_f32().unwrap());
-
-           // Walk HTMLAreaElements
-           for element in elements {
-               let shape = element.get_shape_from_coords();
-               let p = Point2D::new(self.upcast::<Element>().GetBoundingClientRect().X() as f32,
-                                    self.upcast::<Element>().GetBoundingClientRect().Y() as f32);
-
-               let shp = if let Some(x) = shape {
-                   x.absolute_coords(p)
-               } else {
-                   return
-               };
-               if shp.hit_test(point) {
-                   element.activation_behavior(event, self.upcast());
-                   return
-               }
            }
        }
     }

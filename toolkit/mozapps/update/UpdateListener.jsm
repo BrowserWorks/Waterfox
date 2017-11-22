@@ -78,7 +78,7 @@ var UpdateListener = {
     win.openURL(manualUpdateUrl);
   },
 
-  showUpdateNotification(type, dismissed, mainAction, beforeShowDoorhanger) {
+  showUpdateNotification(type, mainActionDismiss, dismissed, mainAction, beforeShowDoorhanger) {
     let action = {
       callback(win, fromDoorhanger) {
         if (fromDoorhanger) {
@@ -87,7 +87,8 @@ var UpdateListener = {
           Services.telemetry.getHistogramById("UPDATE_NOTIFICATION_MAIN_ACTION_MENU").add(type);
         }
         mainAction(win);
-      }
+      },
+      dismiss: mainActionDismiss,
     };
 
     let secondaryAction = {
@@ -109,11 +110,11 @@ var UpdateListener = {
   },
 
   showRestartNotification(dismissed) {
-    this.showUpdateNotification("restart", dismissed, () => this.requestRestart());
+    this.showUpdateNotification("restart", true, dismissed, () => this.requestRestart());
   },
 
   showUpdateAvailableNotification(update, dismissed) {
-    this.showUpdateNotification("available", dismissed, () => {
+    this.showUpdateNotification("available", false, dismissed, () => {
       let updateService = Cc["@mozilla.org/updates/update-service;1"]
                           .getService(Ci.nsIApplicationUpdateService);
       updateService.downloadUpdate(update, true);
@@ -122,6 +123,7 @@ var UpdateListener = {
 
   showManualUpdateNotification(update, dismissed) {
     this.showUpdateNotification("manual",
+                                false,
                                 dismissed,
                                 win => this.openManualUpdateUrl(win),
                                 doc => this.replaceReleaseNotes(doc, update, "updateManualWhatsNew"));
@@ -192,8 +194,8 @@ var UpdateListener = {
   handleUpdateAvailable(update, status) {
     switch (status) {
       case "show-prompt":
-        // If an update is available and had the showPrompt flag set, then
-        // show an update available doorhanger.
+        // If an update is available and the app.update.auto preference is
+        // false, then show an update available doorhanger.
         this.clearCallbacks();
         this.showUpdateAvailableNotification(update, false);
         break;

@@ -83,7 +83,7 @@ TEST(Strings, rfind)
   nsCString src(text);
   int32_t i;
 
-  i = src.RFind(term, true, 3, -1); 
+  i = src.RFind(term, true, 3, -1);
   EXPECT_EQ(i, kNotFound);
 
   i = src.RFind(term, true, -1, -1);
@@ -100,7 +100,7 @@ TEST(Strings, rfind_2)
 {
   const char text[] = "<!DOCTYPE blah blah blah>";
   nsCString src(text);
-  int32_t i = src.RFind("TYPE", false, 5, -1); 
+  int32_t i = src.RFind("TYPE", false, 5, -1);
   EXPECT_EQ(i, 5);
 }
 
@@ -323,8 +323,8 @@ TEST(Strings, replace_substr_2)
   const char *newName = "user";
   nsString acctName; acctName.AssignLiteral("forums.foo.com");
   nsAutoString newAcctName, oldVal, newVal;
-  oldVal.AssignWithConversion(oldName);
-  newVal.AssignWithConversion(newName);
+  CopyASCIItoUTF16(oldName, oldVal);
+  CopyASCIItoUTF16(newName, newVal);
   newAcctName.Assign(acctName);
 
   // here, oldVal is empty.  we are testing that this function
@@ -537,7 +537,7 @@ TEST(Strings, substring)
   nsCString super("hello world"), sub("hello");
 
   // this tests that |super| starts with |sub|,
-  
+
   EXPECT_TRUE(sub.Equals(StringHead(super, sub.Length())));
 
   // and verifies that |sub| does not start with |super|.
@@ -1018,14 +1018,14 @@ TEST(Strings, Split)
   nsString wide(u"hello world");
 
   size_t counter = 0;
-  for (const nsCSubstring& token : one.Split(',')) {
+  for (const nsACString& token : one.Split(',')) {
     EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("one")));
     counter++;
   }
   EXPECT_EQ(counter, (size_t)1);
 
   counter = 0;
-  for (const nsCSubstring& token : two.Split(';')) {
+  for (const nsACString& token : two.Split(';')) {
     if (counter == 0) {
       EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("one")));
     } else if (counter == 1) {
@@ -1036,7 +1036,7 @@ TEST(Strings, Split)
   EXPECT_EQ(counter, (size_t)2);
 
   counter = 0;
-  for (const nsCSubstring& token : three.Split('-')) {
+  for (const nsACString& token : three.Split('-')) {
     if (counter == 0) {
       EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("one")));
     } else if (counter == 1) {
@@ -1049,14 +1049,14 @@ TEST(Strings, Split)
   EXPECT_EQ(counter, (size_t)3);
 
   counter = 0;
-  for (const nsCSubstring& token : empty.Split(',')) {
+  for (const nsACString& token : empty.Split(',')) {
     mozilla::Unused << token;
     counter++;
   }
   EXPECT_EQ(counter, (size_t)0);
 
   counter = 0;
-  for (const nsCSubstring& token : delimStart.Split('-')) {
+  for (const nsACString& token : delimStart.Split('-')) {
     if (counter == 0) {
       EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("")));
     } else if (counter == 1) {
@@ -1067,7 +1067,7 @@ TEST(Strings, Split)
   EXPECT_EQ(counter, (size_t)2);
 
   counter = 0;
-  for (const nsCSubstring& token : delimEnd.Split('-')) {
+  for (const nsACString& token : delimEnd.Split('-')) {
     if (counter == 0) {
       EXPECT_TRUE(token.Equals(NS_LITERAL_CSTRING("one")));
     } else if (counter == 1) {
@@ -1078,7 +1078,7 @@ TEST(Strings, Split)
   EXPECT_EQ(counter, (size_t)2);
 
   counter = 0;
-  for (const nsSubstring& token : wide.Split(' ')) {
+  for (const nsAString& token : wide.Split(' ')) {
     if (counter == 0) {
       EXPECT_TRUE(token.Equals(NS_LITERAL_STRING("hello")));
     } else if (counter == 1) {

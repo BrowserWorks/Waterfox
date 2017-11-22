@@ -15,8 +15,7 @@ const AUTOCOMPLETE_AFTER_RIGHT_CLICK_THRESHOLD_MS = 400;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask", "resource://gre/modules/DeferredTask.jsm");
@@ -246,7 +245,7 @@ var LoginManagerContent = {
 
     messageManager.sendAsyncMessage(name, messageData);
 
-    let deferred = Promise.defer();
+    let deferred = PromiseUtils.defer();
     requestData.promise = deferred;
     this._requests.set(requestId, requestData);
     return deferred.promise;
@@ -446,7 +445,7 @@ var LoginManagerContent = {
 
     this._getLoginDataFromParent(form, { showMasterPassword: true })
         .then(this.loginsFound.bind(this))
-        .then(null, Cu.reportError);
+        .catch(Cu.reportError);
   },
 
   onPageShow(event, window) {
@@ -650,7 +649,7 @@ var LoginManagerContent = {
               userTriggered: true,
             });
           })
-          .then(null, Cu.reportError);
+          .catch(Cu.reportError);
     } else {
       // Ignore the event, it's for some input we don't care about.
     }

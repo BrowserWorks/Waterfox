@@ -69,9 +69,11 @@ ProcessLink::~ProcessLink()
 #endif
 }
 
-void 
+void
 ProcessLink::Open(mozilla::ipc::Transport* aTransport, MessageLoop *aIOLoop, Side aSide)
 {
+    mChan->AssertWorkerThread();
+
     NS_PRECONDITION(aTransport, "need transport layer");
 
     // FIXME need to check for valid channel
@@ -102,8 +104,11 @@ ProcessLink::Open(mozilla::ipc::Transport* aTransport, MessageLoop *aIOLoop, Sid
 
     // If we were never able to open the transport, immediately post an error message.
     if (mTransport->Unsound_IsClosed()) {
-        mIOLoop->PostTask(NewNonOwningRunnableMethod(this, &ProcessLink::OnChannelConnectError));
-        return;
+      mIOLoop->PostTask(
+        NewNonOwningRunnableMethod("ipc::ProcessLink::OnChannelConnectError",
+                                   this,
+                                   &ProcessLink::OnChannelConnectError));
+      return;
     }
 
     {
@@ -113,16 +118,26 @@ ProcessLink::Open(mozilla::ipc::Transport* aTransport, MessageLoop *aIOLoop, Sid
             // Transport::Connect() has not been called.  Call it so
             // we start polling our pipe and processing outgoing
             // messages.
-            mIOLoop->PostTask(NewNonOwningRunnableMethod(this, &ProcessLink::OnChannelOpened));
+            mIOLoop->PostTask(
+              NewNonOwningRunnableMethod("ipc::ProcessLink::OnChannelOpened",
+                                         this,
+                                         &ProcessLink::OnChannelOpened));
         } else {
             // Transport::Connect() has already been called.  Take
             // over the channel from the previous listener and process
             // any queued messages.
-            mIOLoop->PostTask(NewNonOwningRunnableMethod(this, &ProcessLink::OnTakeConnectedChannel));
+            mIOLoop->PostTask(NewNonOwningRunnableMethod(
+              "ipc::ProcessLink::OnTakeConnectedChannel",
+              this,
+              &ProcessLink::OnTakeConnectedChannel));
         }
 
-        // Should not wait here if something goes wrong with the channel.
-        while (!mChan->Connected() && mChan->mChannelState != ChannelError) {
+        // Wait until one of the runnables above changes the state of the
+        // channel. Note that the state could be changed again after that (to
+        // ChannelClosing, for example, by the IO thread). We can rely on it not
+        // changing back to Closed: only the worker thread changes it to closed,
+        // and we're on the worker thread, blocked.
+        while (mChan->mChannelState == ChannelClosed) {
             mChan->mMonitor->Wait();
         }
     }
@@ -134,7 +149,11 @@ ProcessLink::EchoMessage(Message *msg)
     mChan->AssertWorkerThread();
     mChan->mMonitor->AssertCurrentThreadOwns();
 
-    mIOLoop->PostTask(NewNonOwningRunnableMethod<Message*>(this, &ProcessLink::OnEchoMessage, msg));
+    mIOLoop->PostTask(
+      NewNonOwningRunnableMethod<Message*>("ipc::ProcessLink::OnEchoMessage",
+                                           this,
+                                           &ProcessLink::OnEchoMessage,
+                                           msg));
     // OnEchoMessage takes ownership of |msg|
 }
 
@@ -149,10 +168,13 @@ ProcessLink::SendMessage(Message *msg)
       MOZ_CRASH("IPC message size is too large");
     }
 
-    mChan->AssertWorkerThread();
+    if (!mChan->mIsPostponingSends) {
+        mChan->AssertWorkerThread();
+    }
     mChan->mMonitor->AssertCurrentThreadOwns();
 
-    mIOLoop->PostTask(NewNonOwningRunnableMethod<Message*>(mTransport, &Transport::Send, msg));
+    mIOLoop->PostTask(NewNonOwningRunnableMethod<Message*>(
+      "IPC::Channel::Send", mTransport, &Transport::Send, msg));
 }
 
 void
@@ -161,7 +183,8 @@ ProcessLink::SendClose()
     mChan->AssertWorkerThread();
     mChan->mMonitor->AssertCurrentThreadOwns();
 
-    mIOLoop->PostTask(NewNonOwningRunnableMethod(this, &ProcessLink::OnCloseChannel));
+    mIOLoop->PostTask(NewNonOwningRunnableMethod(
+      "ipc::ProcessLink::OnCloseChannel", this, &ProcessLink::OnCloseChannel));
 }
 
 ThreadLink::ThreadLink(MessageChannel *aChan, MessageChannel *aTargetChan)
@@ -212,7 +235,9 @@ ThreadLink::EchoMessage(Message *msg)
 void
 ThreadLink::SendMessage(Message *msg)
 {
-    mChan->AssertWorkerThread();
+    if (!mChan->mIsPostponingSends) {
+        mChan->AssertWorkerThread();
+    }
     mChan->mMonitor->AssertCurrentThreadOwns();
 
     if (mTargetChan)

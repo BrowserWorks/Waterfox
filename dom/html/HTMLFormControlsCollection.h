@@ -15,6 +15,8 @@
 
 class nsGenericHTMLFormElement;
 class nsIFormControl;
+template <class T>
+class RefPtr;
 
 namespace mozilla {
 namespace dom {
@@ -65,7 +67,7 @@ public:
                           int32_t* aIndex);
 
   nsISupports* NamedItemInternal(const nsAString& aName, bool aFlushContent);
-  
+
   /**
    * Create a sorted list of form control elements. This list is sorted
    * in document order and contains the controls in the mElements and
@@ -75,7 +77,7 @@ public:
    * @param aControls The list of sorted controls[out].
    * @return NS_OK or NS_ERROR_OUT_OF_MEMORY.
    */
-  nsresult GetSortedControls(nsTArray<nsGenericHTMLFormElement*>& aControls) const;
+  nsresult GetSortedControls(nsTArray<RefPtr<nsGenericHTMLFormElement>>& aControls) const;
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
@@ -114,7 +116,7 @@ protected:
 
   // Flush out the content model so it's up to date.
   void FlushPendingNotifications();
-  
+
   // A map from an ID or NAME attribute to the form control(s), this
   // hash holds strong references either to the named form control, or
   // to a list of named form controls, in the case where this hash

@@ -132,7 +132,7 @@ txToDocHandlerFactory::createHandlerWith(txOutputFormat* aFormat,
 
 nsresult
 txToDocHandlerFactory::createHandlerWith(txOutputFormat* aFormat,
-                                         const nsSubstring& aName,
+                                         const nsAString& aName,
                                          int32_t aNsID,
                                          txAXMLEventHandler** aHandler)
 {
@@ -224,7 +224,7 @@ txToFragmentHandlerFactory::createHandlerWith(txOutputFormat* aFormat,
 
 nsresult
 txToFragmentHandlerFactory::createHandlerWith(txOutputFormat* aFormat,
-                                              const nsSubstring& aName,
+                                              const nsAString& aName,
                                               int32_t aNsID,
                                               txAXMLEventHandler** aHandler)
 {
@@ -546,7 +546,8 @@ public:
   RefPtr<txMozillaXSLTProcessor> mProcessor;
 
   explicit nsTransformBlockerEvent(txMozillaXSLTProcessor* processor)
-    : mProcessor(processor)
+    : mozilla::Runnable("nsTransformBlockerEvent")
+    , mProcessor(processor)
   {}
 
   ~nsTransformBlockerEvent()
@@ -1087,12 +1088,12 @@ txMozillaXSLTProcessor::reportError(nsresult aResult,
             if (bundle) {
                 const char16_t* error[] = { errorText.get() };
                 if (mStylesheet) {
-                    bundle->FormatStringFromName(u"TransformError",
+                    bundle->FormatStringFromName("TransformError",
                                                  error, 1,
                                                  getter_Copies(errorMessage));
                 }
                 else {
-                    bundle->FormatStringFromName(u"LoadingError",
+                    bundle->FormatStringFromName("LoadingError",
                                                  error, 1,
                                                  getter_Copies(errorMessage));
                 }

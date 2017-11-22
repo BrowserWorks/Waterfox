@@ -55,6 +55,7 @@ using mozilla::Nothing;
 using mozilla::NumberIsInt32;
 using mozilla::PodCopy;
 using mozilla::Some;
+using mozilla::Unused;
 
 class BreakableControl;
 class LabelControl;
@@ -6224,6 +6225,7 @@ BytecodeEmitter::emitSingleDeclaration(ParseNode* declList, ParseNode* decl,
             MOZ_ASSERT(declList->isKind(PNK_LET),
                        "var declarations without initializers handled above, "
                        "and const declarations must have initializers");
+            Unused << declList; // silence clang -Wunused-lambda-capture in opt builds
             return bce->emit1(JSOP_UNDEFINED);
         }
 
@@ -7239,8 +7241,10 @@ BytecodeEmitter::emitForOf(ParseNode* forOfLoop, EmitterScope* headLexicalEmitte
         allowSelfHostedIter = true;
     }
 
-    // Evaluate the expression being iterated.
-    if (!emitTree(forHeadExpr))                           // ITERABLE
+    // Evaluate the expression being iterated. The forHeadExpr should use a
+    // distinct TDZCheckCache to evaluate since (abstractly) it runs in its own
+    // LexicalEnvironment.
+    if (!emitTreeInBranch(forHeadExpr))                   // ITERABLE
         return false;
     if (iterKind == IteratorKind::Async) {
         if (!emitAsyncIterator())                         // ITER
@@ -7439,7 +7443,7 @@ BytecodeEmitter::emitForIn(ParseNode* forInLoop, EmitterScope* headLexicalEmitte
 
     // Evaluate the expression being iterated.
     ParseNode* expr = forInHead->pn_kid3;
-    if (!emitTree(expr))                                  // EXPR
+    if (!emitTreeInBranch(expr))                          // EXPR
         return false;
 
     // Convert the value to the appropriate sort of iterator object for the
@@ -10776,14 +10780,8 @@ BytecodeEmitter::emitClass(ParseNode* pn)
         // offsets in the source buffer as source notes so that when we
         // actually make the constructor during execution, we can give it the
         // correct toString output.
-        //
-        // Token positions are already offset from the start column. Since
-        // toString offsets are absolute offsets into the ScriptSource,
-        // de-offset from the starting column.
-        ptrdiff_t classStart = ptrdiff_t(pn->pn_pos.begin) -
-                               tokenStream().options().sourceStartColumn;
-        ptrdiff_t classEnd = ptrdiff_t(pn->pn_pos.end) -
-                             tokenStream().options().sourceStartColumn;
+        ptrdiff_t classStart = ptrdiff_t(pn->pn_pos.begin);
+        ptrdiff_t classEnd = ptrdiff_t(pn->pn_pos.end);
         if (!newSrcNote3(SRC_CLASS_SPAN, classStart, classEnd))
             return false;
 

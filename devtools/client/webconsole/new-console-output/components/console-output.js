@@ -12,8 +12,11 @@ const {
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
 const {
+  getAllMessagesById,
   getAllMessagesUiById,
   getAllMessagesTableDataById,
+  getAllMessagesObjectPropertiesById,
+  getAllMessagesObjectEntriesById,
   getAllNetworkMessagesUpdateById,
   getVisibleMessages,
   getAllRepeatById,
@@ -25,6 +28,7 @@ const ConsoleOutput = createClass({
   displayName: "ConsoleOutput",
 
   propTypes: {
+    messages: PropTypes.object.isRequired,
     messagesUi: PropTypes.object.isRequired,
     serviceContainer: PropTypes.shape({
       attachRefToHud: PropTypes.func.isRequired,
@@ -34,6 +38,8 @@ const ConsoleOutput = createClass({
     dispatch: PropTypes.func.isRequired,
     timestampsVisible: PropTypes.bool,
     messagesTableData: PropTypes.object.isRequired,
+    messagesObjectProperties: PropTypes.object.isRequired,
+    messagesObjectEntries: PropTypes.object.isRequired,
     messagesRepeat: PropTypes.object.isRequired,
     networkMessagesUpdate: PropTypes.object.isRequired,
     visibleMessages: PropTypes.array.isRequired,
@@ -77,30 +83,31 @@ const ConsoleOutput = createClass({
     let {
       dispatch,
       visibleMessages,
+      messages,
       messagesUi,
       messagesTableData,
+      messagesObjectProperties,
+      messagesObjectEntries,
       messagesRepeat,
       networkMessagesUpdate,
       serviceContainer,
       timestampsVisible,
     } = this.props;
 
-    let messageNodes = visibleMessages.map((message) => {
-      return (
-        MessageContainer({
-          dispatch,
-          message,
-          key: message.id,
-          serviceContainer,
-          open: messagesUi.includes(message.id),
-          tableData: messagesTableData.get(message.id),
-          indent: message.indent,
-          timestampsVisible,
-          repeat: messagesRepeat[message.id],
-          networkMessageUpdate: networkMessagesUpdate[message.id],
-        })
-      );
-    });
+    let messageNodes = visibleMessages.map((messageId) => MessageContainer({
+      dispatch,
+      key: messageId,
+      messageId,
+      serviceContainer,
+      open: messagesUi.includes(messageId),
+      tableData: messagesTableData.get(messageId),
+      timestampsVisible,
+      repeat: messagesRepeat[messageId],
+      networkMessageUpdate: networkMessagesUpdate[messageId],
+      getMessage: () => messages.get(messageId),
+      loadedObjectProperties: messagesObjectProperties.get(messageId),
+      loadedObjectEntries: messagesObjectEntries.get(messageId),
+    }));
 
     return (
       dom.div({
@@ -128,9 +135,12 @@ function isScrolledToBottom(outputNode, scrollNode) {
 
 function mapStateToProps(state, props) {
   return {
+    messages: getAllMessagesById(state),
     visibleMessages: getVisibleMessages(state),
     messagesUi: getAllMessagesUiById(state),
     messagesTableData: getAllMessagesTableDataById(state),
+    messagesObjectProperties: getAllMessagesObjectPropertiesById(state),
+    messagesObjectEntries: getAllMessagesObjectEntriesById(state),
     messagesRepeat: getAllRepeatById(state),
     networkMessagesUpdate: getAllNetworkMessagesUpdateById(state),
     timestampsVisible: state.ui.timestampsVisible,

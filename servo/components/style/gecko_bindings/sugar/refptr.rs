@@ -6,10 +6,10 @@
 
 use gecko_bindings::structs;
 use gecko_bindings::sugar::ownership::HasArcFFI;
+use servo_arc::Arc;
 use std::{mem, ptr};
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
-use stylearc::Arc;
 
 /// Trait for all objects that have Addref() and Release
 /// methods and can be placed inside RefPtr<T>
@@ -211,7 +211,7 @@ impl<T> structs::RefPtr<T> {
     /// Sets the contents to an Arc<T>
     /// will leak existing contents
     pub fn set_arc_leaky<U>(&mut self, other: Arc<U>) where U: HasArcFFI<FFIType = T> {
-        *self = unsafe { mem::transmute(other) }; // Arc::into_raw is unstable :(
+        *self = unsafe { mem::transmute(Arc::into_raw_offset(other)) };
     }
 }
 

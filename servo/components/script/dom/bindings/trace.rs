@@ -43,10 +43,8 @@ use dom::bindings::str::{DOMString, USVString};
 use dom::bindings::utils::WindowProxyHandler;
 use dom::document::PendingRestyle;
 use encoding::types::EncodingRef;
-use euclid::{Matrix2D, Matrix4D, Point2D};
-use euclid::length::Length as EuclidLength;
-use euclid::rect::Rect;
-use euclid::size::Size2D;
+use euclid::{Transform2D, Transform3D, Point2D, Vector2D, Rect, TypedSize2D, ScaleFactor};
+use euclid::Length as EuclidLength;
 use html5ever::{Prefix, LocalName, Namespace, QualName};
 use html5ever::buffer_queue::BufferQueue;
 use html5ever::tendril::IncompleteUtf8;
@@ -77,8 +75,10 @@ use script_layout_interface::reporter::CSSErrorReporter;
 use script_layout_interface::rpc::LayoutRPC;
 use script_traits::{DocumentActivity, TimerEventId, TimerSource, TouchpadPressurePhase};
 use script_traits::{UntrustedNodeAddress, WindowSizeData, WindowSizeType};
+use script_traits::DrawAPaintImageResult;
 use selectors::matching::ElementSelectorFlags;
 use serde::{Deserialize, Serialize};
+use servo_arc::Arc as ServoArc;
 use servo_atoms::Atom;
 use servo_url::{ImmutableOrigin, MutableOrigin, ServoUrl};
 use smallvec::SmallVec;
@@ -99,15 +99,14 @@ use style::media_queries::MediaList;
 use style::properties::PropertyDeclarationBlock;
 use style::selector_parser::{PseudoElement, Snapshot};
 use style::shared_lock::{SharedRwLock as StyleSharedRwLock, Locked as StyleLocked};
-use style::stylearc::Arc as StyleArc;
 use style::stylesheets::{CssRules, FontFaceRule, KeyframesRule, MediaRule};
 use style::stylesheets::{NamespaceRule, StyleRule, ImportRule, SupportsRule, ViewportRule};
 use style::stylesheets::keyframes_rule::Keyframe;
 use style::values::specified::Length;
 use time::Duration;
 use uuid::Uuid;
-use webrender_traits::{WebGLBufferId, WebGLError, WebGLFramebufferId, WebGLProgramId};
-use webrender_traits::{WebGLRenderbufferId, WebGLShaderId, WebGLTextureId, WebGLVertexArrayId};
+use webrender_api::{WebGLBufferId, WebGLError, WebGLFramebufferId, WebGLProgramId};
+use webrender_api::{WebGLRenderbufferId, WebGLShaderId, WebGLTextureId, WebGLVertexArrayId};
 use webvr_traits::WebVRGamepadHand;
 
 /// A trait to allow tracing (only) DOM objects.
@@ -167,7 +166,7 @@ unsafe impl<T: JSTraceable> JSTraceable for Arc<T> {
     }
 }
 
-unsafe impl<T: JSTraceable> JSTraceable for StyleArc<T> {
+unsafe impl<T: JSTraceable> JSTraceable for ServoArc<T> {
     unsafe fn trace(&self, trc: *mut JSTracer) {
         (**self).trace(trc)
     }
@@ -176,6 +175,14 @@ unsafe impl<T: JSTraceable> JSTraceable for StyleArc<T> {
 unsafe impl<T: JSTraceable + ?Sized> JSTraceable for Box<T> {
     unsafe fn trace(&self, trc: *mut JSTracer) {
         (**self).trace(trc)
+    }
+}
+
+unsafe impl<T: JSTraceable> JSTraceable for [T] {
+    unsafe fn trace(&self, trc: *mut JSTracer) {
+        for e in self.iter() {
+            e.trace(trc);
+        }
     }
 }
 
@@ -383,6 +390,7 @@ unsafe_no_jsmanaged_fields!(RelativePos);
 unsafe_no_jsmanaged_fields!(OpaqueStyleAndLayoutData);
 unsafe_no_jsmanaged_fields!(PathBuf);
 unsafe_no_jsmanaged_fields!(CSSErrorReporter);
+unsafe_no_jsmanaged_fields!(DrawAPaintImageResult);
 unsafe_no_jsmanaged_fields!(WebGLBufferId);
 unsafe_no_jsmanaged_fields!(WebGLFramebufferId);
 unsafe_no_jsmanaged_fields!(WebGLProgramId);
@@ -407,7 +415,7 @@ unsafe impl<A, B> JSTraceable for fn(A) -> B {
     }
 }
 
-unsafe impl<T> JSTraceable for IpcSender<T> where T: Deserialize + Serialize {
+unsafe impl<T> JSTraceable for IpcSender<T> where T: for<'de> Deserialize<'de> + Serialize {
     #[inline]
     unsafe fn trace(&self, _: *mut JSTracer) {
         // Do nothing
@@ -429,7 +437,7 @@ unsafe impl JSTraceable for () {
     }
 }
 
-unsafe impl<T> JSTraceable for IpcReceiver<T> where T: Deserialize + Serialize {
+unsafe impl<T> JSTraceable for IpcReceiver<T> where T: for<'de> Deserialize<'de> + Serialize {
     #[inline]
     unsafe fn trace(&self, _: *mut JSTracer) {
         // Do nothing
@@ -457,14 +465,14 @@ unsafe impl<T: Send> JSTraceable for Sender<T> {
     }
 }
 
-unsafe impl JSTraceable for Matrix2D<f32> {
+unsafe impl JSTraceable for Transform2D<f32> {
     #[inline]
     unsafe fn trace(&self, _trc: *mut JSTracer) {
         // Do nothing
     }
 }
 
-unsafe impl JSTraceable for Matrix4D<f64> {
+unsafe impl JSTraceable for Transform3D<f64> {
     #[inline]
     unsafe fn trace(&self, _trc: *mut JSTracer) {
         // Do nothing
@@ -472,6 +480,20 @@ unsafe impl JSTraceable for Matrix4D<f64> {
 }
 
 unsafe impl JSTraceable for Point2D<f32> {
+    #[inline]
+    unsafe fn trace(&self, _trc: *mut JSTracer) {
+        // Do nothing
+    }
+}
+
+unsafe impl<T, U> JSTraceable for ScaleFactor<f32, T, U> {
+    #[inline]
+    unsafe fn trace(&self, _trc: *mut JSTracer) {
+        // Do nothing
+    }
+}
+
+unsafe impl JSTraceable for Vector2D<f32> {
     #[inline]
     unsafe fn trace(&self, _trc: *mut JSTracer) {
         // Do nothing
@@ -499,7 +521,14 @@ unsafe impl JSTraceable for Rect<f32> {
     }
 }
 
-unsafe impl JSTraceable for Size2D<i32> {
+unsafe impl<U> JSTraceable for TypedSize2D<i32, U> {
+    #[inline]
+    unsafe fn trace(&self, _trc: *mut JSTracer) {
+        // Do nothing
+    }
+}
+
+unsafe impl<U> JSTraceable for TypedSize2D<f32, U> {
     #[inline]
     unsafe fn trace(&self, _trc: *mut JSTracer) {
         // Do nothing

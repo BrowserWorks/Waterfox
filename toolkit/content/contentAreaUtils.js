@@ -16,8 +16,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Deprecated",
@@ -432,7 +430,7 @@ function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
       file = fpParams.file;
 
       continueSave();
-    }).then(null, Components.utils.reportError);
+    }).catch(Components.utils.reportError);
   }
 
   function continueSave() {
@@ -825,7 +823,7 @@ function DownloadURL(aURL, aFileName, aInitiatingDocument) {
     // Add the download to the list, allowing it to be managed.
     let list = await Downloads.getList(Downloads.ALL);
     list.add(download);
-  })().then(null, Components.utils.reportError);
+  })().catch(Components.utils.reportError);
 }
 
 // We have no DOM, and can only save the URL as is.

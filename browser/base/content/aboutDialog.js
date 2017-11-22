@@ -64,7 +64,7 @@ function init(aEvent) {
   }
 
   if (AppConstants.MOZ_UPDATER) {
-    gAppUpdater = new appUpdater();
+    gAppUpdater = new appUpdater({ buttonAutoFocus: true });
 
     let channelLabel = document.getElementById("currentChannel");
     let currentChannelText = document.getElementById("currentChannelText");

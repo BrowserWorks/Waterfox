@@ -5,10 +5,10 @@
 // The ext-* files are imported into the same scopes.
 /* import-globals-from ext-browserAction.js */
 
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
-                                  "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Services",
+                                  "resource://gre/modules/Services.jsm");
 
 var {
   normalizeTime,
@@ -65,9 +65,9 @@ const convertNodeToHistoryItem = node => {
 const convertNodeToVisitItem = node => {
   return {
     id: node.pageGuid,
-    visitId: node.visitId,
+    visitId: String(node.visitId),
     visitTime: PlacesUtils.toDate(node.time).getTime(),
-    referringVisitId: node.fromVisitId,
+    referringVisitId: String(node.fromVisitId),
     transition: getTransition(node.visitType),
   };
 };
@@ -96,11 +96,11 @@ const getHistoryObserver = () => {
       onDeleteURI: function(uri, guid, reason) {
         this.emit("visitRemoved", {allHistory: false, urls: [uri.spec]});
       },
-      onVisit: function(uri, visitId, time, sessionId, referringId, transitionType, guid, hidden, visitCount, typed) {
+      onVisit: function(uri, visitId, time, sessionId, referringId, transitionType, guid, hidden, visitCount, typed, lastKnownTitle) {
         let data = {
           id: guid,
           url: uri.spec,
-          title: "",
+          title: lastKnownTitle || "",
           lastVisitTime: time / 1000,  // time from Places is microseconds,
           visitCount,
           typedCount: typed,
@@ -213,13 +213,13 @@ this.history = class extends ExtensionAPI {
           options.resultType = options.RESULTS_AS_VISIT;
 
           let historyQuery = PlacesUtils.history.getNewQuery();
-          historyQuery.uri = NetUtil.newURI(url);
+          historyQuery.uri = Services.io.newURI(url);
           let queryResult = PlacesUtils.history.executeQuery(historyQuery, options).root;
           let results = convertNavHistoryContainerResultNode(queryResult, convertNodeToVisitItem);
           return Promise.resolve(results);
         },
 
-        onVisited: new SingletonEventManager(context, "history.onVisited", fire => {
+        onVisited: new EventManager(context, "history.onVisited", fire => {
           let listener = (event, data) => {
             fire.sync(data);
           };
@@ -230,7 +230,7 @@ this.history = class extends ExtensionAPI {
           };
         }).api(),
 
-        onVisitRemoved: new SingletonEventManager(context, "history.onVisitRemoved", fire => {
+        onVisitRemoved: new EventManager(context, "history.onVisitRemoved", fire => {
           let listener = (event, data) => {
             fire.sync(data);
           };
@@ -241,7 +241,7 @@ this.history = class extends ExtensionAPI {
           };
         }).api(),
 
-        onTitleChanged: new SingletonEventManager(context, "history.onTitleChanged", fire => {
+        onTitleChanged: new EventManager(context, "history.onTitleChanged", fire => {
           let listener = (event, data) => {
             fire.sync(data);
           };

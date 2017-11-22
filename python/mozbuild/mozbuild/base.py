@@ -627,6 +627,10 @@ class MozbuildObject(ProcessExecutionMixin):
         self.virtualenv_manager.activate()
 
 
+    def _set_log_level(self, verbose):
+        self.log_manager.terminal_handler.setLevel(logging.INFO if not verbose else logging.DEBUG)
+
+
 class MachCommandBase(MozbuildObject):
     """Base class for mach command providers that wish to be MozbuildObjects.
 
@@ -747,24 +751,17 @@ class MachCommandConditions(object):
     @staticmethod
     def is_hg(cls):
         """Must have a mercurial source checkout."""
-        if hasattr(cls, 'substs'):
-            top_srcdir = cls.substs.get('top_srcdir')
-        elif hasattr(cls, 'topsrcdir'):
-            top_srcdir = cls.topsrcdir
-        else:
-            return False
-        return top_srcdir and os.path.isdir(os.path.join(top_srcdir, '.hg'))
+        return getattr(cls, 'substs', {}).get('VCS_CHECKOUT_TYPE') == 'hg'
 
     @staticmethod
     def is_git(cls):
         """Must have a git source checkout."""
-        if hasattr(cls, 'substs'):
-            top_srcdir = cls.substs.get('top_srcdir')
-        elif hasattr(cls, 'topsrcdir'):
-            top_srcdir = cls.topsrcdir
-        else:
-            return False
-        return top_srcdir and os.path.exists(os.path.join(top_srcdir, '.git'))
+        return getattr(cls, 'substs', {}).get('VCS_CHECKOUT_TYPE') == 'git'
+
+    @staticmethod
+    def is_artifact_build(cls):
+        """Must be an artifact build."""
+        return getattr(cls, 'substs', {}).get('MOZ_ARTIFACT_BUILDS')
 
 
 class PathArgument(object):

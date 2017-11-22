@@ -7,13 +7,14 @@
 package org.mozilla.gecko.mma;
 
 import android.app.Activity;
-import android.app.Application;
 import android.content.Context;
+
+import java.util.Map;
 
 
 public class MmaStubImp implements MmaInterface {
     @Override
-    public void init(Activity activity) {
+    public void init(Activity activity, Map<String, ?> attributes) {
 
     }
 
@@ -23,12 +24,12 @@ public class MmaStubImp implements MmaInterface {
     }
 
     @Override
-    public void track(String leanplumEvent) {
+    public void event(String leanplumEvent) {
 
     }
 
     @Override
-    public void track(String leanplumEvent, double value) {
+    public void event(String leanplumEvent, double value) {
 
     }
 
@@ -36,4 +37,5 @@ public class MmaStubImp implements MmaInterface {
     public void stop() {
 
     }
+
 }

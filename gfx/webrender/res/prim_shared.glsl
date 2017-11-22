@@ -10,7 +10,16 @@
         #else
         precision mediump sampler2DArray;
         #endif
+
+        // Sampler default precision is lowp on mobile GPUs.
+        // This causes RGBA32F texture data to be clamped to 16 bit floats on some GPUs (e.g. Mali-T880).
+        // Define highp precision macro to allow lossless FLOAT texture sampling.
+        #define HIGHP_SAMPLER_FLOAT highp
+    #else
+        #define HIGHP_SAMPLER_FLOAT
     #endif
+#else
+    #define HIGHP_SAMPLER_FLOAT
 #endif
 
 #define PST_TOP_LEFT     0
@@ -27,7 +36,7 @@
 #define BORDER_RIGHT     2
 #define BORDER_BOTTOM    3
 
-// Border styles as defined in webrender_traits/types.rs
+// Border styles as defined in webrender_api/types.rs
 #define BORDER_STYLE_NONE         0
 #define BORDER_STYLE_SOLID        1
 #define BORDER_STYLE_DOUBLE       2
@@ -44,6 +53,11 @@
 
 #define EXTEND_MODE_CLAMP  0
 #define EXTEND_MODE_REPEAT 1
+
+#define LINE_STYLE_SOLID        0
+#define LINE_STYLE_DOTTED       1
+#define LINE_STYLE_DASHED       2
+#define LINE_STYLE_WAVY         3
 
 uniform sampler2DArray sCacheA8;
 uniform sampler2DArray sCacheRGBA8;
@@ -80,17 +94,8 @@ vec2 clamp_rect(vec2 point, RectWithSize rect) {
     return clamp(point, rect.p0, rect.p0 + rect.size);
 }
 
-vec2 clamp_rect(vec2 point, RectWithEndpoint rect) {
-    return clamp(point, rect.p0, rect.p1);
-}
-
-// Clamp 2 points at once.
-vec4 clamp_rect(vec4 points, RectWithSize rect) {
-    return clamp(points, rect.p0.xyxy, rect.p0.xyxy + rect.size.xyxy);
-}
-
 RectWithSize intersect_rect(RectWithSize a, RectWithSize b) {
-    vec4 p = clamp_rect(vec4(a.p0, a.p0 + a.size), b);
+    vec4 p = clamp(vec4(a.p0, a.p0 + a.size), b.p0.xyxy, b.p0.xyxy + b.size.xyxy);
     return RectWithSize(p.xy, max(vec2(0.0), p.zw - p.xy));
 }
 
@@ -106,45 +111,6 @@ varying vec3 vClipMaskUv;
     flat varying vec4 vLocalBounds;
 #endif
 
-#ifdef WR_VERTEX_SHADER
-
-#define VECS_PER_LAYER              9
-#define VECS_PER_RENDER_TASK        3
-#define VECS_PER_PRIM_GEOM          2
-#define VECS_PER_SPLIT_GEOM         3
-
-uniform sampler2D sLayers;
-uniform sampler2D sRenderTasks;
-uniform sampler2D sPrimGeometry;
-
-uniform sampler2D sData16;
-uniform sampler2D sData32;
-uniform sampler2D sResourceRects;
-uniform sampler2D sResourceCache;
-
-// Instanced attributes
-in ivec4 aData0;
-in ivec4 aData1;
-
-// get_fetch_uv is a macro to work around a macOS Intel driver parsing bug.
-// TODO: convert back to a function once the driver issues are resolved, if ever.
-// https://github.com/servo/webrender/pull/623
-// https://github.com/servo/servo/issues/13953
-#define get_fetch_uv(i, vpi)  ivec2(vpi * (i % (WR_MAX_VERTEX_TEXTURE_WIDTH/vpi)), i / (WR_MAX_VERTEX_TEXTURE_WIDTH/vpi))
-
-vec4 fetch_data_1(int index) {
-    ivec2 uv = get_fetch_uv(index, 1);
-    return texelFetch(sData16, uv, 0);
-}
-
-vec4[2] fetch_data_2(int index) {
-    ivec2 uv = get_fetch_uv(index, 2);
-    return vec4[2](
-        texelFetchOffset(sData32, uv, 0, ivec2(0, 0)),
-        texelFetchOffset(sData32, uv, 0, ivec2(1, 0))
-    );
-}
-
 // TODO(gw): This is here temporarily while we have
 //           both GPU store and cache. When the GPU
 //           store code is removed, we can change the
@@ -156,6 +122,39 @@ ivec2 get_resource_cache_uv(int address) {
     return ivec2(address % WR_MAX_VERTEX_TEXTURE_WIDTH,
                  address / WR_MAX_VERTEX_TEXTURE_WIDTH);
 }
+
+uniform HIGHP_SAMPLER_FLOAT sampler2D sResourceCache;
+
+vec4[2] fetch_from_resource_cache_2(int address) {
+    ivec2 uv = get_resource_cache_uv(address);
+    return vec4[2](
+        texelFetchOffset(sResourceCache, uv, 0, ivec2(0, 0)),
+        texelFetchOffset(sResourceCache, uv, 0, ivec2(1, 0))
+    );
+}
+
+#ifdef WR_VERTEX_SHADER
+
+#define VECS_PER_LAYER              9
+#define VECS_PER_RENDER_TASK        3
+#define VECS_PER_PRIM_HEADER        2
+#define VECS_PER_TEXT_RUN           2
+#define VECS_PER_GRADIENT           3
+#define VECS_PER_GRADIENT_STOP      2
+
+uniform HIGHP_SAMPLER_FLOAT sampler2D sLayers;
+uniform HIGHP_SAMPLER_FLOAT sampler2D sRenderTasks;
+
+// Instanced attributes
+in ivec4 aData0;
+in ivec4 aData1;
+
+// get_fetch_uv is a macro to work around a macOS Intel driver parsing bug.
+// TODO: convert back to a function once the driver issues are resolved, if ever.
+// https://github.com/servo/webrender/pull/623
+// https://github.com/servo/servo/issues/13953
+#define get_fetch_uv(i, vpi)  ivec2(vpi * (i % (WR_MAX_VERTEX_TEXTURE_WIDTH/vpi)), i / (WR_MAX_VERTEX_TEXTURE_WIDTH/vpi))
+
 
 vec4[8] fetch_from_resource_cache_8(int address) {
     ivec2 uv = get_resource_cache_uv(address);
@@ -321,8 +320,8 @@ struct GradientStop {
     vec4 offset;
 };
 
-GradientStop fetch_gradient_stop(int index) {
-    vec4 data[2] = fetch_data_2(index);
+GradientStop fetch_gradient_stop(int address) {
+    vec4 data[2] = fetch_from_resource_cache_2(address);
     return GradientStop(data[0], data[1]);
 }
 
@@ -417,12 +416,18 @@ BorderCorners get_border_corners(Border border, RectWithSize local_rect) {
 }
 
 struct Glyph {
-    vec4 offset;
+    vec2 offset;
 };
 
-Glyph fetch_glyph(int index) {
-    vec4 data = fetch_data_1(index);
-    return Glyph(data);
+Glyph fetch_glyph(int specific_prim_address, int glyph_index) {
+    // Two glyphs are packed in each texel in the GPU cache.
+    int glyph_address = specific_prim_address +
+                        VECS_PER_TEXT_RUN +
+                        glyph_index / 2;
+    vec4 data = fetch_from_resource_cache_1(glyph_address);
+    // Select XY or ZW based on glyph index.
+    vec2 glyph = mix(data.xy, data.zw, bvec2(glyph_index % 2 == 1));
+    return Glyph(glyph);
 }
 
 RectWithSize fetch_instance_geometry(int address) {
@@ -430,26 +435,8 @@ RectWithSize fetch_instance_geometry(int address) {
     return RectWithSize(data.xy, data.zw);
 }
 
-struct PrimitiveGeometry {
-    RectWithSize local_rect;
-    RectWithSize local_clip_rect;
-};
-
-PrimitiveGeometry fetch_prim_geometry(int index) {
-    PrimitiveGeometry pg;
-
-    ivec2 uv = get_fetch_uv(index, VECS_PER_PRIM_GEOM);
-
-    vec4 local_rect = texelFetchOffset(sPrimGeometry, uv, 0, ivec2(0, 0));
-    pg.local_rect = RectWithSize(local_rect.xy, local_rect.zw);
-    vec4 local_clip_rect = texelFetchOffset(sPrimGeometry, uv, 0, ivec2(1, 0));
-    pg.local_clip_rect = RectWithSize(local_clip_rect.xy, local_clip_rect.zw);
-
-    return pg;
-}
-
 struct PrimitiveInstance {
-    int global_prim_index;
+    int prim_address;
     int specific_prim_address;
     int render_task_index;
     int clip_task_index;
@@ -457,19 +444,21 @@ struct PrimitiveInstance {
     int z;
     int user_data0;
     int user_data1;
+    int user_data2;
 };
 
 PrimitiveInstance fetch_prim_instance() {
     PrimitiveInstance pi;
 
-    pi.global_prim_index = aData0.x;
-    pi.specific_prim_address = aData0.y;
-    pi.render_task_index = aData0.z;
-    pi.clip_task_index = aData0.w;
-    pi.layer_index = aData1.x;
-    pi.z = aData1.y;
-    pi.user_data0 = aData1.z;
-    pi.user_data1 = aData1.w;
+    pi.prim_address = aData0.x;
+    pi.specific_prim_address = pi.prim_address + VECS_PER_PRIM_HEADER;
+    pi.render_task_index = aData0.y;
+    pi.clip_task_index = aData0.z;
+    pi.layer_index = aData0.w;
+    pi.z = aData1.x;
+    pi.user_data0 = aData1.y;
+    pi.user_data1 = aData1.z;
+    pi.user_data2 = aData1.w;
 
     return pi;
 }
@@ -503,37 +492,45 @@ struct Primitive {
     AlphaBatchTask task;
     RectWithSize local_rect;
     RectWithSize local_clip_rect;
-    int prim_index;
+    int specific_prim_address;
     int user_data0;
     int user_data1;
+    int user_data2;
     float z;
 };
 
-Primitive load_primitive_custom(PrimitiveInstance pi) {
+struct PrimitiveGeometry {
+    RectWithSize local_rect;
+    RectWithSize local_clip_rect;
+};
+
+PrimitiveGeometry fetch_primitive_geometry(int address) {
+    vec4 geom[2] = fetch_from_resource_cache_2(address);
+    return PrimitiveGeometry(RectWithSize(geom[0].xy, geom[0].zw),
+                             RectWithSize(geom[1].xy, geom[1].zw));
+}
+
+Primitive load_primitive() {
+    PrimitiveInstance pi = fetch_prim_instance();
+
     Primitive prim;
 
     prim.layer = fetch_layer(pi.layer_index);
     prim.clip_area = fetch_clip_area(pi.clip_task_index);
     prim.task = fetch_alpha_batch_task(pi.render_task_index);
 
-    PrimitiveGeometry pg = fetch_prim_geometry(pi.global_prim_index);
-    prim.local_rect = pg.local_rect;
-    prim.local_clip_rect = pg.local_clip_rect;
+    PrimitiveGeometry geom = fetch_primitive_geometry(pi.prim_address);
+    prim.local_rect = geom.local_rect;
+    prim.local_clip_rect = geom.local_clip_rect;
 
-    prim.prim_index = pi.specific_prim_address;
+    prim.specific_prim_address = pi.specific_prim_address;
     prim.user_data0 = pi.user_data0;
     prim.user_data1 = pi.user_data1;
+    prim.user_data2 = pi.user_data2;
     prim.z = float(pi.z);
 
     return prim;
 }
-
-Primitive load_primitive() {
-    PrimitiveInstance pi = fetch_prim_instance();
-
-    return load_primitive_custom(pi);
-}
-
 
 // Return the intersection of the plane (set up by "normal" and "point")
 // with the ray (set up by "ray_origin" and "ray_dir"),
@@ -578,6 +575,35 @@ vec4 get_layer_pos(vec2 pos, Layer layer) {
     return untransform(pos, n, a, layer.inv_transform);
 }
 
+// Compute a snapping offset in world space (adjusted to pixel ratio),
+// given local position on the layer and a snap rectangle.
+vec2 compute_snap_offset(vec2 local_pos,
+                         RectWithSize local_clip_rect,
+                         Layer layer,
+                         RectWithSize snap_rect) {
+    // Ensure that the snap rect is at *least* one device pixel in size.
+    // TODO(gw): It's not clear to me that this is "correct". Specifically,
+    //           how should it interact with sub-pixel snap rects when there
+    //           is a layer transform with scale present? But it does fix
+    //           the test cases we have in Servo that are failing without it
+    //           and seem better than not having this at all.
+    snap_rect.size = max(snap_rect.size, vec2(1.0 / uDevicePixelRatio));
+
+    // Transform the snap corners to the world space.
+    vec4 world_snap_p0 = layer.transform * vec4(snap_rect.p0, 0.0, 1.0);
+    vec4 world_snap_p1 = layer.transform * vec4(snap_rect.p0 + snap_rect.size, 0.0, 1.0);
+    // Snap bounds in world coordinates, adjusted for pixel ratio. XY = top left, ZW = bottom right
+    vec4 world_snap = uDevicePixelRatio * vec4(world_snap_p0.xy, world_snap_p1.xy) /
+                                          vec4(world_snap_p0.ww, world_snap_p1.ww);
+    /// World offsets applied to the corners of the snap rectangle.
+    vec4 snap_offsets = floor(world_snap + 0.5) - world_snap;
+
+    /// Compute the position of this vertex inside the snap rectangle.
+    vec2 normalized_snap_pos = (local_pos - snap_rect.p0) / snap_rect.size;
+    /// Compute the actual world offset for this vertex needed to make it snap.
+    return mix(snap_offsets.xy, snap_offsets.zw, normalized_snap_pos);
+}
+
 struct VertexInfo {
     vec2 local_pos;
     vec2 screen_pos;
@@ -588,38 +614,32 @@ VertexInfo write_vertex(RectWithSize instance_rect,
                         float z,
                         Layer layer,
                         AlphaBatchTask task,
-                        vec2 snap_ref) {
+                        RectWithSize snap_rect) {
+
     // Select the corner of the local rect that we are processing.
     vec2 local_pos = instance_rect.p0 + instance_rect.size * aPosition.xy;
 
-    // xy = top left corner of the local rect, zw = position of current vertex.
-    vec4 local_p0_pos = vec4(snap_ref, local_pos);
-
     // Clamp to the two local clip rects.
-    local_p0_pos = clamp_rect(local_p0_pos, local_clip_rect);
-    local_p0_pos = clamp_rect(local_p0_pos, layer.local_clip_rect);
+    vec2 clamped_local_pos = clamp_rect(clamp_rect(local_pos, local_clip_rect),
+                                        layer.local_clip_rect);
 
-    // Transform the top corner and current vertex to world space.
-    vec4 world_p0 = layer.transform * vec4(local_p0_pos.xy, 0.0, 1.0);
-    world_p0.xyz /= world_p0.w;
-    vec4 world_pos = layer.transform * vec4(local_p0_pos.zw, 0.0, 1.0);
-    world_pos.xyz /= world_pos.w;
+    /// Compute the snapping offset.
+    vec2 snap_offset = compute_snap_offset(clamped_local_pos, local_clip_rect, layer, snap_rect);
 
-    // Convert the world positions to device pixel space. xy=top left corner. zw=current vertex.
-    vec4 device_p0_pos = vec4(world_p0.xy, world_pos.xy) * uDevicePixelRatio;
+    // Transform the current vertex to the world cpace.
+    vec4 world_pos = layer.transform * vec4(clamped_local_pos, 0.0, 1.0);
 
-    // Calculate the distance to snap the vertex by (snap top left corner).
-    vec2 snap_delta = device_p0_pos.xy - floor(device_p0_pos.xy + 0.5);
+    // Convert the world positions to device pixel space.
+    vec2 device_pos = world_pos.xy / world_pos.w * uDevicePixelRatio;
 
     // Apply offsets for the render task to get correct screen location.
-    vec2 final_pos = device_p0_pos.zw -
-                     snap_delta -
+    vec2 final_pos = device_pos + snap_offset -
                      task.screen_space_origin +
                      task.render_target_origin;
 
     gl_Position = uTransform * vec4(final_pos, z, 1.0);
 
-    VertexInfo vi = VertexInfo(local_p0_pos.zw, device_p0_pos.zw);
+    VertexInfo vi = VertexInfo(clamped_local_pos, device_pos);
     return vi;
 }
 
@@ -654,7 +674,7 @@ TransformVertexInfo write_transform_vertex(RectWithSize instance_rect,
                                            float z,
                                            Layer layer,
                                            AlphaBatchTask task,
-                                           vec2 snap_ref) {
+                                           RectWithSize snap_rect) {
     RectWithEndpoint local_rect = to_rect_with_endpoint(instance_rect);
 
     vec2 current_local_pos, prev_local_pos, next_local_pos;
@@ -713,14 +733,10 @@ TransformVertexInfo write_transform_vertex(RectWithSize instance_rect,
                                       adjusted_next_p0,
                                       adjusted_next_p1);
 
-    // Calculate the snap amount based on the first vertex as a reference point.
-    vec4 world_p0 = layer.transform * vec4(snap_ref, 0.0, 1.0);
-    vec2 device_p0 = uDevicePixelRatio * world_p0.xy / world_p0.w;
-    vec2 snap_delta = device_p0 - floor(device_p0 + 0.5);
+    vec4 layer_pos = get_layer_pos(device_pos / uDevicePixelRatio, layer);
 
     // Apply offsets for the render task to get correct screen location.
-    vec2 final_pos = device_pos -
-                     snap_delta -
+    vec2 final_pos = device_pos - //Note: `snap_rect` is not used
                      task.screen_space_origin +
                      task.render_target_origin;
 
@@ -728,25 +744,28 @@ TransformVertexInfo write_transform_vertex(RectWithSize instance_rect,
 
     vLocalBounds = vec4(local_rect.p0, local_rect.p1);
 
-    vec4 layer_pos = get_layer_pos(device_pos / uDevicePixelRatio, layer);
-
     return TransformVertexInfo(layer_pos.xyw, device_pos);
 }
 
 #endif //WR_FEATURE_TRANSFORM
 
-struct ResourceRect {
+struct GlyphResource {
+    vec4 uv_rect;
+    vec2 offset;
+};
+
+GlyphResource fetch_glyph_resource(int address) {
+    vec4 data[2] = fetch_from_resource_cache_2(address);
+    return GlyphResource(data[0], data[1].xy);
+}
+
+struct ImageResource {
     vec4 uv_rect;
 };
 
-ResourceRect fetch_resource_rect(int index) {
-    ResourceRect rect;
-
-    ivec2 uv = get_fetch_uv(index, 1);
-
-    rect.uv_rect = texelFetchOffset(sResourceRects, uv, 0, ivec2(0, 0));
-
-    return rect;
+ImageResource fetch_image_resource(int address) {
+    vec4 data = fetch_from_resource_cache_1(address);
+    return ImageResource(data);
 }
 
 struct Rectangle {
@@ -758,23 +777,47 @@ Rectangle fetch_rectangle(int address) {
     return Rectangle(data);
 }
 
+struct TextShadow {
+    vec4 color;
+    vec2 offset;
+    float blur_radius;
+};
+
+TextShadow fetch_text_shadow(int address) {
+    vec4 data[2] = fetch_from_resource_cache_2(address);
+    return TextShadow(data[0], data[1].xy, data[1].z);
+}
+
+struct Line {
+    vec4 color;
+    float style;
+    float orientation;
+};
+
+Line fetch_line(int address) {
+    vec4 data[2] = fetch_from_resource_cache_2(address);
+    return Line(data[0], data[1].x, data[1].y);
+}
+
 struct TextRun {
     vec4 color;
+    vec2 offset;
 };
 
 TextRun fetch_text_run(int address) {
-    vec4 data = fetch_from_resource_cache_1(address);
-    return TextRun(data);
+    vec4 data[2] = fetch_from_resource_cache_2(address);
+    return TextRun(data[0], data[1].xy);
 }
 
 struct Image {
     vec4 stretch_size_and_tile_spacing;  // Size of the actual image and amount of space between
                                          //     tiled instances of this image.
+    vec4 sub_rect;                          // If negative, ignored.
 };
 
 Image fetch_image(int address) {
-    vec4 data = fetch_from_resource_cache_1(address);
-    return Image(data);
+    vec4 data[2] = fetch_from_resource_cache_2(address);
+    return Image(data[0], data[1]);
 }
 
 struct YuvImage {
@@ -857,10 +900,8 @@ vec4 dither(vec4 color) {
 }
 #endif //WR_FEATURE_DITHERING
 
-vec4 sample_gradient(float offset, float gradient_repeat, float gradient_index, vec2 gradient_size) {
-    // Modulo the offset if the gradient repeats. We don't need to clamp non-repeating
-    // gradients because the gradient data texture is bound with CLAMP_TO_EDGE, and the
-    // first and last color entries are filled with the first and last stop colors
+vec4 sample_gradient(int address, float offset, float gradient_repeat) {
+    // Modulo the offset if the gradient repeats.
     float x = mix(offset, fract(offset), gradient_repeat);
 
     // Calculate the color entry index to use for this offset:
@@ -868,22 +909,25 @@ vec4 sample_gradient(float offset, float gradient_repeat, float gradient_index, 
     //     offsets from [0, 1) use the color entries in the range of [1, N-1)
     //     offsets >= 1 use the last color entry, N-1
     //     so transform the range [0, 1) -> [1, N-1)
-    float gradient_entries = 0.5 * gradient_size.x;
-    x = x * (gradient_entries - 2.0) + 1.0;
+
+    // TODO(gw): In the future we might consider making the size of the
+    // LUT vary based on number / distribution of stops in the gradient.
+    const int GRADIENT_ENTRIES = 128;
+    x = 1.0 + x * float(GRADIENT_ENTRIES);
 
     // Calculate the texel to index into the gradient color entries:
     //     floor(x) is the gradient color entry index
     //     fract(x) is the linear filtering factor between start and end
-    //     so, 2 * floor(x) + 0.5 is the center of the start color
-    //     finally, add floor(x) to interpolate to end
-    x = 2.0 * floor(x) + 0.5 + fract(x);
+    int lut_offset = 2 * int(floor(x));     // There is a [start, end] color per entry.
 
-    // Gradient color entries are encoded with high bits in one row and low bits in the next
-    // So use linear filtering to mix (gradient_index + 1) with (gradient_index)
-    float y = gradient_index * 2.0 + 0.5 + 1.0 / 256.0;
+    // Ensure we don't fetch outside the valid range of the LUT.
+    lut_offset = clamp(lut_offset, 0, 2 * (GRADIENT_ENTRIES + 1));
 
-    // Finally sample and apply dithering
-    return dither(texture(sGradients, vec2(x, y) / gradient_size));
+    // Fetch the start and end color.
+    vec4 texels[2] = fetch_from_resource_cache_2(address + lut_offset);
+
+    // Finally interpolate and apply dithering
+    return dither(mix(texels[0], texels[1], fract(x)));
 }
 
 //

@@ -52,12 +52,13 @@ public:
     // We need to ensure that mParamsArray is released on the main thread,
     // as the binding arguments may be XPConnect values, which are safe
     // to release only on the main thread.
-    NS_ReleaseOnMainThread(mParamsArray.forget());
+    NS_ReleaseOnMainThreadSystemGroup("StatementData::mParamsArray",
+                                      mParamsArray.forget());
   }
 
   /**
    * Return the sqlite statement, fetching it from the storage statement.  In
-   * the case of AsyncStatements this may actually create the statement 
+   * the case of AsyncStatements this may actually create the statement
    */
   inline int getSqliteStatement(sqlite3_stmt **_stmt)
   {
@@ -78,19 +79,6 @@ public:
   inline void reset()
   {
     NS_PRECONDITION(mStatementOwner, "Must have a statement owner!");
-#ifdef DEBUG
-    {
-      nsCOMPtr<nsIEventTarget> asyncThread =
-        mStatementOwner->getOwner()->getAsyncExecutionTarget();
-      // It's possible that we are shutting down the async thread, and this
-      // method would return nullptr as a result.
-      if (asyncThread) {
-        bool onAsyncThread;
-        NS_ASSERTION(NS_SUCCEEDED(asyncThread->IsOnCurrentThread(&onAsyncThread)) && onAsyncThread,
-                     "This should only be running on the async thread!");
-      }
-    }
-#endif
     // In the AsyncStatement case we may never have populated mStatement if the
     // AsyncExecuteStatements got canceled or a failure occurred in constructing
     // the statement.

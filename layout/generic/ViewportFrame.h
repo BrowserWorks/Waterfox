@@ -18,6 +18,8 @@ class nsPresContext;
 
 namespace mozilla {
 
+class ServoRestyleState;
+
 /**
   * ViewportFrame is the parent of a single child - the doc root frame or a scroll frame
   * containing the doc root frame. ViewportFrame stores this child in its primary child
@@ -55,8 +57,8 @@ public:
   void BuildDisplayListForTopLayer(nsDisplayListBuilder* aBuilder,
                                    nsDisplayList* aList);
 
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
   virtual void Reflow(nsPresContext* aPresContext,
                       ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,
@@ -71,6 +73,17 @@ public:
    * @return the rect to use as containing block rect
    */
   nsRect AdjustReflowInputAsContainingBlock(ReflowInput* aReflowInput) const;
+
+  /**
+   * Update our style (and recursively the styles of any anonymous boxes we
+   * might own)
+   */
+  void UpdateStyle(ServoRestyleState& aStyleSet);
+
+  /**
+   * Return our single anonymous box child.
+   */
+  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;

@@ -9,9 +9,8 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/NetUtil.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/ctypes.jsm");
+Cu.importGlobalProperties(["fetch"]); /* globals fetch */
 
 const FILE_UPDATE_LOCALE                  = "update.locale";
 const PREF_APP_DISTRIBUTION               = "distribution.id";
@@ -20,6 +19,8 @@ const PREF_APP_UPDATE_CUSTOM              = "app.update.custom";
 
 
 this.UpdateUtils = {
+  _locale: undefined,
+
   /**
    * Read the update channel from defaults only.  We do this to ensure that
    * the channel is tightly coupled with the application and does not apply
@@ -62,26 +63,69 @@ this.UpdateUtils = {
    *         The URL to format.
    * @return The formatted URL.
    */
-  formatUpdateURL(url) {
-    url = url.replace(/%PRODUCT%/g, Services.appinfo.name);
-    url = url.replace(/%VERSION%/g, Services.appinfo.version);
-    url = url.replace(/%BUILD_ID%/g, Services.appinfo.appBuildID);
-    url = url.replace(/%BUILD_TARGET%/g, Services.appinfo.OS + "_" + this.ABI);
-    url = url.replace(/%OS_VERSION%/g, this.OSVersion);
-    url = url.replace(/%SYSTEM_CAPABILITIES%/g, getSystemCapabilities());
-    if (/%LOCALE%/.test(url)) {
-      url = url.replace(/%LOCALE%/g, this.Locale);
-    }
-    url = url.replace(/%CHANNEL%/g, this.UpdateChannel);
-    url = url.replace(/%PLATFORM_VERSION%/g, Services.appinfo.platformVersion);
-    url = url.replace(/%DISTRIBUTION%/g,
-                      getDistributionPrefValue(PREF_APP_DISTRIBUTION));
-    url = url.replace(/%DISTRIBUTION_VERSION%/g,
-                      getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION));
-    url = url.replace(/%CUSTOM%/g, Preferences.get(PREF_APP_UPDATE_CUSTOM, ""));
-    url = url.replace(/\+/g, "%2B");
+  async formatUpdateURL(url) {
+    const locale = await this.getLocale();
 
-    return url;
+    return url.replace(/%(\w+)%/g, (match, name) => {
+      switch (name) {
+        case "PRODUCT":
+          return Services.appinfo.name;
+        case "VERSION":
+          return Services.appinfo.version;
+        case "BUILD_ID":
+          return Services.appinfo.appBuildID;
+        case "BUILD_TARGET":
+          return Services.appinfo.OS + "_" + this.ABI;
+        case "OS_VERSION":
+          return this.OSVersion;
+        case "LOCALE":
+          return locale;
+        case "CHANNEL":
+          return this.UpdateChannel;
+        case "PLATFORM_VERSION":
+          return Services.appinfo.platformVersion;
+        case "SYSTEM_CAPABILITIES":
+          return getSystemCapabilities();
+        case "CUSTOM":
+          return Services.prefs.getStringPref(PREF_APP_UPDATE_CUSTOM, "");
+        case "DISTRIBUTION":
+          return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+        case "DISTRIBUTION_VERSION":
+          return getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
+      }
+      return match;
+    }).replace(/\+/g, "%2B");
+  },
+
+  /**
+   * Gets the locale from the update.locale file for replacing %LOCALE% in the
+   * update url. The update.locale file can be located in the application
+   * directory or the GRE directory with preference given to it being located in
+   * the application directory.
+   */
+  async getLocale() {
+    if (this._locale !== undefined) {
+      return this._locale;
+    }
+
+    for (let res of ["app", "gre"]) {
+      const url = "resource://" + res + "/" + FILE_UPDATE_LOCALE;
+      let data;
+      try {
+        data = await fetch(url);
+      } catch (e) {
+        continue;
+      }
+      const locale = await data.text();
+      if (locale) {
+        return this._locale = locale.trim();
+      }
+    }
+
+    Cu.reportError(FILE_UPDATE_LOCALE + " file doesn't exist in either the " +
+                   "application or GRE directories");
+
+    return this._locale = null;
   }
 };
 
@@ -90,37 +134,21 @@ function getDistributionPrefValue(aPrefName) {
   return Services.prefs.getDefaultBranch(null).getCharPref(aPrefName, "default");
 }
 
+function getSystemCapabilities() {
+  return "ISET:" + gInstructionSet + ",MEM:" + getMemoryMB() + getJAWS();
+}
+
 /**
- * Gets the locale from the update.locale file for replacing %LOCALE% in the
- * update url. The update.locale file can be located in the application
- * directory or the GRE directory with preference given to it being located in
- * the application directory.
+ * Gets the appropriate update url string for whether a JAWS screen reader that
+ * is incompatible with e10s is present on Windows. For platforms other than
+ * Windows this returns an empty string which is easier for balrog to detect.
  */
-XPCOMUtils.defineLazyGetter(UpdateUtils, "Locale", function() {
-  let channel;
-  let locale;
-  for (let res of ["app", "gre"]) {
-    channel = NetUtil.newChannel({
-      uri: "resource://" + res + "/" + FILE_UPDATE_LOCALE,
-      contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_XMLHTTPREQUEST,
-      loadUsingSystemPrincipal: true
-    });
-    try {
-      let inputStream = channel.open2();
-      locale = NetUtil.readInputStreamToString(inputStream, inputStream.available());
-    } catch (e) {}
-    if (locale)
-      return locale.trim();
+function getJAWS() {
+  if (AppConstants.platform != "win") {
+    return "";
   }
 
-  Cu.reportError(FILE_UPDATE_LOCALE + " file doesn't exist in either the " +
-                 "application or GRE directories");
-
-  return null;
-});
-
-function getSystemCapabilities() {
-  return gInstructionSet + "," + getMemoryMB();
+  return ",JAWS:" + (Services.appinfo.shouldBlockIncompatJaws ? "1" : "0");
 }
 
 /**

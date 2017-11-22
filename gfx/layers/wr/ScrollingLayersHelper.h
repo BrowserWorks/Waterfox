@@ -16,6 +16,7 @@ class DisplayListBuilder;
 
 namespace layers {
 
+struct LayerClip;
 class StackingContextHelper;
 class WebRenderLayer;
 
@@ -28,8 +29,13 @@ public:
   ~ScrollingLayersHelper();
 
 private:
+  void PushLayerLocalClip(const StackingContextHelper& aStackingContext);
+  void PushLayerClip(const LayerClip& aClip,
+                     const StackingContextHelper& aSc);
+
   WebRenderLayer* mLayer;
   wr::DisplayListBuilder* mBuilder;
+  bool mPushedLayerLocalClip;
 };
 
 } // namespace layers

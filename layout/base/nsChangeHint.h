@@ -89,7 +89,7 @@ enum nsChangeHint : uint32_t {
 
   /**
    * The overflow area of the frame and all of its descendants has changed. This
-   * can happen through a text-decoration change.   
+   * can happen through a text-decoration change.
    */
   nsChangeHint_UpdateSubtreeOverflow = 1 << 12,
 
@@ -232,6 +232,12 @@ enum nsChangeHint : uint32_t {
    */
   nsChangeHint_CSSOverflowChange = 1 << 28,
 
+  /**
+   * Indicates that nsIFrame::UpdateWidgetProperties needs to be called.
+   * This is used for -moz-window-* properties.
+   */
+  nsChangeHint_UpdateWidgetProperties = 1 << 29,
+
   // IMPORTANT NOTE: When adding a new hint, you will need to add it to
   // one of:
   //
@@ -247,7 +253,7 @@ enum nsChangeHint : uint32_t {
   /**
    * Dummy hint value for all hints. It exists for compile time check.
    */
-  nsChangeHint_AllHints = (1 << 29) - 1,
+  nsChangeHint_AllHints = (1 << 30) - 1,
 };
 
 // Redefine these operators to return nothing. This will catch any use
@@ -349,7 +355,8 @@ inline nsChangeHint operator^=(nsChangeHint& aLeft, nsChangeHint aRight)
   nsChangeHint_UpdatePostTransformOverflow |               \
   nsChangeHint_UpdateTransformLayer |                      \
   nsChangeHint_UpdateUsesOpacity |                         \
-  nsChangeHint_AddOrRemoveTransform                        \
+  nsChangeHint_AddOrRemoveTransform |                      \
+  nsChangeHint_UpdateWidgetProperties                      \
 )
 
 // The change hints that are sometimes considered to be handled for descendants.
@@ -417,6 +424,17 @@ static_assert(!(nsChangeHint_Hints_AlwaysHandledForDescendants &
 #define nsChangeHint_ReflowHintsForBSizeChange            \
   nsChangeHint((nsChangeHint_AllReflowHints |             \
                 nsChangeHint_UpdateComputedBSize) &       \
+               ~(nsChangeHint_ClearDescendantIntrinsics | \
+                 nsChangeHint_NeedDirtyReflow))
+
+// * For changes to the float area of an already-floated element, we need all
+// reflow hints, but not the ones that apply to descendants.
+// Our descendants aren't impacted when our float area only changes
+// placement but not size/shape. (e.g. if we change which side we float to).
+// But our ancestors/siblings are potentially impacted, so we need to send
+// the non-descendant reflow hints.
+#define nsChangeHint_ReflowHintsForFloatAreaChange            \
+  nsChangeHint(nsChangeHint_AllReflowHints &              \
                ~(nsChangeHint_ClearDescendantIntrinsics | \
                  nsChangeHint_NeedDirtyReflow))
 

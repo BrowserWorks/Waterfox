@@ -11,10 +11,7 @@ taskgraph-tests:
         max-run-time: 1800
     run:
         using: mach
-        mach: taskgraph python-tests
-    run-on-projects:
-        - integration
-        - release
+        mach: python-test --subsuite taskgraph
     when:
         files-changed:
             - 'taskcluster/**/*.py'
@@ -39,9 +36,6 @@ marionette-harness:
     run:
         using: mach
         mach: python-test --subsuite marionette-harness
-    run-on-projects:
-        - integration
-        - release
     when:
         files-changed:
           - 'testing/marionette/harness/**'
@@ -52,7 +46,9 @@ marionette-harness:
 
 mochitest-harness:
     description: testing/mochitest unittests
-    platform: linux64/opt
+    platform:
+        - linux64/opt
+        - linux64/debug
     require-build: true
     treeherder:
         symbol: py(mch)
@@ -73,9 +69,6 @@ mochitest-harness:
             start_xvfb '1600x1200x24' 0 &&
             cd /home/worker/checkouts/gecko &&
             ./mach python-test --subsuite mochitest
-    run-on-projects:
-        - integration
-        - release
     when:
         files-changed:
             - 'config/mozunit.py'
@@ -105,9 +98,6 @@ mozbase:
     run:
         using: mach
         mach: python-test --subsuite mozbase
-    run-on-projects:
-        - integration
-        - release
     when:
         files-changed:
             - 'testing/mozbase/**'
@@ -116,9 +106,9 @@ mozbase:
 
 mozharness:
     description: mozharness integration tests
-    platform: lint/opt
+    platform: linux64/opt
     treeherder:
-        symbol: py(MH)
+        symbol: py(mh)
         kind: test
         tier: 2
     worker-type: aws-provisioner-v1/gecko-t-linux-xlarge
@@ -130,10 +120,7 @@ mozharness:
         cache-dotcache: true
         command: >
             cd /home/worker/checkouts/gecko/testing/mozharness &&
-            /usr/local/bin/tox -e py27-hg4.1
-    run-on-projects:
-        - integration
-        - release
+            /usr/local/bin/tox -e py27-hg4.3
     when:
         files-changed:
             - 'testing/mozharness/**'
@@ -156,9 +143,6 @@ mozlint:
     run:
         using: mach
         mach: python-test --subsuite mozlint
-    run-on-projects:
-        - integration
-        - release
     when:
         files-changed:
             - 'python/mozlint/**'

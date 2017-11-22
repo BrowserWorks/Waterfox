@@ -1260,19 +1260,17 @@ ScriptedProxyHandler::className(JSContext* cx, HandleObject proxy) const
 }
 
 JSString*
-ScriptedProxyHandler::fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const
+ScriptedProxyHandler::fun_toString(JSContext* cx, HandleObject proxy, bool isToSource) const
 {
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
                               js_Function_str, js_toString_str, "object");
     return nullptr;
 }
 
-bool
-ScriptedProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy,
-                                      MutableHandleRegExpShared shared) const
+RegExpShared*
+ScriptedProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy) const
 {
     MOZ_CRASH("Should not end up in ScriptedProxyHandler::regexp_toShared");
-    return false;
 }
 
 bool

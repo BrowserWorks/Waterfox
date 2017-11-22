@@ -11,6 +11,7 @@ use heapsize::HeapSizeOf;
 use platform::font::FontHandle;
 use platform::font_context::FontContextHandle;
 use platform::font_template::FontTemplateData;
+use servo_arc::Arc as ServoArc;
 use smallvec::SmallVec;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -21,8 +22,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use style::computed_values::{font_style, font_variant_caps};
 use style::properties::style_structs;
-use style::stylearc::Arc as StyleArc;
-use webrender_traits;
+use webrender_api;
 
 static SMALL_CAPS_SCALE_FACTOR: f32 = 0.8;      // Matches FireFox (see gfxFont.h)
 
@@ -79,7 +79,7 @@ impl FontContext {
                           descriptor: FontTemplateDescriptor,
                           pt_size: Au,
                           variant: font_variant_caps::T,
-                          font_key: webrender_traits::FontKey) -> Result<Font, ()> {
+                          font_key: webrender_api::FontKey) -> Result<Font, ()> {
         // TODO: (Bug #3463): Currently we only support fake small-caps
         // painting. We should also support true small-caps (where the
         // font supports it) in the future.
@@ -88,9 +88,9 @@ impl FontContext {
             font_variant_caps::T::normal => pt_size,
         };
 
-        let handle = try!(FontHandle::new_from_template(&self.platform_handle,
+        let handle = FontHandle::new_from_template(&self.platform_handle,
                                                         template,
-                                                        Some(actual_pt_size)));
+                                                        Some(actual_pt_size))?;
 
         Ok(Font::new(handle, variant, descriptor, pt_size, actual_pt_size, font_key))
     }
@@ -110,7 +110,7 @@ impl FontContext {
     /// Create a group of fonts for use in layout calculations. May return
     /// a cached font if this font instance has already been used by
     /// this context.
-    pub fn layout_font_group_for_style(&mut self, style: StyleArc<style_structs::Font>)
+    pub fn layout_font_group_for_style(&mut self, style: ServoArc<style_structs::Font>)
                                        -> Rc<FontGroup> {
         self.expire_font_caches_if_necessary();
 
@@ -240,7 +240,7 @@ impl HeapSizeOf for FontContext {
 
 #[derive(Debug)]
 struct LayoutFontGroupCacheKey {
-    pointer: StyleArc<style_structs::Font>,
+    pointer: ServoArc<style_structs::Font>,
     size: Au,
 }
 

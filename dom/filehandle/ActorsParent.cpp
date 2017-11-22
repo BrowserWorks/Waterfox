@@ -371,7 +371,7 @@ private:
 class FileHandleOp
 {
 protected:
-  nsCOMPtr<nsIEventTarget> mOwningThread;
+  nsCOMPtr<nsIEventTarget> mOwningEventTarget;
   RefPtr<FileHandle> mFileHandle;
 
 public:
@@ -381,16 +381,16 @@ public:
   AssertIsOnOwningThread() const
   {
     AssertIsOnBackgroundThread();
-    MOZ_ASSERT(mOwningThread);
+    MOZ_ASSERT(mOwningEventTarget);
     DebugOnly<bool> current;
-    MOZ_ASSERT(NS_SUCCEEDED(mOwningThread->IsOnCurrentThread(&current)));
+    MOZ_ASSERT(NS_SUCCEEDED(mOwningEventTarget->IsOnCurrentThread(&current)));
     MOZ_ASSERT(current);
   }
 
   nsIEventTarget*
   OwningThread() const
   {
-    return mOwningThread;
+    return mOwningEventTarget;
   }
 
   void
@@ -411,7 +411,7 @@ public:
 
 protected:
   FileHandleOp(FileHandle* aFileHandle)
-    : mOwningThread(NS_GetCurrentThread())
+    : mOwningEventTarget(GetCurrentThreadSerialEventTarget())
     , mFileHandle(aFileHandle)
   {
     AssertIsOnOwningThread();
@@ -588,7 +588,8 @@ public:
   ProgressRunnable(CopyFileHandleOp* aCopyFileHandleOp,
                    uint64_t aProgress,
                    uint64_t aProgressMax)
-    : mCopyFileHandleOp(aCopyFileHandleOp)
+    : Runnable("dom::CopyFileHandleOp::ProgressRunnable")
+    , mCopyFileHandleOp(aCopyFileHandleOp)
     , mProgress(aProgress)
     , mProgressMax(aProgressMax)
   { }
@@ -786,12 +787,12 @@ GetFileHandleThreadPoolFor(FileHandleStorage aStorage)
  ******************************************************************************/
 
 FileHandleThreadPool::FileHandleThreadPool()
-  : mOwningThread(NS_GetCurrentThread())
+  : mOwningEventTarget(GetCurrentThreadSerialEventTarget())
   , mShutdownRequested(false)
   , mShutdownComplete(false)
 {
   AssertIsOnBackgroundThread();
-  MOZ_ASSERT(mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget);
   AssertIsOnOwningThread();
 }
 
@@ -826,10 +827,10 @@ FileHandleThreadPool::Create()
 void
 FileHandleThreadPool::AssertIsOnOwningThread() const
 {
-  MOZ_ASSERT(mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget);
 
   bool current;
-  MOZ_ALWAYS_SUCCEEDS(mOwningThread->IsOnCurrentThread(&current));
+  MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->IsOnCurrentThread(&current));
   MOZ_ASSERT(current);
 }
 
@@ -1081,10 +1082,11 @@ FileHandleThreadPool::MaybeFireCallback(StoragesCompleteCallback* aCallback)
   return true;
 }
 
-FileHandleThreadPool::
-FileHandleQueue::FileHandleQueue(FileHandleThreadPool* aFileHandleThreadPool,
-                                 FileHandle* aFileHandle)
-  : mOwningFileHandleThreadPool(aFileHandleThreadPool)
+FileHandleThreadPool::FileHandleQueue::FileHandleQueue(
+  FileHandleThreadPool* aFileHandleThreadPool,
+  FileHandle* aFileHandle)
+  : Runnable("dom::FileHandleThreadPool::FileHandleQueue")
+  , mOwningFileHandleThreadPool(aFileHandleThreadPool)
   , mFileHandle(aFileHandle)
   , mShouldFinish(false)
 {
@@ -2252,7 +2254,7 @@ CopyFileHandleOp::DoFileWork(FileHandle* aFileHandle)
     nsCOMPtr<nsIRunnable> runnable =
       new ProgressRunnable(this, mOffset, mSize);
 
-    mOwningThread->Dispatch(runnable, NS_DISPATCH_NORMAL);
+    mOwningEventTarget->Dispatch(runnable, NS_DISPATCH_NORMAL);
   } while (true);
 
   MOZ_ASSERT(mOffset == mSize);

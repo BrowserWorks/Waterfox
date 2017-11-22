@@ -17,6 +17,7 @@ toolbar[brighttext] .toolbarbutton-1 {
 %ifdef MOZ_PHOTON_THEME
 #forward-button:-moz-locale-dir(rtl) > .toolbarbutton-icon,
 #reload-button:-moz-locale-dir(rtl) > .toolbarbutton-icon,
+#library-button:-moz-locale-dir(rtl) > .toolbarbutton-icon,
 %endif
 #nav-bar-overflow-button:-moz-locale-dir(rtl) > .toolbarbutton-icon,
 #panic-button:-moz-locale-dir(rtl) > .toolbarbutton-icon {
@@ -36,6 +37,134 @@ toolbar[brighttext] .toolbarbutton-1 {
 }
 
 %ifdef MOZ_PHOTON_THEME
+%ifdef MOZ_PHOTON_ANIMATIONS
+.toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1;
+  list-style-image: none;
+}
+
+#stop-reload-button[animate] > #reload-button > .toolbarbutton-icon,
+#stop-reload-button[animate] > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon {
+  fill: transparent;
+}
+
+@keyframes reload-to-stop {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-450px);
+  }
+}
+
+@keyframes reload-to-stop-rtl {
+  from {
+    transform: scaleX(-1) translateX(0);
+  }
+  to {
+    transform: scaleX(-1) translateX(-450px);
+  }
+}
+
+@keyframes stop-to-reload {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-450px);
+  }
+}
+
+@keyframes stop-to-reload-rtl {
+  from {
+    transform: scaleX(-1) translateX(0);
+  }
+  to {
+    transform: scaleX(-1) translateX(-450px);
+  }
+}
+
+#stop-reload-button[animate] > #reload-button,
+#stop-reload-button[animate] > #stop-button {
+  position: relative;
+}
+
+#reload-button > .toolbarbutton-animatable-box,
+#stop-button > .toolbarbutton-animatable-box {
+  position: absolute;
+  overflow: hidden;
+  top: calc(50% - 10px); /* Vertically center the 20px tall animatable image */
+  /* Since .toolbarbutton-icon uses a different width than the animatable-box,
+     we need to set a padding relative to the difference in widths. */
+  margin-inline-start: calc((16px + 2 * var(--toolbarbutton-inner-padding) - 18px) / 2);
+  /* Set the min- and max- width and height of the box equal to that
+     of each frame of the SVG sprite. Setting the width and height via
+     the `width` and `height` CSS properties causes an assertion for
+     `inline-size less than zero: 'aContainingBlockISize >= 0'` (bug 1379332). */
+  min-width: 18px;
+  max-width: 18px;
+  min-height: 20px;
+  max-height: 20px;
+}
+
+#reload-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image,
+#stop-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  height: var(--toolbarbutton-height); /* Height must be equal to height of toolbarbutton padding-box */
+}
+
+#stop-reload-button[animate] > #reload-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  background-image: url("chrome://browser/skin/reload-to-stop.svg");
+  width: 468px;
+}
+
+#stop-reload-button[animate] > #reload-button:not([displaystop]) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: reload-to-stop;
+}
+
+#stop-reload-button[animate] > #reload-button:not([displaystop]):-moz-locale-dir(rtl) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: reload-to-stop-rtl;
+}
+
+#reload-button:not([displaystop]) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-timing-function: steps(25);
+  animation-duration: 400ms;
+}
+
+#stop-reload-button[animate] > #reload-button[displaystop] + #stop-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  background-image: url("chrome://browser/skin/stop-to-reload.svg");
+  width: 468px;
+}
+
+#stop-reload-button[animate] > #reload-button[displaystop] + #stop-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: stop-to-reload;
+}
+
+#stop-reload-button[animate] > #reload-button[displaystop] + #stop-button:-moz-locale-dir(rtl) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: stop-to-reload-rtl;
+}
+
+#reload-button[displaystop] + #stop-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-timing-function: steps(25);
+  animation-duration: 400ms;
+}
+
+#reload-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  transform: translateX(-450px);
+}
+
+#reload-button:-moz-locale-dir(rtl) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  transform: scaleX(-1) translateX(-450px);
+}
+
+#reload-button[displaystop] + #stop-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  transform: translateX(-450px);
+}
+
+#reload-button[displaystop] + #stop-button:-moz-locale-dir(rtl) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  transform: scaleX(-1) translateX(-450px);
+}
+%endif
 #reload-button {
   list-style-image: url("chrome://browser/skin/reload.svg");
 }
@@ -45,72 +174,82 @@ toolbar[brighttext] .toolbarbutton-1 {
 }
 %endif
 
-#home-button[cui-areatype="toolbar"] {
+#home-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/home.svg");
 }
 
-#bookmarks-menu-button[cui-areatype="toolbar"] {
+#bookmarks-menu-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/bookmark-hollow.svg");
 }
 
-#bookmarks-menu-button[cui-areatype="toolbar"][starred] {
+#bookmarks-menu-button@attributeSelectorForToolbar@[starred] {
   list-style-image: url("chrome://browser/skin/bookmark.svg");
 }
 
-toolbar:not([brighttext]) #bookmarks-menu-button[cui-areatype="toolbar"][starred] > .toolbarbutton-menubutton-button {
+toolbar:not([brighttext]) #bookmarks-menu-button@attributeSelectorForToolbar@[starred] > .toolbarbutton-menubutton-button {
   -moz-context-properties: fill;
   fill: var(--toolbarbutton-icon-fill-attention);
 }
 
+%ifdef MOZ_PHOTON_THEME
+#bookmarks-menu-button > .toolbarbutton-icon {
+  list-style-image: url("chrome://browser/skin/bookmark-star-on-tray.svg");
+}
+%else
 #bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
   list-style-image: url("chrome://browser/skin/bookmarksMenu.svg");
 }
+%endif
 
-#history-panelmenu[cui-areatype="toolbar"] {
+#history-panelmenu@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/history.svg");
 }
 
-#downloads-button[cui-areatype="toolbar"] {
+#downloads-button@attributeSelectorForToolbar@ {
+%ifdef MOZ_PHOTON_THEME
+  list-style-image: url("chrome://browser/skin/downloads/download-icons.svg#arrow-with-bar");
+%else
   list-style-image: url("chrome://browser/skin/download.svg");
+%endif
 }
 
-#add-ons-button[cui-areatype="toolbar"] {
+#add-ons-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/addons.svg");
 }
 
-#open-file-button[cui-areatype="toolbar"] {
+#open-file-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/open.svg");
 }
 
-#save-page-button[cui-areatype="toolbar"] {
+#save-page-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/save.svg");
 }
 
-#sync-button[cui-areatype="toolbar"] {
+#sync-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/synced-tabs.svg");
 }
 
-#containers-panelmenu[cui-areatype="toolbar"] {
+#containers-panelmenu@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/containers.svg");
 }
 
-#feed-button[cui-areatype="toolbar"] {
+#feed-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/feed.svg");
 }
 
-#social-share-button[cui-areatype="toolbar"] {
+#social-share-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/share.svg");
 }
 
-#characterencoding-button[cui-areatype="toolbar"]{
+#characterencoding-button@attributeSelectorForToolbar@{
   list-style-image: url("chrome://browser/skin/characterEncoding.svg");
 }
 
-#new-window-button[cui-areatype="toolbar"] {
+#new-window-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/new-window.svg");
 }
 
-#e10s-button[cui-areatype="toolbar"] {
+#e10s-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/new-window.svg");
 }
 
@@ -118,34 +257,34 @@ toolbar:not([brighttext]) #bookmarks-menu-button[cui-areatype="toolbar"][starred
   transform: scaleY(-1);
 }
 
-#new-tab-button[cui-areatype="toolbar"] {
+#new-tab-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/new-tab.svg");
 }
 
-#privatebrowsing-button[cui-areatype="toolbar"] {
+#privatebrowsing-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/privateBrowsing.svg");
 }
 
-#find-button[cui-areatype="toolbar"] {
+#find-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/find.svg");
 }
 
-#print-button[cui-areatype="toolbar"] {
+#print-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/print.svg");
 }
 
 %ifdef XP_MACOSX
 #restore-button,
 %endif
-#fullscreen-button[cui-areatype="toolbar"] {
+#fullscreen-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/fullscreen.svg");
 }
 
-#developer-button[cui-areatype="toolbar"] {
+#developer-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/developer.svg");
 }
 
-#preferences-button[cui-areatype="toolbar"] {
+#preferences-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/settings.svg");
 }
 
@@ -153,23 +292,29 @@ toolbar:not([brighttext]) #bookmarks-menu-button[cui-areatype="toolbar"][starred
   list-style-image: url("chrome://browser/skin/menu.svg");
 }
 
-#edit-controls:not(@inAnyPanel@) > #cut-button {
+%ifdef MOZ_PHOTON_THEME
+%define PSEUDO_FOR_COMBINED_BUTTONS
+%else
+%define PSEUDO_FOR_COMBINED_BUTTONS :not(@inAnyPanel@)
+%endif
+
+#edit-controls@PSEUDO_FOR_COMBINED_BUTTONS@ > #cut-button {
   list-style-image: url("chrome://browser/skin/edit-cut.svg");
 }
 
-#edit-controls:not(@inAnyPanel@) > #copy-button {
+#edit-controls@PSEUDO_FOR_COMBINED_BUTTONS@ > #copy-button {
   list-style-image: url("chrome://browser/skin/edit-copy.svg");
 }
 
-#edit-controls:not(@inAnyPanel@) > #paste-button {
+#edit-controls@PSEUDO_FOR_COMBINED_BUTTONS@ > #paste-button {
   list-style-image: url("chrome://browser/skin/edit-paste.svg");
 }
 
-#zoom-controls:not(@inAnyPanel@) > #zoom-out-button {
+#zoom-controls@PSEUDO_FOR_COMBINED_BUTTONS@ > #zoom-out-button {
   list-style-image: url("chrome://browser/skin/zoom-out.svg");
 }
 
-#zoom-controls:not(@inAnyPanel@) > #zoom-in-button {
+#zoom-controls@PSEUDO_FOR_COMBINED_BUTTONS@ > #zoom-in-button {
   list-style-image: url("chrome://browser/skin/zoom-in.svg");
 }
 
@@ -177,26 +322,206 @@ toolbar:not([brighttext]) #bookmarks-menu-button[cui-areatype="toolbar"][starred
   list-style-image: url("chrome://browser/skin/chevron.svg");
 }
 
-#email-link-button[cui-areatype="toolbar"] {
+%ifdef MOZ_PHOTON_ANIMATIONS
+#nav-bar-overflow-button[animate] > .toolbarbutton-icon {
+  fill: transparent;
+}
+
+@keyframes overflow-animation {
+  from {
+    transform: translateX(0);
+  }
+  50% {
+    fill: #30A3FF;
+  }
+  to {
+    transform: translateX(-1260px);
+    fill: #30A3FF;
+  }
+}
+
+@keyframes overflow-animation-rtl {
+  from {
+    transform: scaleX(-1) translateX(0);
+  }
+  50% {
+    fill: #30A3FF;
+  }
+  to {
+    transform: scaleX(-1) translateX(-1260px);
+    fill: #30A3FF;
+  }
+}
+
+/* The animation is supposed to show the blue fill color for 520ms, then the
+   fade to the toolbarbutton-fill color for the remaining 210ms. Thus with an
+   animation-duration of 730ms, 71% is the point where we start the fade out. */
+@keyframes overflow-fade {
+  from {
+    fill: #30A3FF;
+  }
+  71% {
+    fill: #30A3FF;
+  }
+  to {
+    fill: inherit;
+  }
+}
+
+#nav-bar-overflow-button > .toolbarbutton-animatable-box {
+  position: absolute;
+  overflow: hidden;
+  top: calc(50% - 18px); /* Vertically center the 36px tall animatable image */
+  /* Since .toolbarbutton-icon uses a different width than the animatable box,
+     we need to set a padding relative to the difference in widths. */
+  margin-inline-start: calc((16px + 2 * var(--toolbarbutton-inner-padding) - 18px) / 2);
+  width: 18px; /* Width of each frame within the SVG sprite */
+  height: 36px; /* Height of each frame within the SVG sprite */
+}
+
+#nav-bar-overflow-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  /* Height must be equal to height of toolbarbutton padding-box. --toolbarbutton-height
+     is calculated and set during runtime by BrowserUtils.setToolbarButtonHeightProperty()
+     before the animation begins. */
+  height: var(--toolbarbutton-height);
+}
+
+#nav-bar-overflow-button[animate] > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: overflow-animation;
+  animation-timing-function: steps(70);
+  animation-duration: 1.1s;
+  background-image: url("chrome://browser/skin/chevron-animation.svg");
+  width: 1278px;
+}
+
+#nav-bar-overflow-button[animate]:-moz-locale-dir(rtl) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: overflow-animation-rtl;
+}
+
+#nav-bar-overflow-button[animate][fade] > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: overflow-fade;
+  animation-timing-function: ease-out;
+  animation-duration: 730ms;
+}
+
+#nav-bar-overflow-button[animate][fade]:-moz-locale-dir(rtl) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  transform: scaleX(-1);
+}
+%endif
+
+#email-link-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/mail.svg");
 }
 
-#sidebar-button[cui-areatype="toolbar"] {
+#sidebar-button@attributeSelectorForToolbar@ {
+  list-style-image: url("chrome://browser/skin/sidebars-right.svg");
+}
+
+#sidebar-button@attributeSelectorForToolbar@:-moz-locale-dir(ltr):not([positionend]),
+#sidebar-button@attributeSelectorForToolbar@:-moz-locale-dir(rtl)[positionend] {
   list-style-image: url("chrome://browser/skin/sidebars.svg");
 }
 
-#panic-button[cui-areatype="toolbar"] {
+#panic-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/forget.svg");
 }
 
-#panic-button[cui-areatype="toolbar"][open] {
+#panic-button@attributeSelectorForToolbar@[open] {
   fill: rgb(213, 32, 20);
 }
 
-#webide-button[cui-areatype="toolbar"] {
+#webide-button@attributeSelectorForToolbar@ {
   list-style-image: url("chrome://browser/skin/webIDE.svg");
 }
 
 #library-button {
   list-style-image: url("chrome://browser/skin/library.svg");
 }
+
+%ifdef MOZ_PHOTON_ANIMATIONS
+@keyframes library-bookmark-animation {
+  from {
+    transform: translateX(0);
+    fill: inherit;
+  }
+  25% {
+    fill: inherit;
+  }
+  50% {
+    fill: rgb(10,132,255);
+  }
+  to {
+    transform: translateX(-1056px);
+    fill: rgb(10,132,255);
+  }
+}
+
+@keyframes library-bookmark-animation-rtl {
+  from {
+    transform: scaleX(-1) translateX(0);
+    fill: inherit;
+  }
+  25% {
+    fill: inherit;
+  }
+  50% {
+    fill: rgb(10,132,255);
+  }
+  to {
+    transform: scaleX(-1) translateX(-1056px);
+    fill: rgb(10,132,255);
+  }
+}
+
+@keyframes library-bookmark-fade {
+  from {
+    fill: rgb(10,132,255);
+  }
+  to {
+    fill: inherit;
+  }
+}
+
+#library-button[animate="bookmark"] {
+  position: relative;
+}
+
+#library-button[animate="bookmark"] > .toolbarbutton-icon {
+  fill: transparent;
+}
+
+#library-button[animate="bookmark"] > .toolbarbutton-animatable-box {
+  position: absolute;
+  overflow: hidden;
+  top: calc(50% - 27px); /* 27px is half the height of the sprite */
+  /* Set a margin relative to the difference in widths of the .toolbarbutton-icon
+     and the .toolbar-animatable-box */
+  margin-inline-start: calc((16px + 2 * var(--toolbarbutton-inner-padding) - 22px) / 2);
+  /* Set the min- and max- width and height of the box equal to that
+     of each frame of the SVG sprite (must use min- and max- due to bug 1379332). */
+  min-width: 22px;
+  max-width: 22px;
+  min-height: 54px;
+  max-height: 54px;
+}
+
+#library-button[animate="bookmark"] > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  height: var(--toolbarbutton-height);
+  background-image: url("chrome://browser/skin/library-bookmark-animation.svg");
+  width: 1078px;
+  animation-name: library-bookmark-animation;
+  animation-duration: 768ms;
+  animation-timing-function: steps(48);
+}
+
+#library-button[animate="bookmark"]:-moz-locale-dir(rtl) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: library-bookmark-animation-rtl;
+  transform: scaleX(-1);
+}
+
+#library-button[animate="bookmark"][fade] > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
+  animation-name: library-bookmark-fade;
+  animation-duration: 2s;
+  animation-timing-function: ease-out;
+}
+%endif

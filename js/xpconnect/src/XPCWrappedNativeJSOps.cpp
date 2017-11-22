@@ -626,6 +626,7 @@ static const js::ClassOps XPC_WN_NoHelper_JSClassOps = {
     nullptr,                           // getProperty
     nullptr,                           // setProperty
     XPC_WN_Shared_Enumerate,           // enumerate
+    nullptr,                           // newEnumerate
     XPC_WN_NoHelper_Resolve,           // resolve
     nullptr,                           // mayResolve
     XPC_WN_NoHelper_Finalize,          // finalize
@@ -875,9 +876,9 @@ XPC_WN_Helper_Enumerate(JSContext* cx, HandleObject obj)
 
 /***************************************************************************/
 
-static bool
-XPC_WN_JSOp_Enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
-                      bool enumerableOnly)
+bool
+XPC_WN_NewEnumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
+                    bool enumerableOnly)
 {
     XPCCallContext ccx(cx, obj);
     XPCWrappedNative* wrapper = ccx.GetWrapper();
@@ -896,23 +897,6 @@ XPC_WN_JSOp_Enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
         return Throw(rv, cx);
     return retval;
 }
-
-/***************************************************************************/
-
-const js::ObjectOps XPC_WN_ObjectOpsWithEnumerate = {
-    nullptr,  // lookupProperty
-    nullptr,  // defineProperty
-    nullptr,  // hasProperty
-    nullptr,  // getProperty
-    nullptr,  // setProperty
-    nullptr,  // getOwnPropertyDescriptor
-    nullptr,  // deleteProperty
-    nullptr,  // watch
-    nullptr,  // unwatch
-    nullptr,  // getElements
-    XPC_WN_JSOp_Enumerate,
-    nullptr,  // funToString
-};
 
 /***************************************************************************/
 /***************************************************************************/
@@ -1114,6 +1098,7 @@ static const js::ClassOps XPC_WN_ModsAllowed_Proto_JSClassOps = {
     nullptr,                            // getProperty
     nullptr,                            // setProperty
     XPC_WN_Shared_Proto_Enumerate,      // enumerate
+    nullptr,                            // newEnumerate
     XPC_WN_ModsAllowed_Proto_Resolve,   // resolve
     nullptr,                            // mayResolve
     XPC_WN_Shared_Proto_Finalize,       // finalize
@@ -1194,6 +1179,7 @@ static const js::ClassOps XPC_WN_NoMods_Proto_JSClassOps = {
     nullptr,                                   // getProperty
     nullptr,                                   // setProperty
     XPC_WN_Shared_Proto_Enumerate,             // enumerate
+    nullptr,                                   // newEnumerate
     XPC_WN_NoMods_Proto_Resolve,               // resolve
     nullptr,                                   // mayResolve
     XPC_WN_Shared_Proto_Finalize,              // finalize
@@ -1290,6 +1276,7 @@ static const js::ClassOps XPC_WN_Tearoff_JSClassOps = {
     nullptr,                            // getProperty
     nullptr,                            // setProperty
     XPC_WN_TearOff_Enumerate,           // enumerate
+    nullptr,                            // newEnumerate
     XPC_WN_TearOff_Resolve,             // resolve
     nullptr,                            // mayResolve
     XPC_WN_TearOff_Finalize,            // finalize

@@ -17,21 +17,20 @@
 var TalosParentProfiler;
 
 (function() {
+  Components.utils.import("resource://gre/modules/Services.jsm");
+  Components.utils.import("resource://gre/modules/Console.jsm");
 
   // Whether or not this TalosContentProfiler object has had initFromObject
   // or initFromURLQueryParams called on it. Any functions that change the
   // state of the Gecko Profiler should only be called after calling either
   // initFromObject or initFromURLQueryParams.
-  let initted = false;
+  let initted = Services.profiler.IsActive();
 
   // The subtest name that beginTest() was called with.
   let currentTest = "unknown";
 
   // Profiler settings.
   let interval, entries, threadsArray, profileDir;
-
-  Components.utils.import("resource://gre/modules/Services.jsm");
-  Components.utils.import("resource://gre/modules/Console.jsm");
 
   // Use a bit of XPCOM hackery to get at the Talos Powers service
   // implementation...
@@ -74,7 +73,7 @@ var TalosParentProfiler;
      *     gecko_profile_threads (string, comma separated list of threads to filter with)
      *     gecko_profile_dir (string)
      */
-    initFromObject(obj={}) {
+    initFromObject(obj = {}) {
       if (!initted) {
         if (("gecko_profile_dir" in obj) && typeof obj.gecko_profile_dir == "string" &&
             ("gecko_profile_interval" in obj) && Number.isFinite(obj.gecko_profile_interval * 1) &&
@@ -133,12 +132,12 @@ var TalosParentProfiler;
       if (initted) {
         let profileFile = profileDir + "/" + currentTest + ".profile";
         return TalosPowers.profilerFinish(profileFile);
-      } else {
+      }
         let msg = "You should not call finishTest without having first " +
                   "initted the Profiler";
         console.error(msg);
         return Promise.reject(msg);
-      }
+
     },
 
     /**
@@ -164,7 +163,7 @@ var TalosParentProfiler;
      * @returns Promise
      *          Resolves once the Gecko Profiler has resumed.
      */
-    resume(marker="") {
+    resume(marker = "") {
       if (initted) {
         TalosPowers.profilerResume(marker);
       }
@@ -176,7 +175,7 @@ var TalosParentProfiler;
      * @returns Promise
      *          Resolves once the Gecko Profiler has paused.
      */
-    pause(marker="") {
+    pause(marker = "") {
       if (initted) {
         TalosPowers.profilerPause(marker);
       }
@@ -198,5 +197,18 @@ var TalosParentProfiler;
         TalosPowers.profilerMarker(marker);
       }
     },
+
+    afterProfileGathered() {
+      if (!initted) {
+        return Promise.resolve();
+      }
+
+      return new Promise(resolve => {
+        Services.obs.addObserver(function onGathered() {
+          Services.obs.removeObserver(onGathered, "talos-profile-gathered");
+          resolve();
+        }, "talos-profile-gathered");
+      });
+    }
   };
 })();

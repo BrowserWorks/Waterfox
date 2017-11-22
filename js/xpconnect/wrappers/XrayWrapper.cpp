@@ -213,11 +213,11 @@ const JSClass JSXrayTraits::HolderClass = {
 };
 
 bool
-OpaqueXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper, HandleObject wrapper,
+OpaqueXrayTraits::resolveOwnProperty(JSContext* cx, HandleObject wrapper, HandleObject target,
                                      HandleObject holder, HandleId id,
                                      MutableHandle<PropertyDescriptor> desc)
 {
-    bool ok = XrayTraits::resolveOwnProperty(cx, jsWrapper, wrapper, holder, id, desc);
+    bool ok = XrayTraits::resolveOwnProperty(cx, wrapper, target, holder, id, desc);
     if (!ok || desc.object())
         return ok;
 
@@ -518,13 +518,13 @@ ShouldResolveStaticProperties(JSProtoKey key)
 }
 
 bool
-JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
-                                 HandleObject wrapper, HandleObject holder,
+JSXrayTraits::resolveOwnProperty(JSContext* cx, HandleObject wrapper,
+                                 HandleObject target, HandleObject holder,
                                  HandleId id,
                                  MutableHandle<PropertyDescriptor> desc)
 {
     // Call the common code.
-    bool ok = XrayTraits::resolveOwnProperty(cx, jsWrapper, wrapper, holder,
+    bool ok = XrayTraits::resolveOwnProperty(cx, wrapper, target, holder,
                                              id, desc);
     if (!ok || desc.object())
         return ok;
@@ -541,7 +541,6 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
         return true;
     }
 
-    RootedObject target(cx, getTargetObject(wrapper));
     JSProtoKey key = getProtoKey(holder);
     if (!isPrototype(holder)) {
         // For Object and Array instances, we expose some properties from the
@@ -1055,6 +1054,23 @@ GetXrayTraits(JSObject* obj)
  * them. They are private to the origin that placed them.
  */
 
+// Certain globals do not share expandos with other globals. Xrays in these
+// globals cache expandos on the wrapper's holder, as there is only one such
+// wrapper which can create or access the expando. This allows for faster
+// access to the expando, including through JIT inline caches.
+static inline bool
+GlobalHasExclusiveExpandos(JSObject* obj)
+{
+    MOZ_ASSERT(JS_IsGlobalObject(obj));
+    return !strcmp(js::GetObjectJSClass(obj)->name, "Sandbox");
+}
+
+static inline JSObject*
+GetCachedXrayExpando(JSObject* wrapper);
+
+static inline void
+SetCachedXrayExpando(JSObject* holder, JSObject* expandoWrapper);
+
 static nsIPrincipal*
 ObjectPrincipal(JSObject* obj)
 {
@@ -1078,14 +1094,14 @@ ExpandoObjectFinalize(JSFreeOp* fop, JSObject* obj)
 
 const JSClassOps XrayExpandoObjectClassOps = {
     nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr, nullptr, ExpandoObjectFinalize
+    nullptr, nullptr, nullptr, nullptr,
+    ExpandoObjectFinalize
 };
 
 bool
 XrayTraits::expandoObjectMatchesConsumer(JSContext* cx,
                                          HandleObject expandoObject,
-                                         nsIPrincipal* consumerOrigin,
-                                         HandleObject exclusiveGlobal)
+                                         nsIPrincipal* consumerOrigin)
 {
     MOZ_ASSERT(js::IsObjectInContextCompartment(expandoObject, cx));
 
@@ -1101,39 +1117,50 @@ XrayTraits::expandoObjectMatchesConsumer(JSContext* cx,
     if (!consumerOrigin->Equals(o))
       return false;
 
-    // Sandboxes want exclusive expando objects.
+    // Certain globals exclusively own the associated expandos, in which case
+    // the caller should have used the cached expando on the wrapper instead.
     JSObject* owner = JS_GetReservedSlot(expandoObject,
-                                         JSSLOT_EXPANDO_EXCLUSIVE_GLOBAL)
+                                         JSSLOT_EXPANDO_EXCLUSIVE_WRAPPER_HOLDER)
                                         .toObjectOrNull();
-    if (!owner && !exclusiveGlobal)
-        return true;
-
-    // The exclusive global should always be wrapped in the target's compartment.
-    MOZ_ASSERT(!exclusiveGlobal || js::IsObjectInContextCompartment(exclusiveGlobal, cx));
-    MOZ_ASSERT(!owner || js::IsObjectInContextCompartment(owner, cx));
-    return owner == exclusiveGlobal;
+    return owner == nullptr;
 }
 
 bool
 XrayTraits::getExpandoObjectInternal(JSContext* cx, JSObject* expandoChain,
+                                     HandleObject exclusiveWrapper,
                                      nsIPrincipal* origin,
-                                     JSObject* exclusiveGlobalArg,
                                      MutableHandleObject expandoObject)
 {
     MOZ_ASSERT(!JS_IsExceptionPending(cx));
     expandoObject.set(nullptr);
 
+    // Use the cached expando if this wrapper has exclusive access to it.
+    if (exclusiveWrapper) {
+        JSObject* expandoWrapper = GetCachedXrayExpando(exclusiveWrapper);
+        expandoObject.set(expandoWrapper ? UncheckedUnwrap(expandoWrapper) : nullptr);
+#ifdef DEBUG
+        // Make sure the expando we found is on the target's chain. While we
+        // don't use this chain to look up expandos for the wrapper,
+        // the expando still needs to be on the chain to keep the wrapper and
+        // expando alive.
+        if (expandoObject) {
+            JSObject* head = expandoChain;
+            while (head && head != expandoObject)
+                head = JS_GetReservedSlot(head, JSSLOT_EXPANDO_NEXT).toObjectOrNull();
+            MOZ_ASSERT(head == expandoObject);
+        }
+#endif
+        return true;
+    }
+
     // The expando object lives in the compartment of the target, so all our
     // work needs to happen there.
-    RootedObject exclusiveGlobal(cx, exclusiveGlobalArg);
     RootedObject head(cx, expandoChain);
     JSAutoCompartment ac(cx, head);
-    if (!JS_WrapObject(cx, &exclusiveGlobal))
-        return false;
 
     // Iterate through the chain, looking for a same-origin object.
     while (head) {
-        if (expandoObjectMatchesConsumer(cx, head, origin, exclusiveGlobal)) {
+        if (expandoObjectMatchesConsumer(cx, head, origin)) {
             expandoObject.set(head);
             return true;
         }
@@ -1155,19 +1182,35 @@ XrayTraits::getExpandoObject(JSContext* cx, HandleObject target, HandleObject co
         return true;
 
     JSObject* consumerGlobal = js::GetGlobalForObjectCrossCompartment(consumer);
-    bool isSandbox = !strcmp(js::GetObjectJSClass(consumerGlobal)->name, "Sandbox");
-    return getExpandoObjectInternal(cx, chain, ObjectPrincipal(consumer),
-                                    isSandbox ? consumerGlobal : nullptr,
-                                    expandoObject);
+    bool isExclusive = GlobalHasExclusiveExpandos(consumerGlobal);
+    return getExpandoObjectInternal(cx, chain, isExclusive ? consumer : nullptr,
+                                    ObjectPrincipal(consumer), expandoObject);
 }
+
+// Wrappers which have exclusive access to the expando on their target object
+// need to be kept alive as long as the target object exists. This is done by
+// keeping the expando in the expando chain on the target (even though it will
+// not be used while looking up the expando for the wrapper), and keeping a
+// strong reference from that expando to the wrapper itself, via the
+// JSSLOT_EXPANDO_EXCLUSIVE_WRAPPER_HOLDER reserved slot. This slot does not
+// point to the wrapper itself, because it is a cross compartment edge and we
+// can't create a wrapper for a wrapper. Instead, the slot points to an
+// instance of the holder class below in the wrapper's compartment, and the
+// wrapper is held via this holder object's reserved slot.
+static const JSClass gWrapperHolderClass = {
+    "XrayExpandoWrapperHolder",
+    JSCLASS_HAS_RESERVED_SLOTS(1)
+};
+static const size_t JSSLOT_WRAPPER_HOLDER_CONTENTS = 0;
 
 JSObject*
 XrayTraits::attachExpandoObject(JSContext* cx, HandleObject target,
-                                nsIPrincipal* origin, HandleObject exclusiveGlobal)
+                                HandleObject exclusiveWrapper,
+                                nsIPrincipal* origin)
 {
     // Make sure the compartments are sane.
     MOZ_ASSERT(js::IsObjectInContextCompartment(target, cx));
-    MOZ_ASSERT(!exclusiveGlobal || js::IsObjectInContextCompartment(exclusiveGlobal, cx));
+    MOZ_ASSERT_IF(exclusiveWrapper, !js::IsObjectInContextCompartment(exclusiveWrapper, cx));
 
     // No duplicates allowed.
 #ifdef DEBUG
@@ -1175,7 +1218,7 @@ XrayTraits::attachExpandoObject(JSContext* cx, HandleObject target,
         JSObject* chain = getExpandoChain(target);
         if (chain) {
             RootedObject existingExpandoObject(cx);
-            if (getExpandoObjectInternal(cx, chain, origin, exclusiveGlobal, &existingExpandoObject))
+            if (getExpandoObjectInternal(cx, chain, exclusiveWrapper, origin, &existingExpandoObject))
                 MOZ_ASSERT(!existingExpandoObject);
             else
                 JS_ClearPendingException(cx);
@@ -1195,9 +1238,31 @@ XrayTraits::attachExpandoObject(JSContext* cx, HandleObject target,
     NS_ADDREF(origin);
     JS_SetReservedSlot(expandoObject, JSSLOT_EXPANDO_ORIGIN, JS::PrivateValue(origin));
 
-    // Note the exclusive global, if any.
-    JS_SetReservedSlot(expandoObject, JSSLOT_EXPANDO_EXCLUSIVE_GLOBAL,
-                       ObjectOrNullValue(exclusiveGlobal));
+    // Note the exclusive wrapper, if there is one.
+    RootedObject wrapperHolder(cx);
+    if (exclusiveWrapper) {
+        JSAutoCompartment ac(cx, exclusiveWrapper);
+        wrapperHolder = JS_NewObjectWithGivenProto(cx, &gWrapperHolderClass, nullptr);
+        if (!wrapperHolder)
+            return nullptr;
+        JS_SetReservedSlot(wrapperHolder, JSSLOT_WRAPPER_HOLDER_CONTENTS, ObjectValue(*exclusiveWrapper));
+    }
+    if (!JS_WrapObject(cx, &wrapperHolder))
+        return nullptr;
+    JS_SetReservedSlot(expandoObject, JSSLOT_EXPANDO_EXCLUSIVE_WRAPPER_HOLDER,
+                       ObjectOrNullValue(wrapperHolder));
+
+    // Store it on the exclusive wrapper, if there is one.
+    if (exclusiveWrapper) {
+        RootedObject cachedExpandoObject(cx, expandoObject);
+        JSAutoCompartment ac(cx, exclusiveWrapper);
+        if (!JS_WrapObject(cx, &cachedExpandoObject))
+            return nullptr;
+        JSObject* holder = ensureHolder(cx, exclusiveWrapper);
+        if (!holder)
+            return nullptr;
+        SetCachedXrayExpando(holder, cachedExpandoObject);
+    }
 
     // If this is our first expando object, take the opportunity to preserve
     // the wrapper. This keeps our expandos alive even if the Xray wrapper gets
@@ -1223,17 +1288,10 @@ XrayTraits::ensureExpandoObject(JSContext* cx, HandleObject wrapper,
     if (!getExpandoObject(cx, target, wrapper, &expandoObject))
         return nullptr;
     if (!expandoObject) {
-        // If the object is a sandbox, we don't want it to share expandos with
-        // anyone else, so we tag it with the sandbox global.
-        //
-        // NB: We first need to check the class, _then_ wrap for the target's
-        // compartment.
-        RootedObject consumerGlobal(cx, js::GetGlobalForObjectCrossCompartment(wrapper));
-        bool isSandbox = !strcmp(js::GetObjectJSClass(consumerGlobal)->name, "Sandbox");
-        if (!JS_WrapObject(cx, &consumerGlobal))
-            return nullptr;
-        expandoObject = attachExpandoObject(cx, target, ObjectPrincipal(wrapper),
-                                            isSandbox ? (HandleObject)consumerGlobal : nullptr);
+        JSObject* consumerGlobal = js::GetGlobalForObjectCrossCompartment(wrapper);
+        bool isExclusive = GlobalHasExclusiveExpandos(consumerGlobal);
+        expandoObject = attachExpandoObject(cx, target, isExclusive ? wrapper : nullptr,
+                                            ObjectPrincipal(wrapper));
     }
     return expandoObject;
 }
@@ -1264,13 +1322,21 @@ XrayTraits::cloneExpandoChain(JSContext* cx, HandleObject dst, HandleObject src)
 #endif
 
     while (oldHead) {
-        RootedObject exclusive(cx, JS_GetReservedSlot(oldHead,
-                                                      JSSLOT_EXPANDO_EXCLUSIVE_GLOBAL)
-                                                     .toObjectOrNull());
-        if (!JS_WrapObject(cx, &exclusive))
-            return false;
-        RootedObject newHead(cx, attachExpandoObject(cx, dst, GetExpandoObjectPrincipal(oldHead),
-                                                     exclusive));
+        RootedObject exclusiveWrapper(cx);
+        RootedObject wrapperHolder(cx, JS_GetReservedSlot(oldHead,
+                                                          JSSLOT_EXPANDO_EXCLUSIVE_WRAPPER_HOLDER)
+                                                         .toObjectOrNull());
+        if (wrapperHolder) {
+            // The global containing this wrapper holder has an xray for |src|
+            // with expandos. Create an xray in the global for |dst| which
+            // will be associated with a clone of |src|'s expando object.
+            JSAutoCompartment ac(cx, UncheckedUnwrap(wrapperHolder));
+            exclusiveWrapper = dst;
+            if (!JS_WrapObject(cx, &exclusiveWrapper))
+                return false;
+        }
+        RootedObject newHead(cx, attachExpandoObject(cx, dst, exclusiveWrapper,
+                                                     GetExpandoObjectPrincipal(oldHead)));
         if (!JS_CopyPropertiesFrom(cx, newHead, oldHead))
             return false;
         oldHead = JS_GetReservedSlot(oldHead, JSSLOT_EXPANDO_NEXT).toObjectOrNull();
@@ -1286,6 +1352,8 @@ ClearXrayExpandoSlots(JSObject* target, size_t slotIndex)
         return;
     }
 
+    MOZ_ASSERT(slotIndex != JSSLOT_EXPANDO_NEXT);
+    MOZ_ASSERT(slotIndex != JSSLOT_EXPANDO_EXCLUSIVE_WRAPPER_HOLDER);
     MOZ_ASSERT(GetXrayTraits(target) == &DOMXrayTraits::singleton);
     RootingContext* rootingCx = RootingCx();
     RootedObject rootedTarget(rootingCx, target);
@@ -1324,17 +1392,19 @@ bool CloneExpandoChain(JSContext* cx, JSObject* dstArg, JSObject* srcArg)
 }
 } // namespace XrayUtils
 
+static const size_t JSSLOT_XRAY_HOLDER = 0;
+
 static JSObject*
 GetHolder(JSObject* obj)
 {
-    return &js::GetProxyReservedSlot(obj, 0).toObject();
+    return &js::GetProxyReservedSlot(obj, JSSLOT_XRAY_HOLDER).toObject();
 }
 
-JSObject*
+/* static */ JSObject*
 XrayTraits::getHolder(JSObject* wrapper)
 {
     MOZ_ASSERT(WrapperFactory::IsXrayWrapper(wrapper));
-    js::Value v = js::GetProxyReservedSlot(wrapper, 0);
+    js::Value v = js::GetProxyReservedSlot(wrapper, JSSLOT_XRAY_HOLDER);
     return v.isObject() ? &v.toObject() : nullptr;
 }
 
@@ -1346,8 +1416,26 @@ XrayTraits::ensureHolder(JSContext* cx, HandleObject wrapper)
         return holder;
     holder = createHolder(cx, wrapper); // virtual trap.
     if (holder)
-        js::SetProxyReservedSlot(wrapper, 0, ObjectValue(*holder));
+        js::SetProxyReservedSlot(wrapper, JSSLOT_XRAY_HOLDER, ObjectValue(*holder));
     return holder;
+}
+
+static inline JSObject*
+GetCachedXrayExpando(JSObject* wrapper)
+{
+    JSObject* holder = XrayTraits::getHolder(wrapper);
+    if (!holder)
+        return nullptr;
+    Value v = JS_GetReservedSlot(holder, XrayTraits::HOLDER_SLOT_EXPANDO);
+    return v.isObject() ? &v.toObject() : nullptr;
+}
+
+static inline void
+SetCachedXrayExpando(JSObject* holder, JSObject* expandoWrapper)
+{
+    MOZ_ASSERT(js::GetObjectCompartment(holder) ==
+               js::GetObjectCompartment(expandoWrapper));
+    JS_SetReservedSlot(holder, XrayTraits::HOLDER_SLOT_EXPANDO, ObjectValue(*expandoWrapper));
 }
 
 namespace XrayUtils {
@@ -1504,12 +1592,11 @@ wrappedJSObject_getter(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-XrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
-                               HandleObject wrapper, HandleObject holder, HandleId id,
+XrayTraits::resolveOwnProperty(JSContext* cx, HandleObject wrapper, HandleObject target,
+                               HandleObject holder, HandleId id,
                                MutableHandle<PropertyDescriptor> desc)
 {
     desc.object().set(nullptr);
-    RootedObject target(cx, getTargetObject(wrapper));
     RootedObject expando(cx);
     if (!getExpandoObject(cx, target, wrapper, &expando))
         return false;
@@ -1576,13 +1663,13 @@ XrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
 }
 
 bool
-XPCWrappedNativeXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
-                                               HandleObject wrapper, HandleObject holder,
+XPCWrappedNativeXrayTraits::resolveOwnProperty(JSContext* cx, HandleObject wrapper,
+                                               HandleObject target, HandleObject holder,
                                                HandleId id,
                                                MutableHandle<PropertyDescriptor> desc)
 {
     // Call the common code.
-    bool ok = XrayTraits::resolveOwnProperty(cx, jsWrapper, wrapper, holder,
+    bool ok = XrayTraits::resolveOwnProperty(cx, wrapper, target, holder,
                                              id, desc);
     if (!ok || desc.object())
         return ok;
@@ -1682,12 +1769,12 @@ XPCWrappedNativeXrayTraits::construct(JSContext* cx, HandleObject wrapper,
 }
 
 bool
-DOMXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper, HandleObject wrapper,
+DOMXrayTraits::resolveOwnProperty(JSContext* cx, HandleObject wrapper, HandleObject target,
                                   HandleObject holder, HandleId id,
                                   MutableHandle<PropertyDescriptor> desc)
 {
     // Call the common code.
-    bool ok = XrayTraits::resolveOwnProperty(cx, jsWrapper, wrapper, holder, id, desc);
+    bool ok = XrayTraits::resolveOwnProperty(cx, wrapper, target, holder, id, desc);
     if (!ok || desc.object())
         return ok;
 
@@ -1721,9 +1808,8 @@ DOMXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper, Handl
         return true;
     }
 
-    RootedObject obj(cx, getTargetObject(wrapper));
     bool cacheOnHolder;
-    if (!XrayResolveOwnProperty(cx, wrapper, obj, id, desc, cacheOnHolder))
+    if (!XrayResolveOwnProperty(cx, wrapper, target, id, desc, cacheOnHolder))
         return false;
 
     MOZ_ASSERT(!desc.object() || desc.object() == wrapper, "What did we resolve this on?");
@@ -1894,14 +1980,14 @@ HasNativeProperty(JSContext* cx, HandleObject wrapper, HandleId id, bool* hasPro
     MOZ_ASSERT(WrapperFactory::IsXrayWrapper(wrapper));
     XrayTraits* traits = GetXrayTraits(wrapper);
     MOZ_ASSERT(traits);
+    RootedObject target(cx, XrayTraits::getTargetObject(wrapper));
     RootedObject holder(cx, traits->ensureHolder(cx, wrapper));
     NS_ENSURE_TRUE(holder, false);
     *hasProp = false;
     Rooted<PropertyDescriptor> desc(cx);
-    const Wrapper* handler = Wrapper::wrapperHandler(wrapper);
 
     // Try resolveOwnProperty.
-    if (!traits->resolveOwnProperty(cx, *handler, wrapper, holder, id, &desc))
+    if (!traits->resolveOwnProperty(cx, wrapper, target, holder, id, &desc))
         return false;
     if (desc.object()) {
         *hasProp = true;
@@ -1967,7 +2053,7 @@ XrayToString(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
     result.AppendASCII(wrapperStr);
-    JS_smprintf_free(wrapperStr);
+    js_free(wrapperStr);
 
     result.AppendASCII(end);
 
@@ -2010,6 +2096,7 @@ XrayWrapper<Base, Traits>::getPropertyDescriptor(JSContext* cx, HandleObject wra
 {
     assertEnteredPolicy(cx, wrapper, id, BaseProxyHandler::GET | BaseProxyHandler::SET |
                                          BaseProxyHandler::GET_PROPERTY_DESCRIPTOR);
+    RootedObject target(cx, XrayTraits::getTargetObject(wrapper));
     RootedObject holder(cx, Traits::singleton.ensureHolder(cx, wrapper));
 
     if (!holder)
@@ -2035,7 +2122,7 @@ XrayWrapper<Base, Traits>::getPropertyDescriptor(JSContext* cx, HandleObject wra
     // and unconditionally caches what it finds on the holder.
 
     // Check resolveOwnProperty.
-    if (!Traits::singleton.resolveOwnProperty(cx, *this, wrapper, holder, id, desc))
+    if (!Traits::singleton.resolveOwnProperty(cx, wrapper, target, holder, id, desc))
         return false;
 
     // Check the holder.
@@ -2098,9 +2185,10 @@ XrayWrapper<Base, Traits>::getOwnPropertyDescriptor(JSContext* cx, HandleObject 
 {
     assertEnteredPolicy(cx, wrapper, id, BaseProxyHandler::GET | BaseProxyHandler::SET |
                                          BaseProxyHandler::GET_PROPERTY_DESCRIPTOR);
+    RootedObject target(cx, XrayTraits::getTargetObject(wrapper));
     RootedObject holder(cx, Traits::singleton.ensureHolder(cx, wrapper));
 
-    if (!Traits::singleton.resolveOwnProperty(cx, *this, wrapper, holder, id, desc))
+    if (!Traits::singleton.resolveOwnProperty(cx, wrapper, target, holder, id, desc))
         return false;
     if (desc.object())
         desc.object().set(wrapper);
@@ -2131,10 +2219,10 @@ RecreateLostWaivers(JSContext* cx, const PropertyDescriptor* orig,
         orig->value.isObject() &&
         WrapperFactory::HasWaiveXrayFlag(&orig->value.toObject());
     bool getterWasWaived =
-        (orig->attrs & JSPROP_GETTER) &&
+        (orig->attrs & JSPROP_GETTER) && orig->getter &&
         WrapperFactory::HasWaiveXrayFlag(JS_FUNC_TO_DATA_PTR(JSObject*, orig->getter));
     bool setterWasWaived =
-        (orig->attrs & JSPROP_SETTER) &&
+        (orig->attrs & JSPROP_SETTER) && orig->setter &&
         WrapperFactory::HasWaiveXrayFlag(JS_FUNC_TO_DATA_PTR(JSObject*, orig->setter));
 
     // Recreate waivers. Note that for value, we need an extra UncheckedUnwrap
@@ -2358,12 +2446,11 @@ XrayWrapper<Base, Traits>::getOwnEnumerablePropertyKeys(JSContext* cx,
 }
 
 template <typename Base, typename Traits>
-bool
-XrayWrapper<Base, Traits>::enumerate(JSContext* cx, HandleObject wrapper,
-                                     MutableHandleObject objp) const
+JSObject*
+XrayWrapper<Base, Traits>::enumerate(JSContext* cx, HandleObject wrapper) const
 {
     // Skip our Base if it isn't already ProxyHandler.
-    return js::BaseProxyHandler::enumerate(cx, wrapper, objp);
+    return js::BaseProxyHandler::enumerate(cx, wrapper);
 }
 
 template <typename Base, typename Traits>
@@ -2546,5 +2633,23 @@ template class PermissiveXrayDOM;
 template class SecurityXrayDOM;
 template class PermissiveXrayJS;
 template class PermissiveXrayOpaque;
+
+/*
+ * This callback is used by the JS engine to test if a proxy handler is for a
+ * cross compartment xray with no security requirements.
+ */
+static bool
+IsCrossCompartmentXrayCallback(const js::BaseProxyHandler* handler)
+{
+    return handler == &PermissiveXrayDOM::singleton;
+}
+
+js::XrayJitInfo gXrayJitInfo = {
+    IsCrossCompartmentXrayCallback,
+    GlobalHasExclusiveExpandos,
+    JSSLOT_XRAY_HOLDER,
+    XrayTraits::HOLDER_SLOT_EXPANDO,
+    JSSLOT_EXPANDO_PROTOTYPE
+};
 
 } // namespace xpc

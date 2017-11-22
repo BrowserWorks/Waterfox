@@ -80,6 +80,22 @@ var snapshotFormatters = {
       $("contentprocesses-row").hidden = true;
     }
 
+    let styloReason;
+    if (!data.styloBuild) {
+      styloReason = strings.GetStringFromName("disabledByBuild");
+    } else if (data.styloResult != data.styloDefault) {
+      if (data.styloResult) {
+        styloReason = strings.GetStringFromName("enabledByUser");
+      } else {
+        styloReason = strings.GetStringFromName("disabledByUser");
+      }
+    } else if (data.styloDefault) {
+      styloReason = strings.GetStringFromName("enabledByDefault");
+    } else {
+      styloReason = strings.GetStringFromName("disabledByDefault");
+    }
+    $("stylo-box").textContent = `${data.styloResult} (${styloReason})`;
+
     let keyGoogleFound = data.keyGoogleFound ? "found" : "missing";
     $("key-google-box").textContent = strings.GetStringFromName(keyGoogleFound);
 
@@ -242,7 +258,7 @@ var snapshotFormatters = {
     let apzInfo = [];
     let formatApzInfo = function(info) {
       let out = [];
-      for (let type of ["Wheel", "Touch", "Drag"]) {
+      for (let type of ["Wheel", "Touch", "Drag", "Keyboard"]) {
         let key = "Apz" + type + "Input";
 
         if (!(key in info))
@@ -332,6 +348,17 @@ var snapshotFormatters = {
       }
     }
 
+    if ((AppConstants.NIGHTLY_BUILD || AppConstants.MOZ_DEV_EDITION) && AppConstants.platform != "macosx") {
+      let gpuDeviceResetButton = $.new("button");
+
+      gpuDeviceResetButton.addEventListener("click", function() {
+        windowUtils.triggerDeviceReset();
+      });
+
+      gpuDeviceResetButton.textContent = strings.GetStringFromName("gpuDeviceResetButton");
+      addRow("diagnostics", "Device Reset", [gpuDeviceResetButton]);
+    }
+
     // graphics-failures-tbody tbody
     if ("failures" in data) {
       // If indices is there, it should be the same length as failures,
@@ -390,16 +417,22 @@ var snapshotFormatters = {
     }
 
     // graphics-features-tbody
-
-    let compositor = data.windowLayerManagerRemote
-                     ? data.windowLayerManagerType
-                     : "BasicLayers (" + strings.GetStringFromName("mainThreadNoOMTC") + ")";
+    let compositor = "";
+    if (data.windowLayerManagerRemote) {
+      compositor = data.windowLayerManagerType;
+      if (data.windowUsingAdvancedLayers) {
+        compositor += " (Advanced Layers)";
+      }
+    } else {
+      compositor = "BasicLayers (" + strings.GetStringFromName("mainThreadNoOMTC") + ")";
+    }
     addRow("features", "compositing", compositor);
     delete data.windowLayerManagerRemote;
     delete data.windowLayerManagerType;
     delete data.numTotalWindows;
     delete data.numAcceleratedWindows;
     delete data.numAcceleratedWindowsMessage;
+    delete data.windowUsingAdvancedLayers;
 
     addRow("features", "asyncPanZoom",
            apzInfo.length
@@ -416,7 +449,6 @@ var snapshotFormatters = {
     addRowFromKey("features", "webgl2DriverExtensions");
     addRowFromKey("features", "webgl2Extensions");
     addRowFromKey("features", "supportsHardwareH264", "hardwareH264");
-    addRowFromKey("features", "currentAudioBackend", "audioBackend");
     addRowFromKey("features", "direct2DEnabled", "#Direct2D");
 
     if ("directWriteEnabled" in data) {
@@ -565,6 +597,111 @@ var snapshotFormatters = {
     }
   },
 
+  media: function media(data) {
+    let strings = stringBundle();
+
+    function insertBasicInfo(key, value) {
+      function createRow(key, value) {
+        let th = $.new("th", strings.GetStringFromName(key), "column");
+        let td = $.new("td", value);
+        td.style["white-space"] = "pre-wrap";
+        return $.new("tr", [th, td]);
+      }
+      $.append($("media-info-tbody"), [createRow(key, value)]);
+    }
+
+    function createDeviceInfoRow(device) {
+      let deviceInfo = Ci.nsIAudioDeviceInfo;
+
+      let states = {};
+      states[deviceInfo.STATE_DISABLED] = "Disabled";
+      states[deviceInfo.STATE_UNPLUGGED] = "Unplugged";
+      states[deviceInfo.STATE_ENABLED] = "Enabled";
+
+      let preferreds = {};
+      preferreds[deviceInfo.PREF_NONE] = "None";
+      preferreds[deviceInfo.PREF_MULTIMEDIA] = "Multimedia";
+      preferreds[deviceInfo.PREF_VOICE] = "Voice";
+      preferreds[deviceInfo.PREF_NOTIFICATION] = "Notification";
+      preferreds[deviceInfo.PREF_ALL] = "All";
+
+      let formats = {};
+      formats[deviceInfo.FMT_S16LE] = "S16LE";
+      formats[deviceInfo.FMT_S16BE] = "S16BE";
+      formats[deviceInfo.FMT_F32LE] = "F32LE";
+      formats[deviceInfo.FMT_F32BE] = "F32BE";
+
+      function toPreferredString(preferred) {
+        if (preferred == deviceInfo.PREF_NONE) {
+          return preferreds[deviceInfo.PREF_NONE];
+        } else if (preferred & deviceInfo.PREF_ALL) {
+          return preferreds[deviceInfo.PREF_ALL];
+        }
+        let str = "";
+        for (let pref of [deviceInfo.PREF_MULTIMEDIA,
+                          deviceInfo.PREF_VOICE,
+                          deviceInfo.PREF_NOTIFICATION]) {
+          if (preferred & pref) {
+            str += " " + preferreds[pref];
+          }
+        }
+        return str;
+      }
+
+      function toFromatString(dev) {
+        let str = "default: " + formats[dev.defaultFormat] + ", support:";
+        for (let fmt of [deviceInfo.FMT_S16LE,
+                         deviceInfo.FMT_S16BE,
+                         deviceInfo.FMT_F32LE,
+                         deviceInfo.FMT_F32BE]) {
+          if (dev.supportedFormat & fmt) {
+            str += " " + formats[fmt];
+          }
+        }
+        return str;
+      }
+
+      function toRateString(dev) {
+        return "default: " + dev.defaultRate +
+               ", support: " + dev.minRate + " - " + dev.maxRate;
+      }
+
+      function toLatencyString(dev) {
+        return dev.minLatency + " - " + dev.maxLatency;
+      }
+
+      return $.new("tr", [$.new("td", device.name),
+                          $.new("td", device.groupId),
+                          $.new("td", device.vendor),
+                          $.new("td", states[device.state]),
+                          $.new("td", toPreferredString(device.preferred)),
+                          $.new("td", toFromatString(device)),
+                          $.new("td", device.maxChannels),
+                          $.new("td", toRateString(device)),
+                          $.new("td", toLatencyString(device))]);
+    }
+
+    function insertDeviceInfo(side, devices) {
+      let rows = [];
+      for (let dev of devices) {
+        rows.push(createDeviceInfoRow(dev));
+      }
+      $.append($("media-" + side + "-devices-tbody"), rows);
+    }
+
+    // Basic information
+    insertBasicInfo("audioBackend", data.currentAudioBackend);
+    insertBasicInfo("maxAudioChannels", data.currentMaxAudioChannels);
+    insertBasicInfo("channelLayout", data.currentPreferredChannelLayout);
+    insertBasicInfo("sampleRate", data.currentPreferredSampleRate);
+
+    // Output devices information
+    insertDeviceInfo("output", data.audioOutputDevices);
+
+    // Input devices information
+    insertDeviceInfo("input", data.audioInputDevices);
+  },
+
   javaScript: function javaScript(data) {
     $("javascript-incremental-gc").textContent = data.incrementalGCEnabled;
   },
@@ -572,6 +709,10 @@ var snapshotFormatters = {
   accessibility: function accessibility(data) {
     $("a11y-activated").textContent = data.isActive;
     $("a11y-force-disabled").textContent = data.forceDisabled || 0;
+    let a11yHandlerUsed = $("a11y-handler-used");
+    if (a11yHandlerUsed) {
+      a11yHandlerUsed.textContent = data.handlerUsed;
+    }
   },
 
   libraryVersions: function libraryVersions(data) {
@@ -1001,7 +1142,7 @@ function populateActionBox() {
     $("reset-box").style.display = "block";
     $("action-box").style.display = "block";
   }
-  if (!Services.appinfo.inSafeMode) {
+  if (!Services.appinfo.inSafeMode && AppConstants.platform !== "android") {
     $("safe-mode-box").style.display = "block";
     $("action-box").style.display = "block";
   }
@@ -1021,13 +1162,31 @@ function safeModeRestart() {
  * Set up event listeners for buttons.
  */
 function setupEventListeners() {
-  $("show-update-history-button").addEventListener("click", function(event) {
-    var prompter = Cc["@mozilla.org/updates/update-prompt;1"].createInstance(Ci.nsIUpdatePrompt);
+  if (AppConstants.platform !== "android") {
+    $("show-update-history-button").addEventListener("click", function(event) {
+      var prompter = Cc["@mozilla.org/updates/update-prompt;1"].createInstance(Ci.nsIUpdatePrompt);
       prompter.showUpdateHistory(window);
-  });
-  $("reset-box-button").addEventListener("click", function(event) {
-    ResetProfile.openConfirmationDialog(window);
-  });
+    });
+    $("reset-box-button").addEventListener("click", function(event) {
+      ResetProfile.openConfirmationDialog(window);
+    });
+    $("restart-in-safe-mode-button").addEventListener("click", function(event) {
+      if (Services.obs.enumerateObservers("restart-in-safe-mode").hasMoreElements()) {
+        Services.obs.notifyObservers(null, "restart-in-safe-mode");
+      } else {
+        safeModeRestart();
+      }
+    });
+    $("verify-place-integrity-button").addEventListener("click", function(event) {
+      PlacesDBUtils.checkAndFixDatabase().then((tasksStatusMap) => {
+        let msg = PlacesDBUtils.getLegacyLog(tasksStatusMap).join("\n");
+        $("verify-place-result").style.display = "block";
+        $("verify-place-result").classList.remove("no-copy");
+        $("verify-place-result").textContent = msg;
+      });
+    });
+  }
+
   $("copy-raw-data-to-clipboard").addEventListener("click", function(event) {
     copyRawDataToClipboard(this);
   });
@@ -1036,20 +1195,5 @@ function setupEventListeners() {
   });
   $("profile-dir-button").addEventListener("click", function(event) {
     openProfileDirectory();
-  });
-  $("restart-in-safe-mode-button").addEventListener("click", function(event) {
-    if (Services.obs.enumerateObservers("restart-in-safe-mode").hasMoreElements()) {
-      Services.obs.notifyObservers(null, "restart-in-safe-mode");
-    } else {
-      safeModeRestart();
-    }
-  });
-  $("verify-place-integrity-button").addEventListener("click", function(event) {
-    PlacesDBUtils.checkAndFixDatabase().then((tasksStatusMap) => {
-      let msg = PlacesDBUtils.getLegacyLog(tasksStatusMap).join("\n");
-      $("verify-place-result").style.display = "block";
-      $("verify-place-result").classList.remove("no-copy");
-      $("verify-place-result").textContent = msg;
-    });
   });
 }

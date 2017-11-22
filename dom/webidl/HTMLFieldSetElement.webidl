@@ -13,10 +13,10 @@
 
 [HTMLConstructor]
 interface HTMLFieldSetElement : HTMLElement {
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute boolean disabled;
   readonly attribute HTMLFormElement? form;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute DOMString name;
 
   readonly attribute DOMString type;
@@ -25,6 +25,7 @@ interface HTMLFieldSetElement : HTMLElement {
 
   readonly attribute boolean willValidate;
   readonly attribute ValidityState validity;
+  [Throws]
   readonly attribute DOMString validationMessage;
 
   boolean checkValidity();

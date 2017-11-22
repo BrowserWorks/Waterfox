@@ -342,9 +342,10 @@ DirectInputMessageLoopOnceCallback(nsITimer *aTimer, void* aClosure)
   }
   aTimer->Cancel();
   if (!sIsShutdown) {
-    aTimer->InitWithFuncCallback(DirectInputMessageLoopOnceCallback,
-                                 nullptr, kWindowsGamepadPollInterval,
-                                 nsITimer::TYPE_ONE_SHOT);
+    aTimer->InitWithNamedFuncCallback(DirectInputMessageLoopOnceCallback,
+                                      nullptr, kWindowsGamepadPollInterval,
+                                      nsITimer::TYPE_ONE_SHOT,
+                                      "DirectInputMessageLoopOnceCallback");
   }
 }
 
@@ -367,9 +368,10 @@ class WindowsGamepadService
   void StartMessageLoop()
   {
     MOZ_ASSERT(mDirectInputTimer);
-    mDirectInputTimer->InitWithFuncCallback(DirectInputMessageLoopOnceCallback,
-                                            nullptr, kWindowsGamepadPollInterval,
-                                            nsITimer::TYPE_ONE_SHOT);
+    mDirectInputTimer->InitWithNamedFuncCallback(DirectInputMessageLoopOnceCallback,
+                                                 nullptr, kWindowsGamepadPollInterval,
+                                                 nsITimer::TYPE_ONE_SHOT,
+                                                 "DirectInputMessageLoopOnceCallback");
   }
 
   void Startup();
@@ -444,8 +446,9 @@ WindowsGamepadService::XInputMessageLoopOnceCallback(nsITimer *aTimer,
   self->PollXInput();
   if (self->mIsXInputMonitoring) {
     aTimer->Cancel();
-    aTimer->InitWithFuncCallback(XInputMessageLoopOnceCallback, self,
-                                 kWindowsGamepadPollInterval, nsITimer::TYPE_ONE_SHOT);
+    aTimer->InitWithNamedFuncCallback(XInputMessageLoopOnceCallback, self,
+                                      kWindowsGamepadPollInterval, nsITimer::TYPE_ONE_SHOT,
+                                      "XInputMessageLoopOnceCallback");
   }
 }
 
@@ -533,9 +536,10 @@ WindowsGamepadService::ScanForDevices()
     mXInputTimer->Cancel();
     if (ScanForXInputDevices()) {
       mIsXInputMonitoring = true;
-      mXInputTimer->InitWithFuncCallback(XInputMessageLoopOnceCallback, this,
-                                         kWindowsGamepadPollInterval,
-                                         nsITimer::TYPE_ONE_SHOT);
+      mXInputTimer->InitWithNamedFuncCallback(XInputMessageLoopOnceCallback, this,
+                                              kWindowsGamepadPollInterval,
+                                              nsITimer::TYPE_ONE_SHOT,
+                                              "XInputMessageLoopOnceCallback");
     } else {
       mIsXInputMonitoring = false;
     }
@@ -943,9 +947,10 @@ WindowsGamepadService::DevicesChanged(bool aIsStablizing)
 {
   if (aIsStablizing) {
     mDeviceChangeTimer->Cancel();
-    mDeviceChangeTimer->InitWithFuncCallback(DevicesChangeCallback, this,
-                                             kDevicesChangedStableDelay,
-                                             nsITimer::TYPE_ONE_SHOT);
+    mDeviceChangeTimer->InitWithNamedFuncCallback(DevicesChangeCallback, this,
+                                                  kDevicesChangedStableDelay,
+                                                  nsITimer::TYPE_ONE_SHOT,
+                                                  "DevicesChangeCallback");
   } else {
     ScanForDevices();
   }
@@ -1002,7 +1007,9 @@ GamepadWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 class StartWindowsGamepadServiceRunnable final : public Runnable
 {
 public:
-  StartWindowsGamepadServiceRunnable() {}
+  StartWindowsGamepadServiceRunnable()
+    : Runnable("StartWindowsGamepadServiceRunnable")
+  {}
 
   NS_IMETHOD Run() override
   {
@@ -1040,7 +1047,9 @@ private:
 class StopWindowsGamepadServiceRunnable final : public Runnable
 {
  public:
-  StopWindowsGamepadServiceRunnable() {}
+  StopWindowsGamepadServiceRunnable()
+    : Runnable("StopWindowsGamepadServiceRunnable")
+  {}
 
   NS_IMETHOD Run() override
   {

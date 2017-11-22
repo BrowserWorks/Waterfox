@@ -41,8 +41,8 @@ public:
                            nsIFrame*       aOldFrame) override;
 #endif
 
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
 
   /**
    * Retrieve the available height for content of this frame. The available content
@@ -77,12 +77,8 @@ public:
    */
   void DrainOverflowColumns();
 
-  /**
-   * Update the style on our column-content frames.
-   */
-  void DoUpdateStyleOfOwnedAnonBoxes(mozilla::ServoStyleSet& aStyleSet,
-                                     nsStyleChangeList& aChangeList,
-                                     nsChangeHint aHintForThisFrame) override;
+  // Return the column-content frame.
+  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override {
@@ -92,7 +88,7 @@ public:
 
   nsRect CalculateBounds(const nsPoint& aOffset);
   void CreateBorderRenderers(nsTArray<nsCSSBorderRenderer>& aBorderRenderers,
-                             nsRenderingContext* aCtx,
+                             gfxContext* aCtx,
                              const nsRect& aDirtyRect,
                              const nsPoint& aPt);
 

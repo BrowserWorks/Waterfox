@@ -4,8 +4,12 @@
 
 loader: taskgraph.loader.transform:loader
 
+kind-dependencies:
+   - toolchain
+
 transforms:
    - taskgraph.transforms.build_attrs:transforms
+   - taskgraph.transforms.toolchain:transforms
    - taskgraph.transforms.job:transforms
    - taskgraph.transforms.task:transforms
 
@@ -37,5 +41,7 @@ jobs:
             secrets: true
             tooltool-downloads: public
             need-xvfb: true
-
-
+        toolchains:
+            - linux64-clang
+            - linux64-gcc
+            - linux64-sccache

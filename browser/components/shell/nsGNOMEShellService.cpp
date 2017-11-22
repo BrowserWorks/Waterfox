@@ -32,6 +32,7 @@
 #include "nsIImageToPixbuf.h"
 #endif
 #include "nsXULAppAPI.h"
+#include "gfxPlatform.h"
 
 #include <glib.h>
 #include <glib-object.h>
@@ -85,6 +86,10 @@ nsresult
 nsGNOMEShellService::Init()
 {
   nsresult rv;
+
+  if (gfxPlatform::IsHeadless()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
   // GConf, GSettings or GIO _must_ be available, or we do not allow
   // CreateInstance to succeed.
@@ -284,7 +289,7 @@ nsGNOMEShellService::SetDefaultBrowser(bool aClaimAllTypes,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsString brandShortName;
-    brandBundle->GetStringFromName(u"brandShortName",
+    brandBundle->GetStringFromName("brandShortName",
                                    getter_Copies(brandShortName));
 
     // use brandShortName as the application id.
@@ -359,9 +364,9 @@ WriteImage(const nsCString& aPath, imgIContainer* aImage)
   return res ? NS_OK : NS_ERROR_FAILURE;
 #endif
 }
-                 
+
 NS_IMETHODIMP
-nsGNOMEShellService::SetDesktopBackground(nsIDOMElement* aElement, 
+nsGNOMEShellService::SetDesktopBackground(nsIDOMElement* aElement,
                                           int32_t aPosition)
 {
   nsresult rv;
@@ -402,7 +407,7 @@ nsGNOMEShellService::SetDesktopBackground(nsIDOMElement* aElement,
     rv = bundleService->CreateBundle(BRAND_PROPERTIES,
                                      getter_AddRefs(brandBundle));
     if (NS_SUCCEEDED(rv) && brandBundle) {
-      rv = brandBundle->GetStringFromName(u"brandShortName",
+      rv = brandBundle->GetStringFromName("brandShortName",
                                           getter_Copies(brandName));
       NS_ENSURE_SUCCESS(rv, rv);
     }
@@ -420,7 +425,7 @@ nsGNOMEShellService::SetDesktopBackground(nsIDOMElement* aElement,
   // Try GSettings first. If we don't have GSettings or the right schema, fall back
   // to using GConf instead. Note that if GSettings works ok, the changes get
   // mirrored to GConf by the gsettings->gconf bridge in gnome-settings-daemon
-  nsCOMPtr<nsIGSettingsService> gsettings = 
+  nsCOMPtr<nsIGSettingsService> gsettings =
     do_GetService(NS_GSETTINGSSERVICE_CONTRACTID);
   if (gsettings) {
     nsCOMPtr<nsIGSettingsCollection> background_settings;
@@ -468,7 +473,7 @@ nsGNOMEShellService::SetDesktopBackground(nsIDOMElement* aElement,
 NS_IMETHODIMP
 nsGNOMEShellService::GetDesktopBackgroundColor(uint32_t *aColor)
 {
-  nsCOMPtr<nsIGSettingsService> gsettings = 
+  nsCOMPtr<nsIGSettingsService> gsettings =
     do_GetService(NS_GSETTINGSSERVICE_CONTRACTID);
   nsCOMPtr<nsIGSettingsCollection> background_settings;
   nsAutoCString background;
@@ -617,11 +622,11 @@ NS_IMETHODIMP
 nsGNOMEShellService::OpenApplicationWithURI(nsIFile* aApplication, const nsACString& aURI)
 {
   nsresult rv;
-  nsCOMPtr<nsIProcess> process = 
+  nsCOMPtr<nsIProcess> process =
     do_CreateInstance("@mozilla.org/process/util;1", &rv);
   if (NS_FAILED(rv))
     return rv;
-  
+
   rv = process->Init(aApplication);
   if (NS_FAILED(rv))
     return rv;

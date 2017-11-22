@@ -26,7 +26,23 @@ def get_session():
 
 def _do_request(url):
     session = get_session()
-    return session.get(url, stream=True)
+    response = session.get(url, stream=True)
+    if response.status_code >= 400:
+        # Consume content before raise_for_status, so that the connection can be
+        # reused.
+        response.content
+    response.raise_for_status()
+    return response
+
+
+def _handle_artifact(path, response):
+    if path.endswith('.json'):
+        return response.json()
+    if path.endswith('.yml'):
+        return yaml.load(response.text)
+    response.raw.read = functools.partial(response.raw.read,
+                                          decode_content=True)
+    return response.raw
 
 
 def get_artifact_url(task_id, path, use_proxy=False):
@@ -47,19 +63,11 @@ def get_artifact(task_id, path, use_proxy=False):
     For other types of content, a file-like object is returned.
     """
     response = _do_request(get_artifact_url(task_id, path, use_proxy))
-    response.raise_for_status()
-    if path.endswith('.json'):
-        return response.json()
-    if path.endswith('.yml'):
-        return yaml.load(response.text)
-    response.raw.read = functools.partial(response.raw.read,
-                                          decode_content=True)
-    return response.raw
+    return _handle_artifact(path, response)
 
 
 def list_artifacts(task_id, use_proxy=False):
     response = _do_request(get_artifact_url(task_id, '', use_proxy).rstrip('/'))
-    response.raise_for_status()
     return response.json()['artifacts']
 
 
@@ -73,5 +81,23 @@ def get_index_url(index_path, use_proxy=False):
 
 def find_task_id(index_path, use_proxy=False):
     response = _do_request(get_index_url(index_path, use_proxy))
-    response.raise_for_status()
     return response.json()['taskId']
+
+
+def get_artifact_from_index(index_path, artifact_path, use_proxy=False):
+    full_path = index_path + '/artifacts/' + artifact_path
+    response = _do_request(get_index_url(full_path, use_proxy))
+    return _handle_artifact(full_path, response)
+
+
+def get_task_url(task_id, use_proxy=False):
+    if use_proxy:
+        TASK_URL = 'http://taskcluster/queue/v1/task/{}'
+    else:
+        TASK_URL = 'https://queue.taskcluster.net/v1/task/{}'
+    return TASK_URL.format(task_id)
+
+
+def get_task_definition(task_id, use_proxy=False):
+    response = _do_request(get_task_url(task_id, use_proxy))
+    return response.json()

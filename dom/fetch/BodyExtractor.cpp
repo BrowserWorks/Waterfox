@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "BodyExtractor.h"
-#include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FormData.h"
 #include "mozilla/dom/TypedArray.h"
@@ -18,7 +17,6 @@
 #include "nsIOutputStream.h"
 #include "nsIStorageStream.h"
 #include "nsStringStream.h"
-#include "nsIUnicodeEncoder.h"
 
 namespace mozilla {
 namespace dom {
@@ -135,41 +133,17 @@ BodyExtractor<const nsAString>::GetAsStream(nsIInputStream** aResult,
                                             nsACString& aContentTypeWithCharset,
                                             nsACString& aCharset) const
 {
-  nsCOMPtr<nsIUnicodeEncoder> encoder =
-    EncodingUtils::EncoderForEncoding("UTF-8");
-  if (!encoder) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  int32_t destBufferLen;
-  nsresult rv = encoder->GetMaxLength(mBody->BeginReading(), mBody->Length(),
-                                      &destBufferLen);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
   nsCString encoded;
-  if (!encoded.SetCapacity(destBufferLen, fallible)) {
+  if (!CopyUTF16toUTF8(*mBody, encoded, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  char* destBuffer = encoded.BeginWriting();
-  int32_t srcLen = (int32_t) mBody->Length();
-  int32_t outLen = destBufferLen;
-  rv = encoder->Convert(mBody->BeginReading(), &srcLen, destBuffer, &outLen);
+  nsresult rv = NS_NewCStringInputStream(aResult, encoded);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
-  MOZ_ASSERT(outLen <= destBufferLen);
-  encoded.SetLength(outLen);
-
-  rv = NS_NewCStringInputStream(aResult, encoded);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  *aContentLength = outLen;
+  *aContentLength = encoded.Length();
   aContentTypeWithCharset.AssignLiteral("text/plain;charset=UTF-8");
   aCharset.AssignLiteral("UTF-8");
   return NS_OK;

@@ -21,6 +21,7 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 #include "nsString.h"
+#include "GeckoProfiler.h"
 
 #define NOTIFY_GLOBAL_OBSERVERS
 
@@ -181,7 +182,10 @@ nsObserverService::Create(nsISupports* aOuter, const nsIID& aIID,
   // The memory reporter can not be immediately registered here because
   // the nsMemoryReporterManager may attempt to get the nsObserverService
   // during initialization, causing a recursive GetService.
-  NS_DispatchToCurrentThread(NewRunnableMethod(os, &nsObserverService::RegisterReporter));
+  NS_DispatchToCurrentThread(
+    NewRunnableMethod("nsObserverService::RegisterReporter",
+                      os,
+                      &nsObserverService::RegisterReporter));
 
   return os->QueryInterface(aIID, aInstancePtr);
 }
@@ -282,6 +286,9 @@ NS_IMETHODIMP nsObserverService::NotifyObservers(nsISupports* aSubject,
   }
 
   mozilla::TimeStamp start = TimeStamp::Now();
+
+  AUTO_PROFILER_LABEL_DYNAMIC("nsObserverService::NotifyObservers", OTHER,
+                              aTopic);
 
   nsObserverList* observerList = mObserverTopicTable.GetEntry(aTopic);
   if (observerList) {

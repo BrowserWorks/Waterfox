@@ -7,7 +7,10 @@
 #define nsUnknownDecoder_h__
 
 #include "nsIStreamConverter.h"
+#include "nsIThreadRetargetableStreamListener.h"
 #include "nsIContentSniffer.h"
+#include "mozilla/Mutex.h"
+#include "mozilla/Atomics.h"
 
 #include "nsCOMPtr.h"
 #include "nsString.h"
@@ -21,7 +24,9 @@
 }
 
 
-class nsUnknownDecoder : public nsIStreamConverter, public nsIContentSniffer
+class nsUnknownDecoder : public nsIStreamConverter
+                       , public nsIContentSniffer
+                       , public nsIThreadRetargetableStreamListener
 {
 public:
   // nsISupports methods
@@ -38,6 +43,9 @@ public:
 
   // nsIContentSniffer methods
   NS_DECL_NSICONTENTSNIFFER
+
+  // nsIThreadRetargetableStreamListener methods
+  NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
   nsUnknownDecoder();
 
@@ -76,7 +84,7 @@ protected:
   // precation thingy... who knows when we suddenly need to flip this
   // pref?
   bool AllowSniffing(nsIRequest* aRequest);
-  
+
   // Various sniffer functions.  Returning true means that a type
   // was determined; false means no luck.
   bool SniffForHTML(nsIRequest* aRequest);
@@ -102,10 +110,10 @@ protected:
    */
   struct nsSnifferEntry {
     typedef bool (nsUnknownDecoder::*TypeSniffFunc)(nsIRequest* aRequest);
-    
+
     const char* mBytes;
     uint32_t mByteLen;
-    
+
     // Exactly one of mMimeType and mContentTypeSniffer should be set non-null
     const char* mMimeType;
     TypeSniffFunc mContentTypeSniffer;
@@ -119,12 +127,17 @@ protected:
 
   static nsSnifferEntry sSnifferEntries[];
   static uint32_t sSnifferEntryNum;
-  
-  char *mBuffer;
-  uint32_t mBufferLen;
-  bool mRequireHTMLsuffix;
+
+  // We guarantee in order delivery of OnStart, OnStop and OnData, therefore
+  // we do not need proper locking for mBuffer.
+  mozilla::Atomic<char *>mBuffer;
+  mozilla::Atomic<uint32_t> mBufferLen;
+  mozilla::Atomic<bool> mRequireHTMLsuffix;
 
   nsCString mContentType;
+
+  // This mutex syncs: mContentType, mDecodedData and mNextListener.
+  mutable mozilla::Mutex mMutex;
 
 protected:
   nsresult ConvertEncodedData(nsIRequest* request, const char* data,

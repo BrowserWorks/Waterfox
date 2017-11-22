@@ -45,9 +45,16 @@ public:
     NS_DECL_NSIMUTABLE
     NS_DECL_NSIIPCSERIALIZABLEURI
 
+    static already_AddRefed<nsSimpleURI> From(nsIURI* aURI);
+
     // nsSimpleURI methods:
 
     nsSimpleURI();
+
+    bool Equals(nsSimpleURI* aOther)
+    {
+      return EqualsInternal(aOther, eHonorRef);
+    }
 
     // nsISizeOf
     // Among the sub-classes that inherit (directly or indirectly) from
@@ -92,7 +99,7 @@ protected:
     virtual nsresult CloneInternal(RefHandlingEnum refHandlingMode,
                                    const nsACString &newRef,
                                    nsIURI** clone);
-    
+
     nsCString mScheme;
     nsCString mPath; // NOTE: mPath does not include ref, as an optimization
     nsCString mRef;  // so that URIs with different refs can share string data.

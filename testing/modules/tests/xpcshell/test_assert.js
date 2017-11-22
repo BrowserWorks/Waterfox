@@ -18,7 +18,7 @@ function run_test() {
 
   function protoCtrChain(o) {
     let result = [];
-    while (o = o.__proto__) {
+    while ((o = o.__proto__)) {
       result.push(o.constructor);
     }
     return result.join();
@@ -31,7 +31,7 @@ function run_test() {
     let clsChain = protoCtrChain(cls.prototype);
     let objChain = protoCtrChain(obj);
     return objChain.slice(-clsChain.length) === clsChain;
-  };
+  }
 
   assert.ok(indirectInstanceOf(ns.Assert.AssertionError.prototype, Error),
             "Assert.AssertionError instanceof Error");
@@ -118,7 +118,7 @@ function run_test() {
   assert.deepEqual(a1, a2);
 
   let nbRoot = {
-    toString: function() { return this.first + " " + this.last; }
+    toString() { return this.first + " " + this.last; }
   };
 
   function nameBuilder(first, last) {
@@ -151,8 +151,8 @@ function run_test() {
   function thrower(errorConstructor) {
     throw new errorConstructor("test");
   }
-  let aethrow = makeBlock(thrower, ns.Assert.AssertionError);
-  aethrow = makeBlock(thrower, ns.Assert.AssertionError);
+  makeBlock(thrower, ns.Assert.AssertionError);
+  makeBlock(thrower, ns.Assert.AssertionError);
 
   // the basic calls work
   assert.throws(makeBlock(thrower, ns.Assert.AssertionError),
@@ -207,12 +207,14 @@ function run_test() {
     if ((err instanceof TypeError) && /test/.test(err)) {
       return true;
     }
+    return false;
   });
   // do the same with an arrow function
   assert.throws(makeBlock(thrower, TypeError), err => {
     if ((err instanceof TypeError) && /test/.test(err)) {
       return true;
     }
+    return false;
   });
 
   function testAssertionMessage(actual, expected) {
@@ -246,7 +248,7 @@ function run_test() {
 
   // https://github.com/joyent/node/issues/2893
   try {
-    assert.throws(function () {
+    assert.throws(function() {
       ifError(null);
     });
   } catch (e) {
@@ -278,7 +280,7 @@ function run_test() {
   // Test robustness of reporting:
   equal(new ns.Assert.AssertionError({
     actual: {
-      toJSON: function() {
+      toJSON() {
         throw "bam!";
       }
     },
@@ -290,7 +292,7 @@ function run_test() {
   assert.greater(3, 2);
   try {
     assert.greater(2, 2);
-  } catch(e) {
+  } catch (e) {
     message = e.toString().split("\n")[0];
   }
   assert.equal(message, "AssertionError: 2 > 2");
@@ -298,7 +300,7 @@ function run_test() {
   assert.greaterOrEqual(2, 2);
   try {
     assert.greaterOrEqual(1, 2);
-  } catch(e) {
+  } catch (e) {
     message = e.toString().split("\n")[0];
   }
   assert.equal(message, "AssertionError: 1 >= 2");
@@ -306,7 +308,7 @@ function run_test() {
   assert.less(1, 2);
   try {
     assert.less(2, 2);
-  } catch(e) {
+  } catch (e) {
     message = e.toString().split("\n")[0];
   }
   assert.equal(message, "AssertionError: 2 < 2");
@@ -314,7 +316,7 @@ function run_test() {
   assert.lessOrEqual(2, 2);
   try {
     assert.lessOrEqual(2, 1);
-  } catch(e) {
+  } catch (e) {
     message = e.toString().split("\n")[0];
   }
   assert.equal(message, "AssertionError: 2 <= 1");
@@ -322,17 +324,17 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_rejects() {
+add_task(async function test_rejects() {
   let ns = {};
   Components.utils.import("resource://testing-common/Assert.jsm", ns);
   let assert = new ns.Assert();
 
   // A helper function to test failures.
-  function* checkRejectsFails(err, expected) {
+  async function checkRejectsFails(err, expected) {
     try {
-      yield assert.rejects(Promise.reject(err), expected);
+      await assert.rejects(Promise.reject(err), expected);
       ok(false, "should have thrown");
-    } catch(ex) {
+    } catch (ex) {
       deepEqual(ex, err, "Assert.rejects threw the original unexpected error");
     }
   }
@@ -342,23 +344,23 @@ add_task(function* test_rejects() {
 
   // The actual tests...
   // No "expected" or "message" values supplied.
-  yield assert.rejects(Promise.reject(new Error("oh no")));
-  yield assert.rejects(Promise.reject("oh no"));
+  await assert.rejects(Promise.reject(new Error("oh no")));
+  await assert.rejects(Promise.reject("oh no"));
 
   // An explicit error object:
   // An instance to check against.
-  yield assert.rejects(Promise.reject(new Error("oh no")), Error, "rejected");
+  await assert.rejects(Promise.reject(new Error("oh no")), Error, "rejected");
   // A regex to match against the message.
-  yield assert.rejects(Promise.reject(new Error("oh no")), /oh no/, "rejected");
+  await assert.rejects(Promise.reject(new Error("oh no")), /oh no/, "rejected");
 
   // Failure cases:
   // An instance to check against that doesn't match.
-  yield checkRejectsFails(new Error("something else"), SomeErrorLikeThing);
+  await checkRejectsFails(new Error("something else"), SomeErrorLikeThing);
   // A regex that doesn't match.
-  yield checkRejectsFails(new Error("something else"), /oh no/);
+  await checkRejectsFails(new Error("something else"), /oh no/);
 
   // Check simple string messages.
-  yield assert.rejects(Promise.reject("oh no"), /oh no/, "rejected");
+  await assert.rejects(Promise.reject("oh no"), /oh no/, "rejected");
   // Wrong message.
-  yield checkRejectsFails("something else", /oh no/);
+  await checkRejectsFails("something else", /oh no/);
 });

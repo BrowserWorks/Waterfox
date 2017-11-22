@@ -15,42 +15,17 @@ use net_traits::image_cache::{ImageOrMetadataAvailable, UsePlaceholder};
 use opaque_node::OpaqueNodeMethods;
 use parking_lot::RwLock;
 use script_layout_interface::{PendingImage, PendingImageState};
-use script_traits::PaintWorkletExecutor;
+use script_traits::Painter;
 use script_traits::UntrustedNodeAddress;
+use servo_atoms::Atom;
 use servo_url::ServoUrl;
-use std::borrow::{Borrow, BorrowMut};
 use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use style::context::{SharedStyleContext, ThreadLocalStyleContext};
-use style::dom::TElement;
-
-/// TLS data scoped to the traversal.
-pub struct ScopedThreadLocalLayoutContext<E: TElement> {
-    pub style_context: ThreadLocalStyleContext<E>,
-}
-
-impl<E: TElement> ScopedThreadLocalLayoutContext<E> {
-    pub fn new(context: &LayoutContext) -> Self {
-        ScopedThreadLocalLayoutContext {
-            style_context: ThreadLocalStyleContext::new(&context.style_context),
-        }
-    }
-}
-
-impl<E: TElement> Borrow<ThreadLocalStyleContext<E>> for ScopedThreadLocalLayoutContext<E> {
-    fn borrow(&self) -> &ThreadLocalStyleContext<E> {
-        &self.style_context
-    }
-}
-
-impl<E: TElement> BorrowMut<ThreadLocalStyleContext<E>> for ScopedThreadLocalLayoutContext<E> {
-    fn borrow_mut(&mut self) -> &mut ThreadLocalStyleContext<E> {
-        &mut self.style_context
-    }
-}
+use style::context::RegisteredSpeculativePainter;
+use style::context::SharedStyleContext;
 
 thread_local!(static FONT_CONTEXT_KEY: RefCell<Option<FontContext>> = RefCell::new(None));
 
@@ -96,8 +71,8 @@ pub struct LayoutContext<'a> {
                                                   WebRenderImageInfo,
                                                   BuildHasherDefault<FnvHasher>>>>,
 
-    /// The executor for worklets
-    pub paint_worklet_executor: Option<Arc<PaintWorkletExecutor>>,
+    /// Paint worklets
+    pub registered_painters: &'a RegisteredPainters,
 
     /// A list of in-progress image loads to be shared with the script thread.
     /// A None value means that this layout was not initiated by the script thread.
@@ -201,4 +176,13 @@ impl<'a> LayoutContext<'a> {
             None | Some(ImageOrMetadataAvailable::MetadataAvailable(_)) => None,
         }
     }
+}
+
+/// A registered painter
+pub trait RegisteredPainter: RegisteredSpeculativePainter + Painter {}
+
+/// A set of registered painters
+pub trait RegisteredPainters: Sync {
+    /// Look up a painter
+    fn get(&self, name: &Atom) -> Option<&RegisteredPainter>;
 }

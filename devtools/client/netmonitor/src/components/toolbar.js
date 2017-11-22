@@ -4,6 +4,7 @@
 
 "use strict";
 
+const Services = require("Services");
 const {
   createClass,
   createFactory,
@@ -16,22 +17,25 @@ const { FILTER_SEARCH_DELAY } = require("../constants");
 const {
   getDisplayedRequestsSummary,
   getRequestFilterTypes,
+  getTypeFilteredRequests,
   isNetworkDetailsToggleButtonDisabled,
 } = require("../selectors/index");
 
-const { autocompleteProvider } = require("../utils/filter-text-utils");
+const { autocompleteProvider } = require("../utils/filter-autocomplete-provider");
 const { L10N } = require("../utils/l10n");
 
 // Components
 const SearchBox = createFactory(require("devtools/client/shared/components/search-box"));
 
-const { button, div, span } = DOM;
+const { button, div, input, label, span } = DOM;
 
 const COLLPASE_DETAILS_PANE = L10N.getStr("collapseDetailsPane");
 const EXPAND_DETAILS_PANE = L10N.getStr("expandDetailsPane");
 const SEARCH_KEY_SHORTCUT = L10N.getStr("netmonitor.toolbar.filterFreetext.key");
 const SEARCH_PLACE_HOLDER = L10N.getStr("netmonitor.toolbar.filterFreetext.label");
 const TOOLBAR_CLEAR = L10N.getStr("netmonitor.toolbar.clear");
+
+const DEVTOOLS_DISABLE_CACHE_PREF = "devtools.cache.disabled";
 
 /*
  * Network monitor toolbar component
@@ -47,7 +51,11 @@ const Toolbar = createClass({
     networkDetailsToggleDisabled: PropTypes.bool.isRequired,
     networkDetailsOpen: PropTypes.bool.isRequired,
     toggleNetworkDetails: PropTypes.func.isRequired,
+    disableBrowserCache: PropTypes.func.isRequired,
+    toggleBrowserCache: PropTypes.func.isRequired,
+    browserCacheDisabled: PropTypes.bool.isRequired,
     toggleRequestFilterType: PropTypes.func.isRequired,
+    filteredRequests: PropTypes.object.isRequired,
   },
 
   toggleRequestFilterType(evt) {
@@ -65,6 +73,9 @@ const Toolbar = createClass({
       networkDetailsToggleDisabled,
       networkDetailsOpen,
       toggleNetworkDetails,
+      toggleBrowserCache,
+      browserCacheDisabled,
+      filteredRequests,
     } = this.props;
 
     let toggleButtonClassName = [
@@ -102,6 +113,20 @@ const Toolbar = createClass({
             onClick: clearRequests,
           }),
           div({ className: "requests-list-filter-buttons" }, buttons),
+          label(
+            {
+              className: "devtools-checkbox-label",
+              title: L10N.getStr("netmonitor.toolbar.disableCache.tooltip"),
+            },
+            input({
+              id: "devtools-cache-checkbox",
+              className: "devtools-checkbox",
+              type: "checkbox",
+              checked: browserCacheDisabled,
+              onClick: toggleBrowserCache,
+            }),
+            L10N.getStr("netmonitor.toolbar.disableCache.label"),
+          ),
         ),
         span({ className: "devtools-toolbar-group" },
           SearchBox({
@@ -110,7 +135,8 @@ const Toolbar = createClass({
             placeholder: SEARCH_PLACE_HOLDER,
             type: "filter",
             onChange: setRequestFilterText,
-            autocompleteProvider,
+            autocompleteProvider: filter =>
+              autocompleteProvider(filter, filteredRequests),
           }),
           button({
             className: toggleButtonClassName.join(" "),
@@ -122,6 +148,21 @@ const Toolbar = createClass({
         )
       )
     );
+  },
+
+  componentDidMount() {
+    Services.prefs.addObserver(DEVTOOLS_DISABLE_CACHE_PREF,
+                               this.updateBrowserCacheDisabled);
+  },
+
+  componentWillUnmount() {
+    Services.prefs.removeObserver(DEVTOOLS_DISABLE_CACHE_PREF,
+                                  this.updateBrowserCacheDisabled);
+  },
+
+  updateBrowserCacheDisabled() {
+    this.props.disableBrowserCache(
+                        Services.prefs.getBoolPref(DEVTOOLS_DISABLE_CACHE_PREF));
   }
 });
 
@@ -129,7 +170,9 @@ module.exports = connect(
   (state) => ({
     networkDetailsToggleDisabled: isNetworkDetailsToggleButtonDisabled(state),
     networkDetailsOpen: state.ui.networkDetailsOpen,
+    browserCacheDisabled: state.ui.browserCacheDisabled,
     requestFilterTypes: getRequestFilterTypes(state),
+    filteredRequests: getTypeFilteredRequests(state),
     summary: getDisplayedRequestsSummary(state),
   }),
   (dispatch) => ({
@@ -137,5 +180,7 @@ module.exports = connect(
     setRequestFilterText: (text) => dispatch(Actions.setRequestFilterText(text)),
     toggleRequestFilterType: (type) => dispatch(Actions.toggleRequestFilterType(type)),
     toggleNetworkDetails: () => dispatch(Actions.toggleNetworkDetails()),
+    disableBrowserCache: (disabled) => dispatch(Actions.disableBrowserCache(disabled)),
+    toggleBrowserCache: () => dispatch(Actions.toggleBrowserCache()),
   }),
 )(Toolbar);

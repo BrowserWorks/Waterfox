@@ -39,7 +39,6 @@
 #include "nsAHtml5TreeBuilderState.h"
 #include "nsGkAtoms.h"
 #include "nsHtml5ByteReadable.h"
-#include "nsIUnicodeDecoder.h"
 #include "nsHtml5Macros.h"
 #include "nsIContentHandle.h"
 #include "nsHtml5Portability.h"
@@ -95,25 +94,45 @@ public:
     return !(flags & nsHtml5ElementName::NOT_INTERNED);
   }
 
-  inline static nsHtml5ElementName* elementNameByBuffer(
-    char16_t* buf,
-    int32_t offset,
-    int32_t length,
-    nsHtml5AtomTable* interner)
+  inline static int32_t levelOrderBinarySearch(jArray<int32_t, int32_t> data,
+                                               int32_t key)
   {
-    uint32_t hash = nsHtml5ElementName::bufToHash(buf, length);
-    int32_t index = nsHtml5ElementName::ELEMENT_HASHES.binarySearch(hash);
-    if (index < 0) {
-      return nullptr;
-    } else {
-      nsHtml5ElementName* elementName =
-        nsHtml5ElementName::ELEMENT_NAMES[index];
-      nsIAtom* name = elementName->name;
-      if (!nsHtml5Portability::localEqualsBuffer(name, buf, offset, length)) {
-        return nullptr;
+    int32_t n = data.length;
+    int32_t i = 0;
+    while (i < n) {
+      int32_t val = data[i];
+      if (val < key) {
+        i = 2 * i + 2;
+      } else if (val > key) {
+        i = 2 * i + 1;
+      } else {
+        return i;
       }
-      return elementName;
     }
+    return -1;
+    }
+
+    inline static nsHtml5ElementName* elementNameByBuffer(
+      char16_t* buf,
+      int32_t offset,
+      int32_t length,
+      nsHtml5AtomTable* interner)
+    {
+      uint32_t hash = nsHtml5ElementName::bufToHash(buf, length);
+      jArray<int32_t, int32_t> hashes;
+      hashes = nsHtml5ElementName::ELEMENT_HASHES;
+      int32_t index = levelOrderBinarySearch(hashes, hash);
+      if (index < 0) {
+        return nullptr;
+      } else {
+        nsHtml5ElementName* elementName =
+          nsHtml5ElementName::ELEMENT_NAMES[index];
+        nsIAtom* name = elementName->name;
+        if (!nsHtml5Portability::localEqualsBuffer(name, buf, offset, length)) {
+          return nullptr;
+        }
+        return elementName;
+      }
     }
 
   private:
@@ -159,7 +178,6 @@ public:
     }
 
     static nsHtml5ElementName* ELT_ANNOTATION_XML;
-    static nsHtml5ElementName* ELT_ISINDEX;
     static nsHtml5ElementName* ELT_BIG;
     static nsHtml5ElementName* ELT_BDO;
     static nsHtml5ElementName* ELT_COL;

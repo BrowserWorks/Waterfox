@@ -6,7 +6,6 @@
 
 #include "jit/IonAnalysis.h"
 
-#include "mozilla/SizePrintfMacros.h"
 
 #include "jit/AliasAnalysis.h"
 #include "jit/BaselineInspector.h"
@@ -225,6 +224,7 @@ FlagAllOperandsAsHavingRemovedUses(MIRGenerator* mir, MBasicBlock* block)
     while (rp) {
         if (mir->shouldCancel("FlagAllOperandsAsHavingRemovedUses loop 2"))
             return false;
+
         const CompileInfo& info = rp->block()->info();
         for (size_t i = 0, e = rp->numOperands(); i < e; i++) {
             if (info.isObservableSlot(i))
@@ -446,10 +446,10 @@ jit::PruneUnusedBranches(MIRGenerator* mir, MIRGraph& graph)
                 shouldBailout = false;
 
             JitSpew(JitSpew_Prune, "info: block %d,"
-                    " predCount: %" PRIuSIZE ", domInst: %" PRIuSIZE
-                    ", span: %" PRIuSIZE ", effectful: %" PRIuSIZE ", "
-                    " isLoopExit: %s, numSuccessorsOfPred: %" PRIuSIZE "."
-                    " (score: %" PRIuSIZE ", shouldBailout: %s)",
+                    " predCount: %zu, domInst: %zu"
+                    ", span: %zu, effectful: %zu, "
+                    " isLoopExit: %s, numSuccessorsOfPred: %zu."
+                    " (score: %zu, shouldBailout: %s)",
                     block->id(), predCount, numDominatedInst, branchSpan, numEffectfulInst,
                     isLoopExit ? "true" : "false", numSuccessorsOfPreds,
                     score, shouldBailout ? "true" : "false");
@@ -1737,6 +1737,9 @@ TypeAnalyzer::insertConversions()
                 phi->type() == MIRType::MagicOptimizedOut ||
                 phi->type() == MIRType::MagicUninitializedLexical)
             {
+                if (!alloc().ensureBallast())
+                    return false;
+
                 replaceRedundantPhi(phi);
                 block->discardPhi(phi);
             } else {
@@ -2650,7 +2653,7 @@ CheckOperand(const MNode* consumer, const MUse* use, int32_t* usesBalance)
     Fprinter print(stderr);
     print.printf("==Check Operand\n");
     use->producer()->dump(print);
-    print.printf("  index: %" PRIuSIZE "\n", use->consumer()->indexOf(use));
+    print.printf("  index: %zu\n", use->consumer()->indexOf(use));
     use->consumer()->dump(print);
     print.printf("==End\n");
 #endif
@@ -2669,7 +2672,7 @@ CheckUse(const MDefinition* producer, const MUse* use, int32_t* usesBalance)
     Fprinter print(stderr);
     print.printf("==Check Use\n");
     use->producer()->dump(print);
-    print.printf("  index: %" PRIuSIZE "\n", use->consumer()->indexOf(use));
+    print.printf("  index: %zu\n", use->consumer()->indexOf(use));
     use->consumer()->dump(print);
     print.printf("==End\n");
 #endif

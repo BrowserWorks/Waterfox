@@ -8,6 +8,8 @@
 
 #include "mozilla/layers/CompositorOGL.h"
 #include "mozilla/layers/TextureHostOGL.h"
+#include "mozilla/gfx/2D.h"
+#include "MacIOSurfaceHelpers.h"
 
 class MacIOSurface;
 
@@ -44,7 +46,8 @@ public:
 
   virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override
   {
-    return nullptr; // XXX - implement this (for MOZ_DUMP_PAINTING)
+    RefPtr<gfx::SourceSurface> surf = CreateSourceSurfaceFromMacIOSurface(GetMacIOSurface());
+    return surf->GetDataSurface();
   }
 
   gl::GLContext* gl() const;
@@ -57,10 +60,9 @@ public:
 
   virtual MacIOSurfaceTextureHostOGL* AsMacIOSurfaceTextureHost() override { return this; }
 
-  MacIOSurface* GetMacIOSurface()
-  {
-    return mSurface;
-  }
+  virtual MacIOSurface* GetMacIOSurface() override { return mSurface; }
+
+  virtual void CreateRenderTexture(const wr::ExternalImageId& aExternalImageId) override;
 
   virtual void GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
                               const std::function<wr::ImageKey()>& aImageKeyAllocator) override;
@@ -70,8 +72,8 @@ public:
                           const wr::ExternalImageId& aExtID) override;
 
   virtual void PushExternalImage(wr::DisplayListBuilder& aBuilder,
-                                 const WrRect& aBounds,
-                                 const WrClipRegionToken aClip,
+                                 const wr::LayoutRect& aBounds,
+                                 const wr::LayoutRect& aClip,
                                  wr::ImageRendering aFilter,
                                  Range<const wr::ImageKey>& aImageKeys) override;
 

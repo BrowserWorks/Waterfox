@@ -59,6 +59,20 @@ public:
   }
 
   /**
+   * DoesTabParentHaveIMEFocus() returns true when aTabParent has IME focus,
+   * i.e., the TabParent sent "focus" notification but not yet sends "blur".
+   * Note that this doesn't check if the remote processes are same because
+   * if another TabParent has focus, committing composition causes firing
+   * composition events in different TabParent.  (Anyway, such case shouldn't
+   * occur.)
+   */
+  static bool DoesTabParentHaveIMEFocus(const TabParent* aTabParent)
+  {
+    MOZ_ASSERT(aTabParent);
+    return sFocusedIMETabParent == aTabParent;
+  }
+
+  /**
    * OnTabParentDestroying() is called when aTabParent is being destroyed.
    */
   static void OnTabParentDestroying(TabParent* aTabParent);
@@ -159,14 +173,14 @@ public:
   //   If the editor is for designMode, nullptr.
   static void OnFocusInEditor(nsPresContext* aPresContext,
                               nsIContent* aContent,
-                              nsIEditor* aEditor);
+                              EditorBase& aEditorBase);
 
   // This method is called when the editor is initialized.
-  static void OnEditorInitialized(nsIEditor* aEditor);
+  static void OnEditorInitialized(EditorBase& aEditorBase);
 
   // This method is called when the editor is (might be temporarily) being
   // destroyed.
-  static void OnEditorDestroying(nsIEditor* aEditor);
+  static void OnEditorDestroying(EditorBase& aEditorBase);
 
   /**
    * All composition events must be dispatched via DispatchCompositionEvent()
@@ -224,13 +238,13 @@ public:
    */
   static nsresult NotifyIME(const IMENotification& aNotification,
                             nsIWidget* aWidget,
-                            bool aOriginIsRemote = false);
+                            TabParent* aTabParent = nullptr);
   static nsresult NotifyIME(IMEMessage aMessage,
                             nsIWidget* aWidget,
-                            bool aOriginIsRemote = false);
+                            TabParent* aTabParent = nullptr);
   static nsresult NotifyIME(IMEMessage aMessage,
                             nsPresContext* aPresContext,
-                            bool aOriginIsRemote = false);
+                            TabParent* aTabParent = nullptr);
 
   static nsINode* GetRootEditableNode(nsPresContext* aPresContext,
                                       nsIContent* aContent);
@@ -248,7 +262,8 @@ protected:
   static void SetIMEState(const IMEState &aState,
                           nsIContent* aContent,
                           nsIWidget* aWidget,
-                          InputContextAction aAction);
+                          InputContextAction aAction,
+                          InputContext::Origin aOrigin);
   static void SetInputContext(nsIWidget* aWidget,
                               const InputContext& aInputContext,
                               const InputContextAction& aAction);
@@ -256,8 +271,14 @@ protected:
                                  nsIContent* aContent);
 
   static void EnsureTextCompositionArray();
-  static void CreateIMEContentObserver(nsIEditor* aEditor);
+  static void CreateIMEContentObserver(EditorBase* aEditorBase);
   static void DestroyIMEContentObserver();
+
+  /**
+   * NotifyIMEOfBlurForChildProcess() tries to send blur notification when
+   * a remote process has IME focus.  Otherwise, do nothing.
+   */
+  static void NotifyIMEOfBlurForChildProcess();
 
   static bool IsEditable(nsINode* node);
 
@@ -279,11 +300,10 @@ protected:
   // sPresContext has gone, we need to clean up some IME state on the widget
   // if the widget is available.
   static nsIWidget* sWidget;
-  // sFocusedIMEWidget is, the widget which was sent to "focus" notification
-  // from IMEContentObserver and not yet sent "blur" notification.
-  // So, if this is not nullptr, the widget needs to receive "blur"
-  // notification.
+  // sFocusedIMETabParent is the tab parent, which send "focus" notification to
+  // sFocusedIMEWidget (and didn't yet sent "blur" notification).
   static nsIWidget* sFocusedIMEWidget;
+  static StaticRefPtr<TabParent> sFocusedIMETabParent;
   // sActiveInputContextWidget is the last widget whose SetInputContext() is
   // called.  This is important to reduce sync IPC cost with parent process.
   // If IMEStateManager set input context to different widget, PuppetWidget can
@@ -300,11 +320,13 @@ protected:
   // something to cause committing or canceling the composition.
   static TextCompositionArray* sTextCompositions;
 
+  // Origin type of current process.
+  static InputContext::Origin sOrigin;
+
   static bool           sInstalledMenuKeyboardListener;
   static bool           sIsGettingNewIMEState;
   static bool           sCheckForIMEUnawareWebApps;
   static bool           sInputModeSupported;
-  static bool           sRemoteHasFocus;
 
   class MOZ_STACK_CLASS GettingNewIMEStateBlocker final
   {

@@ -9,10 +9,10 @@ use cssparser::{Delimiter, parse_important, Parser, SourceLocation, Token};
 use parser::ParserContext;
 use properties::{PropertyId, PropertyDeclaration, SourcePropertyDeclaration};
 use selectors::parser::SelectorParseError;
-use shared_lock::{DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
+use servo_arc::Arc;
+use shared_lock::{DeepCloneParams, DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
 use std::fmt;
 use style_traits::{ToCss, ParseError, StyleParseError};
-use stylearc::Arc;
 use stylesheets::{CssRuleType, CssRules};
 
 /// An [`@supports`][supports] rule.
@@ -48,12 +48,13 @@ impl DeepCloneWithLock for SupportsRule {
     fn deep_clone_with_lock(
         &self,
         lock: &SharedRwLock,
-        guard: &SharedRwLockReadGuard
+        guard: &SharedRwLockReadGuard,
+        params: &DeepCloneParams,
     ) -> Self {
         let rules = self.rules.read_with(guard);
         SupportsRule {
             condition: self.condition.clone(),
-            rules: Arc::new(lock.wrap(rules.deep_clone_with_lock(lock, guard))),
+            rules: Arc::new(lock.wrap(rules.deep_clone_with_lock(lock, guard, params))),
             enabled: self.enabled,
             source_location: self.source_location.clone(),
         }
@@ -96,14 +97,14 @@ impl SupportsCondition {
                 // End of input
                 return Ok(in_parens)
             }
-            Ok(Token::Ident(ident)) => {
+            Ok(&Token::Ident(ref ident)) => {
                 match_ignore_ascii_case! { &ident,
                     "and" => ("and", SupportsCondition::And as fn(_) -> _),
                     "or" => ("or", SupportsCondition::Or as fn(_) -> _),
                     _ => return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into())
                 }
             }
-            Ok(t) => return Err(CssParseError::Basic(BasicParseError::UnexpectedToken(t)))
+            Ok(t) => return Err(CssParseError::Basic(BasicParseError::UnexpectedToken(t.clone())))
         };
 
         let mut conditions = Vec::with_capacity(2);
@@ -125,23 +126,21 @@ impl SupportsCondition {
         // but we want to not include it in `pos` for the SupportsCondition::FutureSyntax cases.
         while input.try(Parser::expect_whitespace).is_ok() {}
         let pos = input.position();
-        match input.next()? {
+        // FIXME: remove clone() when lifetimes are non-lexical
+        match input.next()?.clone() {
             Token::ParenthesisBlock => {
-                input.parse_nested_block(|input| {
-                    // `input.try()` not needed here since the alternative uses `consume_all()`.
-                    parse_condition_or_declaration(input).or_else(|_| {
-                        consume_all(input);
-                        Ok(SupportsCondition::FutureSyntax(input.slice_from(pos).to_owned()))
-                    })
-                })
+                let nested = input.try(|input| {
+                    input.parse_nested_block(|i| parse_condition_or_declaration(i))
+                });
+                if nested.is_ok() {
+                    return nested;
+                }
             }
-            Token::Function(_) => {
-                let result: Result<_, ParseError> = input.parse_nested_block(|i| Ok(consume_all(i)));
-                result.unwrap();
-                Ok(SupportsCondition::FutureSyntax(input.slice_from(pos).to_owned()))
-            }
-            t => Err(CssParseError::Basic(BasicParseError::UnexpectedToken(t)))
+            Token::Function(_) => {}
+            t => return Err(CssParseError::Basic(BasicParseError::UnexpectedToken(t))),
         }
+        input.parse_nested_block(|i| consume_any_value(i))?;
+        Ok(SupportsCondition::FutureSyntax(input.slice_from(pos).to_owned()))
     }
 
     /// Evaluate a supports condition
@@ -216,63 +215,48 @@ impl ToCss for SupportsCondition {
 
 #[derive(Clone, Debug)]
 /// A possibly-invalid property declaration
-pub struct Declaration {
-    /// The property name
-    pub prop: String,
-    /// The property value
-    pub val: String,
-}
+pub struct Declaration(pub String);
 
 impl ToCss for Declaration {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result
-        where W: fmt::Write
-    {
-        dest.write_str(&self.prop)?;
-        dest.write_str(":")?;
-        // no space, the `val` already contains any possible spaces
-        dest.write_str(&self.val)
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
+        dest.write_str(&self.0)
     }
 }
 
-/// Slurps up input till exhausted, return string from source position
-fn parse_anything(input: &mut Parser) -> String {
-    let pos = input.position();
-    consume_all(input);
-    input.slice_from(pos).to_owned()
-}
-
-/// Consume input till done
-fn consume_all(input: &mut Parser) {
-    while let Ok(_) = input.next() {}
+/// https://drafts.csswg.org/css-syntax-3/#typedef-any-value
+fn consume_any_value<'i, 't>(input: &mut Parser<'i, 't>) -> Result<(), ParseError<'i>> {
+    input.expect_no_error_token().map_err(|err| err.into())
 }
 
 impl Declaration {
     /// Parse a declaration
     pub fn parse<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Declaration, ParseError<'i>> {
-        let prop = input.expect_ident()?.into_owned();
+        let pos = input.position();
+        input.expect_ident()?;
         input.expect_colon()?;
-        let val = parse_anything(input);
-        Ok(Declaration { prop: prop, val: val })
+        consume_any_value(input)?;
+        Ok(Declaration(input.slice_from(pos).to_owned()))
     }
 
     /// Determine if a declaration parses
     ///
     /// https://drafts.csswg.org/css-conditional-3/#support-definition
     pub fn eval(&self, cx: &ParserContext) -> bool {
-        let id = if let Ok(id) = PropertyId::parse((&*self.prop).into()) {
-            id
-        } else {
-            return false
-        };
-        let mut input = ParserInput::new(&self.val);
+        let mut input = ParserInput::new(&self.0);
         let mut input = Parser::new(&mut input);
-        let context = ParserContext::new_with_rule_type(cx, Some(CssRuleType::Style));
-        let mut declarations = SourcePropertyDeclaration::new();
-        let res = input.parse_until_before(Delimiter::Bang, |input| {
-            PropertyDeclaration::parse_into(&mut declarations, id, &context, input)
-                .map_err(|e| StyleParseError::PropertyDeclaration(e).into())
-        });
-        let _ = input.try(parse_important);
-        res.is_ok() && input.is_exhausted()
+        input.parse_entirely(|input| {
+            let prop = input.expect_ident().unwrap().as_ref().to_owned();
+            input.expect_colon().unwrap();
+            let id = PropertyId::parse(&prop)
+                .map_err(|_| StyleParseError::UnspecifiedError)?;
+            let mut declarations = SourcePropertyDeclaration::new();
+            let context = ParserContext::new_with_rule_type(cx, Some(CssRuleType::Style));
+            input.parse_until_before(Delimiter::Bang, |input| {
+                PropertyDeclaration::parse_into(&mut declarations, id, &context, input)
+                    .map_err(|e| StyleParseError::PropertyDeclaration(e).into())
+            })?;
+            let _ = input.try(parse_important);
+            Ok(())
+        }).is_ok()
     }
 }

@@ -120,7 +120,7 @@ struct nsCounterChangeNode : public nsCounterNode {
                         // that comes before all the real content, with
                         // the resets first, in order, and then the increments.
                         aPropIndex + (aChangeType == RESET
-                                        ? (INT32_MIN) 
+                                        ? (INT32_MIN)
                                         : (INT32_MIN / 2)),
                         aChangeType)
         , mChangeValue(aChangeValue)
@@ -212,7 +212,7 @@ public:
 
     // Gets the appropriate counter list, creating it if necessary.
     // Guaranteed to return non-null. (Uses an infallible hashtable API.)
-    nsCounterList* CounterListFor(const nsSubstring& aCounterName);
+    nsCounterList* CounterListFor(const nsAString& aCounterName);
 
     // Clean up data in any dirty counter lists.
     void RecalcAll();

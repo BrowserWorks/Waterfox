@@ -10,6 +10,7 @@ const {
   RESET_COLUMNS,
   TOGGLE_COLUMN,
   TOGGLE_REQUEST_FILTER_TYPE,
+  DISABLE_BROWSER_CACHE,
 } = require("../constants");
 const { getRequestFilterTypes } = require("../selectors/index");
 
@@ -30,13 +31,17 @@ function prefsMiddleware(store) {
         Services.prefs.setCharPref(
           "devtools.netmonitor.filters", JSON.stringify(filters));
         break;
+      case DISABLE_BROWSER_CACHE:
+        Services.prefs.setBoolPref(
+          "devtools.cache.disabled", store.getState().ui.browserCacheDisabled);
+        break;
       case TOGGLE_COLUMN:
       case RESET_COLUMNS:
-        let hiddenColumns = [...store.getState().ui.columns]
-          .filter(([column, shown]) => !shown)
+        let visibleColumns = [...store.getState().ui.columns]
+          .filter(([column, shown]) => shown)
           .map(([column, shown]) => column);
         Services.prefs.setCharPref(
-          "devtools.netmonitor.hiddenColumns", JSON.stringify(hiddenColumns));
+          "devtools.netmonitor.visibleColumns", JSON.stringify(visibleColumns));
         break;
     }
     return res;

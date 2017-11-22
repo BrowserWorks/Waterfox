@@ -16,7 +16,7 @@
 #include "nsMappedAttributeElement.h"
 #include "nsIStyleRule.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/ServoBindings.h"
+#include "mozilla/ServoBindingTypes.h"
 #include "mozilla/MemoryReporting.h"
 
 class nsIAtom;
@@ -45,7 +45,7 @@ public:
   }
 
   bool Equals(const nsMappedAttributes* aAttributes) const;
-  uint32_t HashValue() const;
+  PLDHashNumber HashValue() const;
 
   void DropStyleSheetReference()
   {

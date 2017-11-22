@@ -21,6 +21,7 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
+#include "nsContentUtils.h"
 #include "nsThreadUtils.h"
 #include "nsQueryObject.h"
 #include "nsSOCKSIOLayer.h"
@@ -129,19 +130,23 @@ private:
             // callbacks called normally they will all be null and this is a nop
 
             if (mChannel) {
-                NS_ReleaseOnMainThread(mChannel.forget());
+                NS_ReleaseOnMainThreadSystemGroup(
+                  "nsAsyncResolveRequest::mChannel", mChannel.forget());
             }
 
             if (mCallback) {
-                NS_ReleaseOnMainThread(mCallback.forget());
+                NS_ReleaseOnMainThreadSystemGroup(
+                  "nsAsyncResolveRequest::mCallback", mCallback.forget());
             }
 
             if (mProxyInfo) {
-                NS_ReleaseOnMainThread(mProxyInfo.forget());
+                NS_ReleaseOnMainThreadSystemGroup(
+                  "nsAsyncResolveRequest::mProxyInfo", mProxyInfo.forget());
             }
 
             if (mXPComPPS) {
-                NS_ReleaseOnMainThread(mXPComPPS.forget());
+                NS_ReleaseOnMainThreadSystemGroup(
+                  "nsAsyncResolveRequest::mXPComPPS", mXPComPPS.forget());
             }
         }
     }
@@ -362,7 +367,8 @@ private:
     ~AsyncGetPACURIRequest()
     {
         MOZ_ASSERT(NS_IsMainThread() == mIsMainThreadOnly);
-        NS_ReleaseOnMainThread(mServiceHolder.forget());
+        NS_ReleaseOnMainThreadSystemGroup(
+          "AsyncGetPACURIRequest::mServiceHolder", mServiceHolder.forget());
     }
 
     bool mIsMainThreadOnly;
@@ -1142,7 +1148,7 @@ nsProtocolProxyService::IsProxyDisabled(nsProxyInfo *pi)
 }
 
 nsresult
-nsProtocolProxyService::SetupPACThread()
+nsProtocolProxyService::SetupPACThread(nsIEventTarget *mainThreadEventTarget)
 {
     if (mIsShutdown) {
         return NS_ERROR_FAILURE;
@@ -1151,7 +1157,7 @@ nsProtocolProxyService::SetupPACThread()
     if (mPACMan)
         return NS_OK;
 
-    mPACMan = new nsPACMan();
+    mPACMan = new nsPACMan(mainThreadEventTarget);
 
     bool mainThreadOnly;
     nsresult rv;
@@ -1314,7 +1320,8 @@ nsresult
 nsProtocolProxyService::AsyncResolveInternal(nsIChannel *channel, uint32_t flags,
                                              nsIProtocolProxyCallback *callback,
                                              nsICancelable **result,
-                                             bool isSyncOK)
+                                             bool isSyncOK,
+                                             nsIEventTarget *mainThreadEventTarget)
 {
     NS_ENSURE_ARG_POINTER(channel);
     NS_ENSURE_ARG_POINTER(callback);
@@ -1343,6 +1350,11 @@ nsProtocolProxyService::AsyncResolveInternal(nsIChannel *channel, uint32_t flags
             mSystemProxySettings = sp2;
             ResetPACThread();
         }
+    }
+
+    rv = SetupPACThread(mainThreadEventTarget);
+    if (NS_FAILED(rv)) {
+        return rv;
     }
 
     // SystemProxySettings and PAC files can block the main thread
@@ -1381,14 +1393,17 @@ nsProtocolProxyService::AsyncResolveInternal(nsIChannel *channel, uint32_t flags
 NS_IMETHODIMP
 nsProtocolProxyService::AsyncResolve2(nsIChannel *channel, uint32_t flags,
                                       nsIProtocolProxyCallback *callback,
+                                      nsIEventTarget *mainThreadEventTarget,
                                       nsICancelable **result)
 {
-    return AsyncResolveInternal(channel, flags, callback, result, true);
+    return AsyncResolveInternal(channel, flags, callback,
+                                result, true, mainThreadEventTarget);
 }
 
 NS_IMETHODIMP
 nsProtocolProxyService::AsyncResolve(nsISupports *channelOrURI, uint32_t flags,
                                      nsIProtocolProxyCallback *callback,
+                                     nsIEventTarget *mainThreadEventTarget,
                                      nsICancelable **result)
 {
 
@@ -1401,25 +1416,19 @@ nsProtocolProxyService::AsyncResolve(nsISupports *channelOrURI, uint32_t flags,
             return NS_ERROR_NO_INTERFACE;
         }
 
-        nsCOMPtr<nsIScriptSecurityManager> secMan(
-            do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv));
-        NS_ENSURE_SUCCESS(rv, rv);
-        nsCOMPtr<nsIPrincipal> systemPrincipal;
-        rv = secMan->GetSystemPrincipal(getter_AddRefs(systemPrincipal));
-        NS_ENSURE_SUCCESS(rv, rv);
-
         // creating a temporary channel from the URI which is not
         // used to perform any network loads, hence its safe to
         // use systemPrincipal as the loadingPrincipal.
         rv = NS_NewChannel(getter_AddRefs(channel),
                            uri,
-                           systemPrincipal,
+                           nsContentUtils::GetSystemPrincipal(),
                            nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                            nsIContentPolicy::TYPE_OTHER);
         NS_ENSURE_SUCCESS(rv, rv);
     }
 
-    return AsyncResolveInternal(channel, flags, callback, result, false);
+    return AsyncResolveInternal(channel, flags, callback,
+                                result, false, mainThreadEventTarget);
 }
 
 NS_IMETHODIMP
@@ -1909,9 +1918,6 @@ nsProtocolProxyService::Resolve_Internal(nsIChannel *channel,
                                          nsIProxyInfo **result)
 {
     NS_ENSURE_ARG_POINTER(channel);
-    nsresult rv = SetupPACThread();
-    if (NS_FAILED(rv))
-        return rv;
 
     *usePACThread = false;
     *result = nullptr;
@@ -1920,7 +1926,7 @@ nsProtocolProxyService::Resolve_Internal(nsIChannel *channel,
         return NS_OK;  // Can't proxy this (filters may not override)
 
     nsCOMPtr<nsIURI> uri;
-    rv = GetProxyURI(channel, getter_AddRefs(uri));
+    nsresult rv = GetProxyURI(channel, getter_AddRefs(uri));
     if (NS_FAILED(rv)) return rv;
 
     // See bug #586908.
@@ -1974,6 +1980,14 @@ nsProtocolProxyService::Resolve_Internal(nsIChannel *channel,
         uri->GetAsciiHost(host);
         uri->GetScheme(scheme);
         uri->GetPort(&port);
+
+        if (flags & RESOLVE_PREFER_SOCKS_PROXY) {
+            LOG(("Ignoring RESOLVE_PREFER_SOCKS_PROXY for system proxy setting\n"));
+        } else if (flags & RESOLVE_PREFER_HTTPS_PROXY) {
+            scheme.AssignLiteral("https");
+        } else if (flags & RESOLVE_IGNORE_URI_SCHEME) {
+            scheme.AssignLiteral("http");
+        }
 
         // now try the system proxy settings for this particular url
         if (NS_SUCCEEDED(mSystemProxySettings->

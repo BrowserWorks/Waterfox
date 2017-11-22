@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmllegendelement
+[HTMLConstructor]
 interface HTMLLegendElement : HTMLElement {
   readonly attribute HTMLFormElement? form;
 
@@ -11,5 +12,6 @@ interface HTMLLegendElement : HTMLElement {
 
 // https://html.spec.whatwg.org/multipage/#HTMLLegendElement-partial
 partial interface HTMLLegendElement {
+  // [CEReactions]
   //         attribute DOMString align;
 };

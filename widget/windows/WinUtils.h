@@ -105,6 +105,12 @@ typedef DPI_AWARENESS_CONTEXT(WINAPI * SetThreadDpiAwarenessContextProc)(DPI_AWA
 typedef BOOL(WINAPI * EnableNonClientDpiScalingProc)(HWND);
 
 namespace mozilla {
+#if defined(ACCESSIBILITY)
+namespace a11y {
+class Accessible;
+} // namespace a11y
+#endif // defined(ACCESSIBILITY)
+
 namespace widget {
 
 // Windows message debugging data
@@ -157,12 +163,6 @@ class WinUtils
   static SetThreadDpiAwarenessContextProc sSetThreadDpiAwarenessContext;
   static EnableNonClientDpiScalingProc sEnableNonClientDpiScaling;
 
-  // Wrapper for DefWindowProc that will enable non-client dpi scaling on the
-  // window during creation.
-  static LRESULT WINAPI
-  NonClientDpiScalingDefWindowProcW(HWND hWnd, UINT msg,
-                                    WPARAM wParam, LPARAM lParam);
-
 public:
   class AutoSystemDpiAware
   {
@@ -185,11 +185,11 @@ public:
     DPI_AWARENESS_CONTEXT mPrevContext;
   };
 
-  static decltype(::DefWindowProcW)* GetDefWindowProc()
-  {
-    return sEnableNonClientDpiScaling ? NonClientDpiScalingDefWindowProcW :
-                                        ::DefWindowProcW;
-  }
+  // Wrapper for DefWindowProc that will enable non-client dpi scaling on the
+  // window during creation.
+  static LRESULT WINAPI
+  NonClientDpiScalingDefWindowProcW(HWND hWnd, UINT msg,
+                                    WPARAM wParam, LPARAM lParam);
 
   /**
    * Get the system's default logical-to-physical DPI scaling factor,
@@ -202,6 +202,12 @@ public:
   static double SystemScaleFactor();
 
   static bool IsPerMonitorDPIAware();
+  /**
+   * Get the DPI of the given monitor if it's per-monitor DPI aware, otherwise
+   * return the system DPI.
+   */
+  static float MonitorDPI(HMONITOR aMonitor);
+  static float SystemDPI();
   /**
    * Functions to convert between logical pixels as used by most Windows APIs
    * and physical (device) pixels.
@@ -473,6 +479,7 @@ public:
    *               remain unchanged.
    */
   static bool ResolveJunctionPointsAndSymLinks(std::wstring& aPath);
+  static bool ResolveJunctionPointsAndSymLinks(nsIFile* aPath);
 
   static void Initialize();
 
@@ -492,6 +499,8 @@ public:
 
 #ifdef ACCESSIBILITY
   static void SetAPCPending();
+
+  static a11y::Accessible* GetRootAccessibleForHWND(HWND aHwnd);
 #endif
 
 private:

@@ -9,6 +9,7 @@
 #include "nsCOMPtr.h"
 #include "nsCOMArray.h"
 #include "nsPrintfCString.h"
+#include "nsProxyRelease.h"
 #include "nsServiceManagerUtils.h"
 #include "nsMemoryReporterManager.h"
 #include "nsITimer.h"
@@ -21,6 +22,7 @@
 #if defined(XP_UNIX) || defined(MOZ_DMD)
 #include "nsMemoryInfoDumper.h"
 #endif
+#include "nsNetCID.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReportingProcess.h"
 #include "mozilla/PodOperations.h"
@@ -1595,6 +1597,9 @@ nsMemoryReporterManager::nsMemoryReporterManager()
   , mNextGeneration(1)
   , mPendingProcessesState(nullptr)
   , mPendingReportersState(nullptr)
+#ifdef HAVE_JEMALLOC_STATS
+  , mThreadPool(do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID))
+#endif
 {
 }
 
@@ -1605,10 +1610,6 @@ nsMemoryReporterManager::~nsMemoryReporterManager()
   NS_ASSERTION(!mSavedStrongReporters, "failed to restore strong reporters");
   NS_ASSERTION(!mSavedWeakReporters, "failed to restore weak reporters");
 }
-
-#ifdef MOZ_WIDGET_GONK
-#define DEBUG_CHILD_PROCESS_MEMORY_REPORTING 1
-#endif
 
 #ifdef DEBUG_CHILD_PROCESS_MEMORY_REPORTING
 #define MEMORY_REPORTING_LOG(format, ...) \
@@ -1679,7 +1680,9 @@ nsMemoryReporterManager::GetReportsExtended(
 
   if (aMinimize) {
     nsCOMPtr<nsIRunnable> callback =
-      NewRunnableMethod(this, &nsMemoryReporterManager::StartGettingReports);
+      NewRunnableMethod("nsMemoryReporterManager::StartGettingReports",
+                        this,
+                        &nsMemoryReporterManager::StartGettingReports);
     rv = MinimizeMemoryUsage(callback);
   } else {
     rv = StartGettingReports();
@@ -1737,9 +1740,12 @@ nsMemoryReporterManager::StartGettingReports()
       FinishReporting();
       return NS_ERROR_FAILURE;
     }
-    rv = timer->InitWithFuncCallback(TimeoutCallback,
-                                     this, kTimeoutLengthMS,
-                                     nsITimer::TYPE_ONE_SHOT);
+    rv = timer->InitWithNamedFuncCallback(
+      TimeoutCallback,
+      this,
+      kTimeoutLengthMS,
+      nsITimer::TYPE_ONE_SHOT,
+      "nsMemoryReporterManager::StartGettingReports");
     if (NS_WARN_IF(NS_FAILED(rv))) {
       FinishReporting();
       return rv;
@@ -1768,7 +1774,8 @@ nsMemoryReporterManager::DispatchReporter(
   nsCOMPtr<nsISupports> handleReportData = aHandleReportData;
 
   nsCOMPtr<nsIRunnable> event = NS_NewRunnableFunction(
-    [self, reporter, aIsAsync, handleReport, handleReportData, aAnonymize] () {
+    "nsMemoryReporterManager::DispatchReporter",
+    [self, reporter, aIsAsync, handleReport, handleReportData, aAnonymize]() {
       reporter->CollectReports(handleReport, handleReportData, aAnonymize);
       if (!aIsAsync) {
         self->EndReport();
@@ -2367,6 +2374,49 @@ nsMemoryReporterManager::GetHeapAllocated(int64_t* aAmount)
 #endif
 }
 
+NS_IMETHODIMP
+nsMemoryReporterManager::GetHeapAllocatedAsync(nsIHeapAllocatedCallback *aCallback)
+{
+#ifdef HAVE_JEMALLOC_STATS
+  if (!mThreadPool) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  RefPtr<nsIMemoryReporterManager> self{this};
+  nsMainThreadPtrHandle<nsIHeapAllocatedCallback> mainThreadCallback(
+    new nsMainThreadPtrHolder<nsIHeapAllocatedCallback>("HeapAllocatedCallback",
+                                                        aCallback));
+
+  nsCOMPtr<nsIRunnable> getHeapAllocatedRunnable = NS_NewRunnableFunction(
+    "nsMemoryReporterManager::GetHeapAllocatedAsync",
+    [self, mainThreadCallback]() mutable {
+      MOZ_ASSERT(!NS_IsMainThread());
+
+      int64_t heapAllocated = 0;
+      nsresult rv = self->GetHeapAllocated(&heapAllocated);
+
+      nsCOMPtr<nsIRunnable> resultCallbackRunnable = NS_NewRunnableFunction(
+        "nsMemoryReporterManager::GetHeapAllocatedAsync",
+        [mainThreadCallback, heapAllocated, rv]() mutable {
+          MOZ_ASSERT(NS_IsMainThread());
+
+          if (NS_FAILED(rv)) {
+            mainThreadCallback->Callback(0);
+            return;
+          }
+
+          mainThreadCallback->Callback(heapAllocated);
+        });  // resultCallbackRunnable.
+
+      Unused << NS_DispatchToMainThread(resultCallbackRunnable);
+    }); // getHeapAllocatedRunnable.
+
+  return mThreadPool->Dispatch(getHeapAllocatedRunnable, NS_DISPATCH_NORMAL);
+#else
+  return NS_ERROR_NOT_AVAILABLE;
+#endif
+}
+
 // This has UNITS_PERCENTAGE, so it is multiplied by 100x.
 NS_IMETHODIMP
 nsMemoryReporterManager::GetHeapOverheadFraction(int64_t* aAmount)
@@ -2510,7 +2560,8 @@ class MinimizeMemoryUsageRunnable : public Runnable
 {
 public:
   explicit MinimizeMemoryUsageRunnable(nsIRunnable* aCallback)
-    : mCallback(aCallback)
+    : mozilla::Runnable("MinimizeMemoryUsageRunnable")
+    , mCallback(aCallback)
     , mRemainingIters(sNumIters)
   {
   }

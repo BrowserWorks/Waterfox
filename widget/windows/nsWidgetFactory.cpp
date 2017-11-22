@@ -75,7 +75,7 @@ ChildWindowConstructor(nsISupports *aOuter, REFNSIID aIID,
   if (aOuter != nullptr) {
     return NS_ERROR_NO_AGGREGATION;
   }
-  nsCOMPtr<nsIWidget> widget = new ChildWindow;
+  nsCOMPtr<nsIWidget> widget = new nsWindow(true);
   return widget->QueryInterface(aIID, aResult);
 }
 
@@ -105,9 +105,9 @@ ColorPickerConstructor(nsISupports *aOuter, REFNSIID aIID,
 
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(ScreenManager, ScreenManager::GetAddRefedSingleton)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIdleServiceWin, nsIdleServiceWin::GetInstance)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboard)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIClipboard, nsClipboard::GetInstance)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsISound, nsSound::GetInstance)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboardHelper)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSound)
 NS_GENERIC_FACTORY_CONSTRUCTOR(WinTaskbar)
 NS_GENERIC_FACTORY_CONSTRUCTOR(JumpListBuilder)
 NS_GENERIC_FACTORY_CONSTRUCTOR(JumpListItem)
@@ -177,9 +177,9 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
   { &kNS_GFXINFO_CID, false, nullptr, GfxInfoConstructor },
   { &kNS_THEMERENDERER_CID, false, nullptr, NS_NewNativeTheme },
   { &kNS_IDLE_SERVICE_CID, false, nullptr, nsIdleServiceWinConstructor },
-  { &kNS_CLIPBOARD_CID, false, nullptr, nsClipboardConstructor, Module::MAIN_PROCESS_ONLY },
+  { &kNS_CLIPBOARD_CID, false, nullptr, nsIClipboardConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_CLIPBOARDHELPER_CID, false, nullptr, nsClipboardHelperConstructor },
-  { &kNS_SOUND_CID, false, nullptr, nsSoundConstructor, Module::MAIN_PROCESS_ONLY },
+  { &kNS_SOUND_CID, false, nullptr, nsISoundConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_TRANSFERABLE_CID, false, nullptr, nsTransferableConstructor },
   { &kNS_HTMLFORMATCONVERTER_CID, false, nullptr, nsHTMLFormatConverterConstructor },
   { &kNS_WIN_TASKBAR_CID, false, nullptr, WinTaskbarConstructor },

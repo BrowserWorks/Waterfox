@@ -3,9 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlolistelement
+[HTMLConstructor]
 interface HTMLOListElement : HTMLElement {
+  // [CEReactions]
   //         attribute boolean reversed;
+  // [CEReactions]
   //         attribute long start;
+  // [CEReactions]
   //         attribute DOMString type;
 
   // also has obsolete members
@@ -13,5 +17,6 @@ interface HTMLOListElement : HTMLElement {
 
 // https://html.spec.whatwg.org/multipage/#HTMLOListElement-partial
 partial interface HTMLOListElement {
+  // [CEReactions]
   //         attribute boolean compact;
 };

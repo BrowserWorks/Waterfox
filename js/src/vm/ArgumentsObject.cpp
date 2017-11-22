@@ -434,16 +434,17 @@ ArgumentsObject::obj_delProperty(JSContext* cx, HandleObject obj, HandleId id,
 /* static */ bool
 ArgumentsObject::obj_mayResolve(const JSAtomState& names, jsid id, JSObject*)
 {
-    // Arguments might resolve indexes or Symbol.iterator.
-    if (!JSID_IS_ATOM(id))
-        return true;
-
-    JSAtom* atom = JSID_TO_ATOM(id);
-    uint32_t index;
-    if (atom->isIndex(&index))
-        return true;
-
-    return atom == names.length || atom == names.callee;
+    // Arguments might resolve indexes, Symbol.iterator, or length/callee.
+    if (JSID_IS_ATOM(id)) {
+        JSAtom* atom = JSID_TO_ATOM(id);
+        uint32_t index;
+        if (atom->isIndex(&index))
+            return true;
+        return atom == names.length || atom == names.callee;
+    }
+    if (JSID_IS_SYMBOL(id))
+        return JSID_TO_SYMBOL(id)->code() == JS::SymbolCode::iterator;
+    return true;
 }
 
 static bool
@@ -896,6 +897,7 @@ const ClassOps MappedArgumentsObject::classOps_ = {
     nullptr,                 /* getProperty */
     nullptr,                 /* setProperty */
     MappedArgumentsObject::obj_enumerate,
+    nullptr,                 /* newEnumerate */
     MappedArgumentsObject::obj_resolve,
     ArgumentsObject::obj_mayResolve,
     ArgumentsObject::finalize,
@@ -933,6 +935,7 @@ const ClassOps UnmappedArgumentsObject::classOps_ = {
     nullptr,                 /* getProperty */
     nullptr,                 /* setProperty */
     UnmappedArgumentsObject::obj_enumerate,
+    nullptr,                 /* newEnumerate */
     UnmappedArgumentsObject::obj_resolve,
     ArgumentsObject::obj_mayResolve,
     ArgumentsObject::finalize,

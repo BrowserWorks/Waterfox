@@ -475,7 +475,7 @@ nsTString_CharT::ReplaceChar( const char* aSet, char_type aNewChar )
   }
 }
 
-void ReleaseData(void* aData, uint32_t aFlags);
+void ReleaseData(void* aData, nsAString::DataFlags aFlags);
 
 void
 nsTString_CharT::ReplaceSubstring(const char_type* aTarget,
@@ -555,7 +555,7 @@ nsTString_CharT::ReplaceSubstring(const self_type& aTarget,
   // rest of the algorithm relies on having access to all of the original
   // string.  In other words, we over-allocate in the shrinking case.
   char_type* oldData;
-  uint32_t oldFlags;
+  DataFlags oldFlags;
   if (!MutatePrep(XPCOM_MAX(mLength, newLength.value()), &oldData, &oldFlags))
     return false;
   if (oldData) {
@@ -717,27 +717,4 @@ nsTString_CharT::CompressWhitespace( bool aTrimLeading, bool aTrimTrailing )
 
   *to = char_type(0); // add the null
   mLength = to - mData;
-}
-
-
-/**
- * nsTString::AssignWithConversion
- */
-
-void
-nsTString_CharT::AssignWithConversion( const incompatible_char_type* aData, int32_t aLength )
-{
-  // for compatibility with the old string implementation, we need to allow
-  // for a nullptr input buffer :-(
-  if (!aData)
-  {
-    Truncate();
-  }
-  else
-  {
-    if (aLength < 0)
-      aLength = nsCharTraits<incompatible_char_type>::length(aData);
-
-    AssignWithConversion(Substring(aData, aLength));
-  }
 }

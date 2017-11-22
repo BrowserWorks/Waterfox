@@ -69,6 +69,7 @@ def exponential_buckets(dmin, dmax, n_buckets):
         ret_array[bucket_index] = current
     return ret_array
 
+
 always_allowed_keys = ['kind', 'description', 'cpp_guard', 'expires_in_version',
                        'alert_emails', 'keyed', 'releaseChannelCollection',
                        'bug_numbers', 'record_in_processes']
@@ -77,6 +78,7 @@ whitelists = None
 
 
 def load_whitelist():
+    global whitelists
     try:
         whitelist_path = os.path.join(os.path.abspath(os.path.realpath(os.path.dirname(__file__))),
                                       'histogram-whitelists.json')
@@ -120,6 +122,7 @@ symbol that should guard C/C++ definitions associated with the histogram."""
         self._keyed = definition.get('keyed', False)
         self._expiration = definition.get('expires_in_version')
         self._labels = definition.get('labels', [])
+        self._record_in_processes = definition.get('record_in_processes')
 
         self.compute_bucket_parameters(definition)
         self.set_nsITelemetry_kind()
@@ -179,11 +182,11 @@ associated with the histogram.  Returns None if no guarding is necessary."""
 
     def record_in_processes(self):
         """Returns a list of processes this histogram is permitted to record in."""
-        return self.definition['record_in_processes']
+        return self._record_in_processes
 
     def record_in_processes_enum(self):
         """Get the non-empty list of flags representing the processes to record data in"""
-        return [utils.process_name_to_enum(p) for p in self.record_in_processes]
+        return [utils.process_name_to_enum(p) for p in self.record_in_processes()]
 
     def ranges(self):
         """Return an array of lower bounds for each bucket in the histogram."""
@@ -284,10 +287,12 @@ associated with the histogram.  Returns None if no guarding is necessary."""
            name not in whitelists['expiry_default']:
             raise ParserError('New histogram "%s" cannot have "default" %s value.' % (name, field))
 
-        if re.match(r'^[1-9][0-9]*$', expiration):
-            expiration = expiration + ".0a1"
-        elif re.match(r'^[1-9][0-9]*\.0$', expiration):
-            expiration = expiration + "a1"
+        if expiration != "default" and not utils.validate_expiration_version(expiration):
+            raise ParserError(('Error for histogram {} - invalid {}: {}.'
+                               '\nSee: {}#expires-in-version')
+                              .format(name, field, expiration, HISTOGRAMS_DOC_URL))
+
+        expiration = utils.add_expiration_postfix(expiration)
 
         definition[field] = expiration
 
@@ -578,6 +583,7 @@ def from_nsDeprecatedOperationList(filename, strict_type_checks):
             add_counter('page')
 
     return histograms
+
 
 FILENAME_PARSERS = {
     'Histograms.json': from_Histograms_json,

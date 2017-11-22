@@ -26,8 +26,8 @@ public:
 
 private:
   ~nsUnixSystemProxySettings() {
-    if (mProxyFactory) 
-      px_proxy_factory_free(mProxyFactory); 
+    if (mProxyFactory)
+      px_proxy_factory_free(mProxyFactory);
   }
 
   pxProxyFactory *mProxyFactory;
@@ -110,7 +110,7 @@ nsUnixSystemProxySettings::GetProxyForURI(const nsACString & aSpec,
     c++;
   }
 
-  PR_Free(proxyArray);
+  free(proxyArray);
   return NS_OK;
 }
 
@@ -136,6 +136,6 @@ static const mozilla::Module kUnixProxyModule = {
   kUnixProxyCIDs,
   kUnixProxyContracts
 };
-        
+
 NSMODULE_DEFN(nsUnixProxyModule) = &kUnixProxyModule;
 

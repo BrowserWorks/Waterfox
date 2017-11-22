@@ -16,7 +16,7 @@
 
 using mozilla::OriginAttributes;
 
-/** 
+/**
  * The nsCookie class is the main cookie storage medium for use within cookie
  * code. It implements nsICookie2, which extends nsICookie, a frozen interface
  * for xpcom access of cookie objects.
@@ -129,7 +129,7 @@ class nsCookie : public nsICookie2
     // we use char* ptrs to store the strings in a contiguous block,
     // so we save on the overhead of using nsCStrings. However, we
     // store a terminating null for each string, so we can hand them
-    // out as nsAFlatCStrings.
+    // out as nsCStrings.
     //
     // Please update SizeOfIncludingThis if this strategy changes.
     const char  *mName;

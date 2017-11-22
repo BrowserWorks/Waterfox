@@ -14,16 +14,15 @@ use dom::element::Element;
 use dom::node::{Node, window_from_node, document_from_node};
 use dom::window::Window;
 use dom_struct::dom_struct;
+use servo_arc::Arc;
 use servo_url::ServoUrl;
 use std::ascii::AsciiExt;
 use style::attr::AttrValue;
-use style::parser::PARSING_MODE_DEFAULT;
 use style::properties::{Importance, PropertyDeclarationBlock, PropertyId, LonghandId, ShorthandId};
 use style::properties::{parse_one_declaration_into, parse_style_attribute, SourcePropertyDeclaration};
 use style::selector_parser::PseudoElement;
 use style::shared_lock::Locked;
-use style::stylearc::Arc;
-use style_traits::ToCss;
+use style_traits::{PARSING_MODE_DEFAULT, ToCss};
 
 // http://dev.w3.org/csswg/cssom/#the-cssstyledeclaration-interface
 #[dom_struct]
@@ -105,6 +104,8 @@ impl CSSStyleOwner {
                     f(&mut *pdb.write_with(&mut guard), &mut changed)
                 };
                 if changed {
+                    // If this is changed, see also
+                    // CSSStyleRule::SetSelectorText, which does the same thing.
                     rule.global().as_window().Document().invalidate_stylesheets();
                 }
                 result
@@ -147,7 +148,7 @@ impl CSSStyleOwner {
         match *self {
             CSSStyleOwner::Element(ref el) => window_from_node(&**el).Document().base_url(),
             CSSStyleOwner::CSSRule(ref rule, _) => {
-                rule.parent_stylesheet().style_stylesheet().url_data.clone()
+                (*rule.parent_stylesheet().style_stylesheet().contents.url_data.read()).clone()
             }
         }
     }
@@ -295,7 +296,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
 
     // https://dev.w3.org/csswg/cssom/#dom-cssstyledeclaration-getpropertyvalue
     fn GetPropertyValue(&self, property: DOMString) -> DOMString {
-        let id = if let Ok(id) = PropertyId::parse(property.into()) {
+        let id = if let Ok(id) = PropertyId::parse(&property) {
             id
         } else {
             // Unkwown property
@@ -306,7 +307,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
 
     // https://dev.w3.org/csswg/cssom/#dom-cssstyledeclaration-getpropertypriority
     fn GetPropertyPriority(&self, property: DOMString) -> DOMString {
-        let id = if let Ok(id) = PropertyId::parse(property.into()) {
+        let id = if let Ok(id) = PropertyId::parse(&property) {
             id
         } else {
             // Unkwown property
@@ -330,7 +331,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
                    priority: DOMString)
                    -> ErrorResult {
         // Step 3
-        let id = if let Ok(id) = PropertyId::parse(property.into()) {
+        let id = if let Ok(id) = PropertyId::parse(&property) {
             id
         } else {
             // Unknown property
@@ -347,7 +348,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
         }
 
         // Step 2 & 3
-        let id = match PropertyId::parse(property.into()) {
+        let id = match PropertyId::parse(&property) {
             Ok(id) => id,
             Err(..) => return Ok(()), // Unkwown property
         };
@@ -379,7 +380,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
             return Err(Error::NoModificationAllowed);
         }
 
-        let id = if let Ok(id) = PropertyId::parse(property.into()) {
+        let id = if let Ok(id) = PropertyId::parse(&property) {
             id
         } else {
             // Unkwown property, cannot be there to remove.

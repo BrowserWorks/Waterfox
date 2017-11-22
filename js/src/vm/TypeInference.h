@@ -1294,10 +1294,6 @@ bool
 FinishCompilation(JSContext* cx, HandleScript script, CompilerConstraintList* constraints,
                   RecompileInfo* precompileInfo, bool* isValidOut);
 
-// Reset any CompilerOutput present for a script.
-void
-InvalidateCompilerOutputsForScript(JSContext* cx, HandleScript script);
-
 // Update the actual types in any scripts queried by constraints with any
 // speculative types added during the definite properties analysis.
 void

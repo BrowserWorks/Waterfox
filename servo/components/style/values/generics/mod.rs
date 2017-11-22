@@ -9,13 +9,15 @@ use counter_style::{Symbols, parse_counter_style_name};
 use cssparser::Parser;
 use parser::{Parse, ParserContext};
 use std::fmt;
-use style_traits::{OneOrMoreCommaSeparated, ToCss, ParseError, StyleParseError};
+use style_traits::{Comma, OneOrMoreSeparated, ParseError, StyleParseError, ToCss};
 use super::CustomIdent;
 use values::specified::url::SpecifiedUrl;
 
 pub mod background;
 pub mod basic_shape;
 pub mod border;
+pub mod effects;
+pub mod flex;
 #[cfg(feature = "gecko")]
 pub mod gecko;
 pub mod grid;
@@ -54,13 +56,14 @@ impl SymbolsType {
 ///
 /// Since wherever <counter-style> is used, 'none' is a valid value as
 /// well, we combine them into one type to make code simpler.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq, ToCss)]
 pub enum CounterStyleOrNone {
-    /// none
-    None_,
-    /// <counter-style-name>
+    /// `none`
+    None,
+    /// `<counter-style-name>`
     Name(CustomIdent),
-    /// symbols()
+    /// `symbols()`
+    #[css(function)]
     Symbols(SymbolsType, Symbols),
 }
 
@@ -84,7 +87,7 @@ impl Parse for CounterStyleOrNone {
             return Ok(CounterStyleOrNone::Name(name));
         }
         if input.try(|i| i.expect_ident_matching("none")).is_ok() {
-            return Ok(CounterStyleOrNone::None_);
+            return Ok(CounterStyleOrNone::None);
         }
         if input.try(|i| i.expect_function_matching("symbols")).is_ok() {
             return input.parse_nested_block(|input| {
@@ -108,23 +111,6 @@ impl Parse for CounterStyleOrNone {
     }
 }
 
-impl ToCss for CounterStyleOrNone {
-    #[inline]
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        match self {
-            &CounterStyleOrNone::None_ => dest.write_str("none"),
-            &CounterStyleOrNone::Name(ref name) => name.to_css(dest),
-            &CounterStyleOrNone::Symbols(ref symbols_type, ref symbols) => {
-                dest.write_str("symbols(")?;
-                symbols_type.to_css(dest)?;
-                dest.write_str(" ")?;
-                symbols.to_css(dest)?;
-                dest.write_str(")")
-            }
-        }
-    }
-}
-
 /// A settings tag, defined by a four-character tag and a setting value
 ///
 /// For font-feature-settings, this is a tag and an integer,
@@ -138,7 +124,9 @@ pub struct FontSettingTag<T> {
     pub value: T,
 }
 
-impl<T> OneOrMoreCommaSeparated for FontSettingTag<T> {}
+impl<T> OneOrMoreSeparated for FontSettingTag<T> {
+    type S = Comma;
+}
 
 impl<T: ToCss> ToCss for FontSettingTag<T> {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
@@ -163,17 +151,20 @@ impl<T: Parse> Parse for FontSettingTag<T> {
         use byteorder::{ReadBytesExt, BigEndian};
         use std::io::Cursor;
 
-        let tag = try!(input.expect_string());
-
-        // allowed strings of length 4 containing chars: <U+20, U+7E>
-        if tag.len() != 4 ||
-           tag.chars().any(|c| c < ' ' || c > '~')
+        let u_tag;
         {
-            return Err(StyleParseError::UnspecifiedError.into())
-        }
+            let tag = input.expect_string()?;
 
-        let mut raw = Cursor::new(tag.as_bytes());
-        let u_tag = raw.read_u32::<BigEndian>().unwrap();
+            // allowed strings of length 4 containing chars: <U+20, U+7E>
+            if tag.len() != 4 ||
+               tag.chars().any(|c| c < ' ' || c > '~')
+            {
+                return Err(StyleParseError::UnspecifiedError.into())
+            }
+
+            let mut raw = Cursor::new(tag.as_bytes());
+            u_tag = raw.read_u32::<BigEndian>().unwrap();
+        }
 
         Ok(FontSettingTag { tag: u_tag, value: T::parse(context, input)? })
     }
@@ -266,8 +257,8 @@ impl ToCss for FontSettingTagFloat {
 /// An SVG paint value
 ///
 /// https://www.w3.org/TR/SVG2/painting.html#SpecifyingPaint
-#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[derive(Clone, Debug, PartialEq, ToAnimatedValue, ToComputedValue, ToCss)]
 pub struct SVGPaint<ColorType> {
     /// The paint source
     pub kind: SVGPaintKind<ColorType>,
@@ -281,7 +272,7 @@ pub struct SVGPaint<ColorType> {
 /// to have a fallback, Gecko lets the context
 /// properties have a fallback as well.
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-#[derive(Clone, Debug, PartialEq, ToCss)]
+#[derive(Clone, Debug, PartialEq, ToAnimatedValue, ToComputedValue, ToCss)]
 pub enum SVGPaintKind<ColorType> {
     /// `none`
     None,
@@ -296,35 +287,6 @@ pub enum SVGPaintKind<ColorType> {
 }
 
 impl<ColorType> SVGPaintKind<ColorType> {
-    /// Convert to a value with a different kind of color
-    pub fn convert<F, OtherColor>(&self, f: F) -> SVGPaintKind<OtherColor>
-        where F: Fn(&ColorType) -> OtherColor {
-            match *self {
-                SVGPaintKind::None => SVGPaintKind::None,
-                SVGPaintKind::ContextStroke => SVGPaintKind::ContextStroke,
-                SVGPaintKind::ContextFill => SVGPaintKind::ContextFill,
-                SVGPaintKind::Color(ref color) => {
-                    SVGPaintKind::Color(f(color))
-                }
-                SVGPaintKind::PaintServer(ref server) => {
-                    SVGPaintKind::PaintServer(server.clone())
-                }
-            }
-    }
-}
-
-impl<ColorType> SVGPaint<ColorType> {
-    /// Convert to a value with a different kind of color
-    pub fn convert<F, OtherColor>(&self, f: F) -> SVGPaint<OtherColor>
-        where F: Fn(&ColorType) -> OtherColor {
-        SVGPaint {
-            kind: self.kind.convert(&f),
-            fallback: self.fallback.as_ref().map(|color| f(color))
-        }
-    }
-}
-
-impl<ColorType> SVGPaintKind<ColorType> {
     /// Parse a keyword value only
     fn parse_ident<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         try_match_ident_ignore_ascii_case! { input.expect_ident()?,
@@ -335,13 +297,25 @@ impl<ColorType> SVGPaintKind<ColorType> {
     }
 }
 
+/// Parse SVGPaint's fallback.
+/// fallback is keyword(none) or Color.
+/// https://svgwg.org/svg2-draft/painting.html#SpecifyingPaint
+fn parse_fallback<'i, 't, ColorType: Parse>(context: &ParserContext,
+                                            input: &mut Parser<'i, 't>)
+                                            -> Option<ColorType> {
+    if input.try(|i| i.expect_ident_matching("none")).is_ok() {
+        None
+    } else {
+        input.try(|i| ColorType::parse(context, i)).ok()
+    }
+}
+
 impl<ColorType: Parse> Parse for SVGPaint<ColorType> {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
         if let Ok(url) = input.try(|i| SpecifiedUrl::parse(context, i)) {
-            let fallback = input.try(|i| ColorType::parse(context, i));
             Ok(SVGPaint {
                 kind: SVGPaintKind::PaintServer(url),
-                fallback: fallback.ok(),
+                fallback: parse_fallback(context, input),
             })
         } else if let Ok(kind) = input.try(SVGPaintKind::parse_ident) {
             if let SVGPaintKind::None = kind {
@@ -350,10 +324,9 @@ impl<ColorType: Parse> Parse for SVGPaint<ColorType> {
                     fallback: None,
                 })
             } else {
-                let fallback = input.try(|i| ColorType::parse(context, i));
                 Ok(SVGPaint {
                     kind: kind,
-                    fallback: fallback.ok(),
+                    fallback: parse_fallback(context, input),
                 })
             }
         } else if let Ok(color) = input.try(|i| ColorType::parse(context, i)) {
@@ -366,15 +339,3 @@ impl<ColorType: Parse> Parse for SVGPaint<ColorType> {
         }
     }
 }
-
-impl<ColorType: ToCss> ToCss for SVGPaint<ColorType> {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        self.kind.to_css(dest)?;
-        if let Some(ref fallback) = self.fallback {
-            fallback.to_css(dest)?;
-        }
-        Ok(())
-    }
-}
-
-

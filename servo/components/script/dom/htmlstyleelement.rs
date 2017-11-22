@@ -21,11 +21,12 @@ use dom_struct::dom_struct;
 use html5ever::{LocalName, Prefix};
 use net_traits::ReferrerPolicy;
 use script_layout_interface::message::Msg;
+use servo_arc::Arc;
 use std::cell::Cell;
 use style::media_queries::parse_media_query_list;
-use style::parser::{PARSING_MODE_DEFAULT, ParserContext as CssParserContext};
-use style::stylearc::Arc;
+use style::parser::ParserContext as CssParserContext;
 use style::stylesheets::{CssRuleType, Stylesheet, Origin};
+use style_traits::PARSING_MODE_DEFAULT;
 use stylesheet_loader::{StylesheetLoader, StylesheetOwner};
 
 #[dom_struct]
@@ -110,6 +111,7 @@ impl HTMLStyleElement {
 
         win.layout_chan().send(Msg::AddStylesheet(sheet.clone())).unwrap();
         *self.stylesheet.borrow_mut() = Some(sheet);
+        self.cssom_stylesheet.set(None);
         doc.invalidate_stylesheets();
     }
 

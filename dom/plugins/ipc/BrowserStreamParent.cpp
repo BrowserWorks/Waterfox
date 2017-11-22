@@ -5,7 +5,6 @@
 
 
 #include "BrowserStreamParent.h"
-#include "PluginAsyncSurrogate.h"
 #include "PluginInstanceParent.h"
 #include "nsNPAPIPlugin.h"
 
@@ -23,7 +22,6 @@ BrowserStreamParent::BrowserStreamParent(PluginInstanceParent* npp,
                                          NPStream* stream)
   : mNPP(npp)
   , mStream(stream)
-  , mDeferredDestroyReason(NPRES_DONE)
   , mState(INITIALIZING)
 {
   mStream->pdata = static_cast<AStream*>(this);
@@ -43,41 +41,6 @@ void
 BrowserStreamParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   // Implement me! Bug 1005159
-}
-
-mozilla::ipc::IPCResult
-BrowserStreamParent::RecvAsyncNPP_NewStreamResult(const NPError& rv,
-                                                  const uint16_t& stype)
-{
-  PLUGIN_LOG_DEBUG_FUNCTION;
-  PluginAsyncSurrogate* surrogate = mNPP->GetAsyncSurrogate();
-  MOZ_ASSERT(surrogate);
-  surrogate->AsyncCallArriving();
-  if (mState == DEFERRING_DESTROY) {
-    // We've been asked to destroy ourselves before init was complete.
-    mState = DYING;
-    Unused << SendNPP_DestroyStream(mDeferredDestroyReason);
-    return IPC_OK();
-  }
-
-  NPError error = rv;
-  if (error == NPERR_NO_ERROR) {
-    if (!mStreamListener) {
-      return IPC_FAIL_NO_REASON(this);
-    }
-    if (mStreamListener->SetStreamType(stype)) {
-      mState = ALIVE;
-    } else {
-      error = NPERR_GENERIC_ERROR;
-    }
-  }
-
-  if (error != NPERR_NO_ERROR) {
-    surrogate->DestroyAsyncStream(mStream);
-    Unused << PBrowserStreamParent::Send__delete__(this);
-  }
-
-  return IPC_OK();
 }
 
 mozilla::ipc::IPCResult
@@ -122,25 +85,6 @@ BrowserStreamParent::AnswerNPN_RequestRead(const IPCByteRanges& ranges,
   return IPC_OK();
 }
 
-mozilla::ipc::IPCResult
-BrowserStreamParent::RecvNPN_DestroyStream(const NPReason& reason)
-{
-  switch (mState) {
-  case ALIVE:
-    break;
-
-  case DYING:
-    return IPC_OK();
-
-  default:
-    NS_ERROR("Unexpected state");
-    return IPC_FAIL_NO_REASON(this);
-  }
-
-  mNPP->mNPNIface->destroystream(mNPP->mNPP, mStream, reason);
-  return IPC_OK();
-}
-
 void
 BrowserStreamParent::NPP_DestroyStream(NPReason reason)
 {
@@ -149,7 +93,6 @@ BrowserStreamParent::NPP_DestroyStream(NPReason reason)
   bool stillInitializing = INITIALIZING == mState;
   if (stillInitializing) {
     mState = DEFERRING_DESTROY;
-    mDeferredDestroyReason = reason;
   } else {
     mState = DYING;
     Unused << SendNPP_DestroyStream(reason);
@@ -219,7 +162,6 @@ BrowserStreamParent::StreamAsFile(const char* fname)
   }
 
   Unused << SendNPP_StreamAsFile(nsCString(fname));
-  return;
 }
 
 } // namespace plugins

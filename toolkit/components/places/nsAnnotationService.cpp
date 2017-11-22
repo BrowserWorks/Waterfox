@@ -266,8 +266,7 @@ nsAnnotationService::SetItemAnnotation(int64_t aItemId,
                                        uint16_t aExpiration,
                                        uint16_t aSource)
 {
-  PROFILER_LABEL("AnnotationService", "SetItemAnnotation",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsAnnotationService::SetItemAnnotation", OTHER);
 
   NS_ENSURE_ARG_MIN(aItemId, 1);
   NS_ENSURE_ARG(aValue);
@@ -2000,8 +1999,12 @@ nsAnnotationService::Observe(nsISupports *aSubject,
       , itemAnnoStmt.get()
       };
 
+      nsCOMPtr<mozIStorageConnection> conn = mDB->MainConn();
+      if (!conn) {
+        return NS_ERROR_UNEXPECTED;
+      }
       nsCOMPtr<mozIStoragePendingStatement> ps;
-      rv = mDB->MainConn()->ExecuteAsync(stmts, ArrayLength(stmts), nullptr,
+      rv = conn->ExecuteAsync(stmts, ArrayLength(stmts), nullptr,
                                          getter_AddRefs(ps));
       NS_ENSURE_SUCCESS(rv, rv);
     }

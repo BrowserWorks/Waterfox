@@ -8,6 +8,7 @@
   <script type="text/javascript" src="pkijs/asn1.js"></script>
   <script type="text/javascript" src="pkijs/x509_schema.js"></script>
   <script type="text/javascript" src="pkijs/x509_simpl.js"></script>
+  <script type="text/javascript" src="cbor/cbor.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
 <body>
@@ -39,26 +40,36 @@ function() {
 
   testMakeCredential();
 
-  function checkCredentialValid(aCredInfo) {
+  function decodeCreatedCredential(aCredInfo) {
     /* PublicKeyCredential : Credential
        - rawId: Key Handle buffer pulled from U2F Register() Response
+       - id: Key Handle buffer in base64url form, should == rawId
+       - type: Literal 'public-key'
        - response : AuthenticatorAttestationResponse : AuthenticatorResponse
-         - attestationObject: RP ID Hash || U2F Sign() Response
+         - attestationObject: CBOR object
          - clientDataJSON: serialized JSON
        - clientExtensionResults: (not yet supported)
     */
 
-    ok(aCredInfo.rawId.length > 0, "Key ID exists");
+    is(aCredInfo.type, "public-key", "Credential type must be public-key")
 
-    is(aCredInfo.response.attestationObject[0], 0x05, "Reserved byte is correct");
+    ok(aCredInfo.rawId.length > 0, "Key ID exists");
+    is(aCredInfo.id, bytesToBase64UrlSafe(aCredInfo.rawId), "Encoded Key ID and Raw Key ID match");
+
     let clientData = JSON.parse(buffer2string(aCredInfo.response.clientDataJSON));
     is(clientData.challenge, bytesToBase64UrlSafe(gCredentialChallenge), "Challenge is correct");
-    is(clientData.origin, window.location.origin, "Origin is correct");
+    // WD-05 vs. WD-06: In WD-06, the second parameter should be "window.location.origin". Fix
+    // this in Bug 1384776
+    is(clientData.origin, document.domain, "Origin is correct");
     is(clientData.hashAlg, "S256", "Hash algorithm is correct");
 
-    return decodeU2FRegistration(aCredInfo.response.attestationObject)
-    .then(function(u2fObj) {
-      aCredInfo.u2fReg = u2fObj;
+    return webAuthnDecodeCBORAttestation(aCredInfo.response.attestationObject.buffer)
+    .then(function(decodedResult) {
+      ok(decodedResult.flags == (flag_TUP | flag_AT), "User presence and Attestation Object must both be set");
+
+      aCredInfo.clientDataObj = clientData;
+      aCredInfo.publicKeyHandle = decodedResult.publicKeyHandle;
+      aCredInfo.attestationObject = decodedResult.attestationObject;
       return aCredInfo;
     });
   }
@@ -66,47 +77,50 @@ function() {
   function checkAssertionAndSigValid(aPublicKey, aAssertion) {
     /* PublicKeyCredential : Credential
        - rawId: ID of Credential from AllowList that succeeded
+       - id: Key Handle buffer in base64url form, should == rawId
+       - type: Literal 'public-key'
        - response : AuthenticatorAssertionResponse : AuthenticatorResponse
          - clientDataJSON: serialized JSON
          - authenticatorData: RP ID Hash || U2F Sign() Response
          - signature: U2F Sign() Response
     */
 
+    is(aAssertion.type, "public-key", "Credential type must be public-key")
+
     ok(aAssertion.rawId.length > 0, "Key ID exists");
+    is(aAssertion.id, bytesToBase64UrlSafe(aAssertion.rawId), "Encoded Key ID and Raw Key ID match");
 
     ok(aAssertion.response.authenticatorData.length > 0, "Authenticator data exists");
     let clientData = JSON.parse(buffer2string(aAssertion.response.clientDataJSON));
     is(clientData.challenge, bytesToBase64UrlSafe(gAssertionChallenge), "Challenge is correct");
-    is(clientData.origin, window.location.origin, "Origin is correct");
+    // WD-05 vs. WD-06: In WD-06, the second parameter should be "window.location.origin". Fix
+    // this in Bug 1384776
+    is(clientData.origin, document.domain, "Origin is correct");
     is(clientData.hashAlg, "S256", "Hash algorithm is correct");
 
-    // Parse the signature data
-    if (aAssertion.response.signature[0] != 0x01) {
-      throw "User presence byte not set";
-    }
-    let presenceAndCounter = aAssertion.response.signature.slice(0,5);
-    let signatureValue = aAssertion.response.signature.slice(5);
-
-    let rpIdHash = aAssertion.response.authenticatorData.slice(0,32);
-
-    // Assemble the signed data and verify the signature
-    return deriveAppAndChallengeParam(clientData.origin, aAssertion.response.clientDataJSON)
+    return webAuthnDecodeAttestation(aAssertion.response.authenticatorData)
+    .then(function(decodedResult) {
+      ok(decodedResult.flags == flag_TUP, "User presence must be the only flag set");
+      is(decodedResult.counter.length, 4, "Counter must be 4 bytes");
+      return deriveAppAndChallengeParam(window.location.host, aAssertion.response.clientDataJSON, decodedResult)
+    })
     .then(function(aParams) {
-      console.log(aParams.appParam, rpIdHash, presenceAndCounter, aParams.challengeParam);
+      console.log(aParams);
       console.log("ClientData buffer: ", hexEncode(aAssertion.response.clientDataJSON));
       console.log("ClientDataHash: ", hexEncode(aParams.challengeParam));
-      return assembleSignedData(aParams.appParam, presenceAndCounter, aParams.challengeParam);
+      return assembleSignedData(aParams.appParam, aParams.attestation.flags,
+                                aParams.attestation.counter, aParams.challengeParam);
     })
     .then(function(aSignedData) {
-      console.log(aPublicKey, aSignedData, signatureValue);
-      return verifySignature(aPublicKey, aSignedData, signatureValue);
+      console.log(aPublicKey, aSignedData, aAssertion.response.signature);
+      return verifySignature(aPublicKey, aSignedData, aAssertion.response.signature);
     })
   }
 
   function testMakeCredential() {
-    let rp = {id: document.origin, name: "none", icon: "none"};
+    let rp = {id: document.domain, name: "none", icon: "none"};
     let user = {id: "none", name: "none", icon: "none", displayName: "none"};
-    let param = {type: "public-key", algorithm: "P-256"};
+    let param = {type: "public-key", algorithm: "ES256"};
     let makeCredentialOptions = {
       rp: rp,
       user: user,
@@ -114,7 +128,7 @@ function() {
       parameters: [param]
     };
     credm.create({publicKey: makeCredentialOptions})
-    .then(checkCredentialValid)
+    .then(decodeCreatedCredential)
     .then(testMakeDuplicate)
     .catch(function(aReason) {
       ok(false, aReason);
@@ -123,9 +137,9 @@ function() {
   }
 
   function testMakeDuplicate(aCredInfo) {
-    let rp = {id: document.origin, name: "none", icon: "none"};
+    let rp = {id: document.domain, name: "none", icon: "none"};
     let user = {id: "none", name: "none", icon: "none", displayName: "none"};
-    let param = {type: "public-key", algorithm: "P-256"};
+    let param = {type: "public-key", algorithm: "ES256"};
     let makeCredentialOptions = {
       rp: rp,
       user: user,
@@ -156,13 +170,13 @@ function() {
     let publicKeyCredentialRequestOptions = {
       challenge: gAssertionChallenge,
       timeout: 5000, // the minimum timeout is actually 15 seconds
-      rpId: document.origin,
+      rpId: document.domain,
       allowList: [newCredential]
     };
     credm.get({publicKey: publicKeyCredentialRequestOptions})
     .then(function(aAssertion) {
       /* Pass along the pubKey. */
-      return checkAssertionAndSigValid(aCredInfo.u2fReg.publicKey, aAssertion);
+      return checkAssertionAndSigValid(aCredInfo.publicKeyHandle, aAssertion);
     })
     .then(function(aSigVerifyResult) {
       ok(aSigVerifyResult, "Signing signature verified");

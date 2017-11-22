@@ -20,43 +20,60 @@
 namespace mozilla {
 namespace gfx {
 
-static bool FuzzyEqual(Float aV1, Float aV2) {
+static inline bool FuzzyEqual(Float aV1, Float aV2) {
   // XXX - Check if fabs does the smart thing and just negates the sign bit.
   return fabs(aV2 - aV1) < 1e-6;
 }
 
-class Matrix
+template<class T>
+class BaseMatrix
 {
+  // Alias that maps to either Point or PointDouble depending on whether T is a
+  // float or a double.
+  typedef PointTyped<UnknownUnits, T> MatrixPoint;
+  // Same for size and rect
+  typedef SizeTyped<UnknownUnits, T> MatrixSize;
+  typedef RectTyped<UnknownUnits, T> MatrixRect;
+
 public:
-  Matrix()
+  BaseMatrix()
     : _11(1.0f), _12(0)
     , _21(0), _22(1.0f)
     , _31(0), _32(0)
   {}
-  Matrix(Float a11, Float a12, Float a21, Float a22, Float a31, Float a32)
+  BaseMatrix(T a11, T a12, T a21, T a22, T a31, T a32)
     : _11(a11), _12(a12)
     , _21(a21), _22(a22)
     , _31(a31), _32(a32)
   {}
   union {
     struct {
-      Float _11, _12;
-      Float _21, _22;
-      Float _31, _32;
+      T _11, _12;
+      T _21, _22;
+      T _31, _32;
     };
-    Float components[6];
+    T components[6];
   };
 
-  MOZ_ALWAYS_INLINE Matrix Copy() const
+  MOZ_ALWAYS_INLINE BaseMatrix Copy() const
   {
-    return Matrix(*this);
+    return BaseMatrix<T>(*this);
   }
 
-  friend std::ostream& operator<<(std::ostream& aStream, const Matrix& aMatrix);
-
-  Point TransformPoint(const Point &aPoint) const
+  friend std::ostream& operator<<(std::ostream& aStream, const BaseMatrix& aMatrix)
   {
-    Point retPoint;
+    return aStream << "[ " << aMatrix._11
+                   << " "  << aMatrix._12
+                   << "; " << aMatrix._21
+                   << " "  << aMatrix._22
+                   << "; " << aMatrix._31
+                   << " "  << aMatrix._32
+                   << "; ]";
+  }
+
+  MatrixPoint TransformPoint(const MatrixPoint &aPoint) const
+  {
+    MatrixPoint retPoint;
 
     retPoint.x = aPoint.x * _11 + aPoint.y * _21 + _31;
     retPoint.y = aPoint.x * _12 + aPoint.y * _22 + _32;
@@ -64,9 +81,9 @@ public:
     return retPoint;
   }
 
-  Size TransformSize(const Size &aSize) const
+  MatrixSize TransformSize(const MatrixSize &aSize) const
   {
-    Size retSize;
+    MatrixSize retSize;
 
     retSize.width = aSize.width * _11 + aSize.height * _21;
     retSize.height = aSize.width * _12 + aSize.height * _22;
@@ -74,14 +91,53 @@ public:
     return retSize;
   }
 
-  GFX2D_API Rect TransformBounds(const Rect& rect) const;
-
-  static Matrix Translation(Float aX, Float aY)
+  /**
+   * In most cases you probably want to use TransformBounds. This function
+   * just transforms the top-left and size separately and constructs a rect
+   * from those results.
+   */
+  MatrixRect TransformRect(const MatrixRect& aRect) const
   {
-    return Matrix(1.0f, 0.0f, 0.0f, 1.0f, aX, aY);
+    return MatrixRect(TransformPoint(aRect.TopLeft()),
+                      TransformSize(aRect.Size()));
   }
 
-  static Matrix Translation(Point aPoint)
+  GFX2D_API MatrixRect TransformBounds(const MatrixRect& aRect) const
+  {
+    int i;
+    MatrixPoint quad[4];
+    T min_x, max_x;
+    T min_y, max_y;
+
+    quad[0] = TransformPoint(aRect.TopLeft());
+    quad[1] = TransformPoint(aRect.TopRight());
+    quad[2] = TransformPoint(aRect.BottomLeft());
+    quad[3] = TransformPoint(aRect.BottomRight());
+
+    min_x = max_x = quad[0].x;
+    min_y = max_y = quad[0].y;
+
+    for (i = 1; i < 4; i++) {
+      if (quad[i].x < min_x)
+        min_x = quad[i].x;
+      if (quad[i].x > max_x)
+        max_x = quad[i].x;
+
+      if (quad[i].y < min_y)
+        min_y = quad[i].y;
+      if (quad[i].y > max_y)
+        max_y = quad[i].y;
+    }
+
+    return MatrixRect(min_x, min_y, max_x - min_x, max_y - min_y);
+  }
+
+  static BaseMatrix<T> Translation(T aX, T aY)
+  {
+    return BaseMatrix<T>(1.0f, 0.0f, 0.0f, 1.0f, aX, aY);
+  }
+
+  static BaseMatrix<T> Translation(MatrixPoint aPoint)
   {
     return Translation(aPoint.x, aPoint.y);
   }
@@ -97,7 +153,7 @@ public:
    * Calling this method will result in this matrix having the same value as
    * the result of:
    *
-   *   Matrix::Translation(x, y) * this
+   *   BaseMatrix<T>::Translation(x, y) * this
    *
    * (Note that in performance critical code multiplying by the result of a
    * Translation()/Scaling() call is not recommended since that results in a
@@ -105,7 +161,7 @@ public:
    * this method would be preferred since it only involves four floating-point
    * multiplications.)
    */
-  Matrix &PreTranslate(Float aX, Float aY)
+  BaseMatrix<T> &PreTranslate(T aX, T aY)
   {
     _31 += _11 * aX + _21 * aY;
     _32 += _12 * aX + _22 * aY;
@@ -113,7 +169,7 @@ public:
     return *this;
   }
 
-  Matrix &PreTranslate(const Point &aPoint)
+  BaseMatrix<T> &PreTranslate(const MatrixPoint &aPoint)
   {
     return PreTranslate(aPoint.x, aPoint.y);
   }
@@ -130,27 +186,27 @@ public:
    * the Post* methods add a transform to the device space end of the
    * transformation.
    */
-  Matrix &PostTranslate(Float aX, Float aY)
+  BaseMatrix<T> &PostTranslate(T aX, T aY)
   {
     _31 += aX;
     _32 += aY;
     return *this;
   }
 
-  Matrix &PostTranslate(const Point &aPoint)
+  BaseMatrix<T> &PostTranslate(const MatrixPoint &aPoint)
   {
     return PostTranslate(aPoint.x, aPoint.y);
   }
 
-  static Matrix Scaling(Float aScaleX, Float aScaleY)
+  static BaseMatrix<T> Scaling(T aScaleX, T aScaleY)
   {
-    return Matrix(aScaleX, 0.0f, 0.0f, aScaleY, 0.0f, 0.0f);
+    return BaseMatrix<T>(aScaleX, 0.0f, 0.0f, aScaleY, 0.0f, 0.0f);
   }
   
   /**
    * Similar to PreTranslate, but applies a scale instead of a translation.
    */
-  Matrix &PreScale(Float aX, Float aY)
+  BaseMatrix<T> &PreScale(T aX, T aY)
   {
     _11 *= aX;
     _12 *= aX;
@@ -163,7 +219,7 @@ public:
   /**
    * Similar to PostTranslate, but applies a scale instead of a translation.
    */
-  Matrix &PostScale(Float aScaleX, Float aScaleY)
+  BaseMatrix<T> &PostScale(T aScaleX, T aScaleY)
   {
     _11 *= aScaleX;
     _12 *= aScaleY;
@@ -175,33 +231,33 @@ public:
     return *this;
   }
 
-  GFX2D_API static Matrix Rotation(Float aAngle);
+  GFX2D_API static BaseMatrix<T> Rotation(T aAngle);
 
   /**
    * Similar to PreTranslate, but applies a rotation instead of a translation.
    */
-  Matrix &PreRotate(Float aAngle)
+  BaseMatrix<T> &PreRotate(T aAngle)
   {
-    return *this = Matrix::Rotation(aAngle) * *this;
+    return *this = BaseMatrix<T>::Rotation(aAngle) * *this;
   }
 
   bool Invert()
   {
     // Compute co-factors.
-    Float A = _22;
-    Float B = -_21;
-    Float C = _21 * _32 - _22 * _31;
-    Float D = -_12;
-    Float E = _11;
-    Float F = _31 * _12 - _11 * _32;
+    T A = _22;
+    T B = -_21;
+    T C = _21 * _32 - _22 * _31;
+    T D = -_12;
+    T E = _11;
+    T F = _31 * _12 - _11 * _32;
 
-    Float det = Determinant();
+    T det = Determinant();
 
     if (!det) {
       return false;
     }
 
-    Float inv_det = 1 / det;
+    T inv_det = 1 / det;
 
     _11 = inv_det * A;
     _12 = inv_det * D;
@@ -213,22 +269,22 @@ public:
     return true;
   }
 
-  Matrix Inverse() const
+  BaseMatrix<T> Inverse() const
   {
-    Matrix clone = *this;
+    BaseMatrix<T> clone = *this;
     DebugOnly<bool> inverted = clone.Invert();
     MOZ_ASSERT(inverted, "Attempted to get the inverse of a non-invertible matrix");
     return clone;
   }
 
-  Float Determinant() const
+  T Determinant() const
   {
     return _11 * _22 - _12 * _21;
   }
 
-  Matrix operator*(const Matrix &aMatrix) const
+  BaseMatrix<T> operator*(const BaseMatrix<T> &aMatrix) const
   {
-    Matrix resultMatrix;
+    BaseMatrix<T> resultMatrix;
 
     resultMatrix._11 = this->_11 * aMatrix._11 + this->_12 * aMatrix._21;
     resultMatrix._12 = this->_11 * aMatrix._12 + this->_12 * aMatrix._22;
@@ -240,16 +296,21 @@ public:
     return resultMatrix;
   }
 
-  Matrix& operator*=(const Matrix &aMatrix)
+  BaseMatrix<T>& operator*=(const BaseMatrix<T> &aMatrix)
   {
     *this = *this * aMatrix;
     return *this;
   }
 
   /**
+   * Multiplies *this with aMatrix and returns the result.
+   */
+  Matrix4x4 operator*(const Matrix4x4& aMatrix) const;
+
+  /**
    * Multiplies in the opposite order to operator=*.
    */
-  Matrix &PreMultiply(const Matrix &aMatrix)
+  BaseMatrix<T> &PreMultiply(const BaseMatrix<T> &aMatrix)
   {
     *this = aMatrix * *this;
     return *this;
@@ -258,19 +319,19 @@ public:
   /* Returns true if the other matrix is fuzzy-equal to this matrix.
    * Note that this isn't a cheap comparison!
    */
-  bool operator==(const Matrix& other) const
+  bool operator==(const BaseMatrix<T>& other) const
   {
     return FuzzyEqual(_11, other._11) && FuzzyEqual(_12, other._12) &&
            FuzzyEqual(_21, other._21) && FuzzyEqual(_22, other._22) &&
            FuzzyEqual(_31, other._31) && FuzzyEqual(_32, other._32);
   }
 
-  bool operator!=(const Matrix& other) const
+  bool operator!=(const BaseMatrix<T>& other) const
   {
     return !(*this == other);
   }
 
-  bool ExactlyEquals(const Matrix& o) const
+  bool ExactlyEquals(const BaseMatrix<T>& o) const
   {
     return _11 == o._11 && _12 == o._12 &&
            _21 == o._21 && _22 == o._22 &&
@@ -304,8 +365,8 @@ public:
   */
   bool HasNonIntegerTranslation() const {
     return HasNonTranslation() ||
-      !FuzzyEqual(_31, floor(_31 + Float(0.5))) ||
-      !FuzzyEqual(_32, floor(_32 + Float(0.5)));
+      !FuzzyEqual(_31, floor(_31 + T(0.5))) ||
+      !FuzzyEqual(_32, floor(_32 + T(0.5)));
   }
 
   /**
@@ -347,11 +408,20 @@ public:
    */
   bool IsSingular() const
   {
-    Float det = Determinant();
+    T det = Determinant();
     return !mozilla::IsFinite(det) || det == 0;
   }
 
-  GFX2D_API Matrix &NudgeToIntegers();
+  GFX2D_API BaseMatrix<T>& NudgeToIntegers()
+  {
+    NudgeToInteger(&_11);
+    NudgeToInteger(&_12);
+    NudgeToInteger(&_21);
+    NudgeToInteger(&_22);
+    NudgeToInteger(&_31);
+    NudgeToInteger(&_32);
+    return *this;
+  }
 
   bool IsTranslation() const
   {
@@ -359,7 +429,7 @@ public:
            FuzzyEqual(_21, 0.0f) && FuzzyEqual(_22, 1.0f);
   }
 
-  static bool FuzzyIsInteger(Float aValue)
+  static bool FuzzyIsInteger(T aValue)
   {
     return FuzzyEqual(aValue, floorf(aValue + 0.5f));
   }
@@ -376,8 +446,8 @@ public:
            FuzzyIsInteger(_31) && FuzzyIsInteger(_32);
   }
 
-  Point GetTranslation() const {
-    return Point(_31, _32);
+  MatrixPoint GetTranslation() const {
+    return MatrixPoint(_31, _32);
   }
 
   /**
@@ -404,7 +474,45 @@ public:
   bool HasNegativeScaling() const {
       return (_11 < 0.0) || (_22 < 0.0);
   }
+
+  /**
+   * Computes the scale factors of this matrix; that is,
+   * the amounts each basis vector is scaled by.
+   * The xMajor parameter indicates if the larger scale is
+   * to be assumed to be in the X direction or not.
+   */
+  MatrixSize ScaleFactors(bool xMajor) const {
+    T det = Determinant();
+
+    if (det == 0.0) {
+      return MatrixSize(0.0, 0.0);
+    }
+
+    MatrixSize sz = xMajor ? MatrixSize(1.0, 0.0) : MatrixSize(0.0, 1.0);
+    sz = TransformSize(sz);
+
+    T major = sqrt(sz.width * sz.width + sz.height * sz.height);
+    T minor = 0.0;
+
+    // ignore mirroring
+    if (det < 0.0) {
+      det = - det;
+    }
+
+    if (major) {
+      minor = det / major;
+    }
+
+    if (xMajor) {
+      return MatrixSize(major, minor);
+    }
+
+    return MatrixSize(minor, major);
+  }
 };
+
+typedef BaseMatrix<Float> Matrix;
+typedef BaseMatrix<Double> MatrixDouble;
 
 // Helper functions used by Matrix4x4Typed defined in Matrix.cpp
 double
@@ -872,12 +980,6 @@ public:
   template<class F>
   GFX2D_API RectTyped<TargetUnits, F> TransformBounds(const RectTyped<SourceUnits, F>& aRect) const
   {
-    Point4DTyped<TargetUnits, F> verts[4];
-    verts[0] = TransformPoint(Point4DTyped<SourceUnits, F>(aRect.x, aRect.y, 0.0, 1.0));
-    verts[1] = TransformPoint(Point4DTyped<SourceUnits, F>(aRect.XMost(), aRect.y, 0.0, 1.0));
-    verts[2] = TransformPoint(Point4DTyped<SourceUnits, F>(aRect.XMost(), aRect.YMost(), 0.0, 1.0));
-    verts[3] = TransformPoint(Point4DTyped<SourceUnits, F>(aRect.x, aRect.YMost(), 0.0, 1.0));
-
     PointTyped<TargetUnits, F> quad[4];
     F min_x, max_x;
     F min_y, max_y;
@@ -1577,6 +1679,20 @@ public:
    */
   bool HasPerspectiveComponent() const {
     return _14 != 0 || _24 != 0 || _34 != 0 || _44 != 1;
+  }
+
+  /* Returns true if the matrix is a rectilinear transformation (i.e.
+   * grid-aligned rectangles are transformed to grid-aligned rectangles).
+   * This should only be called on 2D matrices.
+   */
+  bool IsRectilinear() const {
+    MOZ_ASSERT(Is2D());
+    if (gfx::FuzzyEqual(_12, 0) && gfx::FuzzyEqual(_21, 0)) {
+      return true;
+    } else if (gfx::FuzzyEqual(_22, 0) && gfx::FuzzyEqual(_11, 0)) {
+      return true;
+    }
+    return false;
   }
 
   /**

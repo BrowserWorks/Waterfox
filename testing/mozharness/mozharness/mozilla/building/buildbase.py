@@ -349,10 +349,8 @@ class BuildOptionParser(object):
         'fuzzing-asan-tc': 'builds/releng_sub_%s_configs/%s_fuzzing_asan_tc.py',
         'tsan': 'builds/releng_sub_%s_configs/%s_tsan.py',
         'cross-debug': 'builds/releng_sub_%s_configs/%s_cross_debug.py',
-        'cross-debug-st-an': 'builds/releng_sub_%s_configs/%s_cross_debug_st_an.py',
         'cross-debug-artifact': 'builds/releng_sub_%s_configs/%s_cross_debug_artifact.py',
         'cross-noopt-debug': 'builds/releng_sub_%s_configs/%s_cross_noopt_debug.py',
-        'cross-opt-st-an': 'builds/releng_sub_%s_configs/%s_cross_opt_st_an.py',
         'cross-artifact': 'builds/releng_sub_%s_configs/%s_cross_artifact.py',
         'debug': 'builds/releng_sub_%s_configs/%s_debug.py',
         'asan-and-debug': 'builds/releng_sub_%s_configs/%s_asan_and_debug.py',
@@ -363,18 +361,18 @@ class BuildOptionParser(object):
         'stylo': 'builds/releng_sub_%s_configs/%s_stylo.py',
         'stylo-debug': 'builds/releng_sub_%s_configs/%s_stylo_debug.py',
         'noopt-debug': 'builds/releng_sub_%s_configs/%s_noopt_debug.py',
-        'api-15-gradle-dependencies': 'builds/releng_sub_%s_configs/%s_api_15_gradle_dependencies.py',
-        'api-15': 'builds/releng_sub_%s_configs/%s_api_15.py',
-        'api-15-old-id': 'builds/releng_sub_%s_configs/%s_api_15_old_id.py',
-        'api-15-artifact': 'builds/releng_sub_%s_configs/%s_api_15_artifact.py',
-        'api-15-debug': 'builds/releng_sub_%s_configs/%s_api_15_debug.py',
-        'api-15-debug-artifact': 'builds/releng_sub_%s_configs/%s_api_15_debug_artifact.py',
-        'api-15-gradle': 'builds/releng_sub_%s_configs/%s_api_15_gradle.py',
-        'api-15-gradle-artifact': 'builds/releng_sub_%s_configs/%s_api_15_gradle_artifact.py',
+        'api-16-gradle-dependencies': 'builds/releng_sub_%s_configs/%s_api_16_gradle_dependencies.py',
+        'api-16': 'builds/releng_sub_%s_configs/%s_api_16.py',
+        'api-16-old-id': 'builds/releng_sub_%s_configs/%s_api_16_old_id.py',
+        'api-16-artifact': 'builds/releng_sub_%s_configs/%s_api_16_artifact.py',
+        'api-16-debug': 'builds/releng_sub_%s_configs/%s_api_16_debug.py',
+        'api-16-debug-artifact': 'builds/releng_sub_%s_configs/%s_api_16_debug_artifact.py',
+        'api-16-gradle': 'builds/releng_sub_%s_configs/%s_api_16_gradle.py',
+        'api-16-gradle-artifact': 'builds/releng_sub_%s_configs/%s_api_16_gradle_artifact.py',
         'x86': 'builds/releng_sub_%s_configs/%s_x86.py',
         'x86-old-id': 'builds/releng_sub_%s_configs/%s_x86_old_id.py',
         'x86-artifact': 'builds/releng_sub_%s_configs/%s_x86_artifact.py',
-        'api-15-partner-sample1': 'builds/releng_sub_%s_configs/%s_api_15_partner_sample1.py',
+        'api-16-partner-sample1': 'builds/releng_sub_%s_configs/%s_api_16_partner_sample1.py',
         'aarch64': 'builds/releng_sub_%s_configs/%s_aarch64.py',
         'android-test': 'builds/releng_sub_%s_configs/%s_test.py',
         'android-checkstyle': 'builds/releng_sub_%s_configs/%s_checkstyle.py',
@@ -384,6 +382,7 @@ class BuildOptionParser(object):
         'artifact': 'builds/releng_sub_%s_configs/%s_artifact.py',
         'debug-artifact': 'builds/releng_sub_%s_configs/%s_debug_artifact.py',
         'devedition': 'builds/releng_sub_%s_configs/%s_devedition.py',
+        'dmd': 'builds/releng_sub_%s_configs/%s_dmd.py',
     }
     build_pool_cfg_file = 'builds/build_pool_specifics.py'
     branch_cfg_file = 'builds/branch_specifics.py'
@@ -796,23 +795,22 @@ or run without that action (ie: --no-{action})"
             return self.buildid
 
         buildid = None
-        if c.get("is_automation"):
-            if self.buildbot_config['properties'].get('buildid'):
-                self.info("Determining buildid from buildbot properties")
-                buildid = self.buildbot_config['properties']['buildid'].encode(
-                    'ascii', 'replace'
-                )
-            else:
-                # for taskcluster, there are no buildbot properties, and we pass
-                # MOZ_BUILD_DATE into mozharness as an environment variable, only
-                # to have it pass the same value out with the same name.
-                buildid = os.environ.get('MOZ_BUILD_DATE')
+        if c.get("is_automation") and self.buildbot_config['properties'].get('buildid'):
+            self.info("Determining buildid from buildbot properties")
+            buildid = self.buildbot_config['properties']['buildid'].encode(
+                'ascii', 'replace'
+            )
+        else:
+            # for taskcluster, there are no buildbot properties, and we pass
+            # MOZ_BUILD_DATE into mozharness as an environment variable, only
+            # to have it pass the same value out with the same name.
+            buildid = os.environ.get('MOZ_BUILD_DATE')
 
         if not buildid:
             self.info("Creating buildid through current time")
             buildid = generate_build_ID()
 
-        if c.get('is_automation'):
+        if c.get('is_automation') or os.environ.get("TASK_ID"):
             self.set_buildbot_property('buildid',
                                        buildid,
                                        write_to_file=True)
@@ -1133,6 +1131,8 @@ or run without that action (ie: --no-{action})"
             '--retry', '4',
             '--tooltool-manifest',
             tooltool_manifest_path,
+            '--artifact-manifest',
+            os.path.join(dirs['abs_src_dir'], 'toolchains.json'),
             '--tooltool-url',
             c['tooltool_url'],
         ]
@@ -1142,6 +1142,9 @@ or run without that action (ie: --no-{action})"
         cache = c['env'].get('TOOLTOOL_CACHE')
         if cache:
             cmd.extend(['--cache-dir', cache])
+        toolchains = os.environ.get('MOZ_TOOLCHAINS')
+        if toolchains:
+            cmd.extend(toolchains.split())
         self.info(str(cmd))
         self.run_command_m(cmd, cwd=dirs['abs_src_dir'], halt_on_failure=True,
                            env=env)
@@ -1386,6 +1389,7 @@ or run without that action (ie: --no-{action})"
             'project': self.buildbot_config['properties']['branch'],
             'head_rev': revision,
             'pushdate': pushdate,
+            'pushid': pushinfo.pushid,
             'year': pushdate[0:4],
             'month': pushdate[4:6],
             'day': pushdate[6:8],
@@ -1623,6 +1627,8 @@ or run without that action (ie: --no-{action})"
                 os.path.join(dirs['abs_work_dir'], 'buildprops.json'))
 
         if 'MOZILLABUILD' in os.environ:
+            # We found many issues with intermittent build failures when not invoking mach via bash.
+            # See bug 1364651 before considering changing.
             mach = [
                 os.path.join(os.environ['MOZILLABUILD'], 'msys', 'bin', 'bash.exe'),
                 os.path.join(dirs['abs_src_dir'], 'mach')
@@ -1978,8 +1984,7 @@ or run without that action (ie: --no-{action})"
 
         if os.path.exists(installer):
             installer_size = self.query_filesize(installer)
-            self.info('TinderboxPrint: Size of %s<br/>%s bytes\n' % (
-                packageName, installer_size))
+            self.info('Size of %s: %s bytes' % (packageName, installer_size))
             try:
                 subtests = {}
                 if zipfile.is_zipfile(installer):
@@ -2008,8 +2013,8 @@ or run without that action (ie: --no-{action})"
                                     subtests[name] = size
                 for name in subtests:
                     if subtests[name] is not None:
-                        self.info('TinderboxPrint: Size of %s<br/>%s bytes\n' %
-                                  (name, subtests[name]))
+                        self.info('Size of %s: %s bytes' % (name,
+                                                            subtests[name]))
                         size_measurements.append(
                             {'name': name, 'value': subtests[name]})
             except:

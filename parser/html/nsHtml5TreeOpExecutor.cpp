@@ -51,7 +51,8 @@ class nsHtml5ExecutorReflusher : public Runnable
     RefPtr<nsHtml5TreeOpExecutor> mExecutor;
   public:
     explicit nsHtml5ExecutorReflusher(nsHtml5TreeOpExecutor* aExecutor)
-      : mExecutor(aExecutor)
+      : mozilla::Runnable("nsHtml5ExecutorReflusher")
+      , mExecutor(aExecutor)
     {}
     NS_IMETHOD Run() override
     {
@@ -238,9 +239,13 @@ nsHtml5TreeOpExecutor::MarkAsBroken(nsresult aReason)
   // We are under memory pressure, but let's hope the following allocation
   // works out so that we get to terminate and clean up the parser from
   // a safer point.
-  if (mParser) { // can mParser ever be null here?
-    MOZ_ALWAYS_SUCCEEDS(
-      NS_DispatchToMainThread(NewRunnableMethod(GetParser(), &nsHtml5Parser::Terminate)));
+  if (mParser && mDocument) { // can mParser ever be null here?
+    nsCOMPtr<nsIRunnable> terminator =
+      NewRunnableMethod("nsHtml5Parser::Terminate", GetParser(), &nsHtml5Parser::Terminate);
+    if (NS_FAILED(mDocument->Dispatch(TaskCategory::Network,
+                                      terminator.forget()))) {
+      NS_WARNING("failed to dispatch executor flush event");
+    }
   }
   return aReason;
 }
@@ -264,9 +269,8 @@ void
 nsHtml5TreeOpExecutor::ContinueInterruptedParsingAsync()
 {
   if (!mDocument || !mDocument->IsInBackgroundWindow()) {
-    nsCOMPtr<nsIRunnable> flusher = new nsHtml5ExecutorReflusher(this);  
-    if (NS_FAILED(mDocument->Dispatch("nsHtml5ExecutorReflusher",
-                                      TaskCategory::Other,
+    nsCOMPtr<nsIRunnable> flusher = new nsHtml5ExecutorReflusher(this);
+    if (NS_FAILED(mDocument->Dispatch(TaskCategory::Network,
                                       flusher.forget()))) {
       NS_WARNING("failed to dispatch executor flush event");
     }
@@ -348,8 +352,7 @@ class nsHtml5FlushLoopGuard
 void
 nsHtml5TreeOpExecutor::RunFlushLoop()
 {
-  PROFILER_LABEL("nsHtml5TreeOpExecutor", "RunFlushLoop",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsHtml5TreeOpExecutor::RunFlushLoop", OTHER);
 
   if (mRunFlushLoopOnStack) {
     // There's already a RunFlushLoop() on the call stack.
@@ -720,7 +723,7 @@ nsHtml5TreeOpExecutor::Start()
 }
 
 void
-nsHtml5TreeOpExecutor::NeedsCharsetSwitchTo(const char* aEncoding,
+nsHtml5TreeOpExecutor::NeedsCharsetSwitchTo(NotNull<const Encoding*> aEncoding,
                                             int32_t aSource,
                                             uint32_t aLineNumber)
 {
@@ -738,7 +741,9 @@ nsHtml5TreeOpExecutor::NeedsCharsetSwitchTo(const char* aEncoding,
 
   // ask the webshellservice to load the URL
   if (NS_SUCCEEDED(wss->StopDocumentLoad())) {
-    wss->ReloadDocument(aEncoding, aSource);
+    nsAutoCString charset;
+    aEncoding->Name(charset);
+    wss->ReloadDocument(charset.get(), aSource);
   }
   // if the charset switch was accepted, wss has called Terminate() on the
   // parser by now
@@ -912,9 +917,9 @@ nsHtml5TreeOpExecutor::ConvertIfNotPreloadedYet(const nsAString& aURL)
   }
 
   nsIURI* base = BaseURIForPreload();
-  const nsCString& charset = mDocument->GetDocumentCharacterSet();
+  auto encoding = mDocument->GetDocumentCharacterSet();
   nsCOMPtr<nsIURI> uri;
-  nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL, charset.get(), base);
+  nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL, encoding, base);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to create a URI");
     return nullptr;
@@ -933,11 +938,7 @@ nsHtml5TreeOpExecutor::ShouldPreloadURI(nsIURI *aURI)
   nsAutoCString spec;
   nsresult rv = aURI->GetSpec(spec);
   NS_ENSURE_SUCCESS(rv, false);
-  if (mPreloadedURLs.Contains(spec)) {
-    return false;
-  }
-  mPreloadedURLs.PutEntry(spec);
-  return true;
+  return mPreloadedURLs.EnsureInserted(spec);
 }
 
 void
@@ -946,14 +947,16 @@ nsHtml5TreeOpExecutor::PreloadScript(const nsAString& aURL,
                                      const nsAString& aType,
                                      const nsAString& aCrossOrigin,
                                      const nsAString& aIntegrity,
-                                     bool aScriptFromHead)
+                                     bool aScriptFromHead,
+                                     bool aAsync,
+                                     bool aDefer)
 {
   nsCOMPtr<nsIURI> uri = ConvertIfNotPreloadedYet(aURL);
   if (!uri) {
     return;
   }
   mDocument->ScriptLoader()->PreloadURI(uri, aCharset, aType, aCrossOrigin,
-                                           aIntegrity, aScriptFromHead,
+                                           aIntegrity, aScriptFromHead, aAsync, aDefer,
                                            mSpeculationReferrerPolicy);
 }
 
@@ -1020,9 +1023,9 @@ nsHtml5TreeOpExecutor::PreloadEndPicture()
 void
 nsHtml5TreeOpExecutor::AddBase(const nsAString& aURL)
 {
-  const nsCString& charset = mDocument->GetDocumentCharacterSet();
+  auto encoding = mDocument->GetDocumentCharacterSet();
   nsresult rv = NS_NewURI(getter_AddRefs(mViewSourceBaseURI), aURL,
-                                     charset.get(), GetViewSourceBaseURI());
+                          encoding, GetViewSourceBaseURI());
   if (NS_FAILED(rv)) {
     mViewSourceBaseURI = nullptr;
   }
@@ -1034,9 +1037,9 @@ nsHtml5TreeOpExecutor::SetSpeculationBase(const nsAString& aURL)
     // the first one wins
     return;
   }
-  const nsCString& charset = mDocument->GetDocumentCharacterSet();
+  auto encoding = mDocument->GetDocumentCharacterSet();
   DebugOnly<nsresult> rv = NS_NewURI(getter_AddRefs(mSpeculationBaseURI), aURL,
-                                     charset.get(), mDocument->GetDocumentURI());
+                                     encoding, mDocument->GetDocumentURI());
   NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Failed to create a URI");
 }
 

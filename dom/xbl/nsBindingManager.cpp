@@ -351,11 +351,15 @@ nsBindingManager::AddToAttachedQueue(nsXBLBinding* aBinding)
 void
 nsBindingManager::PostProcessAttachedQueueEvent()
 {
+  MOZ_ASSERT(NS_IsMainThread());
+  if (!mDocument) {
+    return;
+  }
   mProcessAttachedQueueEvent =
     NewRunnableMethod("nsBindingManager::DoProcessAttachedQueue",
                       this, &nsBindingManager::DoProcessAttachedQueue);
-  nsresult rv = NS_DispatchToCurrentThread(mProcessAttachedQueueEvent);
-  if (NS_SUCCEEDED(rv) && mDocument) {
+  nsresult rv = mDocument->EventTargetFor(TaskCategory::Other)->Dispatch(do_AddRef(mProcessAttachedQueueEvent));
+  if (NS_SUCCEEDED(rv)) {
     mDocument->BlockOnload();
   }
 }
@@ -390,8 +394,12 @@ nsBindingManager::DoProcessAttachedQueue()
     nsresult rv = NS_ERROR_FAILURE;
     nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
     if (timer) {
-      rv = timer->InitWithFuncCallback(PostPAQEventCallback, this,
-                                       100, nsITimer::TYPE_ONE_SHOT);
+      rv = timer->InitWithNamedFuncCallback(
+        PostPAQEventCallback,
+        this,
+        100,
+        nsITimer::TYPE_ONE_SHOT,
+        "nsBindingManager::DoProcessAttachedQueue");
     }
     if (NS_SUCCEEDED(rv)) {
       NS_ADDREF_THIS();

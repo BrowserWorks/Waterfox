@@ -6,11 +6,9 @@
 
 #include "VideoEngine.h"
 #include "webrtc/video_engine/browser_capture_impl.h"
+#include "webrtc/system_wrappers/include/clock.h"
 #ifdef WEBRTC_ANDROID
 #include "webrtc/modules/video_capture/video_capture.h"
-#ifdef WEBRTC_INCLUDE_INTERNAL_VIDEO_RENDER
-#include "webrtc/modules/video_render/video_render.h"
-#endif
 #endif
 
 
@@ -24,7 +22,6 @@ mozilla::LazyLogModule gVideoEngineLog("VideoEngine");
 #define LOG_ENABLED() MOZ_LOG_TEST(gVideoEngineLog, mozilla::LogLevel::Debug)
 
 int VideoEngine::sId = 0;
-
 #if defined(ANDROID)
 int VideoEngine::SetAndroidObjects(JavaVM* javaVM) {
   LOG((__PRETTY_FUNCTION__));
@@ -48,23 +45,21 @@ VideoEngine::CreateVideoCapture(int32_t& id, const char* deviceUniqueIdUTF8) {
   LOG((__PRETTY_FUNCTION__));
   id = GenerateId();
   LOG(("CaptureDeviceInfo.type=%s id=%d",mCaptureDevInfo.TypeName(),id));
-  CaptureEntry entry = {-1,nullptr,nullptr};
+  CaptureEntry entry = {-1, nullptr};
 
   if (mCaptureDevInfo.type == webrtc::CaptureDeviceType::Camera) {
     entry = CaptureEntry(id,
-		         webrtc::VideoCaptureFactory::Create(id, deviceUniqueIdUTF8),
-                         nullptr);
+		         webrtc::VideoCaptureFactory::Create(deviceUniqueIdUTF8));
   } else {
 #ifndef WEBRTC_ANDROID
     entry = CaptureEntry(
 	      id,
-	      webrtc::DesktopCaptureImpl::Create(id, deviceUniqueIdUTF8, mCaptureDevInfo.type),
-              nullptr);
+	      webrtc::DesktopCaptureImpl::Create(id, deviceUniqueIdUTF8, mCaptureDevInfo.type));
 #else
     MOZ_ASSERT("CreateVideoCapture NO DESKTOP CAPTURE IMPL ON ANDROID" == nullptr);
 #endif
   }
-  mCaps.emplace(id,std::move(entry));
+  mCaps.emplace(id, std::move(entry));
 }
 
 int
@@ -79,16 +74,46 @@ VideoEngine::ReleaseVideoCapture(const int32_t id) {
 
 std::shared_ptr<webrtc::VideoCaptureModule::DeviceInfo>
 VideoEngine::GetOrCreateVideoCaptureDeviceInfo() {
+  LOG((__PRETTY_FUNCTION__));
+  int64_t currentTime = 0;
+
+  const char * capDevTypeName =
+    webrtc::CaptureDeviceInfo(mCaptureDevInfo.type).TypeName();
+
   if (mDeviceInfo) {
-    return mDeviceInfo;
+    LOG(("Device cache available."));
+    // Camera cache is invalidated by HW change detection elsewhere
+    if (mCaptureDevInfo.type == webrtc::CaptureDeviceType::Camera) {
+      LOG(("returning cached CaptureDeviceInfo of type %s", capDevTypeName));
+      return mDeviceInfo;
+    }
+    // Screen sharing cache is invalidated after the expiration time
+    currentTime = webrtc::Clock::GetRealTimeClock()->TimeInMilliseconds();
+    LOG(("Checking expiry, fetched current time of: %" PRId64, currentTime));
+    LOG(("device cache expiration is %" PRId64, mExpiryTimeInMs));
+    if (currentTime <= mExpiryTimeInMs) {
+      LOG(("returning cached CaptureDeviceInfo of type %s", capDevTypeName));
+      return mDeviceInfo;
+    }
   }
+
+  if (currentTime == 0) {
+   currentTime = webrtc::Clock::GetRealTimeClock()->TimeInMilliseconds();
+   LOG(("Fetched current time of: %" PRId64, currentTime));
+  }
+  mExpiryTimeInMs = currentTime + kCacheExpiryPeriodMs;
+  LOG(("new device cache expiration is %" PRId64, mExpiryTimeInMs));
+  LOG(("creating a new VideoCaptureDeviceInfo of type %s", capDevTypeName));
+
   switch (mCaptureDevInfo.type) {
     case webrtc::CaptureDeviceType::Camera: {
-      mDeviceInfo.reset(webrtc::VideoCaptureFactory::CreateDeviceInfo(0));
+      mDeviceInfo.reset(webrtc::VideoCaptureFactory::CreateDeviceInfo());
+      LOG(("webrtc::CaptureDeviceType::Camera: Finished creating new device."));
       break;
     }
     case webrtc::CaptureDeviceType::Browser: {
       mDeviceInfo.reset(webrtc::BrowserDeviceInfoImpl::CreateDeviceInfo());
+      LOG(("webrtc::CaptureDeviceType::Browser: Finished creating new device."));
       break;
     }
     // Window, Application, and Screen types are handled by DesktopCapture
@@ -97,6 +122,7 @@ VideoEngine::GetOrCreateVideoCaptureDeviceInfo() {
     case webrtc::CaptureDeviceType::Screen: {
 #if !defined(WEBRTC_ANDROID) && !defined(WEBRTC_IOS)
       mDeviceInfo.reset(webrtc::DesktopCaptureImpl::CreateDeviceInfo(mId,mCaptureDevInfo.type));
+      LOG(("screen capture: Finished creating new device."));
 #else
       MOZ_ASSERT("GetVideoCaptureDeviceInfo NO DESKTOP CAPTURE IMPL ON ANDROID" == nullptr);
       mDeviceInfo.reset();
@@ -104,14 +130,8 @@ VideoEngine::GetOrCreateVideoCaptureDeviceInfo() {
       break;
     }
   }
+  LOG(("EXIT %s", __PRETTY_FUNCTION__));
   return mDeviceInfo;
-}
-
-void
-VideoEngine::RemoveRenderer(int capnum) {
-  WithEntry(capnum, [](CaptureEntry& cap) {
-    cap.mVideoRender = nullptr;
-  });
 }
 
 const UniquePtr<const webrtc::Config>&
@@ -128,27 +148,14 @@ RefPtr<VideoEngine> VideoEngine::Create(UniquePtr<const webrtc::Config>&& aConfi
 }
 
 VideoEngine::CaptureEntry::CaptureEntry(int32_t aCapnum,
-                                        rtc::scoped_refptr<webrtc::VideoCaptureModule> aCapture,
-                                        webrtc::VideoRender * aRenderer):
-    mCapnum(aCapnum),
-    mVideoCaptureModule(aCapture),
-    mVideoRender(aRenderer)
+                                        rtc::scoped_refptr<webrtc::VideoCaptureModule> aCapture)
+  : mCapnum(aCapnum)
+  , mVideoCaptureModule(aCapture)
 {}
 
 rtc::scoped_refptr<webrtc::VideoCaptureModule>
 VideoEngine::CaptureEntry::VideoCapture() {
   return mVideoCaptureModule;
-}
-
-const UniquePtr<webrtc::VideoRender>&
-VideoEngine::CaptureEntry::VideoRenderer() {
-  if (!mVideoRender) {
-     MOZ_ASSERT(mCapnum != -1);
-     // Create a VideoRender on demand
-     mVideoRender = UniquePtr<webrtc::VideoRender>(
-         webrtc::VideoRender::CreateVideoRender(mCapnum,nullptr,false,webrtc::kRenderExternal));
-   }
-  return mVideoRender;
 }
 
 int32_t

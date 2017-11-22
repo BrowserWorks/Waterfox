@@ -8,6 +8,7 @@
 
 #include <map>
 
+#include "gfxPrefs.h"
 #include "FrameMetrics.h"
 #include "nsDebug.h"             // for NS_WARNING
 #include "mozilla/Assertions.h"  // for MOZ_ASSERT
@@ -103,8 +104,9 @@ class APZPaintLogHelper {
 public:
   APZPaintLogHelper(APZTestData* aTestData, SequenceNumber aPaintSequenceNumber)
     : mTestData(aTestData),
-      mPaintSequenceNumber(aPaintSequenceNumber)
-  {}
+      mPaintSequenceNumber(aPaintSequenceNumber) {
+    MOZ_ASSERT(!aTestData || gfxPrefs::APZTestLoggingEnabled(), "don't call me");
+  }
 
   template <typename Value>
   void LogTestData(FrameMetrics::ViewID aScrollId,

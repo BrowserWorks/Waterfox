@@ -15,6 +15,7 @@
 #include "nsIHttpChannel.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsIHttpHeaderVisitor.h"
+#include "nsINamed.h"
 #include "nsINetworkInterceptController.h"
 #include "nsIMutableArray.h"
 #include "nsIScriptError.h"
@@ -206,7 +207,8 @@ class TeardownRunnable final : public Runnable
 {
 public:
   explicit TeardownRunnable(ServiceWorkerManagerChild* aActor)
-    : mActor(aActor)
+    : Runnable("dom::workers::TeardownRunnable")
+    , mActor(aActor)
   {
     MOZ_ASSERT(mActor);
   }
@@ -386,7 +388,8 @@ class PropagateSoftUpdateRunnable final : public Runnable
 public:
   PropagateSoftUpdateRunnable(const OriginAttributes& aOriginAttributes,
                               const nsAString& aScope)
-    : mOriginAttributes(aOriginAttributes)
+    : Runnable("dom::workers::PropagateSoftUpdateRunnable")
+    , mOriginAttributes(aOriginAttributes)
     , mScope(aScope)
   {}
 
@@ -416,7 +419,8 @@ public:
   PropagateUnregisterRunnable(nsIPrincipal* aPrincipal,
                               nsIServiceWorkerUnregisterCallback* aCallback,
                               const nsAString& aScope)
-    : mPrincipal(aPrincipal)
+    : Runnable("dom::workers::PropagateUnregisterRunnable")
+    , mPrincipal(aPrincipal)
     , mCallback(aCallback)
     , mScope(aScope)
   {
@@ -448,7 +452,9 @@ class RemoveRunnable final : public Runnable
 {
 public:
   explicit RemoveRunnable(const nsACString& aHost)
-  {}
+    : Runnable("dom::workers::RemoveRunnable")
+  {
+  }
 
   NS_IMETHOD Run() override
   {
@@ -473,7 +479,9 @@ class PropagateRemoveRunnable final : public Runnable
 {
 public:
   explicit PropagateRemoveRunnable(const nsACString& aHost)
-  {}
+    : Runnable("dom::workers::PropagateRemoveRunnable")
+  {
+  }
 
   NS_IMETHOD Run() override
   {
@@ -498,7 +506,9 @@ class PropagateRemoveAllRunnable final : public Runnable
 {
 public:
   PropagateRemoveAllRunnable()
-  {}
+    : Runnable("dom::workers::PropagateRemoveAllRunnable")
+  {
+  }
 
   NS_IMETHOD Run() override
   {
@@ -578,9 +588,11 @@ class SoftUpdateRunnable final : public CancelableRunnable
 {
 public:
   SoftUpdateRunnable(const OriginAttributes& aOriginAttributes,
-                     const nsACString& aScope, bool aInternalMethod,
+                     const nsACString& aScope,
+                     bool aInternalMethod,
                      GenericPromise::Private* aPromise)
-    : mAttrs(aOriginAttributes)
+    : CancelableRunnable("dom::workers::SoftUpdateRunnable")
+    , mAttrs(aOriginAttributes)
     , mScope(aScope)
     , mInternalMethod(aInternalMethod)
     , mPromise(aPromise)
@@ -650,7 +662,8 @@ public:
                  ServiceWorkerUpdateFinishCallback* aCallback,
                  Type aType,
                  GenericPromise::Private* aPromise)
-    : mPrincipal(aPrincipal)
+    : CancelableRunnable("dom::workers::UpdateRunnable")
+    , mPrincipal(aPrincipal)
     , mScope(aScope)
     , mCallback(aCallback)
     , mType(aType)
@@ -714,7 +727,8 @@ class ResolvePromiseRunnable final : public CancelableRunnable
 {
 public:
   explicit ResolvePromiseRunnable(GenericPromise::Private* aPromise)
-    : mPromise(aPromise)
+    : CancelableRunnable("dom::workers::ResolvePromiseRunnable")
+    , mPromise(aPromise)
   {}
 
   NS_IMETHOD
@@ -959,7 +973,9 @@ class GetRegistrationsRunnable final : public Runnable
   RefPtr<Promise> mPromise;
 public:
   GetRegistrationsRunnable(nsPIDOMWindowInner* aWindow, Promise* aPromise)
-    : mWindow(aWindow), mPromise(aPromise)
+    : Runnable("dom::workers::GetRegistrationsRunnable")
+    , mWindow(aWindow)
+    , mPromise(aPromise)
   {}
 
   NS_IMETHOD
@@ -1085,9 +1101,13 @@ class GetRegistrationRunnable final : public Runnable
   nsString mDocumentURL;
 
 public:
-  GetRegistrationRunnable(nsPIDOMWindowInner* aWindow, Promise* aPromise,
+  GetRegistrationRunnable(nsPIDOMWindowInner* aWindow,
+                          Promise* aPromise,
                           const nsAString& aDocumentURL)
-    : mWindow(aWindow), mPromise(aPromise), mDocumentURL(aDocumentURL)
+    : Runnable("dom::workers::GetRegistrationRunnable")
+    , mWindow(aWindow)
+    , mPromise(aPromise)
+    , mDocumentURL(aDocumentURL)
   {}
 
   NS_IMETHOD
@@ -1191,7 +1211,9 @@ class GetReadyPromiseRunnable final : public Runnable
 
 public:
   GetReadyPromiseRunnable(nsPIDOMWindowInner* aWindow, Promise* aPromise)
-    : mWindow(aWindow), mPromise(aPromise)
+    : Runnable("dom::workers::GetReadyPromiseRunnable")
+    , mWindow(aWindow)
+    , mPromise(aPromise)
   {}
 
   NS_IMETHOD
@@ -1641,17 +1663,16 @@ ServiceWorkerManager::GetOrCreateJobQueue(const nsACString& aKey,
 {
   MOZ_ASSERT(!aKey.IsEmpty());
   ServiceWorkerManager::RegistrationDataPerPrincipal* data;
+  // XXX we could use LookupForAdd here to avoid a hashtable lookup, except that
+  // leads to a false positive assertion, see bug 1370674 comment 7.
   if (!mRegistrationInfos.Get(aKey, &data)) {
     data = new RegistrationDataPerPrincipal();
     mRegistrationInfos.Put(aKey, data);
   }
 
-  RefPtr<ServiceWorkerJobQueue> queue;
-  if (!data->mJobQueues.Get(aScope, getter_AddRefs(queue))) {
-    RefPtr<ServiceWorkerJobQueue> newQueue = new ServiceWorkerJobQueue();
-    queue = newQueue;
-    data->mJobQueues.Put(aScope, newQueue.forget());
-  }
+  RefPtr<ServiceWorkerJobQueue> queue =
+    data->mJobQueues.LookupForAdd(aScope).OrInsert(
+      []() { return new ServiceWorkerJobQueue(); });
 
   return queue.forget();
 }
@@ -1774,8 +1795,7 @@ ServiceWorkerManager::ReportToAllClients(const nsCString& aScope,
 
     if (regList->IsEmpty()) {
       regList = nullptr;
-      nsAutoPtr<WeakDocumentList> doomed;
-      mRegisteringDocuments.RemoveAndForget(aScope, doomed);
+      mRegisteringDocuments.Remove(aScope);
     }
   }
 
@@ -1930,8 +1950,7 @@ ServiceWorkerManager::FlushReportsToAllClients(const nsACString& aScope,
 
     if (regList->IsEmpty()) {
       regList = nullptr;
-      nsAutoPtr<WeakDocumentList> doomed;
-      mRegisteringDocuments.RemoveAndForget(aScope, doomed);
+      mRegisteringDocuments.Remove(aScope);
     }
   }
 
@@ -2245,11 +2264,9 @@ ServiceWorkerManager::AddScopeAndRegistration(const nsACString& aScope,
 
   MOZ_ASSERT(!scopeKey.IsEmpty());
 
-  RegistrationDataPerPrincipal* data;
-  if (!swm->mRegistrationInfos.Get(scopeKey, &data)) {
-    data = new RegistrationDataPerPrincipal();
-    swm->mRegistrationInfos.Put(scopeKey, data);
-  }
+  RegistrationDataPerPrincipal* data =
+    swm->mRegistrationInfos.LookupForAdd(scopeKey).OrInsert(
+      []() { return new RegistrationDataPerPrincipal(); });
 
   for (uint32_t i = 0; i < data->mOrderedScopes.Length(); ++i) {
     const nsCString& current = data->mOrderedScopes[i];
@@ -2344,10 +2361,9 @@ ServiceWorkerManager::RemoveScopeAndRegistration(ServiceWorkerRegistrationInfo* 
     return;
   }
 
-  nsCOMPtr<nsITimer> timer = data->mUpdateTimers.Get(aRegistration->mScope);
-  if (timer) {
-    timer->Cancel();
-    data->mUpdateTimers.Remove(aRegistration->mScope);
+  if (auto entry = data->mUpdateTimers.Lookup(aRegistration->mScope)) {
+    entry.Data()->Cancel();
+    entry.Remove();
   }
 
   // The registration should generally only be removed if there are no controlled
@@ -2363,9 +2379,7 @@ ServiceWorkerManager::RemoveScopeAndRegistration(ServiceWorkerRegistrationInfo* 
   }
 
   RefPtr<ServiceWorkerRegistrationInfo> info;
-  data->mInfos.Get(aRegistration->mScope, getter_AddRefs(info));
-
-  data->mInfos.Remove(aRegistration->mScope);
+  data->mInfos.Remove(aRegistration->mScope, getter_AddRefs(info));
   data->mOrderedScopes.RemoveElement(aRegistration->mScope);
   swm->NotifyListenersOnUnregister(info);
 
@@ -2376,13 +2390,11 @@ ServiceWorkerManager::RemoveScopeAndRegistration(ServiceWorkerRegistrationInfo* 
 void
 ServiceWorkerManager::MaybeRemoveRegistrationInfo(const nsACString& aScopeKey)
 {
-  RegistrationDataPerPrincipal* data;
-  if (!mRegistrationInfos.Get(aScopeKey, &data)) {
-    return;
-  }
-
-  if (data->mOrderedScopes.IsEmpty() && data->mJobQueues.Count() == 0) {
-    mRegistrationInfos.Remove(aScopeKey);
+  if (auto entry = mRegistrationInfos.Lookup(aScopeKey)) {
+    if (entry.Data()->mOrderedScopes.IsEmpty() &&
+        entry.Data()->mJobQueues.Count() == 0) {
+      entry.Remove();
+    }
   }
 }
 
@@ -2627,12 +2639,14 @@ class ContinueDispatchFetchEventRunnable : public Runnable
   nsString mDocumentId;
   bool mIsReload;
 public:
-  ContinueDispatchFetchEventRunnable(ServiceWorkerPrivate* aServiceWorkerPrivate,
-                                     nsIInterceptedChannel* aChannel,
-                                     nsILoadGroup* aLoadGroup,
-                                     const nsAString& aDocumentId,
-                                     bool aIsReload)
-    : mServiceWorkerPrivate(aServiceWorkerPrivate)
+  ContinueDispatchFetchEventRunnable(
+    ServiceWorkerPrivate* aServiceWorkerPrivate,
+    nsIInterceptedChannel* aChannel,
+    nsILoadGroup* aLoadGroup,
+    const nsAString& aDocumentId,
+    bool aIsReload)
+    : Runnable("dom::workers::ContinueDispatchFetchEventRunnable")
+    , mServiceWorkerPrivate(aServiceWorkerPrivate)
     , mChannel(aChannel)
     , mLoadGroup(aLoadGroup)
     , mDocumentId(aDocumentId)
@@ -2773,7 +2787,8 @@ ServiceWorkerManager::DispatchFetchEvent(const OriginAttributes& aOriginAttribut
   // When this service worker was registered, we also sent down the permissions
   // for the runnable. They should have arrived by now, but we still need to
   // wait for them if they have not.
-  nsCOMPtr<nsIRunnable> permissionsRunnable = NS_NewRunnableFunction([=] () {
+  nsCOMPtr<nsIRunnable> permissionsRunnable = NS_NewRunnableFunction(
+    "dom::workers::ServiceWorkerManager::DispatchFetchEvent", [=]() {
       nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
       MOZ_ALWAYS_SUCCEEDS(permMgr->WhenPermissionsAvailable(serviceWorker->Principal(),
                                                             continueRunnable));
@@ -3679,11 +3694,9 @@ ServiceWorkerManager::ForceUnregister(RegistrationDataPerPrincipal* aRegistratio
     queue->CancelAll();
   }
 
-  nsCOMPtr<nsITimer> timer =
-    aRegistrationData->mUpdateTimers.Get(aRegistration->mScope);
-  if (timer) {
-    timer->Cancel();
-    aRegistrationData->mUpdateTimers.Remove(aRegistration->mScope);
+  if (auto entry = aRegistrationData->mUpdateTimers.Lookup(aRegistration->mScope)) {
+    entry.Data()->Cancel();
+    entry.Remove();
   }
 
   // Since Unregister is async, it is ok to call it in an enumeration.
@@ -3877,8 +3890,7 @@ ServiceWorkerManager::ShouldReportToWindow(mozIDOMWindowProxy* aWindow,
 
     if (list->IsEmpty()) {
       list = nullptr;
-      nsAutoPtr<WeakDocumentList> doomed;
-      mRegisteringDocuments.RemoveAndForget(aScope, doomed);
+      mRegisteringDocuments.Remove(aScope);
     }
   }
 
@@ -4157,13 +4169,13 @@ ServiceWorkerManager::RemoveNavigationInterception(const nsACString& aScope,
     MOZ_ASSERT(!list->Contains(aChannel));
     if (list->IsEmpty()) {
       list = nullptr;
-      nsAutoPtr<InterceptionList> doomed;
-      mNavigationInterceptions.RemoveAndForget(aScope, doomed);
+      mNavigationInterceptions.Remove(aScope);
     }
   }
 }
 
 class UpdateTimerCallback final : public nsITimerCallback
+                                , public nsINamed
 {
   nsCOMPtr<nsIPrincipal> mPrincipal;
   const nsCString mScope;
@@ -4197,10 +4209,17 @@ public:
     return NS_OK;
   }
 
+  NS_IMETHOD
+  GetName(nsACString& aName) override
+  {
+    aName.AssignLiteral("UpdateTimerCallback");
+    return NS_OK;
+  }
+
   NS_DECL_ISUPPORTS
 };
 
-NS_IMPL_ISUPPORTS(UpdateTimerCallback, nsITimerCallback)
+NS_IMPL_ISUPPORTS(UpdateTimerCallback, nsITimerCallback, nsINamed)
 
 bool
 ServiceWorkerManager::MayHaveActiveServiceWorkerInstance(ContentParent* aContent,
@@ -4250,7 +4269,7 @@ ServiceWorkerManager::ScheduleUpdateTimer(nsIPrincipal* aPrincipal,
     return;
   }
 
-  nsCOMPtr<nsITimer> timer = data->mUpdateTimers.Get(aScope);
+  nsCOMPtr<nsITimer>& timer = data->mUpdateTimers.GetOrInsert(aScope);
   if (timer) {
     // There is already a timer scheduled.  In this case just use the original
     // schedule time.  We don't want to push it out to a later time since that
@@ -4261,6 +4280,7 @@ ServiceWorkerManager::ScheduleUpdateTimer(nsIPrincipal* aPrincipal,
 
   timer = do_CreateInstance("@mozilla.org/timer;1", &rv);
   if (NS_WARN_IF(NS_FAILED(rv))) {
+    data->mUpdateTimers.Remove(aScope); // another lookup, but very rare
     return;
   }
 
@@ -4272,10 +4292,9 @@ ServiceWorkerManager::ScheduleUpdateTimer(nsIPrincipal* aPrincipal,
   rv = timer->InitWithCallback(callback, UPDATE_DELAY_MS,
                                nsITimer::TYPE_ONE_SHOT);
   if (NS_WARN_IF(NS_FAILED(rv))) {
+    data->mUpdateTimers.Remove(aScope); // another lookup, but very rare
     return;
   }
-
-  data->mUpdateTimers.Put(aScope, timer);
 }
 
 void
@@ -4302,10 +4321,9 @@ ServiceWorkerManager::UpdateTimerFired(nsIPrincipal* aPrincipal,
     return;
   }
 
-  nsCOMPtr<nsITimer> timer = data->mUpdateTimers.Get(aScope);
-  if (timer) {
-    timer->Cancel();
-    data->mUpdateTimers.Remove(aScope);
+  if (auto entry = data->mUpdateTimers.Lookup(aScope)) {
+    entry.Data()->Cancel();
+    entry.Remove();
   }
 
   RefPtr<ServiceWorkerRegistrationInfo> registration;

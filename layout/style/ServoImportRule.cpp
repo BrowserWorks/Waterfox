@@ -14,12 +14,14 @@
 namespace mozilla {
 
 ServoImportRule::ServoImportRule(RefPtr<RawServoImportRule> aRawRule,
-                                 ServoStyleSheet* aSheet,
                                  uint32_t aLine, uint32_t aColumn)
   : CSSImportRule(aLine, aColumn)
   , mRawRule(Move(aRawRule))
-  , mChildSheet(aSheet)
 {
+  const auto* sheet = Servo_ImportRule_GetSheet(mRawRule.get());
+  MOZ_ASSERT(sheet);
+  mChildSheet = const_cast<ServoStyleSheet*>(sheet);
+  mChildSheet->SetOwnerRule(this);
 }
 
 ServoImportRule::~ServoImportRule()
@@ -29,15 +31,34 @@ ServoImportRule::~ServoImportRule()
   }
 }
 
-NS_IMPL_ADDREF_INHERITED(ServoImportRule, dom::CSSImportRule)
-NS_IMPL_RELEASE_INHERITED(ServoImportRule, dom::CSSImportRule)
-
-NS_IMPL_CYCLE_COLLECTION_INHERITED(ServoImportRule,
-                                   dom::CSSImportRule, mChildSheet)
-
 // QueryInterface implementation for ServoImportRule
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ServoImportRule)
 NS_INTERFACE_MAP_END_INHERITING(dom::CSSImportRule)
+
+NS_IMPL_CYCLE_COLLECTION_CLASS(ServoImportRule)
+
+NS_IMPL_ADDREF_INHERITED(ServoImportRule, dom::CSSImportRule)
+NS_IMPL_RELEASE_INHERITED(ServoImportRule, dom::CSSImportRule)
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(ServoImportRule,
+                                                  dom::CSSImportRule)
+  // Note the child sheet twice, since the Servo rule also holds a strong
+  // reference to it.
+  NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mChildSheet");
+  cb.NoteXPCOMChild(static_cast<nsIDOMCSSStyleSheet*>(tmp->mChildSheet));
+  MOZ_ASSERT_IF(tmp->mRawRule,
+                Servo_ImportRule_GetSheet(tmp->mRawRule) == tmp->mChildSheet);
+  cb.NoteXPCOMChild(static_cast<nsIDOMCSSStyleSheet*>(tmp->mChildSheet));
+  NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mRawRule.stylesheet");
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(ServoImportRule)
+  if (tmp->mChildSheet) {
+    tmp->mChildSheet->SetOwnerRule(nullptr);
+    tmp->mChildSheet = nullptr;
+  }
+  tmp->mRawRule = nullptr;
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END_INHERITED(dom::CSSImportRule)
 
 /* virtual */ already_AddRefed<css::Rule>
 ServoImportRule::Clone() const
@@ -45,7 +66,7 @@ ServoImportRule::Clone() const
   // Rule::Clone is only used when CSSStyleSheetInner is cloned in
   // preparation of being mutated. However, ServoStyleSheet never clones
   // anything, so this method should never be called.
-  MOZ_ASSERT_UNREACHABLE("Shouldn't be cloning ServoSupportsRule");
+  MOZ_ASSERT_UNREACHABLE("Shouldn't be cloning ServoImportRule");
   return nullptr;
 }
 
@@ -63,9 +84,10 @@ ServoImportRule::List(FILE* out, int32_t aIndent) const
 #endif
 
 dom::MediaList*
-ServoImportRule::Media() const
+ServoImportRule::GetMedia() const
 {
-  return mChildSheet->Media();
+  // When Bug 1326509 is fixed, we can assert mChildSheet instead.
+  return mChildSheet ? mChildSheet->Media() : nullptr;
 }
 
 StyleSheet*

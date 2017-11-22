@@ -55,7 +55,7 @@ def rust_compiler(rustc_info, cargo_info):
         You can install rust by running './mach bootstrap'
         or by directly running the installer from https://rustup.rs/
         '''))
-    rustc_min_version = Version('1.15.1')
+    rustc_min_version = Version('1.17.0')
     cargo_min_version = Version('0.{}'.format(rustc_min_version.minor + 1))
 
     version = rustc_info.version
@@ -233,6 +233,9 @@ def rust_target_env_name(triple):
 # uppercase function in make, and we don't want to shell out just for
 # converting a string to uppercase.
 set_config('RUST_TARGET_ENV_NAME', rust_target_env_name)
+
+# This is used for putting source info into symbol files.
+set_config('RUSTC_COMMIT', depends(rustc_info)(lambda i: i.commit))
 
 # Until we remove all the other Rust checks in old-configure.
 add_old_configure_assignment('RUSTC', rustc)

@@ -680,7 +680,7 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
     NS_RUNTIMEABORT(jsInitFailureReason);
   }
   sInitializedJS = true;
-  
+
   rv = nsComponentManagerImpl::gComponentManager->Init();
   if (NS_FAILED(rv)) {
     NS_RELEASE(nsComponentManagerImpl::gComponentManager);
@@ -986,7 +986,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
 #endif
   nsCycleCollector_shutdown(shutdownCollect);
 
-  PROFILER_MARKER("Shutdown xpcom");
+  profiler_add_marker("Shutdown xpcom");
   // If we are doing any shutdown checks, poison writes.
   if (gShutdownChecks != SCM_NOTHING) {
 #ifdef XP_MACOSX
@@ -1010,7 +1010,6 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
     NS_WARNING("Component Manager was never created ...");
   }
 
-#ifdef MOZ_GECKO_PROFILER
   // In optimized builds we don't do shutdown collections by default, so
   // uncollected (garbage) objects may keep the nsXPConnect singleton alive,
   // and its XPCJSContext along with it. However, we still destroy various
@@ -1020,7 +1019,6 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   // duplicating the call in XPCJSContext::~XPCJSContext() in case that
   // never fired.
   profiler_clear_js_context();
-#endif
 
   if (sInitializedJS) {
     // Shut down the JS engine.
@@ -1075,17 +1073,6 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   BackgroundHangMonitor::Shutdown();
 
   NS_LogTerm();
-
-#if defined(MOZ_WIDGET_GONK)
-  // This _exit(0) call is intended to be temporary, to get shutdown leak
-  // checking working on non-B2G platforms.
-  // On debug B2G, the child process crashes very late.  Instead, just
-  // give up so at least we exit cleanly. See bug 1071866.
-  if (XRE_IsContentProcess()) {
-      NS_WARNING("Exiting child process early!");
-      _exit(0);
-  }
-#endif
 
   return NS_OK;
 }

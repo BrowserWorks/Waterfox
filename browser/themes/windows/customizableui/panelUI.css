@@ -111,18 +111,20 @@ toolbarbutton.social-provider-menuitem > .toolbarbutton-icon {
 
 menu.subviewbutton > .menu-right {
   -moz-appearance: none;
-  list-style-image: url(chrome://browser/skin/customizableui/menu-arrow.svg#arrow);
+  list-style-image: url(chrome://browser/skin/customizableui/menu-arrow.svg);
+  -moz-context-properties: fill;
+  fill: MenuText;
   /* Reset the rect we inherit from the button: */
   -moz-image-region: auto;
 }
 
 menu[disabled="true"].subviewbutton > .menu-right {
-  list-style-image: url(chrome://browser/skin/customizableui/menu-arrow.svg#arrow-disabled);
+  fill: GrayText;
 }
 
 @media (-moz-windows-default-theme: 0) {
   menu[_moz-menuactive].subviewbutton > .menu-right {
-    list-style-image: url(chrome://browser/skin/customizableui/menu-arrow.svg#arrow-hover);
+    fill: HighlightText;
   }
 }
 
@@ -150,8 +152,21 @@ menu.subviewbutton > .menu-right:-moz-locale-dir(rtl) {
 photonpanelmultiview .subviewbutton > .toolbarbutton-text,
 photonpanelmultiview .subviewbutton > .toolbarbutton-icon,
 photonpanelmultiview .panel-banner-item > .toolbarbutton-multiline-text {
-  padding: 0;
   margin: 0;
+}
+
+photonpanelmultiview .subviewbutton > .toolbarbutton-icon {
+  padding: 0;
+}
+
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon,
+  .restoreallitem, .bookmark-item) > .toolbarbutton-text {
+  padding-inline-start: 8px;
+}
+
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon,
+  .restoreallitem, .bookmark-item)[checked="true"] > .toolbarbutton-icon {
+  visibility: visible;
 }
 
 /* END photon adjustments */

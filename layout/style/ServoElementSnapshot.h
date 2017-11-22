@@ -13,6 +13,7 @@
 #include "nsAttrName.h"
 #include "nsAttrValue.h"
 #include "nsChangeHint.h"
+#include "nsGkAtoms.h"
 #include "nsIAtom.h"
 
 namespace mozilla {
@@ -94,8 +95,13 @@ public:
 
   /**
    * Captures the given element attributes (if not previously captured).
+   *
+   * The attribute name and namespace are used to note which kind of attribute
+   * has changed.
    */
-  void AddAttrs(Element* aElement);
+  void AddAttrs(Element* aElement,
+                int32_t aNameSpaceID,
+                nsIAtom* aChangedAttribute);
 
   /**
    * Captures some other pseudo-class matching state not included in
@@ -145,6 +151,12 @@ public:
     return nullptr;
   }
 
+  const nsAttrValue* GetClasses() const
+  {
+    MOZ_ASSERT(HasAttrs());
+    return &mClass;
+  }
+
   bool IsInChromeDocument() const { return mIsInChromeDocument; }
   bool SupportsLangAttr() const { return mSupportsLangAttr; }
 
@@ -168,6 +180,7 @@ private:
   // though it can be wasted space if we deal with a lot of state-only
   // snapshots.
   nsTArray<ServoAttrSnapshot> mAttrs;
+  nsAttrValue mClass;
   ServoStateType mState;
   Flags mContains;
   bool mIsHTMLElementInHTMLDocument : 1;
@@ -175,6 +188,9 @@ private:
   bool mSupportsLangAttr : 1;
   bool mIsTableBorderNonzero : 1;
   bool mIsMozBrowserFrame : 1;
+  bool mClassAttributeChanged : 1;
+  bool mIdAttributeChanged : 1;
+  bool mOtherAttributeChanged : 1;
 };
 
 } // namespace mozilla

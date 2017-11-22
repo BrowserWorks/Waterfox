@@ -2,8 +2,6 @@
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-  "resource://gre/modules/Promise.jsm");
 
 /**
  * A wrapper for the findbar's method "close", which is not synchronous
@@ -36,13 +34,13 @@ function pushPrefs(...aPrefs) {
  * Used to check whether the audio unblocking icon is in the tab.
  */
 async function waitForTabBlockEvent(tab, expectBlocked) {
-  if (tab.soundBlocked == expectBlocked) {
+  if (tab.activeMediaBlocked == expectBlocked) {
     ok(true, "The tab should " + (expectBlocked ? "" : "not ") + "be blocked");
   } else {
     info("Block state doens't match, wait for attributes changes.");
     await BrowserTestUtils.waitForEvent(tab, "TabAttrModified", false, (event) => {
-      if (event.detail.changed.indexOf("blocked") >= 0) {
-        is(tab.soundBlocked, expectBlocked, "The tab should " + (expectBlocked ? "" : "not ") + "be blocked");
+      if (event.detail.changed.indexOf("activemedia-blocked") >= 0) {
+        is(tab.activeMediaBlocked, expectBlocked, "The tab should " + (expectBlocked ? "" : "not ") + "be blocked");
         return true;
       }
       return false;
@@ -89,11 +87,11 @@ function setTestPluginEnabledState(newEnabledState, pluginName) {
     return;
   }
   var plugin = getTestPlugin(pluginName);
-  while (plugin.enabledState != newEnabledState) {
-    // Run a nested event loop to wait for the preference change to
-    // propagate to the child. Yuck!
-    SpecialPowers.Services.tm.currentThread.processNextEvent(true);
-  }
+  // Run a nested event loop to wait for the preference change to
+  // propagate to the child. Yuck!
+  SpecialPowers.Services.tm.spinEventLoopUntil(() => {
+    return plugin.enabledState == newEnabledState;
+  });
   SimpleTest.registerCleanupFunction(function() {
     SpecialPowers.setTestPluginEnabledState(oldEnabledState, pluginName);
   });

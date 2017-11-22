@@ -184,12 +184,9 @@ nsWindowDataSource::OnCloseWindow(nsIXULWindow *window)
 {
     nsresult rv;
     nsCOMPtr<nsIRDFResource> resource;
-    mWindowResources.Get(window, getter_AddRefs(resource));
-    if (!resource) {
+    if (!mWindowResources.Remove(window, getter_AddRefs(resource))) {
         return NS_ERROR_UNEXPECTED;
     }
-
-    mWindowResources.Remove(window);
 
     // make sure we're not shutting down
     if (!mContainer) return NS_OK;

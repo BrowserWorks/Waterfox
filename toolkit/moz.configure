@@ -9,19 +9,6 @@
 # ==============================================================
 # Some of the options here imply an option from js/moz.configure,
 # so, need to be declared before the include.
-option('--enable-systrace', env='MOZ_USE_SYSTRACE',
-       help='Turn on systrace for the Gecko profiler on android/b2g')
-
-@depends('--enable-systrace', target)
-def systrace(value, target):
-    if value and target.os != 'Android':
-        die('--enable-systrace cannot be used when targeting %s',
-            target.os)
-    if value:
-        return True
-
-set_define('MOZ_USE_SYSTRACE', systrace)
-
 
 option('--enable-jprof', env='MOZ_JPROF',
        help='Enable jprof profiling tool (needs mozilla/tools/jprof)')
@@ -327,35 +314,6 @@ def freetype2_combined_info(fontconfig_info, freetype2_info):
 add_old_configure_assignment('_HAVE_FREETYPE2',
                              depends_if(freetype2_info)(lambda _: True))
 
-# Build Freetype in the tree
-# ==============================================================
-@depends(target)
-def tree_freetype(target):
-    if target.os == 'Android':
-        return True
-
-set_define('MOZ_TREE_FREETYPE', tree_freetype)
-set_config('MOZ_TREE_FREETYPE', tree_freetype)
-add_old_configure_assignment('MOZ_TREE_FREETYPE', tree_freetype)
-
-set_define('HAVE_FT_BITMAP_SIZE_Y_PPEM', tree_freetype)
-set_define('HAVE_FT_GLYPHSLOT_EMBOLDEN', tree_freetype)
-set_define('HAVE_FT_LOAD_SFNT_TABLE', tree_freetype)
-
-@depends(freetype2_combined_info, tree_freetype, check_build_environment)
-def ft2_info(freetype2_combined_info, tree_freetype, build_env):
-    if tree_freetype:
-        return namespace(cflags=('-I%s/modules/freetype2/include' % build_env.topsrcdir,),
-                         libs=())
-    if freetype2_combined_info:
-        return freetype2_combined_info
-
-set_config('FT2_LIBS', ft2_info.libs)
-add_old_configure_assignment('FT2_LIBS',
-                             ft2_info.libs)
-add_old_configure_assignment('FT2_CFLAGS',
-                             ft2_info.cflags)
-
 # Apple platform decoder support
 # ==============================================================
 @depends(toolkit)
@@ -414,7 +372,7 @@ option('--enable-av1',
 def av1(value, target, milestone):
     enabled = bool(value)
     if value.origin == 'default' and milestone.is_nightly:
-        enabled = target.os not in ('Android', 'WINNT')
+        enabled = target.os != 'Android'
     if enabled:
         return True
 
@@ -556,6 +514,18 @@ def photon_animations(value):
 set_config('MOZ_PHOTON_ANIMATIONS', photon_animations)
 set_define('MOZ_PHOTON_ANIMATIONS', photon_animations)
 
+option(env='MOZ_PHOTON_PREFERENCES',
+       help='Enable Photon preferences',
+       default=milestone.is_nightly)
+
+@depends('MOZ_PHOTON_PREFERENCES')
+def photon_preferences(value):
+    if value:
+        return bool(value)
+
+set_config('MOZ_PHOTON_PREFERENCES', photon_preferences)
+set_define('MOZ_PHOTON_PREFERENCES', photon_preferences)
+
 option(env='MOZ_PHOTON_THEME',
        help='Enable Photon theme',
        default=milestone.is_nightly)
@@ -623,17 +593,27 @@ id_and_secret_keyfile('Leanplum SDK')
 option('--enable-stylo', nargs='?', choices=('build',),
        help='Include Stylo in the build and/or enable it at runtime')
 
-@depends('--enable-stylo')
-def stylo_config(value):
+@depends('--enable-stylo', '--help', target)
+def stylo_config(value, _, target):
     build_stylo = None
     enable_stylo = None
 
-    # The default is to not build Stylo at all.
+    # If nothing is specified, default to building stylo where possible.
     if value.origin == 'default':
-        pass
-    elif value == 'build':
+        if target.os == 'GNU' and target.bitness == 32:
+            # The clang setup we use in automation is a little unusual, and
+            # doesn't play well with bindgen on 32-bit Linux.
+            pass
+        elif target.os == 'Android':
+            # Stylo on Android is happening Later(tm).
+            pass
+        else:
+            build_stylo = True
+    elif len(value) and value[0] == 'build':
+        # Build but disable by request.
         build_stylo = True
     elif bool(value):
+        # Build and enable.
         build_stylo = True
         enable_stylo = True
 
@@ -642,118 +622,215 @@ def stylo_config(value):
         enable = enable_stylo,
     )
 
+option('--disable-stylo-build-bindgen',
+       help='Disable build-time bindgen for Stylo')
+
+@depends(stylo_config, '--enable-stylo-build-bindgen', '--enable-compile-environment')
+def building_stylo_bindgen(stylo_config, bindgen_enabled, compile_environment):
+    if not compile_environment:
+        return False
+    if not bindgen_enabled:
+        return False
+    return stylo_config.build
+
 # We support setting up the appropriate options for Stylo's build-time
 # bindings generation via setting LLVM_CONFIG or by providing explicit
 # configure options.  The Windows installer of LLVM/Clang doesn't provide
 # llvm-config, so we need both methods to support all of our tier-1
 # platforms.
-llvm_config = check_prog('LLVM_CONFIG', ('llvm-config-4.0',
-                                         'llvm-config40',
-                                         'llvm-config-3.9',
-                                         'llvm-config39',
-                                         'llvm-config',),
-                         when=stylo_config.build,
+@depends(host)
+@imports('which')
+@imports('os')
+@imports('subprocess')
+def llvm_config_paths(host):
+    llvm_config_progs = [
+        'llvm-config-4.0',
+        'llvm-config-mp-4.0',   # MacPorts' chosen naming scheme.
+        'llvm-config40',
+        'llvm-config-3.9',
+        'llvm-config39',
+        'llvm-config',
+    ]
+
+    # Homebrew on macOS doesn't make clang available on PATH, so we have to
+    # look for it in non-standard places.
+    if host.kernel == 'Darwin':
+        try:
+            brew = which.which('brew')
+            brew_config = subprocess.check_output([brew, 'config']).strip()
+
+            for line in brew_config.splitlines():
+                if line.startswith('HOMEBREW_PREFIX'):
+                    fields = line.split(None, 2)
+                    prefix = fields[1] if len(fields) == 2 else ''
+                    path = ['opt', 'llvm', 'bin', 'llvm-config']
+                    llvm_config_progs.append(os.path.join(prefix, *path))
+                    break
+        except which.WhichError:
+            # Homebrew not installed, which is fine.
+            pass
+
+    # Also add in the location to which `mach bootstrap` or
+    # `mach artifact toolchain` installs clang.
+    mozbuild_state_dir = os.environ.get('MOZBUILD_STATE_PATH',
+                                        os.path.expanduser(os.path.join('~', '.mozbuild')))
+    bootstrap_llvm_config = os.path.join(mozbuild_state_dir, 'clang', 'bin', 'llvm-config')
+
+    llvm_config_progs.append(bootstrap_llvm_config)
+
+    return llvm_config_progs
+
+llvm_config = check_prog('LLVM_CONFIG', llvm_config_paths,
+                         when=building_stylo_bindgen,
                          what='llvm-config', allow_missing=True)
 
-option('--disable-stylo-build-bindgen',
-       help='Enable build-time bindgen for Stylo')
+with only_when(building_stylo_bindgen):
+    option('--with-libclang-path', nargs=1,
+           help='Absolute path to a directory containing Clang/LLVM libraries for Stylo (version 3.9.x or above)')
+    option('--with-clang-path', nargs=1,
+           help='Absolute path to a Clang binary for Stylo bindgen (version 3.9.x or above)')
 
-option('--with-libclang-path', nargs=1,
-       help='Absolute path to Clang/LLVM libraries for Stylo (version 3.9.x')
-option('--with-clang-path', nargs=1,
-       help='Absolute path to a Clang binary for Stylo bindgen (version 3.9.x)')
+    def invoke_llvm_config(llvm_config, *options):
+        '''Invoke llvm_config with the given options and return the first line of
+        output.'''
+        lines = check_cmd_output(llvm_config, *options).splitlines()
+        return lines[0]
 
-def invoke_llvm_config(llvm_config, *options):
-    '''Invoke llvm_config with the given options and return the first line of
-    output.'''
-    lines = check_cmd_output(llvm_config, *options).splitlines()
-    return lines[0]
+    @imports(_from='textwrap', _import='dedent')
+    def check_minimum_llvm_config_version(llvm_config):
+        version = Version(invoke_llvm_config(llvm_config, '--version'))
+        min_version = Version('3.9.0')
+        if version < min_version:
+            die(dedent('''\
+            llvm installation {} is incompatible with Stylo bindgen.
 
-@imports(_from='textwrap', _import='dedent')
-def check_minimum_llvm_config_version(llvm_config):
-    version = Version(invoke_llvm_config(llvm_config, '--version'))
-    min_version = Version('3.9.0')
-    if version < min_version:
-        die(dedent('''\
-        llvm installation {} is incompatible with Stylo bindgen.
+            To compile Stylo, please install version {} or greater of
+            Clang + LLVM and ensure that the 'llvm-config' from that
+            installation is first on your path.
 
-        To compile Stylo, please install version {} or greater of
-        Clang + LLVM and ensure that the 'llvm-config' from that
-        installation is first on your path.
+            You can verify this by typing 'llvm-config --version'.
+            '''.format(version, min_version)))
 
-        You can verify this by typing 'llvm-config --version'.
-        '''.format(version, min_version)))
+    @depends(llvm_config, '--with-libclang-path', '--with-clang-path',
+             host_library_name_info, host)
+    @imports('os.path')
+    @imports('glob')
+    @imports(_from='textwrap', _import='dedent')
+    def bindgen_config_paths(llvm_config, libclang_path, clang_path,
+                             library_name_info, host):
+        def search_for_libclang(path):
+            # Try to ensure that the clang shared library that bindgen is going
+            # to look for is actually present.  The files that we search for
+            # mirror the logic in clang-sys/build.rs.
+            libclang_choices = []
+            if host.os == 'WINNT':
+                libclang_choices.append('libclang.dll')
+            libclang_choices.append('%sclang%s' % (library_name_info.dll.prefix,
+                                                   library_name_info.dll.suffix))
+            if host.kernel == 'Linux':
+                libclang_choices.append('libclang.so.1')
 
-@depends(stylo_config, '--enable-stylo-build-bindgen',
-         llvm_config, '--with-libclang-path', '--with-clang-path',
-         host)
-@imports(_from='textwrap', _import='dedent')
-def bindgen_config_paths(stylo_config, bindgen_enabled,
-                         llvm_config, libclang_path, clang_path,
-                         host):
-    if not stylo_config.build:
-        return None
+            if host.os == 'OpenBSD':
+                libclang_choices = glob.glob(path + '/libclang.so.*.*')
 
-    if not bindgen_enabled:
-        return None
+            # At least one of the choices must be found.
+            for choice in libclang_choices:
+                libclang = os.path.join(path, choice)
+                if os.path.exists(libclang):
+                    return (True, None)
+            else:
+                return (False, list(set(libclang_choices)))
 
-    if not libclang_path and not clang_path:
-        # We must have LLVM_CONFIG in this case.
-        if not llvm_config:
-            return None
+        if not libclang_path and not clang_path:
+            # We must have LLVM_CONFIG in this case.
+            if not llvm_config:
+                die(dedent('''\
+                Could not find LLVM/Clang installation for compiling stylo build-time
+                bindgen.  Please specify the 'LLVM_CONFIG' environment variable
+                (recommended), pass the '--with-libclang-path' and '--with-clang-path'
+                options to configure, or put 'llvm-config' in your PATH.  Altering your
+                PATH may expose 'clang' as well, potentially altering your compiler,
+                which may not be what you intended.'''))
 
-        check_minimum_llvm_config_version(llvm_config)
-        libclang_arg = '--bindir' if host.os == 'WINNT' else '--libdir'
-        clang_path = os.path.join(invoke_llvm_config(llvm_config, '--bindir'),
-                                  'clang')
+            check_minimum_llvm_config_version(llvm_config)
+            libclang_arg = '--bindir' if host.os == 'WINNT' else '--libdir'
+            libclang_path = invoke_llvm_config(llvm_config, libclang_arg)
+            clang_path = os.path.join(invoke_llvm_config(llvm_config, '--bindir'),
+                                      'clang')
+            libclang_path = normsep(libclang_path)
+            clang_path = normsep(clang_path)
+
+            # Debian-based distros, at least, can have llvm-config installed
+            # but not have other packages installed.  Since the user is trying
+            # to use their system packages, we can't be more specific about what
+            # they need.
+            if not os.path.exists(libclang_path):
+                die(dedent('''\
+                The directory {} returned by `llvm-config {}` does not exist.
+                Please check your system configuration.
+                '''.format(libclang_path, libclang_arg)))
+
+            (found, searched) = search_for_libclang(libclang_path)
+            if not found:
+                die(dedent('''\
+                Could not find the clang shared library in the path {}
+                returned by `llvm-config {}` (searched for files {}).
+                Please check your system configuration.
+                '''.format(libclang_path, libclang_arg, searched)))
+
+            clang_resolved = find_program(clang_path)
+            if not clang_resolved:
+                die(dedent('''\
+                The file {} returned by `llvm-config {}` does not exist.
+                Please check your system configuration.
+                '''.format(clang_path, '--bindir')))
+
+            return namespace(
+                libclang_path=libclang_path,
+                clang_path=clang_resolved,
+            )
+
+        if (not libclang_path and clang_path) or \
+           (libclang_path and not clang_path):
+            die(dedent('''\
+            You must provide both of --with-libclang-path and --with-clang-path
+            or neither of them.'''))
+
+        libclang_path = libclang_path[0]
+        clang_path = clang_path[0]
+
+        if not os.path.exists(libclang_path) or \
+           not os.path.isdir(libclang_path):
+            die(dedent('''\
+            The argument to --with-libclang-path is not a directory: {}
+            '''.format(libclang_path)))
+
+        (found, searched) = search_for_libclang(libclang_path)
+        if not found:
+            die(dedent('''\
+            Could not find the clang shared library in the path {}
+            specified by --with-libclang-path (searched for files {}).
+            '''.format(libclang_path, searched)))
+
+        clang_resolved = find_program(clang_path)
+        if not clang_resolved:
+            die(dedent('''\
+            The argument to --with-clang-path is not a file: {}
+            '''.format(clang_path)))
+
         return namespace(
-            libclang_path=normsep(invoke_llvm_config(llvm_config, libclang_arg)),
-            clang_path=normsep(clang_path),
+            libclang_path=libclang_path,
+            clang_path=clang_resolved,
         )
 
-    if (not libclang_path and clang_path) or \
-       (libclang_path and not clang_path):
-        die(dedent('''\
-        You must provide both of --with-libclang-path and --with-clang-path
-        or neither of them.'''))
+    set_config('MOZ_LIBCLANG_PATH', bindgen_config_paths.libclang_path)
+    set_config('MOZ_CLANG_PATH', bindgen_config_paths.clang_path)
+    set_config('MOZ_STYLO_BINDGEN', depends_if('--enable-stylo-build-bindgen')(lambda _: True))
 
-    return namespace(
-        libclang_path=libclang_path[0],
-        clang_path=clang_path[0],
-    )
-
-@depends(stylo_config, bindgen_config_paths, '--enable-stylo-build-bindgen')
-@imports(_from='textwrap', _import='dedent')
-def stylo(stylo_config, bindgen_config_paths, bindgen_enabled):
-    if not stylo_config.build:
-        return None
-    elif not bindgen_enabled:
-        return namespace(
-            build=bool(stylo_config.build)
-        )
-    elif not bindgen_config_paths:
-        die(dedent('''\
-        Could not find LLVM/Clang installation for compiling stylo build-time
-        bindgen.  Please specify the 'LLVM_CONFIG' environment variable
-        (recommended), pass the '--with-libclang-path' and '--with-clang-path'
-        options to configure, or put 'llvm-config' in your PATH.  Altering your
-        PATH may expose 'clang' as well, potentially altering your compiler,
-        which may not be what you intended.'''))
-
-    return namespace(
-        build=bool(stylo_config.build),
-        libclang_path=bindgen_config_paths.libclang_path,
-        clang_path=bindgen_config_paths.clang_path,
-        bindgen_enabled=bool(bindgen_enabled),
-    )
-
-set_config('MOZ_STYLO', stylo.build)
-set_define('MOZ_STYLO', stylo.build)
+set_config('MOZ_STYLO', stylo_config.build)
+set_define('MOZ_STYLO', stylo_config.build)
+set_config('MOZ_STYLO_ENABLE', stylo_config.enable)
 set_define('MOZ_STYLO_ENABLE', stylo_config.enable)
-
-set_config('MOZ_LIBCLANG_PATH', stylo.libclang_path)
-set_config('MOZ_CLANG_PATH', stylo.clang_path)
-set_config('MOZ_STYLO_BINDGEN', stylo.bindgen_enabled)
 
 option('--with-servo', env='SERVO_TARGET_DIR', nargs=1,
        help='Absolute path of the target directory where libgeckoservo can '
@@ -777,7 +854,7 @@ def webrender(value, milestone):
     if value.origin == 'default':
         # if nothing is specified, default to just building on Nightly
         build_webrender = milestone.is_nightly
-    elif value == 'build':
+    elif len(value) and value[0] == 'build':
         # if explicitly set to 'build', then we build but don't enable
         build_webrender = True
     elif bool(value):
@@ -794,6 +871,22 @@ def webrender(value, milestone):
 set_config('MOZ_BUILD_WEBRENDER', webrender.build)
 set_define('MOZ_BUILD_WEBRENDER', webrender.build)
 set_config('MOZ_ENABLE_WEBRENDER', webrender.enable)
+
+# SIMD acceleration for Rust code (currently just encoding_rs)
+
+option('--enable-rust-simd', env='MOZ_RUST_SIMD',
+       help='Enable explicit SIMD in Rust code.')
+
+@depends('--enable-rust-simd', target)
+def rust_simd(value, target):
+    # As of 2017-06-13, the simd crate only works on aarch64,
+    # x86 and x86_64. It's meant to work on 32-bit ARM, too,
+    # but currently does not.
+    if target.cpu in ('aarch64', 'x86', 'x86_64') and value:
+        return True
+
+set_config('MOZ_RUST_SIMD', rust_simd)
+set_define('MOZ_RUST_SIMD', rust_simd)
 
 # Printing
 # ==============================================================
@@ -1052,13 +1145,34 @@ def skia_includes(skia, skia_gpu):
 
 set_config('SKIA_INCLUDES', skia_includes)
 
-option('--with-system-webp',
-       help='Use system libwebp (located with pkgconfig)')
+# Build Freetype in the tree
+# ==============================================================
+@depends(target, skia_pdf)
+def tree_freetype(target, skia_pdf):
+    if target.os == 'Android' or (skia_pdf and target.os == 'WINNT'):
+        return True
 
-system_webp = pkg_check_modules('MOZ_WEBP', 'libwebp >= 0.6.0 libwebpdemux >= 0.6.0',
-                                when='--with-system-webp')
+set_define('MOZ_TREE_FREETYPE', tree_freetype)
+set_config('MOZ_TREE_FREETYPE', tree_freetype)
+add_old_configure_assignment('MOZ_TREE_FREETYPE', tree_freetype)
 
-set_config('MOZ_SYSTEM_WEBP', depends_if(system_webp)(lambda _: True))
+set_define('HAVE_FT_BITMAP_SIZE_Y_PPEM', tree_freetype)
+set_define('HAVE_FT_GLYPHSLOT_EMBOLDEN', tree_freetype)
+set_define('HAVE_FT_LOAD_SFNT_TABLE', tree_freetype)
+
+@depends(freetype2_combined_info, tree_freetype, check_build_environment)
+def ft2_info(freetype2_combined_info, tree_freetype, build_env):
+    if tree_freetype:
+        return namespace(cflags=('-I%s/modules/freetype2/include' % build_env.topsrcdir,),
+                         libs=())
+    if freetype2_combined_info:
+        return freetype2_combined_info
+
+set_config('FT2_LIBS', ft2_info.libs)
+add_old_configure_assignment('FT2_LIBS',
+                             ft2_info.libs)
+add_old_configure_assignment('FT2_CFLAGS',
+                             ft2_info.cflags)
 
 # Mortar
 # ==============================================================
@@ -1122,6 +1236,10 @@ def geckodriver(enable, automation, compile_env, cross_compile, hazard, target):
     default on supported CI build platforms.
     """
     if enable:
+        if not compile_env:
+            die("--enable-geckodriver is not available without a compile "
+                "environment. A geckodriver binary will be downloaded during "
+                "an artifact build by default where available.")
         return True
 
     if enable.origin == 'default':
@@ -1132,3 +1250,17 @@ def geckodriver(enable, automation, compile_env, cross_compile, hazard, target):
             return True
 
 set_config('ENABLE_GECKODRIVER', geckodriver)
+
+# Code Coverage
+# ==============================================================
+
+option('--enable-coverage', env='MOZ_CODE_COVERAGE',
+       help='Enable code coverage')
+
+@depends('--enable-coverage')
+def code_coverage(value):
+    if value:
+        return True
+
+set_config('MOZ_CODE_COVERAGE', code_coverage)
+set_define('MOZ_CODE_COVERAGE', code_coverage)

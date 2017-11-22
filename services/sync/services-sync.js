@@ -17,13 +17,24 @@ pref("services.sync.scheduler.fxa.singleDeviceInterval", 3600); // 1 hour
 
 pref("services.sync.errorhandler.networkFailureReportTimeout", 1209600); // 2 weeks
 
+// Note that new engines are typically added with a default of disabled, so
+// when an existing sync user gets the Firefox upgrade that supports the engine
+// it starts as disabled until the user has explicitly opted in.
+// The sync "create account" process typically *will* offer these engines, so
+// they may be flipped to enabled at that time.
 pref("services.sync.engine.addons", true);
+pref("services.sync.engine.addresses", false);
 pref("services.sync.engine.bookmarks", true);
+pref("services.sync.engine.creditcards", false);
 pref("services.sync.engine.history", true);
 pref("services.sync.engine.passwords", true);
 pref("services.sync.engine.prefs", true);
 pref("services.sync.engine.tabs", true);
 pref("services.sync.engine.tabs.filteredUrls", "^(about:.*|resource:.*|chrome:.*|wyciwyg:.*|file:.*|blob:.*)$");
+
+// The addresses and CC engines might not actually be available at all.
+pref("services.sync.engine.addresses.available", false);
+pref("services.sync.engine.creditcards.available", false);
 
 // If true, add-on sync ignores changes to the user-enabled flag. This
 // allows people to have the same set of add-ons installed across all
@@ -58,6 +69,8 @@ pref("services.sync.log.logger.engine.passwords", "Debug");
 pref("services.sync.log.logger.engine.prefs", "Debug");
 pref("services.sync.log.logger.engine.tabs", "Debug");
 pref("services.sync.log.logger.engine.addons", "Debug");
+pref("services.sync.log.logger.engine.addresses", "Debug");
+pref("services.sync.log.logger.engine.creditcards", "Debug");
 pref("services.sync.log.logger.engine.extension-storage", "Debug");
 pref("services.sync.log.logger.engine.apps", "Debug");
 pref("services.sync.log.logger.identity", "Debug");
@@ -69,10 +82,15 @@ pref("services.sync.fxa.privacyURL", "https://accounts.firefox.com/legal/privacy
 pref("services.sync.telemetry.submissionInterval", 43200); // 12 hours in seconds
 pref("services.sync.telemetry.maxPayloadCount", 500);
 
-#ifndef RELEASE_OR_BETA
-// Enable the (fairly costly) client/server validation on nightly/aurora only.
+#ifdef EARLY_BETA_OR_EARLIER
+// Enable the (fairly costly) client/server validation through early Beta, but
+// not release candidates or Release.
 pref("services.sync.engine.bookmarks.validation.enabled", true);
-// Enable repair of bookmarks - requires validation also be enabled.
+#endif
+
+#if defined(NIGHTLY_BUILD)
+// Enable repair of bookmarks on Nightly only - requires validation also be
+// enabled.
 pref("services.sync.engine.bookmarks.repair.enabled", true);
 #endif
 

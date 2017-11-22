@@ -40,6 +40,7 @@ using mozilla::layers::ScaleMode from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegions from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegionsOverride from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::DiagnosticTypes from "mozilla/layers/CompositorTypes.h";
+using mozilla::layers::FocusTarget from "mozilla/layers/FocusTarget.h";
 using struct mozilla::layers::ScrollMetadata from "FrameMetrics.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
@@ -53,6 +54,7 @@ using mozilla::layers::CompositableHandle from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::ReadLockHandle from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::SimpleLayerAttributes from "mozilla/layers/LayerAttributes.h";
 using mozilla::CrossProcessSemaphoreHandle from "mozilla/ipc/CrossProcessSemaphore.h";
+using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 
 namespace mozilla {
 namespace layers {
@@ -569,10 +571,16 @@ struct TransactionInfo
   TargetConfig targetConfig;
   PluginWindowData[] plugins;
   bool isFirstPaint;
+  FocusTarget focusTarget;
   bool scheduleComposite;
   uint32_t paintSequenceNumber;
   bool isRepeatTransaction;
   TimeStamp transactionStart;
+};
+
+union MaybeTransform {
+  Matrix4x4;
+  void_t;
 };
 
 } // namespace

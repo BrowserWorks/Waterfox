@@ -7,36 +7,10 @@
 use context::QuirksMode;
 use cssparser::{Parser, SourcePosition, UnicodeRange};
 use error_reporting::{ParseErrorReporter, ContextualParseError};
-use style_traits::{OneOrMoreCommaSeparated, ParseError};
+use style_traits::{OneOrMoreSeparated, ParseError, ParsingMode, Separator};
+#[cfg(feature = "gecko")]
+use style_traits::{PARSING_MODE_DEFAULT, PARSING_MODE_ALLOW_UNITLESS_LENGTH, PARSING_MODE_ALLOW_ALL_NUMERIC_VALUES};
 use stylesheets::{CssRuleType, Origin, UrlExtraData, Namespaces};
-
-bitflags! {
-    /// The mode to use when parsing values.
-    pub flags ParsingMode: u8 {
-        /// In CSS, lengths must have units, except for zero values, where the unit can be omitted.
-        /// https://www.w3.org/TR/css3-values/#lengths
-        const PARSING_MODE_DEFAULT = 0x00,
-        /// In SVG, a coordinate or length value without a unit identifier (e.g., "25") is assumed
-        /// to be in user units (px).
-        /// https://www.w3.org/TR/SVG/coords.html#Units
-        const PARSING_MODE_ALLOW_UNITLESS_LENGTH = 0x01,
-        /// In SVG, out-of-range values are not treated as an error in parsing.
-        /// https://www.w3.org/TR/SVG/implnote.html#RangeClamping
-        const PARSING_MODE_ALLOW_ALL_NUMERIC_VALUES = 0x02,
-    }
-}
-
-impl ParsingMode {
-    /// Whether the parsing mode allows unitless lengths for non-zero values to be intpreted as px.
-    pub fn allows_unitless_lengths(&self) -> bool {
-        self.intersects(PARSING_MODE_ALLOW_UNITLESS_LENGTH)
-    }
-
-    /// Whether the parsing mode allows all numeric values.
-    pub fn allows_all_numeric_values(&self) -> bool {
-      self.intersects(PARSING_MODE_ALLOW_ALL_NUMERIC_VALUES)
-    }
-}
 
 /// Asserts that all ParsingMode flags have a matching ParsingMode value in gecko.
 #[cfg(feature = "gecko")]
@@ -187,29 +161,17 @@ pub trait Parse : Sized {
                      -> Result<Self, ParseError<'i>>;
 }
 
-impl<T> Parse for Vec<T> where T: Parse + OneOrMoreCommaSeparated {
+impl<T> Parse for Vec<T>
+where
+    T: Parse + OneOrMoreSeparated,
+    <T as OneOrMoreSeparated>::S: Separator,
+{
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                      -> Result<Self, ParseError<'i>> {
-        input.parse_comma_separated(|input| T::parse(context, input))
+        <T as OneOrMoreSeparated>::S::parse(input, |i| T::parse(context, i))
     }
 }
 
-/// Parse a non-empty space-separated or comma-separated list of objects parsed by parse_one
-pub fn parse_space_or_comma_separated<'i, 't, F, T>(input: &mut Parser<'i, 't>, mut parse_one: F)
-        -> Result<Vec<T>, ParseError<'i>>
-        where F: for<'ii, 'tt> FnMut(&mut Parser<'ii, 'tt>) -> Result<T, ParseError<'ii>> {
-    let first = parse_one(input)?;
-    let mut vec = vec![first];
-    loop {
-        let _ = input.try(|i| i.expect_comma());
-        if let Ok(val) = input.try(|i| parse_one(i)) {
-            vec.push(val)
-        } else {
-            break
-        }
-    }
-    Ok(vec)
-}
 impl Parse for UnicodeRange {
     fn parse<'i, 't>(_context: &ParserContext, input: &mut Parser<'i, 't>)
                      -> Result<Self, ParseError<'i>> {

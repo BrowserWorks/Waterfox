@@ -168,6 +168,13 @@ ScaledFontBase::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *a
     return newPath.forget();
   }
 #endif
+#ifdef USE_SKIA
+  RefPtr<PathBuilder> builder = aTarget->CreatePathBuilder();
+  SkPath skPath = GetSkiaPathForGlyphs(aBuffer);
+  RefPtr<Path> path = MakeAndAddRef<PathSkia>(skPath, FillRule::FILL_WINDING);
+  path->StreamToSink(builder);
+  return builder->Finish();
+#endif
   return nullptr;
 }
 
@@ -212,14 +219,16 @@ ScaledFontBase::CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBu
     cairoPath->AppendPathToBuilder(builder);
     return;
   }
+#endif
+#ifdef USE_SKIA
   if (backendType == BackendType::RECORDING) {
     SkPath skPath = GetSkiaPathForGlyphs(aBuffer);
     RefPtr<Path> path = MakeAndAddRef<PathSkia>(skPath, FillRule::FILL_WINDING);
     path->StreamToSink(aBuilder);
     return;
   }
-  MOZ_ASSERT(false, "Path not being copied");
 #endif
+  MOZ_ASSERT(false, "Path not being copied");
 }
 
 void

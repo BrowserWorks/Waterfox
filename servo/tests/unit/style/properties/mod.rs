@@ -5,9 +5,9 @@
 use cssparser::{Parser, ParserInput};
 use media_queries::CSSErrorReporterTest;
 use style::context::QuirksMode;
-use style::parser::{PARSING_MODE_DEFAULT, ParserContext};
+use style::parser::ParserContext;
 use style::stylesheets::{CssRuleType, Origin};
-use style_traits::ParseError;
+use style_traits::{PARSING_MODE_DEFAULT, ParseError};
 
 fn parse<T, F>(f: F, s: &'static str) -> Result<T, ParseError<'static>>
 where F: for<'t> Fn(&ParserContext, &mut Parser<'static, 't>) -> Result<T, ParseError<'static>> {
@@ -40,13 +40,14 @@ macro_rules! assert_roundtrip_with_context {
         }, $input).unwrap();
 
         let mut input = ::cssparser::ParserInput::new(&serialized);
-        parse_input(|context, i| {
+        let unwrapped = parse_input(|context, i| {
             let re_parsed = $fun(context, i)
                             .expect(&format!("Failed to parse serialization {}", $input));
             let re_serialized = ToCss::to_css_string(&re_parsed);
             assert_eq!(serialized, re_serialized);
             Ok(())
-        }, &mut input).unwrap()
+        }, &mut input).unwrap();
+        unwrapped
     }}
 }
 

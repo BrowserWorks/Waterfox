@@ -8,7 +8,6 @@
 
 #include "mozilla/PodOperations.h"
 #include "mozilla/ScopeExit.h"
-#include "mozilla/SizePrintfMacros.h"
 
 #include "jscompartment.h"
 #include "jsiter.h"
@@ -408,15 +407,23 @@ const ObjectOps ModuleEnvironmentObject::objectOps_ = {
     ModuleEnvironmentObject::deleteProperty,
     nullptr, nullptr,                                    /* watch/unwatch */
     nullptr,                                             /* getElements */
-    ModuleEnvironmentObject::enumerate,
     nullptr
+};
+
+const ClassOps ModuleEnvironmentObject::classOps_ = {
+    nullptr,    /* addProperty */
+    nullptr,    /* delProperty */
+    nullptr,    /* getProperty */
+    nullptr,    /* setProperty */
+    nullptr,    /* enumerate */
+    ModuleEnvironmentObject::newEnumerate
 };
 
 const Class ModuleEnvironmentObject::class_ = {
     "ModuleEnvironmentObject",
     JSCLASS_HAS_RESERVED_SLOTS(ModuleEnvironmentObject::RESERVED_SLOTS) |
     JSCLASS_IS_ANONYMOUS,
-    JS_NULL_CLASS_OPS,
+    &ModuleEnvironmentObject::classOps_,
     JS_NULL_CLASS_SPEC,
     JS_NULL_CLASS_EXT,
     &ModuleEnvironmentObject::objectOps_
@@ -603,8 +610,8 @@ ModuleEnvironmentObject::deleteProperty(JSContext* cx, HandleObject obj, HandleI
 }
 
 /* static */ bool
-ModuleEnvironmentObject::enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
-                                   bool enumerableOnly)
+ModuleEnvironmentObject::newEnumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
+                                      bool enumerableOnly)
 {
     RootedModuleEnvironmentObject self(cx, &obj->as<ModuleEnvironmentObject>());
     const IndirectBindingMap& bs(self->importBindings());
@@ -821,7 +828,6 @@ static const ObjectOps WithEnvironmentObjectOps = {
     with_DeleteProperty,
     nullptr, nullptr,    /* watch/unwatch */
     nullptr,             /* getElements */
-    nullptr,             /* enumerate (native enumeration of target doesn't work) */
     nullptr,
 };
 
@@ -1187,7 +1193,6 @@ static const ObjectOps RuntimeLexicalErrorObjectObjectOps = {
     lexicalError_DeleteProperty,
     nullptr, nullptr,    /* watch/unwatch */
     nullptr,             /* getElements */
-    nullptr,             /* enumerate (native enumeration of target doesn't work) */
     nullptr,             /* this */
 };
 
@@ -3241,7 +3246,8 @@ js::GetThisValueForDebuggerMaybeOptimizedOut(JSContext* cx, AbstractFramePtr fra
         MOZ_CRASH("'this' binding must be found");
     }
 
-    return GetNonSyntacticGlobalThis(cx, scopeChain, res);
+    GetNonSyntacticGlobalThis(cx, scopeChain, res);
+    return true;
 }
 
 bool
@@ -3634,14 +3640,14 @@ AnalyzeEntrainedVariablesInScript(JSContext* cx, HandleScript script, HandleScri
             buf.printf(" ");
         }
 
-        buf.printf("(%s:%" PRIuSIZE ") has variables entrained by ", script->filename(), script->lineno());
+        buf.printf("(%s:%zu) has variables entrained by ", script->filename(), script->lineno());
 
         if (JSAtom* name = innerScript->functionNonDelazifying()->displayAtom()) {
             buf.putString(name);
             buf.printf(" ");
         }
 
-        buf.printf("(%s:%" PRIuSIZE ") ::", innerScript->filename(), innerScript->lineno());
+        buf.printf("(%s:%zu) ::", innerScript->filename(), innerScript->lineno());
 
         for (PropertyNameSet::Range r = remainingNames.all(); !r.empty(); r.popFront()) {
             buf.printf(" ");

@@ -44,6 +44,7 @@
 // Interfaces Needed
 #include "nsIDocCharset.h"
 #include "nsIInterfaceRequestor.h"
+#include "nsINamed.h"
 #include "nsIRefreshURI.h"
 #include "nsIWebNavigation.h"
 #include "nsIWebPageDescriptor.h"
@@ -62,6 +63,7 @@
 #include "nsIDeprecationWarner.h"
 
 namespace mozilla {
+class Encoding;
 enum class TaskCategory;
 namespace dom {
 class EventTarget;
@@ -95,6 +97,7 @@ class nsIURIFixup;
 class nsIURILoader;
 class nsIWebBrowserFind;
 class nsIWidget;
+class FramingChecker;
 
 /* internally used ViewMode types */
 enum ViewMode
@@ -104,12 +107,15 @@ enum ViewMode
 };
 
 class nsRefreshTimer : public nsITimerCallback
+                     , public nsINamed
 {
 public:
-  nsRefreshTimer();
+  nsRefreshTimer(nsDocShell* aDocShell, nsIURI* aURI, int32_t aDelay,
+                 bool aRepeat, bool aMetaRefresh);
 
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
   int32_t GetDelay() { return mDelay ;}
 
@@ -153,6 +159,8 @@ class nsDocShell final
   , public mozilla::SupportsWeakPtr<nsDocShell>
 {
   friend class nsDSURIContentListener;
+  friend class FramingChecker;
+  using Encoding = mozilla::Encoding;
 
 public:
   MOZ_DECLARE_WEAKREFERENCE_TYPENAME(nsDocShell)
@@ -272,6 +280,8 @@ public:
   }
   bool InFrameSwap();
 
+  const Encoding* GetForcedCharset() { return mForcedCharset; }
+
 private:
   bool CanSetOriginAttributes();
 
@@ -369,7 +379,9 @@ protected:
   // If aLoadReplace is true, LOAD_REPLACE flag will be set to the nsIChannel.
   nsresult DoURILoad(nsIURI* aURI,
                      nsIURI* aOriginalURI,
+                     mozilla::Maybe<nsCOMPtr<nsIURI>> const& aResultPrincipalURI,
                      bool aLoadReplace,
+                     bool aLoadFromExternal,
                      nsIURI* aReferrer,
                      bool aSendReferrer,
                      uint32_t aReferrerPolicy,
@@ -606,7 +618,7 @@ protected:
   nsresult RefreshURIFromQueue();
   NS_IMETHOD LoadErrorPage(nsIURI* aURI, const char16_t* aURL,
                            const char* aErrorPage,
-                           const char16_t* aErrorType,
+                           const char* aErrorType,
                            const char16_t* aDescription,
                            const char* aCSSClass,
                            nsIChannel* aFailedChannel);
@@ -774,7 +786,11 @@ public:
   {
   public:
     NS_DECL_NSIRUNNABLE
-    explicit RestorePresentationEvent(nsDocShell* aDs) : mDocShell(aDs) {}
+    explicit RestorePresentationEvent(nsDocShell* aDs)
+      : mozilla::Runnable("nsDocShell::RestorePresentationEvent")
+      , mDocShell(aDs)
+    {
+    }
     void Revoke() { mDocShell = nullptr; }
   private:
     RefPtr<nsDocShell> mDocShell;
@@ -1033,8 +1049,8 @@ protected:
   nsString mInterceptedDocumentId;
 
 private:
-  nsCString mForcedCharset;
-  nsCString mParentCharset;
+  const Encoding* mForcedCharset;
+  const Encoding* mParentCharset;
   int32_t mParentCharsetSource;
   nsCOMPtr<nsIPrincipal> mParentCharsetPrincipal;
   nsTObserverArray<nsWeakPtr> mPrivacyObservers;
@@ -1078,8 +1094,7 @@ private:
                                         bool aSkipCheckingDynEntries);
 
   // Dispatch a runnable to the TabGroup associated to this docshell.
-  nsresult DispatchToTabGroup(const char* aName,
-                              mozilla::TaskCategory aCategory,
+  nsresult DispatchToTabGroup(mozilla::TaskCategory aCategory,
                               already_AddRefed<nsIRunnable>&& aRunnable);
 
 #ifdef DEBUG

@@ -10,6 +10,8 @@
 #include "nsGlobalWindow.h"
 #include "VRManagerChild.h"
 
+#include "mozilla/Telemetry.h"
+
 namespace mozilla {
 namespace dom {
 
@@ -22,9 +24,11 @@ using namespace gfx;
  */
 VREventObserver::VREventObserver(nsGlobalWindow* aGlobalWindow)
   : mWindow(aGlobalWindow)
+  , mIs2DView(true)
 {
   MOZ_ASSERT(aGlobalWindow && aGlobalWindow->IsInnerWindow());
 
+  mSpendTimeIn2DView = TimeStamp::Now();
   VRManagerChild* vmc = VRManagerChild::Get();
   if (vmc) {
     vmc->AddListener(this);
@@ -42,6 +46,13 @@ VREventObserver::DisconnectFromOwner()
   // In the event that nsGlobalWindow is deallocated, VREventObserver may
   // still be AddRef'ed elsewhere.  Ensure that we don't UAF by
   // dereferencing mWindow.
+  if (mWindow && mIs2DView) {
+    // The WebVR content is closed, and we will collect the telemetry info
+    // for the users who view it in 2D view only.
+    Telemetry::Accumulate(Telemetry::WEBVR_USERS_VIEW_IN, 0);
+    Telemetry::AccumulateTimeDelta(Telemetry::WEBVR_TIME_SPENT_VIEWING_IN_2D,
+                                   mSpendTimeIn2DView);
+  }
   mWindow = nullptr;
 
   // Unregister from VRManagerChild
@@ -118,6 +129,10 @@ VREventObserver::NotifyVRDisplayDisconnect(uint32_t aDisplayID)
 void
 VREventObserver::NotifyVRDisplayPresentChange(uint32_t aDisplayID)
 {
+  // When switching to HMD present mode, it is no longer
+  // to be a 2D view.
+  mIs2DView = false;
+
   if (mWindow && mWindow->AsInner()->IsCurrentInnerWindow()) {
     mWindow->NotifyActiveVRDisplaysChanged();
     MOZ_ASSERT(nsContentUtils::IsSafeToRunScript());

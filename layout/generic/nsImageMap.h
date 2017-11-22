@@ -31,7 +31,7 @@ class nsImageMap final : public nsStubMutationObserver,
 public:
   nsImageMap();
 
-  nsresult Init(nsImageFrame* aImageFrame, nsIContent* aMap);
+  void Init(nsImageFrame* aImageFrame, nsIContent* aMap);
 
   /**
    * Return the first area element (in content order) for the given aX,aY pixel
@@ -52,13 +52,13 @@ public:
   void Draw(nsIFrame* aFrame, DrawTarget& aDrawTarget,
             const ColorPattern& aColor,
             const StrokeOptions& aStrokeOptions = StrokeOptions());
-  
-  /** 
-   * Called just before the nsImageFrame releases us. 
+
+  /**
+   * Called just before the nsImageFrame releases us.
    * Used to break the cycle caused by the DOM listener.
    */
   void Destroy();
-  
+
   // nsISupports
   NS_DECL_ISUPPORTS
 
@@ -67,7 +67,7 @@ public:
   NS_DECL_NSIMUTATIONOBSERVER_CONTENTAPPENDED
   NS_DECL_NSIMUTATIONOBSERVER_CONTENTINSERTED
   NS_DECL_NSIMUTATIONOBSERVER_CONTENTREMOVED
-  NS_DECL_NSIMUTATIONOBSERVER_PARENTCHAINCHANGED  
+  NS_DECL_NSIMUTATIONOBSERVER_PARENTCHAINCHANGED
 
   //nsIDOMEventListener
   NS_DECL_NSIDOMEVENTLISTENER
@@ -80,12 +80,13 @@ protected:
 
   void FreeAreas();
 
-  nsresult UpdateAreas();
-  nsresult SearchForAreas(nsIContent* aParent, bool& aFoundArea,
-                          bool& aFoundAnchor);
+  void UpdateAreas();
+  void SearchForAreas(nsIContent* aParent,
+                      bool& aFoundArea,
+                      bool& aFoundAnchor);
 
-  nsresult AddArea(nsIContent* aArea);
- 
+  void AddArea(nsIContent* aArea);
+
   void MaybeUpdateAreas(nsIContent *aContent);
 
   nsImageFrame* mImageFrame;  // the frame that owns us

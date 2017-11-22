@@ -28,11 +28,9 @@
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
 #include "mozilla/layers/PaintedLayerComposite.h"
 #include "mozilla/mozalloc.h"           // for operator delete, etc
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Unused.h"
 #include "nsCoord.h"                    // for NSAppUnitsToFloatPixels
 #include "nsDebug.h"                    // for NS_RUNTIMEABORT
-#include "nsDeviceContext.h"            // for AppUnitsPerCSSPixel
 #include "nsISupportsImpl.h"            // for Layer::Release, etc
 #include "nsLayoutUtils.h"              // for nsLayoutUtils
 #include "nsMathUtils.h"                // for NS_round
@@ -52,9 +50,11 @@ namespace layers {
 // LayerTransactionParent
 LayerTransactionParent::LayerTransactionParent(HostLayerManager* aManager,
                                                CompositorBridgeParentBase* aBridge,
+                                               CompositorAnimationStorage* aAnimStorage,
                                                uint64_t aId)
   : mLayerManager(aManager)
   , mCompositorBridge(aBridge)
+  , mAnimStorage(aAnimStorage)
   , mId(aId)
   , mChildEpoch(0)
   , mParentEpoch(0)
@@ -69,13 +69,21 @@ LayerTransactionParent::~LayerTransactionParent()
 }
 
 void
-LayerTransactionParent::SetLayerManager(HostLayerManager* aLayerManager)
+LayerTransactionParent::SetLayerManager(HostLayerManager* aLayerManager, CompositorAnimationStorage* aAnimStorage)
 {
+  if (mDestroyed) {
+    return;
+  }
   mLayerManager = aLayerManager;
   for (auto iter = mLayerMap.Iter(); !iter.Done(); iter.Next()) {
     auto layer = iter.Data();
+    if (mAnimStorage &&
+        layer->GetCompositorAnimationsId()) {
+      mAnimStorage->ClearById(layer->GetCompositorAnimationsId());
+    }
     layer->AsHostLayer()->SetLayerManager(aLayerManager);
   }
+  mAnimStorage = aAnimStorage;
 }
 
 mozilla::ipc::IPCResult
@@ -98,8 +106,21 @@ LayerTransactionParent::RecvShutdownSync()
 void
 LayerTransactionParent::Destroy()
 {
+  if (mDestroyed) {
+    return;
+  }
   mDestroyed = true;
+  if (mAnimStorage) {
+    for (auto iter = mLayerMap.Iter(); !iter.Done(); iter.Next()) {
+      auto layer = iter.Data();
+      if (layer->GetCompositorAnimationsId()) {
+        mAnimStorage->ClearById(layer->GetCompositorAnimationsId());
+      }
+      layer->Disconnect();
+    }
+  }
   mCompositables.clear();
+  mAnimStorage = nullptr;
 }
 
 class MOZ_STACK_CLASS AutoLayerTransactionParentAsyncMessageSender
@@ -149,13 +170,12 @@ LayerTransactionParent::RecvInitReadLocks(ReadLockArray&& aReadLocks)
 mozilla::ipc::IPCResult
 LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
 {
-  GeckoProfilerTracingRAII tracer("Paint", "LayerTransaction");
-  PROFILER_LABEL("LayerTransactionParent", "RecvUpdate",
-    js::ProfileEntry::Category::GRAPHICS);
+  AutoProfilerTracing tracing("Paint", "LayerTransaction");
+  AUTO_PROFILER_LABEL("LayerTransactionParent::RecvUpdate", GRAPHICS);
 
   TimeStamp updateStart = TimeStamp::Now();
 
-  MOZ_LAYERS_LOG(("[ParentSide] received txn with %" PRIuSIZE " edits", aInfo.cset().Length()));
+  MOZ_LAYERS_LOG(("[ParentSide] received txn with %zu edits", aInfo.cset().Length()));
 
   UpdateFwdTransactionId(aInfo.fwdTransactionId());
   AutoClearReadLocks clearLocks(mReadLocks);
@@ -273,8 +293,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
       break;
     }
     case Edit::TOpSetDiagnosticTypes: {
-      mLayerManager->GetCompositor()->SetDiagnosticTypes(
-        edit.get_OpSetDiagnosticTypes().diagnostics());
+      mLayerManager->SetDiagnosticTypes(edit.get_OpSetDiagnosticTypes().diagnostics());
       break;
     }
     case Edit::TOpWindowOverlayChanged: {
@@ -400,9 +419,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
       if (!Attach(AsLayer(op.layer()), host, false)) {
         return IPC_FAIL_NO_REASON(this);
       }
-      if (mLayerManager->GetCompositor()) {
-        host->SetCompositorID(mLayerManager->GetCompositor()->GetCompositorID());
-      }
+      host->SetCompositorBridgeID(mLayerManager->GetCompositorBridgeID());
       break;
     }
     case Edit::TOpAttachAsyncCompositable: {
@@ -423,9 +440,7 @@ LayerTransactionParent::RecvUpdate(const TransactionInfo& aInfo)
       if (!Attach(AsLayer(op.layer()), host, true)) {
         return IPC_FAIL_NO_REASON(this);
       }
-      if (mLayerManager->GetCompositor()) {
-        host->SetCompositorID(mLayerManager->GetCompositor()->GetCompositorID());
-      }
+      host->SetCompositorBridgeID(mLayerManager->GetCompositorBridgeID());
       break;
     }
     default:
@@ -539,14 +554,10 @@ LayerTransactionParent::SetLayerAttributes(const OpSetLayerAttributes& aOp)
   layer->SetCompositorAnimations(common.compositorAnimations());
   // Clean up the Animations by id in the CompositorAnimationStorage
   // if there are no active animations on the layer
-  if (layer->GetCompositorAnimationsId() &&
+  if (mAnimStorage &&
+      layer->GetCompositorAnimationsId() &&
       layer->GetAnimations().IsEmpty()) {
-    CompositorAnimationStorage* storage =
-      mCompositorBridge->GetAnimationStorage(GetId());
-
-    if (storage) {
-      storage->ClearById(layer->GetCompositorAnimationsId());
-    }
+    mAnimStorage->ClearById(layer->GetCompositorAnimationsId());
   }
   if (common.scrollMetadata() != layer->GetAllScrollMetadata()) {
     UpdateHitTestingTree(layer, "scroll metadata changed");
@@ -706,7 +717,7 @@ LayerTransactionParent::ShouldParentObserveEpoch()
 mozilla::ipc::IPCResult
 LayerTransactionParent::RecvSetTestSampleTime(const TimeStamp& aTime)
 {
-  if (!mCompositorBridge->SetTestSampleTime(this, aTime)) {
+  if (!mCompositorBridge->SetTestSampleTime(GetId(), aTime)) {
     return IPC_FAIL_NO_REASON(this);
   }
   return IPC_OK();
@@ -715,7 +726,7 @@ LayerTransactionParent::RecvSetTestSampleTime(const TimeStamp& aTime)
 mozilla::ipc::IPCResult
 LayerTransactionParent::RecvLeaveTestMode()
 {
-  mCompositorBridge->LeaveTestMode(this);
+  mCompositorBridge->LeaveTestMode(GetId());
   return IPC_OK();
 }
 
@@ -731,21 +742,15 @@ LayerTransactionParent::RecvGetAnimationOpacity(const uint64_t& aCompositorAnima
 
   mCompositorBridge->ApplyAsyncProperties(this);
 
-  CompositorAnimationStorage* storage =
-    mCompositorBridge->GetAnimationStorage(GetId());
-
-  if (!storage) {
+  if (!mAnimStorage) {
     return IPC_FAIL_NO_REASON(this);
   }
 
-  auto value = storage->GetAnimatedValue(aCompositorAnimationsId);
-
-  if (!value || value->mType != AnimatedValue::OPACITY) {
-    return IPC_OK();
+  Maybe<float> opacity = mAnimStorage->GetAnimationOpacity(aCompositorAnimationsId);
+  if (opacity) {
+    *aOpacity = *opacity;
+    *aHasAnimationOpacity = true;
   }
-
-  *aOpacity = value->mOpacity;
-  *aHasAnimationOpacity = true;
   return IPC_OK();
 }
 
@@ -763,39 +768,16 @@ LayerTransactionParent::RecvGetAnimationTransform(const uint64_t& aCompositorAni
   // the value.
   mCompositorBridge->ApplyAsyncProperties(this);
 
-  CompositorAnimationStorage* storage =
-    mCompositorBridge->GetAnimationStorage(GetId());
-
-  if (!storage) {
+  if (!mAnimStorage) {
     return IPC_FAIL_NO_REASON(this);
   }
 
-  auto value = storage->GetAnimatedValue(aCompositorAnimationsId);
-
-  if (!value || value->mType != AnimatedValue::TRANSFORM) {
+  Maybe<Matrix4x4> transform = mAnimStorage->GetAnimationTransform(aCompositorAnimationsId);
+  if (transform) {
+    *aTransform = *transform;
+  } else {
     *aTransform = mozilla::void_t();
-    return IPC_OK();
   }
-
-  Matrix4x4 transform = value->mTransform.mFrameTransform;
-  const TransformData& data = value->mTransform.mData;
-  float scale = data.appUnitsPerDevPixel();
-  Point3D transformOrigin = data.transformOrigin();
-
-  // Undo the rebasing applied by
-  // nsDisplayTransform::GetResultingTransformMatrixInternal
-  transform.ChangeBasis(-transformOrigin);
-
-  // Convert to CSS pixels (this undoes the operations performed by
-  // nsStyleTransformMatrix::ProcessTranslatePart which is called from
-  // nsDisplayTransform::GetResultingTransformMatrix)
-  double devPerCss =
-    double(scale) / double(nsDeviceContext::AppUnitsPerCSSPixel());
-  transform._41 *= devPerCss;
-  transform._42 *= devPerCss;
-  transform._43 *= devPerCss;
-
-  *aTransform = transform;
   return IPC_OK();
 }
 
@@ -932,6 +914,7 @@ LayerTransactionParent::RecvForceComposite()
 void
 LayerTransactionParent::ActorDestroy(ActorDestroyReason why)
 {
+  Destroy();
 }
 
 bool
@@ -998,11 +981,14 @@ LayerTransactionParent::NotifyNotUsed(PTextureParent* aTexture, uint64_t aTransa
 bool
 LayerTransactionParent::BindLayerToHandle(RefPtr<Layer> aLayer, const LayerHandle& aHandle)
 {
-  if (!aHandle || !aLayer || mLayerMap.Contains(aHandle.Value())) {
+  if (!aHandle || !aLayer) {
     return false;
   }
-
-  mLayerMap.Put(aHandle.Value(), aLayer);
+  if (auto entry = mLayerMap.LookupForAdd(aHandle.Value())) {
+    return false;
+  } else {
+    entry.OrInsert([&aLayer] () { return aLayer; });
+  }
   return true;
 }
 
@@ -1012,7 +998,7 @@ LayerTransactionParent::AsLayer(const LayerHandle& aHandle)
   if (!aHandle) {
     return nullptr;
   }
-  return mLayerMap.Get(aHandle.Value()).get();
+  return mLayerMap.GetWeak(aHandle.Value());
 }
 
 mozilla::ipc::IPCResult
@@ -1027,15 +1013,15 @@ LayerTransactionParent::RecvNewCompositable(const CompositableHandle& aHandle, c
 mozilla::ipc::IPCResult
 LayerTransactionParent::RecvReleaseLayer(const LayerHandle& aHandle)
 {
-  if (!aHandle || !mLayerMap.Contains(aHandle.Value())) {
+  RefPtr<Layer> layer;
+  if (!aHandle || !mLayerMap.Remove(aHandle.Value(), getter_AddRefs(layer))) {
     return IPC_FAIL_NO_REASON(this);
   }
-
-  Maybe<RefPtr<Layer>> maybeLayer = mLayerMap.GetAndRemove(aHandle.Value());
-  if (maybeLayer) {
-    (*maybeLayer)->Disconnect();
+  if (mAnimStorage &&
+      layer->GetCompositorAnimationsId()) {
+    mAnimStorage->ClearById(layer->GetCompositorAnimationsId());
   }
-
+  layer->Disconnect();
   return IPC_OK();
 }
 

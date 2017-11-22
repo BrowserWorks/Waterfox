@@ -58,7 +58,7 @@ GeckoMediaPluginServiceChild::GetContentParent(GMPCrashHelper* aHelper,
                                                const nsCString& aAPI,
                                                const nsTArray<nsCString>& aTags)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
 
   MozPromiseHolder<GetGMPContentParentPromise>* rawHolder = new MozPromiseHolder<GetGMPContentParentPromise>();
   RefPtr<GetGMPContentParentPromise> promise = rawHolder->Ensure(__func__);
@@ -133,7 +133,7 @@ GeckoMediaPluginServiceChild::GetContentParent(GMPCrashHelper* aHelper,
                                                const nsCString& aAPI,
                                                const nsTArray<nsCString>& aTags)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
 
   MozPromiseHolder<GetGMPContentParentPromise>* rawHolder =
     new MozPromiseHolder<GetGMPContentParentPromise>();
@@ -296,7 +296,7 @@ GeckoMediaPluginServiceChild::UpdateGMPCapabilities(nsTArray<GMPCapabilityData>&
 void
 GeckoMediaPluginServiceChild::BeginShutdown()
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
   mShuttingDownOnGMPThread = true;
 }
 
@@ -329,7 +329,7 @@ GeckoMediaPluginServiceChild::GetNodeId(const nsAString& aOrigin,
                                         const nsAString& aGMPName,
                                         UniquePtr<GetNodeIdCallback>&& aCallback)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
 
   GetNodeIdCallback* rawCallback = aCallback.release();
   RefPtr<AbstractThread> thread(GetAbstractGMPThread());
@@ -378,7 +378,7 @@ GeckoMediaPluginServiceChild::Observe(nsISupports* aSubject,
 RefPtr<GeckoMediaPluginServiceChild::GetServiceChildPromise>
 GeckoMediaPluginServiceChild::GetServiceChild()
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
 
   if (!mServiceChild) {
     if (mShuttingDownOnGMPThread) {
@@ -397,7 +397,7 @@ GeckoMediaPluginServiceChild::GetServiceChild()
     if (mGetServiceChildPromises.Length() == 1) {
       nsCOMPtr<nsIRunnable> r = WrapRunnable(
         contentChild, &dom::ContentChild::SendCreateGMPService);
-      SystemGroup::Dispatch("SendCreateGMPService", TaskCategory::Other, r.forget());
+      SystemGroup::Dispatch(TaskCategory::Other, r.forget());
     }
     return promise;
   }
@@ -407,7 +407,7 @@ GeckoMediaPluginServiceChild::GetServiceChild()
 void
 GeckoMediaPluginServiceChild::SetServiceChild(UniquePtr<GMPServiceChild>&& aServiceChild)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
 
   mServiceChild = Move(aServiceChild);
 
@@ -421,7 +421,7 @@ GeckoMediaPluginServiceChild::SetServiceChild(UniquePtr<GMPServiceChild>&& aServ
 void
 GeckoMediaPluginServiceChild::RemoveGMPContentParent(GMPContentParent* aGMPContentParent)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
 
   if (mServiceChild) {
     mServiceChild->RemoveGMPContentParent(aGMPContentParent);
@@ -490,8 +490,9 @@ class OpenPGMPServiceChild : public mozilla::Runnable
 public:
   OpenPGMPServiceChild(UniquePtr<GMPServiceChild>&& aGMPServiceChild,
                        ipc::Endpoint<PGMPServiceChild>&& aEndpoint)
-    : mGMPServiceChild(Move(aGMPServiceChild)),
-      mEndpoint(Move(aEndpoint))
+    : Runnable("gmp::OpenPGMPServiceChild")
+    , mGMPServiceChild(Move(aGMPServiceChild))
+    , mEndpoint(Move(aEndpoint))
   {
   }
 

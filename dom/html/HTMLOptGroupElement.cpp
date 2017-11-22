@@ -43,10 +43,6 @@ NS_IMPL_ISUPPORTS_INHERITED(HTMLOptGroupElement, nsGenericHTMLElement,
 NS_IMPL_ELEMENT_CLONE(HTMLOptGroupElement)
 
 
-NS_IMPL_BOOL_ATTR(HTMLOptGroupElement, Disabled, disabled)
-NS_IMPL_STRING_ATTR(HTMLOptGroupElement, Label, label)
-
-
 nsresult
 HTMLOptGroupElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
@@ -106,35 +102,33 @@ HTMLOptGroupElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                   const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::disabled) {
-    // All our children <option> have their :disabled state depending on our
-    // disabled attribute. We should make sure their state is updated.
-    for (nsIContent* child = nsINode::GetFirstChild(); child;
-         child = child->GetNextSibling()) {
-      if (child->IsHTMLElement(nsGkAtoms::option)) {
-        // No need to call |IsElement()| because it's an HTML element.
-        child->AsElement()->UpdateState(true);
+
+    EventStates disabledStates;
+    if (aValue) {
+      disabledStates |= NS_EVENT_STATE_DISABLED;
+    } else {
+      disabledStates |= NS_EVENT_STATE_ENABLED;
+    }
+
+    EventStates oldDisabledStates = State() & DISABLED_STATES;
+    EventStates changedStates = disabledStates ^ oldDisabledStates;
+
+    if (!changedStates.IsEmpty()) {
+      ToggleStates(changedStates, aNotify);
+
+      // All our children <option> have their :disabled state depending on our
+      // disabled attribute. We should make sure their state is updated.
+      for (nsIContent* child = nsINode::GetFirstChild(); child;
+           child = child->GetNextSibling()) {
+        if (auto optElement = HTMLOptionElement::FromContent(child)) {
+          optElement->OptGroupDisabledChanged(true);
+        }
       }
     }
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
                                             aOldValue, aNotify);
-}
-
-EventStates
-HTMLOptGroupElement::IntrinsicState() const
-{
-  EventStates state = nsGenericHTMLElement::IntrinsicState();
-
-  if (HasAttr(kNameSpaceID_None, nsGkAtoms::disabled)) {
-    state |= NS_EVENT_STATE_DISABLED;
-    state &= ~NS_EVENT_STATE_ENABLED;
-  } else {
-    state &= ~NS_EVENT_STATE_DISABLED;
-    state |= NS_EVENT_STATE_ENABLED;
-  }
-
-  return state;
 }
 
 JSObject*

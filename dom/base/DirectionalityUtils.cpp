@@ -544,7 +544,7 @@ private:
     AutoRestore<Element*> restore(data->mMap->mElementToBeRemoved);
     data->mMap->mElementToBeRemoved = rootNode;
     if (newTextNode) {
-      nsINode* oldDirAutoSetBy = 
+      nsINode* oldDirAutoSetBy =
         static_cast<nsTextNode*>(rootNode->GetProperty(nsGkAtoms::dirAutoSetBy));
       if (oldDirAutoSetBy == newTextNode) {
         // We're already registered.
@@ -718,7 +718,7 @@ WalkDescendantsResetAutoDirection(Element* aElement)
 {
   nsIContent* child = aElement->GetFirstChild();
   while (child) {
-    if (child->HasDirAuto()) {
+    if (child->IsElement() && child->AsElement()->HasDirAuto()) {
       child = child->GetNextNonChildNode(aElement);
       continue;
     }
@@ -781,7 +781,7 @@ WalkDescendantsClearAncestorDirAuto(Element* aElement)
 {
   nsIContent* child = aElement->GetFirstChild();
   while (child) {
-    if (child->HasDirAuto()) {
+    if (child->IsElement() && child->AsElement()->HasDirAuto()) {
       child = child->GetNextNonChildNode(aElement);
       continue;
     }

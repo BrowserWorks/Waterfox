@@ -40,7 +40,6 @@
 #include "CamerasChild.h"
 
 // WebRTC library includes follow
-#include "webrtc/common.h"
 // Audio Engine
 #include "webrtc/voice_engine/include/voe_base.h"
 #include "webrtc/voice_engine/include/voe_codec.h"
@@ -153,10 +152,12 @@ public:
   virtual int GetRecordingDeviceName(int aIndex, char (&aStrNameUTF8)[128],
                                      char aStrGuidUTF8[128]) = 0;
   virtual int GetRecordingDeviceStatus(bool& aIsAvailable) = 0;
-  virtual int GetChannelCount(int aDeviceIndex, uint32_t& aChannels) = 0;
+  virtual void GetChannelCount(uint32_t& aChannels) = 0;
+  virtual int GetMaxAvailableChannels(uint32_t& aChannels) = 0;
   virtual void StartRecording(SourceMediaStream *aStream, AudioDataListener *aListener) = 0;
   virtual void StopRecording(SourceMediaStream *aStream) = 0;
   virtual int SetRecordingDevice(int aIndex) = 0;
+  virtual void SetUserChannelCount(uint32_t aChannels) = 0;
 
 protected:
   // Protected destructor, to discourage deletion outside of Release():
@@ -265,9 +266,19 @@ public:
     return 0;
   }
 
-  int GetChannelCount(int aDeviceIndex, uint32_t& aChannels)
+  void GetChannelCount(uint32_t& aChannels)
   {
-    return GetDeviceMaxChannels(aDeviceIndex, aChannels);
+    GetUserChannelCount(mSelectedDevice, aChannels);
+  }
+
+  static void GetUserChannelCount(int aDeviceIndex, uint32_t& aChannels)
+  {
+    aChannels = sUserChannelCount;
+  }
+
+  int GetMaxAvailableChannels(uint32_t& aChannels)
+  {
+    return GetDeviceMaxChannels(mSelectedDevice, aChannels);
   }
 
   static int GetDeviceMaxChannels(int aDeviceIndex, uint32_t& aChannels)
@@ -282,6 +293,18 @@ public:
     aChannels = mDevices.device[devindex].max_channels;
 #endif
     return 0;
+  }
+
+  void SetUserChannelCount(uint32_t aChannels)
+  {
+    if (GetDeviceMaxChannels(mSelectedDevice, sUserChannelCount)) {
+      sUserChannelCount = 1; // error capture mono
+      return;
+    }
+
+    if (aChannels && aChannels < sUserChannelCount) {
+      sUserChannelCount = aChannels;
+    }
   }
 
   void StartRecording(SourceMediaStream *aStream, AudioDataListener *aListener)
@@ -345,6 +368,7 @@ private:
   static cubeb_device_collection mDevices;
   static bool mAnyInUse;
   static StaticMutex sMutex;
+  static uint32_t sUserChannelCount;
 };
 
 class AudioInputWebRTC final : public AudioInput
@@ -385,11 +409,19 @@ public:
     return 0;
   }
 
-  int GetChannelCount(int aDeviceIndex, uint32_t& aChannels)
+  void GetChannelCount(uint32_t& aChannels)
   {
     aChannels = 1; // default to mono
+  }
+
+  int GetMaxAvailableChannels(uint32_t& aChannels)
+  {
+    aChannels = 1;
     return 0;
   }
+
+  void SetUserChannelCount(uint32_t aChannels)
+  {}
 
   void StartRecording(SourceMediaStream *aStream, AudioDataListener *aListener) {}
   void StopRecording(SourceMediaStream *aStream) {}
@@ -566,6 +598,7 @@ private:
   webrtc::VoiceEngine* mVoiceEngine;
   RefPtr<mozilla::AudioInput> mAudioInput;
   RefPtr<WebRTCAudioDataListener> mListener;
+  RefPtr<AudioOutputObserver> mAudioOutputObserver;
 
   // Note: shared across all microphone sources - we don't want to Terminate()
   // the VoEBase until there are no active captures
@@ -574,6 +607,7 @@ private:
   static ScopedCustomReleasePtr<webrtc::VoEExternalMedia> mVoERender;
   static ScopedCustomReleasePtr<webrtc::VoENetwork> mVoENetwork;
   static ScopedCustomReleasePtr<webrtc::VoEAudioProcessing> mVoEProcessing;
+
 
   // accessed from the GraphDriver thread except for deletion
   nsAutoPtr<AudioPacketizer<AudioDataValue, int16_t>> mPacketizer;
@@ -632,20 +666,15 @@ public:
   void EnumerateAudioDevices(dom::MediaSourceEnum,
                              nsTArray<RefPtr<MediaEngineAudioSource>>*) override;
 private:
-  ~MediaEngineWebRTC() {
-    gFarendObserver = nullptr;
-  }
+  ~MediaEngineWebRTC() {}
 
   nsCOMPtr<nsIThread> mThread;
 
   // gUM runnables can e.g. Enumerate from multiple threads
   Mutex mMutex;
   webrtc::VoiceEngine* mVoiceEngine;
-  webrtc::Config mConfig;
   RefPtr<mozilla::AudioInput> mAudioInput;
   bool mFullDuplex;
-  bool mExtendedFilter;
-  bool mDelayAgnostic;
   bool mHasTabVideoSource;
 
   // Store devices we've already seen in a hashtable for quick return.

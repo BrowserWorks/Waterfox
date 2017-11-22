@@ -24,6 +24,8 @@ if (runtime.processType == runtime.PROCESS_TYPE_DEFAULT) {
   do_get_profile();
 }
 
+const topWindowURI = NetUtil.newURI("http://www.itisatrap.org/");
+
 var Ci = Components.interfaces;
 
 function listener(tracking, priority, nextTest) {
@@ -37,6 +39,10 @@ listener.prototype = {
                 this._tracking);
     do_check_eq(request.QueryInterface(Ci.nsISupportsPriority).priority,
                 this._priority);
+    if (runtime.processType == runtime.PROCESS_TYPE_DEFAULT && this._tracking) {
+      do_check_true(request.QueryInterface(Ci.nsIClassOfService).classFlags &
+                    Ci.nsIClassOfService.Throttleable);
+    }
     request.cancel(Components.results.NS_ERROR_ABORT);
     this._nextTest();
   },
@@ -100,6 +106,7 @@ function makeChannel(path) {
   chan.QueryInterface(Ci.nsIHttpChannel);
   chan.requestMethod = "GET";
   chan.loadFlags |= Ci.nsIChannel.LOAD_CLASSIFY_URI;
+  chan.QueryInterface(Ci.nsIHttpChannelInternal).setTopWindowURIIfUnknown(topWindowURI);
   return chan;
 }
 

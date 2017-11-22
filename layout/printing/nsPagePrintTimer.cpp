@@ -80,7 +80,7 @@ nsPagePrintTimer::StopWatchDogTimer()
 
 //nsRunnable
 NS_IMETHODIMP
-nsPagePrintTimer::Run() 
+nsPagePrintTimer::Run()
 {
   bool initNewTimer = true;
   // Check to see if we are done
@@ -102,7 +102,7 @@ nsPagePrintTimer::Run()
   // Note that the Stop() destroys this after the print job finishes
   // (The PrintEngine stops holding a reference when DonePrintingPages
   // returns true.)
-  Stop(); 
+  Stop();
   if (initNewTimer) {
     ++mFiringCount;
     nsresult result = StartTimer(inRange);
@@ -163,7 +163,7 @@ nsPagePrintTimer::Notify(nsITimer *timer)
     if (donePrePrint && !mWaitingForRemotePrint) {
       StopWatchDogTimer();
       // Pass nullptr here since name already was set in constructor.
-      mDocument->Dispatch(nullptr, TaskCategory::Other, do_AddRef(this));
+      mDocument->Dispatch(TaskCategory::Other, do_AddRef(this));
     } else {
       // Start the watch dog if we're waiting for preprint to ensure that if any
       // mozPrintCallbacks take to long we error out.

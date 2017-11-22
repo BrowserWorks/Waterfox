@@ -14,7 +14,7 @@
 #include "nsDisplayList.h"
 #include "nsFilterInstance.h"
 #include "nsLayoutUtils.h"
-#include "nsRenderingContext.h"
+#include "gfxContext.h"
 #include "nsSVGClipPathFrame.h"
 #include "nsSVGEffects.h"
 #include "nsSVGElement.h"
@@ -137,6 +137,21 @@ GetPreEffectsVisualOverflowUnion(nsIFrame* aFirstContinuation,
   return collector.GetResult() + aFirstContinuationToUserSpace;
 }
 
+static nsRect
+GetPreEffectsVisualOverflow(nsIFrame* aFirstContinuation,
+                            nsIFrame* aCurrentFrame,
+                            const nsPoint& aFirstContinuationToUserSpace)
+{
+  PreEffectsVisualOverflowCollector collector(aFirstContinuation,
+                                              nullptr,
+                                              nsRect(),
+                                              false);
+  // Compute overflow areas of current frame relative to aFirstContinuation:
+  nsLayoutUtils::AddBoxesForFrame(aCurrentFrame, &collector);
+  // Return the result in user space:
+  return collector.GetResult() + aFirstContinuationToUserSpace;
+}
+
 
 bool
 nsSVGIntegrationUtils::UsingEffectsForFrame(const nsIFrame* aFrame)
@@ -198,7 +213,8 @@ nsSVGIntegrationUtils::GetSVGCoordContextForNonSVGFrame(nsIFrame* aNonSVGFrame)
 }
 
 gfxRect
-nsSVGIntegrationUtils::GetSVGBBoxForNonSVGFrame(nsIFrame* aNonSVGFrame)
+nsSVGIntegrationUtils::GetSVGBBoxForNonSVGFrame(nsIFrame* aNonSVGFrame,
+                                                bool aUnionContinuations)
 {
   // Except for nsSVGOuterSVGFrame, we shouldn't be getting here with SVG
   // frames at all. This function is for elements that are laid out using the
@@ -211,9 +227,13 @@ nsSVGIntegrationUtils::GetSVGBBoxForNonSVGFrame(nsIFrame* aNonSVGFrame)
   nsIFrame* firstFrame =
     nsLayoutUtils::FirstContinuationOrIBSplitSibling(aNonSVGFrame);
   // 'r' is in "user space":
-  nsRect r = GetPreEffectsVisualOverflowUnion(firstFrame, nullptr, nsRect(),
-                                              GetOffsetToBoundingBox(firstFrame),
-                                              false);
+  nsRect r = (aUnionContinuations)
+    ? GetPreEffectsVisualOverflowUnion(firstFrame, nullptr, nsRect(),
+                                       GetOffsetToBoundingBox(firstFrame),
+                                       false)
+    : GetPreEffectsVisualOverflow(firstFrame, aNonSVGFrame,
+                                  GetOffsetToBoundingBox(firstFrame));
+
   return nsLayoutUtils::RectToGfxRect(r,
            aNonSVGFrame->PresContext()->AppUnitsPerCSSPixel());
 }
@@ -394,7 +414,7 @@ public:
     basic->SetTarget(&aContext);
 
     gfxContextMatrixAutoSaveRestore autoSR(&aContext);
-    aContext.SetMatrix(aContext.CurrentMatrix().Translate(-mUserSpaceToFrameSpaceOffset));
+    aContext.SetMatrix(aContext.CurrentMatrix().PreTranslate(-mUserSpaceToFrameSpaceOffset));
 
     mLayerManager->EndTransaction(FrameLayerBuilder::DrawPaintedLayer, mBuilder);
     basic->SetTarget(oldCtx);
@@ -461,11 +481,10 @@ PaintMaskSurface(const PaintFramesParams& aParams,
                              Point(0, 0),
                              DrawOptions(1.0, compositionOp));
       }
-    } else {
+    } else if (svgReset->mMask.mLayers[i].mImage.IsResolved()) {
       gfxContextMatrixAutoSaveRestore matRestore(maskContext);
 
       maskContext->Multiply(gfxMatrix::Translation(-devPixelOffsetToUserSpace));
-      nsRenderingContext rc(maskContext);
       nsCSSRendering::PaintBGParams  params =
         nsCSSRendering::PaintBGParams::ForSingleLayer(*presContext,
                                                       aParams.dirtyRect,
@@ -477,8 +496,10 @@ PaintMaskSurface(const PaintFramesParams& aParams,
                                                       aOpacity);
 
       aParams.imgParams.result &=
-        nsCSSRendering::PaintStyleImageLayerWithSC(params, rc, aSC,
+        nsCSSRendering::PaintStyleImageLayerWithSC(params, *maskContext, aSC,
                                               *aParams.frame->StyleBorder());
+    } else {
+      aParams.imgParams.result &= DrawResult::NOT_READY;
     }
   }
 }
@@ -692,7 +713,7 @@ MoveContextOriginToUserSpace(nsIFrame* aFrame, const PaintFramesParams& aParams)
   EffectOffsets offset = ComputeEffectOffset(aFrame, aParams);
 
   aParams.ctx.SetMatrix(
-    aParams.ctx.CurrentMatrix().Translate(offset.offsetToUserSpaceInDevPx));
+    aParams.ctx.CurrentMatrix().PreTranslate(offset.offsetToUserSpaceInDevPx));
 
   return offset;
 }
@@ -1074,20 +1095,9 @@ nsSVGIntegrationUtils::PaintFilter(const PaintFramesParams& aParams)
   RegularFramePaintCallback callback(aParams.builder, aParams.layerManager,
                                      offsets.offsetToUserSpaceInDevPx);
   nsRegion dirtyRegion = aParams.dirtyRect - offsets.offsetToBoundingBox;
-  gfxSize scaleFactors = context.CurrentMatrix().ScaleFactors(true);
-  gfxMatrix scaleMatrix(scaleFactors.width, 0.0f,
-                        0.0f, scaleFactors.height,
-                        0.0f, 0.0f);
-  gfxMatrix reverseScaleMatrix = scaleMatrix;
-  DebugOnly<bool> invertible = reverseScaleMatrix.Invert();
-  MOZ_ASSERT(invertible);
-  context.SetMatrix(reverseScaleMatrix * context.CurrentMatrix());
 
-  gfxMatrix tm =
-    scaleMatrix * nsSVGUtils::GetCSSPxToDevPxMatrix(frame);
-  nsFilterInstance::PaintFilteredFrame(frame, context.GetDrawTarget(),
-                                       tm, &callback, &dirtyRegion,
-                                       aParams.imgParams);
+  nsFilterInstance::PaintFilteredFrame(frame, &context, &callback,
+                                       &dirtyRegion, aParams.imgParams);
 
   if (opacity != 1.0f) {
     context.PopGroupAndBlend();
@@ -1167,8 +1177,7 @@ PaintFrameCallback::operator()(gfxContext* aContext,
   if (mFlags & nsSVGIntegrationUtils::FLAG_SYNC_DECODE_IMAGES) {
     flags |= PaintFrameFlags::PAINT_SYNC_DECODE_IMAGES;
   }
-  nsRenderingContext context(aContext);
-  nsLayoutUtils::PaintFrame(&context, mFrame,
+  nsLayoutUtils::PaintFrame(aContext, mFrame,
                             dirty, NS_RGBA(0, 0, 0, 0),
                             nsDisplayListBuilderMode::PAINTING,
                             flags);
@@ -1183,7 +1192,7 @@ PaintFrameCallback::operator()(gfxContext* aContext,
     aContext->Multiply(gfxMatrix::Translation(devPxOffset));
     aContext->Multiply(gfxMatrix::Scaling(scaleX, scaleY));
 
-    nsLayoutUtils::PaintFrame(&context, currentFrame,
+    nsLayoutUtils::PaintFrame(aContext, currentFrame,
                               dirty - offset, NS_RGBA(0, 0, 0, 0),
                               nsDisplayListBuilderMode::PAINTING,
                               flags);
@@ -1220,7 +1229,7 @@ nsSVGIntegrationUtils::DrawableFromPaintServer(nsIFrame*         aFrame,
 
     gfxRect overrideBounds(0, 0,
                            aPaintServerSize.width, aPaintServerSize.height);
-    overrideBounds.ScaleInverse(aFrame->PresContext()->AppUnitsPerDevPixel());
+    overrideBounds.Scale(1.0 / aFrame->PresContext()->AppUnitsPerDevPixel());
     imgDrawingParams imgParams(aFlags);
     RefPtr<gfxPattern> pattern =
       server->GetPaintServerPattern(aTarget, aDrawTarget,

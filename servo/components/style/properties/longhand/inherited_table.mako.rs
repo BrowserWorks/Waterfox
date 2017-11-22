@@ -23,13 +23,12 @@ ${helpers.single_keyword("caption-side", "top bottom",
 <%helpers:longhand name="border-spacing" animation_value_type="ComputedValue" boxed="True"
                    spec="https://drafts.csswg.org/css-tables/#propdef-border-spacing">
     use app_units::Au;
-    use std::fmt;
-    use style_traits::ToCss;
     use values::specified::{AllowQuirks, Length};
 
     pub mod computed_value {
         use app_units::Au;
         use properties::animated_properties::Animatable;
+        use values::animated::ToAnimatedZero;
 
         #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
         #[derive(Clone, Copy, Debug, PartialEq, ToCss)]
@@ -44,10 +43,10 @@ ${helpers.single_keyword("caption-side", "top bottom",
             fn add_weighted(&self, other: &Self, self_portion: f64, other_portion: f64)
                 -> Result<Self, ()> {
                 Ok(T {
-                    horizontal: try!(self.horizontal.add_weighted(&other.horizontal,
-                                                                  self_portion, other_portion)),
-                    vertical: try!(self.vertical.add_weighted(&other.vertical,
-                                                              self_portion, other_portion)),
+                    horizontal: self.horizontal.add_weighted(&other.horizontal,
+                                                             self_portion, other_portion)?,
+                    vertical: self.vertical.add_weighted(&other.vertical,
+                                                         self_portion, other_portion)?,
                 })
             }
 
@@ -58,14 +57,19 @@ ${helpers.single_keyword("caption-side", "top bottom",
 
             #[inline]
             fn compute_squared_distance(&self, other: &Self) -> Result<f64, ()> {
-                Ok(try!(self.horizontal.compute_squared_distance(&other.horizontal)) +
-                   try!(self.vertical.compute_squared_distance(&other.vertical)))
+                Ok(self.horizontal.compute_squared_distance(&other.horizontal)? +
+                   self.vertical.compute_squared_distance(&other.vertical)?)
             }
+        }
+
+        impl ToAnimatedZero for T {
+            #[inline]
+            fn to_animated_zero(&self) -> Result<Self, ()> { Err(()) }
         }
     }
 
-    #[derive(Clone, Debug, HasViewportPercentage, PartialEq)]
     #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+    #[derive(Clone, Debug, HasViewportPercentage, PartialEq, ToCss)]
     pub struct SpecifiedValue {
         pub horizontal: Length,
         pub vertical: Option<Length>,
@@ -76,19 +80,6 @@ ${helpers.single_keyword("caption-side", "top bottom",
         computed_value::T {
             horizontal: Au(0),
             vertical: Au(0),
-        }
-    }
-
-    impl ToCss for SpecifiedValue {
-        fn to_css<W>(&self, dest: &mut W) -> fmt::Result
-            where W: fmt::Write,
-        {
-            try!(self.horizontal.to_css(dest));
-            if let Some(vertical) = self.vertical.as_ref() {
-                try!(dest.write_str(" "));
-                vertical.to_css(dest)?;
-            }
-            Ok(())
         }
     }
 

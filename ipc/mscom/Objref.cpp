@@ -166,7 +166,8 @@ StripHandlerFromOBJREF(NotNull<IStream*> aStream)
   hr = aStream->Read(&type, sizeof(type), &bytesRead);
   if (FAILED(hr) || bytesRead != sizeof(type) ||
       type != OBJREF_TYPE_HANDLER) {
-    return false;
+    // If we're not a handler then just return success
+    return true;
   }
 
   IID iid;
@@ -239,6 +240,14 @@ StripHandlerFromOBJREF(NotNull<IStream*> aStream)
 
   hr = aStream->Write(resAddr, resAddrSize, &bytesWritten);
   if (FAILED(hr) || bytesWritten != resAddrSize) {
+    return false;
+  }
+
+  // The difference between a OBJREF_STANDARD and an OBJREF_HANDLER is
+  // sizeof(CLSID), so we'll zero out the remaining bytes.
+  CLSID zeroClsid = {0};
+  hr = aStream->Write(&zeroClsid, sizeof(CLSID), &bytesWritten);
+  if (FAILED(hr) || bytesWritten != sizeof(CLSID)) {
     return false;
   }
 

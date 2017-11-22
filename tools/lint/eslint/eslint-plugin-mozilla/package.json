@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-mozilla",
-  "version": "0.3.3",
+  "version": "0.4.2",
   "description": "A collection of rules that help enforce JavaScript coding standard in the Mozilla project.",
   "keywords": [
     "eslint",
@@ -20,23 +20,29 @@
   "author": "Mike Ratcliffe",
   "main": "lib/index.js",
   "dependencies": {
-    "escope": "^3.6.0",
-    "espree": "^3.4.0",
-    "estraverse": "^4.2.0",
-    "globals": "^9.14.0",
-    "ini-parser": "^0.0.2",
-    "sax": "^1.2.2"
+    "escope": "3.6.0",
+    "espree": "3.4.3",
+    "estraverse": "4.2.0",
+    "globals": "9.18.0",
+    "ini-parser": "0.0.2",
+    "sax": "1.2.4"
   },
   "devDependencies": {
-    "mocha": "3.2.0"
+    "eslint": "4.2.0",
+    "mocha": "3.4.2"
+  },
+  "peerDependencies": {
+    "eslint": "^3.0.0 || ^4.0.0",
+    "eslint-plugin-no-unsanitized": "^2.0.1"
   },
   "engines": {
     "node": ">=6.9.1"
   },
   "scripts": {
-    "prepublishOnly": "node scripts/createExports.js",
-    "test": "mocha -R dot tests",
-    "postpublish": "rm -f lib/modules.json lib/environments/saved-globals.json"
+    "prepack": "node scripts/createExports.js",
+    "test": "mocha -R dot --reporter 'reporters/mozilla-format.js' tests",
+    "postpublish": "rm -f lib/modules.json lib/environments/saved-globals.json",
+    "update-tooltool": "./update.sh"
   },
   "license": "MPL-2.0"
 }

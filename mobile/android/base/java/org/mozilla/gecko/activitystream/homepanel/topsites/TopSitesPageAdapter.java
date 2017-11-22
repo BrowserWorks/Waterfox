@@ -17,8 +17,9 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.activitystream.ActivityStreamTelemetry;
-import org.mozilla.gecko.home.HomePager;
 import org.mozilla.gecko.activitystream.homepanel.model.TopSite;
+import org.mozilla.gecko.home.HomePager;
+import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.widget.RecyclerViewClickSupport;
 
 import java.util.ArrayList;
@@ -87,7 +88,7 @@ import java.util.List;
                 extras.build()
         );
 
-        onUrlOpenListener.onUrlOpen(topSite.getUrl(), EnumSet.noneOf(HomePager.OnUrlOpenListener.Flags.class));
+        onUrlOpenListener.onUrlOpen(StringUtils.decodeUserEnteredUrl(topSite.getUrl()), EnumSet.noneOf(HomePager.OnUrlOpenListener.Flags.class));
     }
 
     @Override
@@ -100,12 +101,11 @@ import java.util.List;
         final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
         final FrameLayout card = (FrameLayout) inflater.inflate(R.layout.activity_stream_topsites_card, parent, false);
-        final View content = card.findViewById(R.id.content);
 
-        ViewGroup.LayoutParams layoutParams = content.getLayoutParams();
+        ViewGroup.LayoutParams layoutParams = card.getLayoutParams();
         layoutParams.width = tilesWidth;
         layoutParams.height = tilesHeight + textHeight;
-        content.setLayoutParams(layoutParams);
+        card.setLayoutParams(layoutParams);
 
         return new TopSitesCard(card, onUrlOpenListener, onUrlOpenInBackgroundListener);
     }

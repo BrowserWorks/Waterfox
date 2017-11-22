@@ -56,9 +56,9 @@ public:
   }
 
   // Reflow
-  nscoord GetMinISize(nsRenderingContext* aRenderingContext) override;
+  nscoord GetMinISize(gfxContext* aRenderingContext) override;
 
-  nscoord GetPrefISize(nsRenderingContext* aRenderingContext) override;
+  nscoord GetPrefISize(gfxContext* aRenderingContext) override;
 
   void Reflow(nsPresContext* aPresContext,
               ReflowOutput& aDesiredSize,
@@ -73,11 +73,13 @@ public:
   nsresult AttributeChanged(int32_t aNameSpaceID, nsIAtom* aAttribute,
                             int32_t aModType) override;
 
-  void UpdateInputBoxValue();
+  void OnValueChanged();
+  void OnMinMaxStepAttrChanged();
   void SetValueFromPicker(const DateTimeValue& aValue);
   void HandleFocusEvent();
   void HandleBlurEvent();
   void SetPickerState(bool aOpen);
+  bool HasBadInput();
 
 private:
   class SyncDisabledStateEvent;
@@ -86,7 +88,8 @@ private:
   {
   public:
     explicit SyncDisabledStateEvent(nsDateTimeControlFrame* aFrame)
-    : mFrame(aFrame)
+      : mozilla::Runnable("nsDateTimeControlFrame::SyncDisabledStateEvent")
+      , mFrame(aFrame)
     {}
 
     NS_IMETHOD Run() override

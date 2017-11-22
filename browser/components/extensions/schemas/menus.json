@@ -22,7 +22,15 @@
     "namespace": "contextMenus",
     "permissions": ["contextMenus"],
     "description": "Use the browser.contextMenus API to add items to the browser's context menu. You can choose what types of objects your context menu additions apply to, such as images, hyperlinks, and pages.",
-    "$import": "menus"
+    "$import": "menus",
+    "types": [
+      {
+        "id": "ContextType",
+        "type": "string",
+        "enum": ["all", "page", "frame", "selection", "link", "editable", "password", "image", "video", "audio", "launcher", "browser_action", "page_action", "tab"],
+        "description": "The different contexts a menu can appear in. Specifying 'all' is equivalent to the combination of all other contexts except for 'tab' and 'tools_menu'."
+      }
+    ]
   },
   {
     "namespace": "menus",
@@ -38,8 +46,8 @@
       {
         "id": "ContextType",
         "type": "string",
-        "enum": ["all", "page", "frame", "selection", "link", "editable", "password", "image", "video", "audio", "launcher", "browser_action", "page_action", "tab"],
-        "description": "The different contexts a menu can appear in. Specifying 'all' is equivalent to the combination of all other contexts except for 'tab'."
+        "enum": ["all", "page", "frame", "selection", "link", "editable", "password", "image", "video", "audio", "launcher", "browser_action", "page_action", "tab", "tools_menu"],
+        "description": "The different contexts a menu can appear in. Specifying 'all' is equivalent to the combination of all other contexts except for 'tab' and 'tools_menu'."
       },
       {
         "id": "ItemType",
@@ -71,6 +79,11 @@
             "type": "string",
             "optional": true,
             "description": "One of 'image', 'video', or 'audio' if the context menu was activated on one of these types of elements."
+          },
+          "linkText": {
+            "type": "string",
+            "optional": true,
+            "description": "If the element is a link, the text of that link."
           },
           "linkUrl": {
             "type": "string",
@@ -148,6 +161,13 @@
                 "type": "string",
                 "optional": true,
                 "description": "The unique ID to assign to this item. Mandatory for event pages. Cannot be the same as another ID for this extension."
+              },
+              "icons": {
+                "type": "object",
+                "optional" : true,
+                "patternProperties" : {
+                  "^[1-9]\\d*$": { "type" : "string" }
+                }
               },
               "title": {
                 "type": "string",

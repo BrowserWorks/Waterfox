@@ -20,19 +20,6 @@
 namespace mozilla {
 namespace wr {
 
-class InMemoryStreamBuffer: public std::streambuf
-{
-public:
-  explicit InMemoryStreamBuffer(const Range<const uint8_t> aBlob)
-  {
-    // we need to cast away the const because C++ doesn't
-    // have a separate type of streambuf that can only
-    // be read from
-    auto start = const_cast<char*>(reinterpret_cast<const char*>(aBlob.begin().get()));
-    setg(start, start, start + aBlob.length());
-  }
-};
-
 #ifdef MOZ_ENABLE_FREETYPE
 static MOZ_THREAD_LOCAL(FT_Library) sFTLibrary;
 #endif
@@ -84,12 +71,9 @@ static bool Moz2DRenderCallback(const Range<const uint8_t> aBlob,
     return false;
   }
 
-  InMemoryStreamBuffer streamBuffer(aBlob);
-  std::istream stream(&streamBuffer);
-
   gfx::InlineTranslator translator(dt, fontContext);
 
-  auto ret = translator.TranslateRecording(stream);
+  auto ret = translator.TranslateRecording((char*)aBlob.begin().get(), aBlob.length());
 
 #if 0
   static int i = 0;
@@ -106,14 +90,14 @@ static bool Moz2DRenderCallback(const Range<const uint8_t> aBlob,
 
 extern "C" {
 
-bool wr_moz2d_render_cb(const WrByteSlice blob,
+bool wr_moz2d_render_cb(const mozilla::wr::ByteSlice blob,
                         uint32_t width, uint32_t height,
                         mozilla::wr::ImageFormat aFormat,
-                        MutByteSlice output)
+                        mozilla::wr::MutByteSlice output)
 {
   return mozilla::wr::Moz2DRenderCallback(mozilla::wr::ByteSliceToRange(blob),
                                           mozilla::gfx::IntSize(width, height),
-                                          mozilla::wr::WrImageFormatToSurfaceFormat(aFormat),
+                                          mozilla::wr::ImageFormatToSurfaceFormat(aFormat),
                                           mozilla::wr::MutByteSliceToRange(output));
 }
 

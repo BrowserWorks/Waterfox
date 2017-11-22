@@ -26,7 +26,7 @@ public:
     , mConsumerTarget(aConsumerTarget)
   {
     if (!mConsumerTarget) {
-      mConsumerTarget = NS_GetCurrentThread();
+      mConsumerTarget = GetCurrentThreadEventTarget();
     }
   }
 
@@ -54,8 +54,10 @@ nsInterfaceRequestorAgg::GetInterface(const nsIID& aIID, void** aResult)
 
 nsInterfaceRequestorAgg::~nsInterfaceRequestorAgg()
 {
-  NS_ProxyRelease(mConsumerTarget, mFirst.forget());
-  NS_ProxyRelease(mConsumerTarget, mSecond.forget());
+  NS_ProxyRelease(
+    "nsInterfaceRequestorAgg::mFirst", mConsumerTarget, mFirst.forget());
+  NS_ProxyRelease(
+    "nsInterfaceRequestorAgg::mSecond", mConsumerTarget, mSecond.forget());
 }
 
 nsresult

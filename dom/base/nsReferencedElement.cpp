@@ -33,13 +33,16 @@ nsReferencedElement::Reset(nsIContent* aFromContent, nsIURI* aURI,
 
   nsAutoCString charset;
   aURI->GetOriginCharset(charset);
+  auto encoding = Encoding::ForLabelNoReplacement(charset);
+  if (!encoding) {
+    encoding = UTF_8_ENCODING;
+  }
   nsAutoString ref;
-  nsresult rv = nsContentUtils::ConvertStringFromEncoding(charset,
-                                                          refPart,
-                                                          ref);
+  nsresult rv = encoding->DecodeWithoutBOMHandling(refPart, ref);
   if (NS_FAILED(rv) || ref.IsEmpty()) {
     return;
   }
+  rv = NS_OK;
 
   // Get the current document
   nsIDocument *doc = aFromContent->OwnerDoc();
@@ -161,7 +164,7 @@ nsReferencedElement::HaveNewDocument(nsIDocument* aDocument, bool aWatch,
     }
     return;
   }
-  
+
   if (!aDocument) {
     return;
   }

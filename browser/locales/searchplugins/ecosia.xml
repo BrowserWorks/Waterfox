@@ -6,5 +6,4 @@
 	<Image height="16" width="16">resource://search-plugins/images/ecosia.ico</Image>
 	<Url type="text/html" method="get" template="https://www.ecosia.org/search?q={searchTerms}&amp;ref=waterfox"/>
 	<Url type="application/x-suggestions+json" template="https://ac.ecosia.org/autocomplete?q={searchTerms}&amp;type=list&amp;ref=waterfox"/>
-	<moz:SearchForm>https://www.ecosia.org</moz:SearchForm>
 </OpenSearchDescription>

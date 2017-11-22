@@ -17,7 +17,6 @@
 #include "mozilla/dom/ImageData.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Scoped.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Unused.h"
 #include "ScopedGLHelpers.h"
 #include "TexUnpackBlob.h"
@@ -693,7 +692,7 @@ ValidateCompressedTexUnpack(WebGLContext* webgl, const char* funcName, GLsizei w
 
     if (dataSize != bytesNeeded.value()) {
         webgl->ErrorInvalidValue("%s: Provided buffer's size must match expected size."
-                                 " (needs %u, has %" PRIuSIZE ")",
+                                 " (needs %u, has %zu)",
                                  funcName, bytesNeeded.value(), dataSize);
         return false;
     }
@@ -1165,6 +1164,8 @@ WebGLTexture::TexStorage(const char* funcName, TexTarget target, GLsizei levels,
     GLenum error = DoTexStorage(mContext->gl, target.get(), levels, sizedFormat, width,
                                 height, depth);
 
+    mContext->OnDataAllocCall();
+
     if (error == LOCAL_GL_OUT_OF_MEMORY) {
         mContext->ErrorOutOfMemory("%s: Ran out of memory during texture allocation.",
                                    funcName);
@@ -1292,10 +1293,12 @@ WebGLTexture::TexImage(const char* funcName, TexImageTarget target, GLint level,
 
     GLenum glError;
     if (!blob->TexOrSubImage(isSubImage, needsRespec, funcName, this, target, level,
-                             driverUnpackInfo, xOffset, yOffset, zOffset, &glError))
+                             driverUnpackInfo, xOffset, yOffset, zOffset, pi, &glError))
     {
         return;
     }
+
+    mContext->OnDataAllocCall();
 
     if (glError == LOCAL_GL_OUT_OF_MEMORY) {
         mContext->ErrorOutOfMemory("%s: Driver ran out of memory during upload.",
@@ -1380,7 +1383,7 @@ WebGLTexture::TexSubImage(const char* funcName, TexImageTarget target, GLint lev
 
     GLenum glError;
     if (!blob->TexOrSubImage(isSubImage, needsRespec, funcName, this, target, level,
-                             driverUnpackInfo, xOffset, yOffset, zOffset, &glError))
+                             driverUnpackInfo, xOffset, yOffset, zOffset, pi, &glError))
     {
         return;
     }
@@ -1502,6 +1505,7 @@ WebGLTexture::CompressedTexImage(const char* funcName, TexImageTarget target, GL
     GLenum error = DoCompressedTexImage(mContext->gl, target, level, internalFormat,
                                         blob->mWidth, blob->mHeight, blob->mDepth,
                                         blob->mAvailBytes, blob->mPtr);
+    mContext->OnDataAllocCall();
     if (error == LOCAL_GL_OUT_OF_MEMORY) {
         mContext->ErrorOutOfMemory("%s: Ran out of memory during upload.", funcName);
         return;
@@ -2166,6 +2170,8 @@ WebGLTexture::CopyTexImage2D(TexImageTarget target, GLint level, GLenum internal
     {
         return;
     }
+
+    mContext->OnDataAllocCall();
 
     ////////////////////////////////////
     // Update our specification data.

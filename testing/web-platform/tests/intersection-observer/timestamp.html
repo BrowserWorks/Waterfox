@@ -28,9 +28,6 @@ var topWindowTimeBeforeNotification;
 var iframeWindowTimeBeforeNotification;
 
 async_test(function(t) {
-  // assert_equals(window.innerWidth, 800, "Window must be 800 pixels wide.");
-  // assert_equals(window.innerHeight, 600, "Window must be 600 pixels high.");
-
   t.step_timeout(function() {
     targetIframe = document.createElement("iframe");
     assert_true(!!targetIframe, "iframe exists");
@@ -76,10 +73,14 @@ function step2() {
   var topWindowTimeAfterNotification = performance.now();
   var iframeWindowTimeAfterNotification = targetIframe.contentWindow.performance.now();
 
-  // Test results are only significant if there's a gap between
-  // top window time and iframe window time.
-  assert_greater_than(topWindowTimeBeforeNotification, iframeWindowTimeAfterNotification,
-    "Time ranges for top and iframe windows are disjoint.");
+  assert_approx_equals(
+      topWindowEntries[1].time - topWindowTimeBeforeNotification,
+      iframeWindowEntries[1].time - iframeWindowTimeBeforeNotification,
+      // Since all intersections are computed in a tight loop between 2 frames,
+      // an epsilon of 16ms (the length of one frame at 60Hz) turned out to be
+      // reliable, even at slow frame rates.
+      16,
+      "Notification times are relative to the expected time origins");
 
   assert_equals(topWindowEntries.length, 2, "Top window observer has two notifications.");
   assert_between_inclusive(

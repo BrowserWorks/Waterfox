@@ -51,6 +51,7 @@ extern crate fnv;
 #[cfg(feature = "gecko")] #[macro_use] pub mod gecko_string_cache;
 #[cfg(feature = "servo")] extern crate heapsize;
 #[cfg(feature = "servo")] #[macro_use] extern crate heapsize_derive;
+extern crate itertools;
 extern crate itoa;
 #[cfg(feature = "servo")] #[macro_use] extern crate html5ever;
 #[macro_use]
@@ -67,12 +68,13 @@ pub extern crate nsstring_vendor as nsstring;
 extern crate num_integer;
 extern crate num_traits;
 extern crate ordered_float;
+extern crate owning_ref;
 extern crate parking_lot;
 extern crate pdqsort;
 #[cfg(feature = "gecko")] extern crate precomputed_hash;
 extern crate rayon;
 extern crate selectors;
-#[cfg(feature = "servo")] #[macro_use] extern crate serde_derive;
+#[cfg(feature = "servo")] #[macro_use] extern crate serde;
 pub extern crate servo_arc;
 #[cfg(feature = "servo")] #[macro_use] extern crate servo_atoms;
 #[cfg(feature = "servo")] extern crate servo_config;
@@ -91,6 +93,7 @@ extern crate unicode_segmentation;
 mod macros;
 
 pub mod animation;
+pub mod applicable_declarations;
 #[allow(missing_docs)] // TODO.
 #[cfg(feature = "servo")] pub mod attr;
 pub mod bezier;
@@ -116,17 +119,16 @@ pub mod matching;
 pub mod media_queries;
 pub mod parallel;
 pub mod parser;
-pub mod restyle_hints;
 pub mod rule_tree;
 pub mod scoped_tls;
 pub mod selector_map;
 pub mod selector_parser;
 pub mod shared_lock;
 pub mod sharing;
+pub mod style_resolver;
 pub mod stylist;
 #[cfg(feature = "servo")] #[allow(unsafe_code)] pub mod servo;
 pub mod sequential;
-pub mod sink;
 pub mod str;
 pub mod style_adjuster;
 pub mod stylesheet_set;
@@ -134,13 +136,10 @@ pub mod stylesheets;
 pub mod thread_state;
 pub mod timer;
 pub mod traversal;
+pub mod traversal_flags;
 #[macro_use]
 #[allow(non_camel_case_types)]
 pub mod values;
-
-// Compat shim for the old name when it lived in the style crate.
-// FIXME(bholley) Remove this.
-pub use servo_arc as stylearc;
 
 use std::fmt;
 use style_traits::ToCss;
@@ -187,14 +186,6 @@ macro_rules! reexport_computed_values {
 }
 longhand_properties_idents!(reexport_computed_values);
 
-/// Pointer equality
-///
-/// FIXME: Remove this and use std::ptr::eq once we require Rust 1.17
-#[inline]
-pub fn ptr_eq<T: ?Sized>(a: *const T, b: *const T) -> bool {
-    a == b
-}
-
 /// Serializes as CSS a comma-separated list of any `T` that supports being
 /// serialized as CSS.
 pub fn serialize_comma_separated_list<W, T>(dest: &mut W,
@@ -207,12 +198,30 @@ pub fn serialize_comma_separated_list<W, T>(dest: &mut W,
         return Ok(());
     }
 
-    try!(list[0].to_css(dest));
+    list[0].to_css(dest)?;
 
     for item in list.iter().skip(1) {
-        try!(write!(dest, ", "));
-        try!(item.to_css(dest));
+        write!(dest, ", ")?;
+        item.to_css(dest)?;
     }
 
     Ok(())
+}
+
+#[cfg(feature = "gecko")] use gecko_string_cache::WeakAtom;
+#[cfg(feature = "servo")] use servo_atoms::Atom as WeakAtom;
+
+/// Extension methods for selectors::attr::CaseSensitivity
+pub trait CaseSensitivityExt {
+    /// Return whether two atoms compare equal according to this case sensitivity.
+    fn eq_atom(self, a: &WeakAtom, b: &WeakAtom) -> bool;
+}
+
+impl CaseSensitivityExt for selectors::attr::CaseSensitivity {
+    fn eq_atom(self, a: &WeakAtom, b: &WeakAtom) -> bool {
+        match self {
+            selectors::attr::CaseSensitivity::CaseSensitive => a == b,
+            selectors::attr::CaseSensitivity::AsciiCaseInsensitive => a.eq_ignore_ascii_case(b),
+        }
+    }
 }

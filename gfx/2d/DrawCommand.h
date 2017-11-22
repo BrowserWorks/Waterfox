@@ -28,11 +28,14 @@ enum class CommandType : int8_t {
   STROKE,
   FILL,
   FILLGLYPHS,
+  STROKEGLYPHS,
   MASK,
   MASKSURFACE,
   PUSHCLIP,
   PUSHCLIPRECT,
+  PUSHLAYER,
   POPCLIP,
+  POPLAYER,
   SETTRANSFORM,
   FLUSH
 };
@@ -56,6 +59,31 @@ protected:
 
 private:
   CommandType mType;
+};
+
+class StrokeOptionsCommand : public DrawingCommand
+{
+public:
+  StrokeOptionsCommand(CommandType aType,
+                       const StrokeOptions& aStrokeOptions)
+    : DrawingCommand(aType)
+    , mStrokeOptions(aStrokeOptions)
+  {
+    // Stroke Options dashes are owned by the caller.
+    // Have to copy them here so they don't get freed
+    // between now and replay.
+    if (aStrokeOptions.mDashLength) {
+      mDashes.resize(aStrokeOptions.mDashLength);
+      mStrokeOptions.mDashPattern = &mDashes.front();
+      PodCopy(&mDashes.front(), aStrokeOptions.mDashPattern, mStrokeOptions.mDashLength);
+    }
+  }
+
+  virtual ~StrokeOptionsCommand() {}
+
+protected:
+  StrokeOptions mStrokeOptions;
+  std::vector<Float> mDashes;
 };
 
 class StoredPattern
@@ -249,24 +277,18 @@ private:
   DrawOptions mOptions;
 };
 
-class StrokeRectCommand : public DrawingCommand
+class StrokeRectCommand : public StrokeOptionsCommand
 {
 public:
   StrokeRectCommand(const Rect& aRect,
                     const Pattern& aPattern,
                     const StrokeOptions& aStrokeOptions,
                     const DrawOptions& aOptions)
-    : DrawingCommand(CommandType::STROKERECT)
+    : StrokeOptionsCommand(CommandType::STROKERECT, aStrokeOptions)
     , mRect(aRect)
     , mPattern(aPattern)
-    , mStrokeOptions(aStrokeOptions)
     , mOptions(aOptions)
   {
-    if (aStrokeOptions.mDashLength) {
-      mDashes.resize(aStrokeOptions.mDashLength);
-      mStrokeOptions.mDashPattern = &mDashes.front();
-      memcpy(&mDashes.front(), aStrokeOptions.mDashPattern, mStrokeOptions.mDashLength * sizeof(Float));
-    }
   }
 
   virtual void ExecuteOnDT(DrawTarget* aDT, const Matrix*) const
@@ -277,12 +299,10 @@ public:
 private:
   Rect mRect;
   StoredPattern mPattern;
-  StrokeOptions mStrokeOptions;
   DrawOptions mOptions;
-  std::vector<Float> mDashes;
 };
 
-class StrokeLineCommand : public DrawingCommand
+class StrokeLineCommand : public StrokeOptionsCommand
 {
 public:
   StrokeLineCommand(const Point& aStart,
@@ -290,11 +310,10 @@ public:
                     const Pattern& aPattern,
                     const StrokeOptions& aStrokeOptions,
                     const DrawOptions& aOptions)
-    : DrawingCommand(CommandType::STROKELINE)
+    : StrokeOptionsCommand(CommandType::STROKELINE, aStrokeOptions)
     , mStart(aStart)
     , mEnd(aEnd)
     , mPattern(aPattern)
-    , mStrokeOptions(aStrokeOptions)
     , mOptions(aOptions)
   {
   }
@@ -308,7 +327,6 @@ private:
   Point mStart;
   Point mEnd;
   StoredPattern mPattern;
-  StrokeOptions mStrokeOptions;
   DrawOptions mOptions;
 };
 
@@ -382,24 +400,19 @@ PathExtentsToMaxStrokeExtents(const StrokeOptions &aStrokeOptions,
   return result;
 }
 
-class StrokeCommand : public DrawingCommand
+
+class StrokeCommand : public StrokeOptionsCommand
 {
 public:
   StrokeCommand(const Path* aPath,
                 const Pattern& aPattern,
                 const StrokeOptions& aStrokeOptions,
                 const DrawOptions& aOptions)
-    : DrawingCommand(CommandType::STROKE)
+    : StrokeOptionsCommand(CommandType::STROKE, aStrokeOptions)
     , mPath(const_cast<Path*>(aPath))
     , mPattern(aPattern)
-    , mStrokeOptions(aStrokeOptions)
     , mOptions(aOptions)
   {
-    if (aStrokeOptions.mDashLength) {
-      mDashes.resize(aStrokeOptions.mDashLength);
-      mStrokeOptions.mDashPattern = &mDashes.front();
-      memcpy(&mDashes.front(), aStrokeOptions.mDashPattern, mStrokeOptions.mDashLength * sizeof(Float));
-    }
   }
 
   virtual void ExecuteOnDT(DrawTarget* aDT, const Matrix*) const
@@ -416,9 +429,7 @@ public:
 private:
   RefPtr<Path> mPath;
   StoredPattern mPattern;
-  StrokeOptions mStrokeOptions;
   DrawOptions mOptions;
-  std::vector<Float> mDashes;
 };
 
 class FillGlyphsCommand : public DrawingCommand
@@ -446,6 +457,42 @@ public:
     buf.mNumGlyphs = mGlyphs.size();
     buf.mGlyphs = &mGlyphs.front();
     aDT->FillGlyphs(mFont, buf, mPattern, mOptions, mRenderingOptions);
+  }
+
+private:
+  RefPtr<ScaledFont> mFont;
+  std::vector<Glyph> mGlyphs;
+  StoredPattern mPattern;
+  DrawOptions mOptions;
+  RefPtr<GlyphRenderingOptions> mRenderingOptions;
+};
+
+class StrokeGlyphsCommand : public StrokeOptionsCommand
+{
+  friend class DrawTargetCaptureImpl;
+public:
+  StrokeGlyphsCommand(ScaledFont* aFont,
+                      const GlyphBuffer& aBuffer,
+                      const Pattern& aPattern,
+                      const StrokeOptions& aStrokeOptions,
+                      const DrawOptions& aOptions,
+                      const GlyphRenderingOptions* aRenderingOptions)
+    : StrokeOptionsCommand(CommandType::STROKEGLYPHS, aStrokeOptions)
+    , mFont(aFont)
+    , mPattern(aPattern)
+    , mOptions(aOptions)
+    , mRenderingOptions(const_cast<GlyphRenderingOptions*>(aRenderingOptions))
+  {
+    mGlyphs.resize(aBuffer.mNumGlyphs);
+    memcpy(&mGlyphs.front(), aBuffer.mGlyphs, sizeof(Glyph) * aBuffer.mNumGlyphs);
+  }
+
+  virtual void ExecuteOnDT(DrawTarget* aDT, const Matrix*) const
+  {
+    GlyphBuffer buf;
+    buf.mNumGlyphs = mGlyphs.size();
+    buf.mGlyphs = &mGlyphs.front();
+    aDT->StrokeGlyphs(mFont, buf, mPattern, mStrokeOptions, mOptions, mRenderingOptions);
   }
 
 private:
@@ -543,6 +590,40 @@ private:
   Rect mRect;
 };
 
+class PushLayerCommand : public DrawingCommand
+{
+public:
+  PushLayerCommand(const bool aOpaque,
+                   const Float aOpacity,
+                   SourceSurface* aMask,
+                   const Matrix& aMaskTransform,
+                   const IntRect& aBounds,
+                   bool aCopyBackground)
+    : DrawingCommand(CommandType::PUSHLAYER)
+    , mOpaque(aOpaque)
+    , mOpacity(aOpacity)
+    , mMask(aMask)
+    , mMaskTransform(aMaskTransform)
+    , mBounds(aBounds)
+    , mCopyBackground(aCopyBackground)
+  {
+  }
+
+  virtual void ExecuteOnDT(DrawTarget* aDT, const Matrix*) const
+  {
+    aDT->PushLayer(mOpaque, mOpacity, mMask,
+                   mMaskTransform, mBounds, mCopyBackground);
+  }
+
+private:
+  bool mOpaque;
+  float mOpacity;
+  RefPtr<SourceSurface> mMask;
+  Matrix mMaskTransform;
+  IntRect mBounds;
+  bool mCopyBackground;
+};
+
 class PopClipCommand : public DrawingCommand
 {
 public:
@@ -554,6 +635,20 @@ public:
   virtual void ExecuteOnDT(DrawTarget* aDT, const Matrix*) const
   {
     aDT->PopClip();
+  }
+};
+
+class PopLayerCommand : public DrawingCommand
+{
+public:
+  PopLayerCommand()
+    : DrawingCommand(CommandType::POPLAYER)
+  {
+  }
+
+  virtual void ExecuteOnDT(DrawTarget* aDT, const Matrix*) const
+  {
+    aDT->PopLayer();
   }
 };
 

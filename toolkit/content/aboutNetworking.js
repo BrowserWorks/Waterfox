@@ -22,6 +22,8 @@ const gRequestNetworkingData = {
   "sockets": gDashboard.requestSockets,
   "dns": gDashboard.requestDNSInfo,
   "websockets": gDashboard.requestWebsocketConnections,
+  "dnslookuptool": () => {},
+  "logging": () => {},
   "rcwn": gDashboard.requestRcwnStats,
 };
 const gDashboardCallbacks = {
@@ -131,11 +133,37 @@ function displayRcwnStats(data) {
   let cacheWon = data.rcwnCacheWonCount;
   let netWon = data.rcwnNetWonCount;
   let total = data.totalNetworkRequests;
+  let cacheSlow = data.cacheSlowCount;
+  let cacheNotSlow = data.cacheNotSlowCount;
 
   document.getElementById("rcwn_status").innerText = status;
   document.getElementById("total_req_count").innerText = total;
   document.getElementById("rcwn_cache_won_count").innerText = cacheWon;
   document.getElementById("rcwn_cache_net_count").innerText = netWon;
+  document.getElementById("rcwn_cache_slow").innerText = cacheSlow;
+  document.getElementById("rcwn_cache_not_slow").innerText = cacheNotSlow;
+
+  // Keep in sync with CachePerfStats::EDataType in CacheFileUtils.h
+  const perfStatTypes = [
+    "open",
+    "read",
+    "write",
+    "entryopen",
+  ];
+
+  const perfStatFieldNames = [
+    "avgShort",
+    "avgLong",
+    "stddevLong",
+  ]
+
+  for (let typeIndex in perfStatTypes) {
+    for (let statFieldIndex in perfStatFieldNames) {
+      document.getElementById("rcwn_perfstats_" + perfStatTypes[typeIndex] + "_"
+                              + perfStatFieldNames[statFieldIndex]).innerText =
+        data.perfStats[typeIndex][perfStatFieldNames[statFieldIndex]];
+    }
+  }
 }
 
 function requestAllNetworkingData() {
@@ -147,7 +175,12 @@ function requestNetworkingDataForTab(id) {
   gRequestNetworkingData[id](gDashboardCallbacks[id]);
 }
 
+let gInited = false;
 function init() {
+  if (gInited) {
+    return;
+  }
+  gInited = true;
   gDashboard.enableLogging = true;
   if (Services.prefs.getBoolPref("network.warnOnAboutNetworking")) {
     let div = document.getElementById("warning_message");
@@ -221,6 +254,13 @@ function init() {
   if (setLogButton.disabled && setModulesButton.disabled) {
     startLoggingButton.disabled = true;
     stopLoggingButton.disabled = true;
+  }
+
+  if (location.hash) {
+    let sectionButton = document.getElementById("category-" + location.hash.substring(1));
+    if (sectionButton) {
+      sectionButton.click();
+    }
   }
 }
 
@@ -366,7 +406,8 @@ function confirm() {
 
 function show(button) {
   let current_tab = document.querySelector(".active");
-  let content = document.getElementById(button.getAttribute("value"));
+  let category = button.getAttribute("id").substring("category-".length);
+  let content = document.getElementById(category);
   if (current_tab == content)
     return;
   current_tab.classList.remove("active");
@@ -386,6 +427,7 @@ function show(button) {
 
   let title = document.getElementById("sectionTitle");
   title.textContent = button.children[0].textContent;
+  location.hash = category;
 }
 
 function setAutoRefreshInterval(checkBox) {
@@ -395,9 +437,13 @@ function setAutoRefreshInterval(checkBox) {
   }, REFRESH_INTERVAL_MS);
 }
 
-window.addEventListener("DOMContentLoaded", function() {
+// We use the pageshow event instead of onload. This is needed because sometimes
+// the page is loaded via session-restore/bfcache. In such cases we need to call
+// init() to keep the page behaviour consistent with the ticked checkboxes.
+// Mostly the issue is with the autorefresh checkbox.
+window.addEventListener("pageshow", function() {
   init();
-}, {once: true});
+});
 
 function doLookup() {
   let host = document.getElementById("host").value;

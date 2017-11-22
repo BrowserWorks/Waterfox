@@ -245,7 +245,7 @@ private:
    * Locates the root items in the bookmarks folder hierarchy assigning folder
    * ids to the root properties that are exposed through the service interface.
    */
-  nsresult ReadRoots();
+  nsresult EnsureRoots();
 
   nsresult AdjustIndices(int64_t aFolder,
                          int32_t aStartIndex,
@@ -318,6 +318,14 @@ private:
 
   nsMaybeWeakPtrArray<nsINavBookmarkObserver> mObservers;
 
+  int64_t TagsRootId() {
+    nsresult rv = EnsureRoots();
+    NS_ENSURE_SUCCESS(rv, -1);
+    return mTagsRoot;
+  }
+
+  // These are lazy loaded, so never access them directly, always use the
+  // XPIDL getters or TagsRootId().
   int64_t mRoot;
   int64_t mMenuRoot;
   int64_t mTagsRoot;

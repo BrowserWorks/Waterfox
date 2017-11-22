@@ -63,7 +63,7 @@ ${helpers.single_keyword("list-style-position", "outside inside", animation_valu
             pub fn from_gecko_keyword(value: u32) -> Self {
                 use gecko_bindings::structs;
                 SpecifiedValue::CounterStyle(if value == structs::NS_STYLE_LIST_STYLE_NONE {
-                    CounterStyleOrNone::None_
+                    CounterStyleOrNone::None
                 } else {
                     <%
                         values = """disc circle square decimal lower-roman
@@ -94,13 +94,13 @@ ${helpers.single_keyword("list-style-position", "outside inside", animation_valu
             Ok(if let Ok(style) = input.try(|i| CounterStyleOrNone::parse(context, i)) {
                 SpecifiedValue::CounterStyle(style)
             } else {
-                SpecifiedValue::String(input.expect_string()?.into_owned())
+                SpecifiedValue::String(input.expect_string()?.as_ref().to_owned())
             })
         }
     </%helpers:longhand>
 % endif
 
-<%helpers:longhand name="list-style-image" animation_value_type="none"
+<%helpers:longhand name="list-style-image" animation_value_type="discrete"
                    boxed="${product == 'gecko'}"
                    spec="https://drafts.csswg.org/css-lists/#propdef-list-style-image">
     use values::computed::ComputedValueAsSpecified;
@@ -142,9 +142,9 @@ ${helpers.single_keyword("list-style-position", "outside inside", animation_valu
     }
 </%helpers:longhand>
 
-<%helpers:longhand name="quotes" animation_value_type="none"
+<%helpers:longhand name="quotes" animation_value_type="discrete"
                    spec="https://drafts.csswg.org/css-content/#propdef-quotes">
-    use std::borrow::Cow;
+    use cssparser::serialize_string;
     use std::fmt;
     use style_traits::ToCss;
     use values::computed::ComputedValueAsSpecified;
@@ -169,12 +169,12 @@ ${helpers.single_keyword("list-style-position", "outside inside", animation_valu
             let mut first = true;
             for pair in &self.0 {
                 if !first {
-                    try!(dest.write_str(" "));
+                    dest.write_str(" ")?;
                 }
                 first = false;
-                try!(Token::QuotedString(Cow::from(&*pair.0)).to_css(dest));
-                try!(dest.write_str(" "));
-                try!(Token::QuotedString(Cow::from(&*pair.1)).to_css(dest));
+                serialize_string(&*pair.0, dest)?;
+                dest.write_str(" ")?;
+                serialize_string(&*pair.1, dest)?;
             }
             Ok(())
         }
@@ -197,13 +197,13 @@ ${helpers.single_keyword("list-style-position", "outside inside", animation_valu
         let mut quotes = Vec::new();
         loop {
             let first = match input.next() {
-                Ok(Token::QuotedString(value)) => value.into_owned(),
-                Ok(t) => return Err(BasicParseError::UnexpectedToken(t).into()),
+                Ok(&Token::QuotedString(ref value)) => value.as_ref().to_owned(),
+                Ok(t) => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
                 Err(_) => break,
             };
             let second = match input.next() {
-                Ok(Token::QuotedString(value)) => value.into_owned(),
-                Ok(t) => return Err(BasicParseError::UnexpectedToken(t).into()),
+                Ok(&Token::QuotedString(ref value)) => value.as_ref().to_owned(),
+                Ok(t) => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
                 Err(e) => return Err(e.into()),
             };
             quotes.push((first, second))

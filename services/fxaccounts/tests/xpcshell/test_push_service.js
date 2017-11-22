@@ -47,22 +47,22 @@ let mockLog = {
 };
 
 
-add_task(function* initialize() {
+add_task(async function initialize() {
   let pushService = new FxAccountsPushService();
   equal(pushService.initialize(), false);
 });
 
-add_task(function* registerPushEndpointSuccess() {
+add_task(async function registerPushEndpointSuccess() {
   let pushService = new FxAccountsPushService({
     pushService: mockPushService,
     fxAccounts: mockFxAccounts,
   });
 
-  let subscription = yield pushService.registerPushEndpoint();
+  let subscription = await pushService.registerPushEndpoint();
   equal(subscription.endpoint, MOCK_ENDPOINT);
 });
 
-add_task(function* registerPushEndpointFailure() {
+add_task(async function registerPushEndpointFailure() {
   let failPushService = Object.assign(mockPushService, {
     subscribe(scope, principal, cb) {
       cb(Components.results.NS_ERROR_ABORT);
@@ -74,21 +74,21 @@ add_task(function* registerPushEndpointFailure() {
     fxAccounts: mockFxAccounts,
   });
 
-  let subscription = yield pushService.registerPushEndpoint();
+  let subscription = await pushService.registerPushEndpoint();
   equal(subscription, null);
 });
 
-add_task(function* unsubscribeSuccess() {
+add_task(async function unsubscribeSuccess() {
   let pushService = new FxAccountsPushService({
     pushService: mockPushService,
     fxAccounts: mockFxAccounts,
   });
 
-  let result = yield pushService.unsubscribe();
+  let result = await pushService.unsubscribe();
   equal(result, true);
 });
 
-add_task(function* unsubscribeFailure() {
+add_task(async function unsubscribeFailure() {
   let failPushService = Object.assign(mockPushService, {
     unsubscribe(scope, principal, cb) {
       cb(Components.results.NS_ERROR_ABORT);
@@ -100,7 +100,7 @@ add_task(function* unsubscribeFailure() {
     fxAccounts: mockFxAccounts,
   });
 
-  let result = yield pushService.unsubscribe();
+  let result = await pushService.unsubscribe();
   equal(result, null);
 });
 
@@ -171,7 +171,7 @@ add_test(function observePushTopicDeviceConnected() {
   pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
 });
 
-add_test(function observePushTopicDeviceDisconnected() {
+add_task(async function observePushTopicDeviceDisconnected_current_device() {
   const deviceId = "bogusid";
   let msg = {
     data: {
@@ -186,19 +186,69 @@ add_test(function observePushTopicDeviceDisconnected() {
       return this;
     }
   };
-  let customAccounts = Object.assign(mockFxAccounts, {
-    handleDeviceDisconnection() {
-      // checking verification status on push messages without data
-      run_next_test();
-    }
+
+  let { FxAccounts } = Cu.import("resource://gre/modules/FxAccounts.jsm", {});
+  const fxAccountsMock = new FxAccounts({});
+  fxAccountsMock.internal.currentAccountState.getUserAccountData = async () => {
+    return { deviceId };
+  };
+
+  const deviceDisconnectedNotificationObserved = new Promise(resolve => {
+    Services.obs.addObserver(function obs(subject, topic, data) {
+      Services.obs.removeObserver(obs, topic);
+      equal(data, JSON.stringify({ isLocalDevice: true }));
+      resolve();
+    }, ON_DEVICE_DISCONNECTED_NOTIFICATION);
   });
 
   let pushService = new FxAccountsPushService({
     pushService: mockPushService,
-    fxAccounts: customAccounts,
+    fxAccounts: fxAccountsMock,
   });
 
   pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
+
+  await deviceDisconnectedNotificationObserved;
+});
+
+add_task(async function observePushTopicDeviceDisconnected_another_device() {
+  const deviceId = "bogusid";
+  let msg = {
+    data: {
+      json: () => ({
+        command: ON_DEVICE_DISCONNECTED_NOTIFICATION,
+        data: {
+          id: deviceId
+        }
+      })
+    },
+    QueryInterface() {
+      return this;
+    }
+  };
+
+  let { FxAccounts } = Cu.import("resource://gre/modules/FxAccounts.jsm", {});
+  const fxAccountsMock = new FxAccounts({});
+  fxAccountsMock.internal.currentAccountState.getUserAccountData = async () => {
+    return { deviceId: "thelocaldevice" };
+  };
+
+  const deviceDisconnectedNotificationObserved = new Promise(resolve => {
+    Services.obs.addObserver(function obs(subject, topic, data) {
+      Services.obs.removeObserver(obs, topic);
+      equal(data, JSON.stringify({ isLocalDevice: false }));
+      resolve();
+    }, ON_DEVICE_DISCONNECTED_NOTIFICATION);
+  });
+
+  let pushService = new FxAccountsPushService({
+    pushService: mockPushService,
+    fxAccounts: fxAccountsMock,
+  });
+
+  pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
+
+  await deviceDisconnectedNotificationObserved;
 });
 
 add_test(function observePushTopicAccountDestroyed() {
@@ -226,6 +276,40 @@ add_test(function observePushTopicAccountDestroyed() {
   let pushService = new FxAccountsPushService({
     pushService: mockPushService,
     fxAccounts: customAccounts,
+  });
+
+  pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);
+});
+
+add_test(function observePushTopicVerifyLogin() {
+  let url = "http://localhost/newLogin";
+  let title = "bogustitle";
+  let body = "bogusbody";
+  let msg = {
+    data: {
+      json: () => ({
+        command: ON_VERIFY_LOGIN_NOTIFICATION,
+        data: {
+          body,
+          title,
+          url
+        }
+      })
+    },
+    QueryInterface() {
+      return this;
+    }
+  };
+  let obs = (subject, topic, data) => {
+    Services.obs.removeObserver(obs, topic);
+    Assert.equal(data, JSON.stringify(msg.data.json().data));
+    run_next_test();
+  };
+  Services.obs.addObserver(obs, ON_VERIFY_LOGIN_NOTIFICATION);
+
+  let pushService = new FxAccountsPushService({
+    pushService: mockPushService,
+    fxAccounts: mockFxAccounts,
   });
 
   pushService.observe(msg, mockPushService.pushTopic, FXA_PUSH_SCOPE_ACCOUNT_UPDATE);

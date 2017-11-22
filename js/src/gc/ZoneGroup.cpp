@@ -11,6 +11,8 @@
 #include "jit/IonBuilder.h"
 #include "jit/JitCompartment.h"
 
+using namespace js;
+
 namespace js {
 
 ZoneGroup::ZoneGroup(JSRuntime* runtime)
@@ -130,4 +132,43 @@ ZoneGroup::ionLazyLinkListAdd(jit::IonBuilder* builder)
     ionLazyLinkListSize_++;
 }
 
+void
+ZoneGroup::deleteEmptyZone(Zone* zone)
+{
+    MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtime));
+    MOZ_ASSERT(zone->group() == this);
+    MOZ_ASSERT(zone->compartments().empty());
+    for (auto& i : zones()) {
+        if (i == zone) {
+            zones().erase(&i);
+            zone->destroy(runtime->defaultFreeOp());
+            return;
+        }
+    }
+    MOZ_CRASH("Zone not found");
+}
+
 } // namespace js
+
+JS::AutoRelinquishZoneGroups::AutoRelinquishZoneGroups(JSContext* cx)
+  : cx(cx)
+{
+    MOZ_ASSERT(cx == TlsContext.get());
+
+    AutoEnterOOMUnsafeRegion oomUnsafe;
+    for (ZoneGroupsIter group(cx->runtime()); !group.done(); group.next()) {
+        while (group->ownerContext().context() == cx) {
+            group->leave();
+            if (!enterList.append(group))
+                oomUnsafe.crash("AutoRelinquishZoneGroups");
+        }
+    }
+}
+
+JS::AutoRelinquishZoneGroups::~AutoRelinquishZoneGroups()
+{
+    for (size_t i = 0; i < enterList.length(); i++) {
+        ZoneGroup* group = static_cast<ZoneGroup*>(enterList[i]);
+        group->enter(cx);
+    }
+}

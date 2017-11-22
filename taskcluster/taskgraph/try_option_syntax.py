@@ -62,7 +62,6 @@ UNITTEST_ALIASES = {
     'crashtest': alias_prefix('crashtest'),
     'crashtest-e10s': alias_prefix('crashtest-e10s'),
     'e10s': alias_contains('e10s'),
-    'external-media-tests': alias_prefix('external-media-tests'),
     'firefox-ui-functional': alias_prefix('firefox-ui-functional'),
     'firefox-ui-functional-e10s': alias_prefix('firefox-ui-functional-e10s'),
     'gaia-js-integration': alias_contains('gaia-js-integration'),
@@ -101,6 +100,7 @@ UNITTEST_ALIASES = {
     'reftests': alias_matches(r'^(plain-)?reftest.*$'),
     'reftests-e10s': alias_matches(r'^(plain-)?reftest-e10s.*$'),
     'reftest-stylo': alias_matches(r'^(plain-)?reftest-stylo.*$'),
+    'reftest-gpu': alias_matches(r'^(plain-)?reftest-gpu.*$'),
     'robocop': alias_prefix('robocop'),
     'web-platform-test': alias_prefix('web-platform-tests'),
     'web-platform-tests': alias_prefix('web-platform-tests'),
@@ -119,7 +119,7 @@ UNITTEST_ALIASES = {
 UNITTEST_PLATFORM_PRETTY_NAMES = {
     'Ubuntu': ['linux32', 'linux64', 'linux64-asan'],
     'x64': ['linux64', 'linux64-asan'],
-    'Android 4.3': ['android-4.3-arm7-api-15'],
+    'Android 4.3': ['android-4.3-arm7-api-16'],
     '10.10': ['macosx64'],
     # other commonly-used substrings for platforms not yet supported with
     # in-tree taskgraphs:
@@ -127,9 +127,10 @@ UNITTEST_PLATFORM_PRETTY_NAMES = {
     # '10.6': [..TODO..],
     # '10.8': [..TODO..],
     # 'Android 2.3 API9': [..TODO..],
-    # 'Windows 7':  [..TODO..],
-    # 'Windows 7 VM': [..TODO..],
-    # 'Windows 8':  [..TODO..],
+    'Windows 7':  ['windows7-32'],
+    'Windows 7 VM':  ['windows7-32-vm'],
+    'Windows 8':  ['windows8-64'],
+    'Windows 10':  ['windows10-64'],
     # 'Windows XP': [..TODO..],
     # 'win32': [..TODO..],
     # 'win64': [..TODO..],
@@ -140,8 +141,8 @@ UNITTEST_PLATFORM_PRETTY_NAMES = {
 # as different "platforms".  These do *not* automatically ride along with "-p
 # all"
 RIDEALONG_BUILDS = {
-    'android-api-15': [
-        'android-api-15-l10n',
+    'android-api-16': [
+        'android-api-16-l10n',
     ],
     'linux': [
         'linux-l10n',
@@ -548,8 +549,8 @@ class TryOptionSyntax(object):
                     rv.add(a[len(prefix):])
         return sorted(rv)
 
-    def task_matches(self, attributes):
-        attr = attributes.get
+    def task_matches(self, task):
+        attr = task.attributes.get
 
         def check_run_on_projects():
             if attr('nightly') and not self.include_nightly:
@@ -557,6 +558,7 @@ class TryOptionSyntax(object):
             return set(['try', 'all']) & set(attr('run_on_projects', []))
 
         def match_test(try_spec, attr_name):
+            run_by_default = True
             if attr('build_type') not in self.build_types:
                 return False
             if self.platforms is not None:
@@ -564,22 +566,25 @@ class TryOptionSyntax(object):
                     return False
             else:
                 if not check_run_on_projects():
-                    return False
+                    run_by_default = False
             if try_spec is None:
-                return True
+                return run_by_default
             # TODO: optimize this search a bit
             for test in try_spec:
                 if attr(attr_name) == test['test']:
                     break
             else:
                 return False
-            if 'platforms' in test:
-                platform = attributes.get('test_platform', '').split('/')[0]
-                if platform not in test['platforms']:
-                    return False
             if 'only_chunks' in test and attr('test_chunk') not in test['only_chunks']:
                 return False
-            return True
+            if 'platforms' in test:
+                platform = attr('test_platform', '').split('/')[0]
+                # Platforms can be forced by syntax like "-u xpcshell[Windows 8]"
+                return platform in test['platforms']
+            elif run_by_default:
+                return check_run_on_projects()
+            else:
+                return False
 
         job_try_name = attr('job_try_name')
         if job_try_name:
@@ -587,6 +592,12 @@ class TryOptionSyntax(object):
             # They will be [] if there was no try syntax, and None if try syntax was detected but
             # they remained unspecified.
             if self.jobs and job_try_name not in self.jobs:
+                return False
+            elif not self.jobs and 'build' in task.dependencies:
+                # We exclude tasks with build dependencies from the default set of jobs because
+                # they will schedule their builds even if they end up optimized away. This means
+                # to run these tasks on try, they'll need to be explicitly specified by -j until
+                # we find a better solution (see bug 1372510).
                 return False
             elif not self.jobs and attr('build_platform'):
                 if self.platforms is None or attr('build_platform') in self.platforms:

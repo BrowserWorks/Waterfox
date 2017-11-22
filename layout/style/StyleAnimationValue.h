@@ -8,6 +8,7 @@
 #ifndef mozilla_StyleAnimationValue_h_
 #define mozilla_StyleAnimationValue_h_
 
+#include "gfxPoint.h"
 #include "mozilla/gfx/MatrixFwd.h"
 #include "mozilla/ServoBindingTypes.h"
 #include "mozilla/UniquePtr.h"
@@ -25,6 +26,8 @@ class nsStyleContext;
 class gfx3DMatrix;
 
 namespace mozilla {
+
+class GeckoStyleContext;
 
 namespace css {
 class StyleRule;
@@ -107,7 +110,7 @@ public:
   ComputeDistance(nsCSSPropertyID aProperty,
                   const StyleAnimationValue& aStartValue,
                   const StyleAnimationValue& aEndValue,
-                  nsStyleContext* aStyleContext,
+                  GeckoStyleContext* aStyleContext,
                   double& aDistance);
 
   /**
@@ -203,7 +206,7 @@ public:
   static MOZ_MUST_USE bool
   ComputeValue(nsCSSPropertyID aProperty,
                mozilla::dom::Element* aTargetElement,
-               nsStyleContext* aStyleContext,
+               mozilla::GeckoStyleContext* aStyleContext,
                const nsAString& aSpecifiedValue,
                bool aUseSVGMode,
                StyleAnimationValue& aComputedValue,
@@ -223,7 +226,7 @@ public:
   ComputeValues(nsCSSPropertyID aProperty,
                 mozilla::CSSEnabledState aEnabledState,
                 mozilla::dom::Element* aTargetElement,
-                nsStyleContext* aStyleContext,
+                mozilla::GeckoStyleContext* aStyleContext,
                 const nsAString& aSpecifiedValue,
                 bool aUseSVGMode,
                 nsTArray<PropertyStyleAnimationValuePair>& aResult);
@@ -236,7 +239,7 @@ public:
   ComputeValues(nsCSSPropertyID aProperty,
                 mozilla::CSSEnabledState aEnabledState,
                 mozilla::dom::Element* aTargetElement,
-                nsStyleContext* aStyleContext,
+                mozilla::GeckoStyleContext* aStyleContext,
                 const nsCSSValue& aSpecifiedValue,
                 bool aUseSVGMode,
                 nsTArray<PropertyStyleAnimationValuePair>& aResult);
@@ -287,7 +290,7 @@ public:
    */
   static MOZ_MUST_USE bool ExtractComputedValue(
     nsCSSPropertyID aProperty,
-    nsStyleContext* aStyleContext,
+    mozilla::GeckoStyleContext* aStyleContext,
     StyleAnimationValue& aComputedValue);
 
   static already_AddRefed<nsCSSValue::Array>

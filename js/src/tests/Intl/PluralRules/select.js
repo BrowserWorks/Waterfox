@@ -1,7 +1,4 @@
 // |reftest| skip-if(!this.hasOwnProperty('Intl')||!this.hasOwnProperty('addIntlExtras'))
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Tests the format function with a diverse set of locales and options.
 
@@ -46,6 +43,12 @@ assertEq(pr.select(1.1), "one");
 
 pr = new Intl.PluralRules("pl", {type: "cardinal", maximumFractionDigits: 1});
 assertEq(pr.select(1.1), "other");
+
+pr = new Intl.PluralRules("en", {type: "cardinal", minimumFractionDigits: 0});
+assertEq(pr.select(1), "one");
+
+pr = new Intl.PluralRules("en", {type: "cardinal", minimumFractionDigits: 2});
+assertEq(pr.select(1), "other");
 
 var weirdCases = [
   NaN,

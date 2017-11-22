@@ -4,26 +4,30 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <stdint.h>
-#include <algorithm>
-#include "nsIStringBundle.h"
-#include "nsDebug.h"
-#include "nsString.h"
+#include "CubebUtils.h"
+
+#include "MediaInfo.h"
+#include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Telemetry.h"
-#include "mozilla/Logging.h"
-#include "nsThreadUtils.h"
-#include "CubebUtils.h"
 #include "nsAutoRef.h"
+#include "nsDebug.h"
+#include "nsIStringBundle.h"
+#include "nsString.h"
+#include "nsThreadUtils.h"
 #include "prdtoa.h"
+#include <algorithm>
+#include <stdint.h>
 
 #define PREF_VOLUME_SCALE "media.volume_scale"
 #define PREF_CUBEB_BACKEND "media.cubeb.backend"
 #define PREF_CUBEB_LATENCY_PLAYBACK "media.cubeb_latency_playback_ms"
 #define PREF_CUBEB_LATENCY_MSG "media.cubeb_latency_msg_frames"
-#define PREF_CUBEB_LOG_LEVEL "media.cubeb.log_level"
+#define PREF_CUBEB_LOGGING_LEVEL "media.cubeb.logging_level"
 
 #define MASK_MONO       (1 << AudioConfig::CHANNEL_MONO)
 #define MASK_MONO_LFE   (MASK_MONO | (1 << AudioConfig::CHANNEL_LFE))
@@ -100,6 +104,33 @@ const int CUBEB_BACKEND_INIT_FAILURE_OTHER = CUBEB_BACKEND_INIT_FAILURE_FIRST + 
 /* Index for an unknown backend. */
 const int CUBEB_BACKEND_UNKNOWN = CUBEB_BACKEND_INIT_FAILURE_FIRST + 2;
 
+typedef struct {
+  const char* name;
+  const unsigned int channels;
+  const uint32_t mask;
+} layoutInfo;
+
+const layoutInfo kLayoutInfos[CUBEB_LAYOUT_MAX] = {
+  { "undefined",      0, 0 },               // CUBEB_LAYOUT_UNDEFINED
+  { "dual mono",      2, MASK_STEREO },     // CUBEB_LAYOUT_DUAL_MONO
+  { "dual mono lfe",  3, MASK_STEREO_LFE }, // CUBEB_LAYOUT_DUAL_MONO_LFE
+  { "mono",           1, MASK_MONO },       // CUBEB_LAYOUT_MONO
+  { "mono lfe",       2, MASK_MONO_LFE },   // CUBEB_LAYOUT_MONO_LFE
+  { "stereo",         2, MASK_STEREO },     // CUBEB_LAYOUT_STEREO
+  { "stereo lfe",     3, MASK_STEREO_LFE }, // CUBEB_LAYOUT_STEREO_LFE
+  { "3f",             3, MASK_3F },         // CUBEB_LAYOUT_3F
+  { "3f lfe",         4, MASK_3F_LFE },     // CUBEB_LAYOUT_3F_LFE
+  { "2f1",            3, MASK_2F1 },        // CUBEB_LAYOUT_2F1
+  { "2f1 lfe",        4, MASK_2F1_LFE },    // CUBEB_LAYOUT_2F1_LFE
+  { "3f1",            4, MASK_3F1 },        // CUBEB_LAYOUT_3F1
+  { "3f1 lfe",        5, MASK_3F1_LFE },    // CUBEB_LAYOUT_3F1_LFE
+  { "2f2",            4, MASK_2F2_LFE },    // CUBEB_LAYOUT_2F2
+  { "2f2 lfe",        5, MASK_2F2_LFE },    // CUBEB_LAYOUT_2F2_LFE
+  { "3f2",            5, MASK_3F2 },        // CUBEB_LAYOUT_3F2
+  { "3f2 lfe",        6, MASK_3F2_LFE },    // CUBEB_LAYOUT_3F2_LFE
+  { "3f3r lfe",       7, MASK_3F3R_LFE },   // CUBEB_LAYOUT_3F3R_LFE
+  { "3f4 lfe",        8, MASK_3F4_LFE }     // CUBEB_LAYOUT_3F4_LFE
+};
 
 // Prefered samplerate, in Hz (characteristic of the hardware, mixer, platform,
 // and API used).
@@ -131,13 +162,13 @@ namespace CubebUtils {
 void PrefChanged(const char* aPref, void* aClosure)
 {
   if (strcmp(aPref, PREF_VOLUME_SCALE) == 0) {
-    nsAdoptingString value = Preferences::GetString(aPref);
+    nsAutoCString value;
+    Preferences::GetCString(aPref, value);
     StaticMutexAutoLock lock(sMutex);
     if (value.IsEmpty()) {
       sVolumeScale = 1.0;
     } else {
-      NS_ConvertUTF16toUTF8 utf8(value);
-      sVolumeScale = std::max<double>(0, PR_strtod(utf8.get(), nullptr));
+      sVolumeScale = std::max<double>(0, PR_strtod(value.get(), nullptr));
     }
   } else if (strcmp(aPref, PREF_CUBEB_LATENCY_PLAYBACK) == 0) {
     // Arbitrary default stream latency of 100ms.  The higher this
@@ -156,29 +187,29 @@ void PrefChanged(const char* aPref, void* aClosure)
     // We don't want to limit the upper limit too much, so that people can
     // experiment.
     sCubebMSGLatencyInFrames = std::min<uint32_t>(std::max<uint32_t>(value, 128), 1e6);
-  } else if (strcmp(aPref, PREF_CUBEB_LOG_LEVEL) == 0) {
-    nsAdoptingString value = Preferences::GetString(aPref);
-    NS_ConvertUTF16toUTF8 utf8(value);
+  } else if (strcmp(aPref, PREF_CUBEB_LOGGING_LEVEL) == 0) {
+    nsAutoCString value;
+    Preferences::GetCString(aPref, value);
     LogModule* cubebLog = LogModule::Get("cubeb");
-    if (strcmp(utf8.get(), "verbose") == 0) {
+    if (value.EqualsLiteral("verbose")) {
       cubeb_set_log_callback(CUBEB_LOG_VERBOSE, CubebLogCallback);
       cubebLog->SetLevel(LogLevel::Verbose);
-    } else if (strcmp(utf8.get(), "normal") == 0) {
+    } else if (value.EqualsLiteral("normal")) {
       cubeb_set_log_callback(CUBEB_LOG_NORMAL, CubebLogCallback);
       cubebLog->SetLevel(LogLevel::Error);
-    } else if (utf8.IsEmpty()) {
+    } else if (value.IsEmpty()) {
       cubeb_set_log_callback(CUBEB_LOG_DISABLED, nullptr);
       cubebLog->SetLevel(LogLevel::Disabled);
     }
   } else if (strcmp(aPref, PREF_CUBEB_BACKEND) == 0) {
-    nsAdoptingString value = Preferences::GetString(aPref);
+    nsAutoCString value;
+    Preferences::GetCString(aPref, value);
     if (value.IsEmpty()) {
       sCubebBackendName = nullptr;
     } else {
-      NS_LossyConvertUTF16toASCII ascii(value);
-      sCubebBackendName = new char[ascii.Length() + 1];
-      PodCopy(sCubebBackendName.get(), ascii.get(), ascii.Length());
-      sCubebBackendName[ascii.Length()] = 0;
+      sCubebBackendName = new char[value.Length() + 1];
+      PodCopy(sCubebBackendName.get(), value.get(), value.Length());
+      sCubebBackendName[value.Length()] = 0;
     }
   }
 }
@@ -260,42 +291,15 @@ bool InitPreferredChannelLayout()
 
 uint32_t PreferredChannelMap(uint32_t aChannels)
 {
-  // The first element of the following mapping table is channel counts,
-  // and the second one is its bit mask. It will be used in many times,
-  // so we shoule avoid to allocate it in stack, or it will be created
-  // and removed repeatedly. Use static to allocate this local variable
-  // in data space instead of stack.
-  static uint32_t layoutInfo[CUBEB_LAYOUT_MAX][2] = {
-    { 0, 0 },               // CUBEB_LAYOUT_UNDEFINED
-    { 2, MASK_STEREO },     // CUBEB_LAYOUT_DUAL_MONO
-    { 3, MASK_STEREO_LFE }, // CUBEB_LAYOUT_DUAL_MONO_LFE
-    { 1, MASK_MONO },       // CUBEB_LAYOUT_MONO
-    { 2, MASK_MONO_LFE },   // CUBEB_LAYOUT_MONO_LFE
-    { 2, MASK_STEREO },     // CUBEB_LAYOUT_STEREO
-    { 3, MASK_STEREO_LFE }, // CUBEB_LAYOUT_STEREO_LFE
-    { 3, MASK_3F },         // CUBEB_LAYOUT_3F
-    { 4, MASK_3F_LFE },     // CUBEB_LAYOUT_3F_LFE
-    { 3, MASK_2F1 },        // CUBEB_LAYOUT_2F1
-    { 4, MASK_2F1_LFE },    // CUBEB_LAYOUT_2F1_LFE
-    { 4, MASK_3F1 },        // CUBEB_LAYOUT_3F1
-    { 5, MASK_3F1_LFE },    // CUBEB_LAYOUT_3F1_LFE
-    { 4, MASK_2F2 },        // CUBEB_LAYOUT_2F2
-    { 5, MASK_2F2_LFE },    // CUBEB_LAYOUT_2F2_LFE
-    { 5, MASK_3F2 },        // CUBEB_LAYOUT_3F2
-    { 6, MASK_3F2_LFE },    // CUBEB_LAYOUT_3F2_LFE
-    { 7, MASK_3F3R_LFE },   // CUBEB_LAYOUT_3F3R_LFE
-    { 8, MASK_3F4_LFE },    // CUBEB_LAYOUT_3F4_LFE
-  };
-
   // Use SMPTE default channel map if we can't get preferred layout
   // or the channel counts of preferred layout is different from input's one
   if (!InitPreferredChannelLayout()
-      || layoutInfo[sPreferredChannelLayout][0] != aChannels) {
+      || kLayoutInfos[sPreferredChannelLayout].channels != aChannels) {
     AudioConfig::ChannelLayout smpteLayout(aChannels);
     return smpteLayout.Map();
   }
 
-  return layoutInfo[sPreferredChannelLayout][1];
+  return kLayoutInfos[sPreferredChannelLayout].mask;
 }
 
 void InitBrandName()
@@ -311,7 +315,7 @@ void InitBrandName()
     nsresult rv = stringBundleService->CreateBundle(kBrandBundleURL,
                                            getter_AddRefs(brandBundle));
     if (NS_SUCCEEDED(rv)) {
-      rv = brandBundle->GetStringFromName(u"brandShortName",
+      rv = brandBundle->GetStringFromName("brandShortName",
                                           getter_Copies(brandName));
       NS_WARNING_ASSERTION(
         NS_SUCCEEDED(rv), "Could not get the program name for a cubeb stream.");
@@ -419,9 +423,14 @@ void InitLibrary()
   Preferences::RegisterCallbackAndCall(PrefChanged, PREF_CUBEB_LATENCY_PLAYBACK);
   Preferences::RegisterCallbackAndCall(PrefChanged, PREF_CUBEB_LATENCY_MSG);
   Preferences::RegisterCallbackAndCall(PrefChanged, PREF_CUBEB_BACKEND);
-  Preferences::RegisterCallbackAndCall(PrefChanged, PREF_CUBEB_LOG_LEVEL);
+  // We don't want to call the callback on startup, because the pref is the
+  // empty string by default ("", which means "logging disabled"). Because the
+  // logging can be enabled via environment variables (MOZ_LOG="module:5"),
+  // calling this callback on init would immediately re-disble the logging.
+  Preferences::RegisterCallback(PrefChanged, PREF_CUBEB_LOGGING_LEVEL);
 #ifndef MOZ_WIDGET_ANDROID
-  NS_DispatchToMainThread(NS_NewRunnableFunction(&InitBrandName));
+  AbstractThread::MainThread()->Dispatch(
+    NS_NewRunnableFunction("CubebUtils::InitLibrary", &InitBrandName));
 #endif
 }
 
@@ -431,7 +440,7 @@ void ShutdownLibrary()
   Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_BACKEND);
   Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_LATENCY_PLAYBACK);
   Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_LATENCY_MSG);
-  Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_LOG_LEVEL);
+  Preferences::UnregisterCallback(PrefChanged, PREF_CUBEB_LOGGING_LEVEL);
 
   StaticMutexAutoLock lock(sMutex);
   if (sCubebContext) {
@@ -520,6 +529,106 @@ void GetCurrentBackend(nsAString& aBackend)
     }
   }
   aBackend.AssignLiteral("unknown");
+}
+
+void GetPreferredChannelLayout(nsAString& aLayout)
+{
+  const char* layout = InitPreferredChannelLayout() ?
+    kLayoutInfos[sPreferredChannelLayout].name : "unknown";
+  aLayout.AssignASCII(layout);
+}
+
+uint16_t ConvertCubebType(cubeb_device_type aType)
+{
+  uint16_t map[] = {
+    nsIAudioDeviceInfo::TYPE_UNKNOWN, // CUBEB_DEVICE_TYPE_UNKNOWN
+    nsIAudioDeviceInfo::TYPE_INPUT,   // CUBEB_DEVICE_TYPE_INPUT,
+    nsIAudioDeviceInfo::TYPE_OUTPUT   // CUBEB_DEVICE_TYPE_OUTPUT
+  };
+  return map[aType];
+}
+
+uint16_t ConvertCubebState(cubeb_device_state aState)
+{
+  uint16_t map[] = {
+    nsIAudioDeviceInfo::STATE_DISABLED,   // CUBEB_DEVICE_STATE_DISABLED
+    nsIAudioDeviceInfo::STATE_UNPLUGGED,  // CUBEB_DEVICE_STATE_UNPLUGGED
+    nsIAudioDeviceInfo::STATE_ENABLED     // CUBEB_DEVICE_STATE_ENABLED
+  };
+  return map[aState];
+}
+
+uint16_t ConvertCubebPreferred(cubeb_device_pref aPreferred)
+{
+  if (aPreferred == CUBEB_DEVICE_PREF_NONE) {
+    return nsIAudioDeviceInfo::PREF_NONE;
+  } else if (aPreferred == CUBEB_DEVICE_PREF_ALL) {
+    return nsIAudioDeviceInfo::PREF_ALL;
+  }
+
+  uint16_t preferred = 0;
+  if (aPreferred & CUBEB_DEVICE_PREF_MULTIMEDIA) {
+    preferred |= nsIAudioDeviceInfo::PREF_MULTIMEDIA;
+  }
+  if (aPreferred & CUBEB_DEVICE_PREF_VOICE) {
+    preferred |= nsIAudioDeviceInfo::PREF_VOICE;
+  }
+  if (aPreferred & CUBEB_DEVICE_PREF_NOTIFICATION) {
+    preferred |= nsIAudioDeviceInfo::PREF_NOTIFICATION;
+  }
+  return preferred;
+}
+
+uint16_t ConvertCubebFormat(cubeb_device_fmt aFormat)
+{
+  uint16_t format = 0;
+  if (aFormat & CUBEB_DEVICE_FMT_S16LE) {
+    format |= nsIAudioDeviceInfo::FMT_S16LE;
+  }
+  if (aFormat & CUBEB_DEVICE_FMT_S16BE) {
+    format |= nsIAudioDeviceInfo::FMT_S16BE;
+  }
+  if (aFormat & CUBEB_DEVICE_FMT_F32LE) {
+    format |= nsIAudioDeviceInfo::FMT_F32LE;
+  }
+  if (aFormat & CUBEB_DEVICE_FMT_F32BE) {
+    format |= nsIAudioDeviceInfo::FMT_F32BE;
+  }
+  return format;
+}
+
+void GetDeviceCollection(nsTArray<RefPtr<AudioDeviceInfo>>& aDeviceInfos,
+                         Side aSide)
+{
+  cubeb* context = GetCubebContext();
+  if (context) {
+    cubeb_device_collection collection = { nullptr, 0 };
+    if (cubeb_enumerate_devices(context,
+                                aSide == Input ? CUBEB_DEVICE_TYPE_INPUT :
+                                                 CUBEB_DEVICE_TYPE_OUTPUT,
+                                &collection) == CUBEB_OK) {
+      for (unsigned int i = 0; i < collection.count; ++i) {
+        auto device = collection.device[i];
+        RefPtr<AudioDeviceInfo> info =
+          new AudioDeviceInfo(NS_ConvertUTF8toUTF16(device.friendly_name),
+                              NS_ConvertUTF8toUTF16(device.group_id),
+                              NS_ConvertUTF8toUTF16(device.vendor_name),
+                              ConvertCubebType(device.type),
+                              ConvertCubebState(device.state),
+                              ConvertCubebPreferred(device.preferred),
+                              ConvertCubebFormat(device.format),
+                              ConvertCubebFormat(device.default_format),
+                              device.max_channels,
+                              device.default_rate,
+                              device.max_rate,
+                              device.min_rate,
+                              device.latency_hi,
+                              device.latency_lo);
+        aDeviceInfos.AppendElement(info);
+      }
+    }
+    cubeb_device_collection_destroy(context, &collection);
+  }
 }
 
 } // namespace CubebUtils

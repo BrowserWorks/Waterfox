@@ -29,7 +29,8 @@ public:
 
 private:
   ~nsWebRequestListener() {
-    NS_ReleaseOnMainThreadSystemGroup(mTargetStreamListener.forget());
+    NS_ReleaseOnMainThreadSystemGroup("nsWebRequestListener::mTargetStreamListener",
+                                      mTargetStreamListener.forget());
   }
   nsCOMPtr<nsIStreamListener> mOrigStreamListener;
   nsCOMPtr<nsIStreamListener> mTargetStreamListener;

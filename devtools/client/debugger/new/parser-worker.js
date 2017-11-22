@@ -10260,20 +10260,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // Attach comments that follow a trailing comma on the last
 	  // property in an object literal or a trailing comma in function arguments
 	  // as trailing comments
-	  if (firstChild && (firstChild.type === "ObjectProperty" || node.type === "CallExpression") && this.state.leadingComments.length > 0) {
+	  if (firstChild && this.state.leadingComments.length > 0) {
 	    var lastComment = last(this.state.leadingComments);
-	    if (lastComment.start >= node.start) {
-	      if (this.state.commentPreviousNode) {
-	        for (j = 0; j < this.state.leadingComments.length; j++) {
-	          if (this.state.leadingComments[j].end < this.state.commentPreviousNode.end) {
-	            this.state.leadingComments.splice(j, 1);
-	            j--;
+
+	    if (firstChild.type === "ObjectProperty") {
+	      if (lastComment.start >= node.start) {
+	        if (this.state.commentPreviousNode) {
+	          for (j = 0; j < this.state.leadingComments.length; j++) {
+	            if (this.state.leadingComments[j].end < this.state.commentPreviousNode.end) {
+	              this.state.leadingComments.splice(j, 1);
+	              j--;
+	            }
+	          }
+
+	          if (this.state.leadingComments.length > 0) {
+	            firstChild.trailingComments = this.state.leadingComments;
+	            this.state.leadingComments = [];
 	          }
 	        }
+	      }
+	    } else if (node.type === "CallExpression" && node.arguments && node.arguments.length) {
+	      var lastArg = last(node.arguments);
 
-	        if (this.state.leadingComments.length > 0) {
-	          firstChild.trailingComments = this.state.leadingComments;
-	          this.state.leadingComments = [];
+	      if (lastArg && lastComment.start >= lastArg.start && lastComment.end <= node.end) {
+	        if (this.state.commentPreviousNode) {
+	          if (this.state.leadingComments.length > 0) {
+	            lastArg.trailingComments = this.state.leadingComments;
+	            this.state.leadingComments = [];
+	          }
 	        }
 	      }
 	    }
@@ -10527,16 +10541,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	  });
 
-	  instance.extend("parseClassMethod", function (inner) {
-	    return function (classBody) {
-	      for (var _len3 = arguments.length, args = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
-	        args[_key3 - 1] = arguments[_key3];
+	  instance.extend("parseClassMethod", function () {
+	    return function (classBody, method, isGenerator, isAsync) {
+	      this.parseMethod(method, isGenerator, isAsync);
+	      if (method.typeParameters) {
+	        method.value.typeParameters = method.typeParameters;
+	        delete method.typeParameters;
 	      }
-
-	      inner.call.apply(inner, [this, classBody].concat(args));
-
-	      var body = classBody.body;
-	      body[body.length - 1].type = "MethodDefinition";
+	      classBody.body.push(this.finishNode(method, "MethodDefinition"));
 	    };
 	  });
 
@@ -10560,8 +10572,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return this.estreeParseLiteral(false);
 
 	        default:
-	          for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-	            args[_key4] = arguments[_key4];
+	          for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+	            args[_key3] = arguments[_key3];
 	          }
 
 	          return inner.call.apply(inner, [this].concat(args));
@@ -10571,8 +10583,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  instance.extend("parseLiteral", function (inner) {
 	    return function () {
-	      for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-	        args[_key5] = arguments[_key5];
+	      for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+	        args[_key4] = arguments[_key4];
 	      }
 
 	      var node = inner.call.apply(inner, [this].concat(args));
@@ -10588,8 +10600,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var funcNode = this.startNode();
 	      funcNode.kind = node.kind; // provide kind, so inner method correctly sets state
 
-	      for (var _len6 = arguments.length, args = Array(_len6 > 1 ? _len6 - 1 : 0), _key6 = 1; _key6 < _len6; _key6++) {
-	        args[_key6 - 1] = arguments[_key6];
+	      for (var _len5 = arguments.length, args = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+	        args[_key5 - 1] = arguments[_key5];
 	      }
 
 	      funcNode = inner.call.apply(inner, [this, funcNode].concat(args));
@@ -10602,8 +10614,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  instance.extend("parseObjectMethod", function (inner) {
 	    return function () {
-	      for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-	        args[_key7] = arguments[_key7];
+	      for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+	        args[_key6] = arguments[_key6];
 	      }
 
 	      var node = inner.call.apply(inner, [this].concat(args));
@@ -10619,8 +10631,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  instance.extend("parseObjectProperty", function (inner) {
 	    return function () {
-	      for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-	        args[_key8] = arguments[_key8];
+	      for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+	        args[_key7] = arguments[_key7];
 	      }
 
 	      var node = inner.call.apply(inner, [this].concat(args));
@@ -10636,8 +10648,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  instance.extend("toAssignable", function (inner) {
 	    return function (node, isBinding) {
-	      for (var _len9 = arguments.length, args = Array(_len9 > 2 ? _len9 - 2 : 0), _key9 = 2; _key9 < _len9; _key9++) {
-	        args[_key9 - 2] = arguments[_key9];
+	      for (var _len8 = arguments.length, args = Array(_len8 > 2 ? _len8 - 2 : 0), _key8 = 2; _key8 < _len8; _key8++) {
+	        args[_key8 - 2] = arguments[_key8];
 	      }
 
 	      if (isSimpleProperty(node)) {
@@ -23796,1300 +23808,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 617 */
 /***/ function(module, exports) {
 
-	module.exports = {
-		"builtin": {
-			"Array": false,
-			"ArrayBuffer": false,
-			"Boolean": false,
-			"constructor": false,
-			"DataView": false,
-			"Date": false,
-			"decodeURI": false,
-			"decodeURIComponent": false,
-			"encodeURI": false,
-			"encodeURIComponent": false,
-			"Error": false,
-			"escape": false,
-			"eval": false,
-			"EvalError": false,
-			"Float32Array": false,
-			"Float64Array": false,
-			"Function": false,
-			"hasOwnProperty": false,
-			"Infinity": false,
-			"Int16Array": false,
-			"Int32Array": false,
-			"Int8Array": false,
-			"isFinite": false,
-			"isNaN": false,
-			"isPrototypeOf": false,
-			"JSON": false,
-			"Map": false,
-			"Math": false,
-			"NaN": false,
-			"Number": false,
-			"Object": false,
-			"parseFloat": false,
-			"parseInt": false,
-			"Promise": false,
-			"propertyIsEnumerable": false,
-			"Proxy": false,
-			"RangeError": false,
-			"ReferenceError": false,
-			"Reflect": false,
-			"RegExp": false,
-			"Set": false,
-			"String": false,
-			"Symbol": false,
-			"SyntaxError": false,
-			"System": false,
-			"toLocaleString": false,
-			"toString": false,
-			"TypeError": false,
-			"Uint16Array": false,
-			"Uint32Array": false,
-			"Uint8Array": false,
-			"Uint8ClampedArray": false,
-			"undefined": false,
-			"unescape": false,
-			"URIError": false,
-			"valueOf": false,
-			"WeakMap": false,
-			"WeakSet": false
-		},
-		"es5": {
-			"Array": false,
-			"Boolean": false,
-			"constructor": false,
-			"Date": false,
-			"decodeURI": false,
-			"decodeURIComponent": false,
-			"encodeURI": false,
-			"encodeURIComponent": false,
-			"Error": false,
-			"escape": false,
-			"eval": false,
-			"EvalError": false,
-			"Function": false,
-			"hasOwnProperty": false,
-			"Infinity": false,
-			"isFinite": false,
-			"isNaN": false,
-			"isPrototypeOf": false,
-			"JSON": false,
-			"Math": false,
-			"NaN": false,
-			"Number": false,
-			"Object": false,
-			"parseFloat": false,
-			"parseInt": false,
-			"propertyIsEnumerable": false,
-			"RangeError": false,
-			"ReferenceError": false,
-			"RegExp": false,
-			"String": false,
-			"SyntaxError": false,
-			"toLocaleString": false,
-			"toString": false,
-			"TypeError": false,
-			"undefined": false,
-			"unescape": false,
-			"URIError": false,
-			"valueOf": false
-		},
-		"es6": {
-			"Array": false,
-			"ArrayBuffer": false,
-			"Boolean": false,
-			"constructor": false,
-			"DataView": false,
-			"Date": false,
-			"decodeURI": false,
-			"decodeURIComponent": false,
-			"encodeURI": false,
-			"encodeURIComponent": false,
-			"Error": false,
-			"escape": false,
-			"eval": false,
-			"EvalError": false,
-			"Float32Array": false,
-			"Float64Array": false,
-			"Function": false,
-			"hasOwnProperty": false,
-			"Infinity": false,
-			"Int16Array": false,
-			"Int32Array": false,
-			"Int8Array": false,
-			"isFinite": false,
-			"isNaN": false,
-			"isPrototypeOf": false,
-			"JSON": false,
-			"Map": false,
-			"Math": false,
-			"NaN": false,
-			"Number": false,
-			"Object": false,
-			"parseFloat": false,
-			"parseInt": false,
-			"Promise": false,
-			"propertyIsEnumerable": false,
-			"Proxy": false,
-			"RangeError": false,
-			"ReferenceError": false,
-			"Reflect": false,
-			"RegExp": false,
-			"Set": false,
-			"String": false,
-			"Symbol": false,
-			"SyntaxError": false,
-			"System": false,
-			"toLocaleString": false,
-			"toString": false,
-			"TypeError": false,
-			"Uint16Array": false,
-			"Uint32Array": false,
-			"Uint8Array": false,
-			"Uint8ClampedArray": false,
-			"undefined": false,
-			"unescape": false,
-			"URIError": false,
-			"valueOf": false,
-			"WeakMap": false,
-			"WeakSet": false
-		},
-		"browser": {
-			"addEventListener": false,
-			"alert": false,
-			"AnalyserNode": false,
-			"Animation": false,
-			"AnimationEffectReadOnly": false,
-			"AnimationEffectTiming": false,
-			"AnimationEffectTimingReadOnly": false,
-			"AnimationEvent": false,
-			"AnimationPlaybackEvent": false,
-			"AnimationTimeline": false,
-			"applicationCache": false,
-			"ApplicationCache": false,
-			"ApplicationCacheErrorEvent": false,
-			"atob": false,
-			"Attr": false,
-			"Audio": false,
-			"AudioBuffer": false,
-			"AudioBufferSourceNode": false,
-			"AudioContext": false,
-			"AudioDestinationNode": false,
-			"AudioListener": false,
-			"AudioNode": false,
-			"AudioParam": false,
-			"AudioProcessingEvent": false,
-			"AutocompleteErrorEvent": false,
-			"BarProp": false,
-			"BatteryManager": false,
-			"BeforeUnloadEvent": false,
-			"BiquadFilterNode": false,
-			"Blob": false,
-			"blur": false,
-			"btoa": false,
-			"Cache": false,
-			"caches": false,
-			"CacheStorage": false,
-			"cancelAnimationFrame": false,
-			"cancelIdleCallback": false,
-			"CanvasGradient": false,
-			"CanvasPattern": false,
-			"CanvasRenderingContext2D": false,
-			"CDATASection": false,
-			"ChannelMergerNode": false,
-			"ChannelSplitterNode": false,
-			"CharacterData": false,
-			"clearInterval": false,
-			"clearTimeout": false,
-			"clientInformation": false,
-			"ClientRect": false,
-			"ClientRectList": false,
-			"ClipboardEvent": false,
-			"close": false,
-			"closed": false,
-			"CloseEvent": false,
-			"Comment": false,
-			"CompositionEvent": false,
-			"confirm": false,
-			"console": false,
-			"ConvolverNode": false,
-			"createImageBitmap": false,
-			"Credential": false,
-			"CredentialsContainer": false,
-			"crypto": false,
-			"Crypto": false,
-			"CryptoKey": false,
-			"CSS": false,
-			"CSSAnimation": false,
-			"CSSFontFaceRule": false,
-			"CSSImportRule": false,
-			"CSSKeyframeRule": false,
-			"CSSKeyframesRule": false,
-			"CSSMediaRule": false,
-			"CSSPageRule": false,
-			"CSSRule": false,
-			"CSSRuleList": false,
-			"CSSStyleDeclaration": false,
-			"CSSStyleRule": false,
-			"CSSStyleSheet": false,
-			"CSSSupportsRule": false,
-			"CSSTransition": false,
-			"CSSUnknownRule": false,
-			"CSSViewportRule": false,
-			"customElements": false,
-			"CustomEvent": false,
-			"DataTransfer": false,
-			"DataTransferItem": false,
-			"DataTransferItemList": false,
-			"Debug": false,
-			"defaultStatus": false,
-			"defaultstatus": false,
-			"DelayNode": false,
-			"DeviceMotionEvent": false,
-			"DeviceOrientationEvent": false,
-			"devicePixelRatio": false,
-			"dispatchEvent": false,
-			"document": false,
-			"Document": false,
-			"DocumentFragment": false,
-			"DocumentTimeline": false,
-			"DocumentType": false,
-			"DOMError": false,
-			"DOMException": false,
-			"DOMImplementation": false,
-			"DOMParser": false,
-			"DOMSettableTokenList": false,
-			"DOMStringList": false,
-			"DOMStringMap": false,
-			"DOMTokenList": false,
-			"DragEvent": false,
-			"DynamicsCompressorNode": false,
-			"Element": false,
-			"ElementTimeControl": false,
-			"ErrorEvent": false,
-			"event": false,
-			"Event": false,
-			"EventSource": false,
-			"EventTarget": false,
-			"external": false,
-			"FederatedCredential": false,
-			"fetch": false,
-			"File": false,
-			"FileError": false,
-			"FileList": false,
-			"FileReader": false,
-			"find": false,
-			"focus": false,
-			"FocusEvent": false,
-			"FontFace": false,
-			"FormData": false,
-			"frameElement": false,
-			"frames": false,
-			"GainNode": false,
-			"Gamepad": false,
-			"GamepadButton": false,
-			"GamepadEvent": false,
-			"getComputedStyle": false,
-			"getSelection": false,
-			"HashChangeEvent": false,
-			"Headers": false,
-			"history": false,
-			"History": false,
-			"HTMLAllCollection": false,
-			"HTMLAnchorElement": false,
-			"HTMLAppletElement": false,
-			"HTMLAreaElement": false,
-			"HTMLAudioElement": false,
-			"HTMLBaseElement": false,
-			"HTMLBlockquoteElement": false,
-			"HTMLBodyElement": false,
-			"HTMLBRElement": false,
-			"HTMLButtonElement": false,
-			"HTMLCanvasElement": false,
-			"HTMLCollection": false,
-			"HTMLContentElement": false,
-			"HTMLDataListElement": false,
-			"HTMLDetailsElement": false,
-			"HTMLDialogElement": false,
-			"HTMLDirectoryElement": false,
-			"HTMLDivElement": false,
-			"HTMLDListElement": false,
-			"HTMLDocument": false,
-			"HTMLElement": false,
-			"HTMLEmbedElement": false,
-			"HTMLFieldSetElement": false,
-			"HTMLFontElement": false,
-			"HTMLFormControlsCollection": false,
-			"HTMLFormElement": false,
-			"HTMLFrameElement": false,
-			"HTMLFrameSetElement": false,
-			"HTMLHeadElement": false,
-			"HTMLHeadingElement": false,
-			"HTMLHRElement": false,
-			"HTMLHtmlElement": false,
-			"HTMLIFrameElement": false,
-			"HTMLImageElement": false,
-			"HTMLInputElement": false,
-			"HTMLIsIndexElement": false,
-			"HTMLKeygenElement": false,
-			"HTMLLabelElement": false,
-			"HTMLLayerElement": false,
-			"HTMLLegendElement": false,
-			"HTMLLIElement": false,
-			"HTMLLinkElement": false,
-			"HTMLMapElement": false,
-			"HTMLMarqueeElement": false,
-			"HTMLMediaElement": false,
-			"HTMLMenuElement": false,
-			"HTMLMetaElement": false,
-			"HTMLMeterElement": false,
-			"HTMLModElement": false,
-			"HTMLObjectElement": false,
-			"HTMLOListElement": false,
-			"HTMLOptGroupElement": false,
-			"HTMLOptionElement": false,
-			"HTMLOptionsCollection": false,
-			"HTMLOutputElement": false,
-			"HTMLParagraphElement": false,
-			"HTMLParamElement": false,
-			"HTMLPictureElement": false,
-			"HTMLPreElement": false,
-			"HTMLProgressElement": false,
-			"HTMLQuoteElement": false,
-			"HTMLScriptElement": false,
-			"HTMLSelectElement": false,
-			"HTMLShadowElement": false,
-			"HTMLSourceElement": false,
-			"HTMLSpanElement": false,
-			"HTMLStyleElement": false,
-			"HTMLTableCaptionElement": false,
-			"HTMLTableCellElement": false,
-			"HTMLTableColElement": false,
-			"HTMLTableElement": false,
-			"HTMLTableRowElement": false,
-			"HTMLTableSectionElement": false,
-			"HTMLTemplateElement": false,
-			"HTMLTextAreaElement": false,
-			"HTMLTitleElement": false,
-			"HTMLTrackElement": false,
-			"HTMLUListElement": false,
-			"HTMLUnknownElement": false,
-			"HTMLVideoElement": false,
-			"IDBCursor": false,
-			"IDBCursorWithValue": false,
-			"IDBDatabase": false,
-			"IDBEnvironment": false,
-			"IDBFactory": false,
-			"IDBIndex": false,
-			"IDBKeyRange": false,
-			"IDBObjectStore": false,
-			"IDBOpenDBRequest": false,
-			"IDBRequest": false,
-			"IDBTransaction": false,
-			"IDBVersionChangeEvent": false,
-			"Image": false,
-			"ImageBitmap": false,
-			"ImageData": false,
-			"indexedDB": false,
-			"innerHeight": false,
-			"innerWidth": false,
-			"InputEvent": false,
-			"InputMethodContext": false,
-			"IntersectionObserver": false,
-			"IntersectionObserverEntry": false,
-			"Intl": false,
-			"KeyboardEvent": false,
-			"KeyframeEffect": false,
-			"KeyframeEffectReadOnly": false,
-			"length": false,
-			"localStorage": false,
-			"location": false,
-			"Location": false,
-			"locationbar": false,
-			"matchMedia": false,
-			"MediaElementAudioSourceNode": false,
-			"MediaEncryptedEvent": false,
-			"MediaError": false,
-			"MediaKeyError": false,
-			"MediaKeyEvent": false,
-			"MediaKeyMessageEvent": false,
-			"MediaKeys": false,
-			"MediaKeySession": false,
-			"MediaKeyStatusMap": false,
-			"MediaKeySystemAccess": false,
-			"MediaList": false,
-			"MediaQueryList": false,
-			"MediaQueryListEvent": false,
-			"MediaSource": false,
-			"MediaRecorder": false,
-			"MediaStream": false,
-			"MediaStreamAudioDestinationNode": false,
-			"MediaStreamAudioSourceNode": false,
-			"MediaStreamEvent": false,
-			"MediaStreamTrack": false,
-			"menubar": false,
-			"MessageChannel": false,
-			"MessageEvent": false,
-			"MessagePort": false,
-			"MIDIAccess": false,
-			"MIDIConnectionEvent": false,
-			"MIDIInput": false,
-			"MIDIInputMap": false,
-			"MIDIMessageEvent": false,
-			"MIDIOutput": false,
-			"MIDIOutputMap": false,
-			"MIDIPort": false,
-			"MimeType": false,
-			"MimeTypeArray": false,
-			"MouseEvent": false,
-			"moveBy": false,
-			"moveTo": false,
-			"MutationEvent": false,
-			"MutationObserver": false,
-			"MutationRecord": false,
-			"name": false,
-			"NamedNodeMap": false,
-			"navigator": false,
-			"Navigator": false,
-			"Node": false,
-			"NodeFilter": false,
-			"NodeIterator": false,
-			"NodeList": false,
-			"Notification": false,
-			"OfflineAudioCompletionEvent": false,
-			"OfflineAudioContext": false,
-			"offscreenBuffering": false,
-			"onbeforeunload": true,
-			"onblur": true,
-			"onerror": true,
-			"onfocus": true,
-			"onload": true,
-			"onresize": true,
-			"onunload": true,
-			"open": false,
-			"openDatabase": false,
-			"opener": false,
-			"opera": false,
-			"Option": false,
-			"OscillatorNode": false,
-			"outerHeight": false,
-			"outerWidth": false,
-			"PageTransitionEvent": false,
-			"pageXOffset": false,
-			"pageYOffset": false,
-			"parent": false,
-			"PasswordCredential": false,
-			"Path2D": false,
-			"performance": false,
-			"Performance": false,
-			"PerformanceEntry": false,
-			"PerformanceMark": false,
-			"PerformanceMeasure": false,
-			"PerformanceNavigation": false,
-			"PerformanceResourceTiming": false,
-			"PerformanceTiming": false,
-			"PeriodicWave": false,
-			"Permissions": false,
-			"PermissionStatus": false,
-			"personalbar": false,
-			"Plugin": false,
-			"PluginArray": false,
-			"PopStateEvent": false,
-			"postMessage": false,
-			"print": false,
-			"ProcessingInstruction": false,
-			"ProgressEvent": false,
-			"PromiseRejectionEvent": false,
-			"prompt": false,
-			"PushManager": false,
-			"PushSubscription": false,
-			"RadioNodeList": false,
-			"Range": false,
-			"ReadableByteStream": false,
-			"ReadableStream": false,
-			"removeEventListener": false,
-			"Request": false,
-			"requestAnimationFrame": false,
-			"requestIdleCallback": false,
-			"resizeBy": false,
-			"resizeTo": false,
-			"Response": false,
-			"RTCIceCandidate": false,
-			"RTCSessionDescription": false,
-			"RTCPeerConnection": false,
-			"screen": false,
-			"Screen": false,
-			"screenLeft": false,
-			"ScreenOrientation": false,
-			"screenTop": false,
-			"screenX": false,
-			"screenY": false,
-			"ScriptProcessorNode": false,
-			"scroll": false,
-			"scrollbars": false,
-			"scrollBy": false,
-			"scrollTo": false,
-			"scrollX": false,
-			"scrollY": false,
-			"SecurityPolicyViolationEvent": false,
-			"Selection": false,
-			"self": false,
-			"ServiceWorker": false,
-			"ServiceWorkerContainer": false,
-			"ServiceWorkerRegistration": false,
-			"sessionStorage": false,
-			"setInterval": false,
-			"setTimeout": false,
-			"ShadowRoot": false,
-			"SharedKeyframeList": false,
-			"SharedWorker": false,
-			"showModalDialog": false,
-			"SiteBoundCredential": false,
-			"speechSynthesis": false,
-			"SpeechSynthesisEvent": false,
-			"SpeechSynthesisUtterance": false,
-			"status": false,
-			"statusbar": false,
-			"stop": false,
-			"Storage": false,
-			"StorageEvent": false,
-			"styleMedia": false,
-			"StyleSheet": false,
-			"StyleSheetList": false,
-			"SubtleCrypto": false,
-			"SVGAElement": false,
-			"SVGAltGlyphDefElement": false,
-			"SVGAltGlyphElement": false,
-			"SVGAltGlyphItemElement": false,
-			"SVGAngle": false,
-			"SVGAnimateColorElement": false,
-			"SVGAnimatedAngle": false,
-			"SVGAnimatedBoolean": false,
-			"SVGAnimatedEnumeration": false,
-			"SVGAnimatedInteger": false,
-			"SVGAnimatedLength": false,
-			"SVGAnimatedLengthList": false,
-			"SVGAnimatedNumber": false,
-			"SVGAnimatedNumberList": false,
-			"SVGAnimatedPathData": false,
-			"SVGAnimatedPoints": false,
-			"SVGAnimatedPreserveAspectRatio": false,
-			"SVGAnimatedRect": false,
-			"SVGAnimatedString": false,
-			"SVGAnimatedTransformList": false,
-			"SVGAnimateElement": false,
-			"SVGAnimateMotionElement": false,
-			"SVGAnimateTransformElement": false,
-			"SVGAnimationElement": false,
-			"SVGCircleElement": false,
-			"SVGClipPathElement": false,
-			"SVGColor": false,
-			"SVGColorProfileElement": false,
-			"SVGColorProfileRule": false,
-			"SVGComponentTransferFunctionElement": false,
-			"SVGCSSRule": false,
-			"SVGCursorElement": false,
-			"SVGDefsElement": false,
-			"SVGDescElement": false,
-			"SVGDiscardElement": false,
-			"SVGDocument": false,
-			"SVGElement": false,
-			"SVGElementInstance": false,
-			"SVGElementInstanceList": false,
-			"SVGEllipseElement": false,
-			"SVGEvent": false,
-			"SVGExternalResourcesRequired": false,
-			"SVGFEBlendElement": false,
-			"SVGFEColorMatrixElement": false,
-			"SVGFEComponentTransferElement": false,
-			"SVGFECompositeElement": false,
-			"SVGFEConvolveMatrixElement": false,
-			"SVGFEDiffuseLightingElement": false,
-			"SVGFEDisplacementMapElement": false,
-			"SVGFEDistantLightElement": false,
-			"SVGFEDropShadowElement": false,
-			"SVGFEFloodElement": false,
-			"SVGFEFuncAElement": false,
-			"SVGFEFuncBElement": false,
-			"SVGFEFuncGElement": false,
-			"SVGFEFuncRElement": false,
-			"SVGFEGaussianBlurElement": false,
-			"SVGFEImageElement": false,
-			"SVGFEMergeElement": false,
-			"SVGFEMergeNodeElement": false,
-			"SVGFEMorphologyElement": false,
-			"SVGFEOffsetElement": false,
-			"SVGFEPointLightElement": false,
-			"SVGFESpecularLightingElement": false,
-			"SVGFESpotLightElement": false,
-			"SVGFETileElement": false,
-			"SVGFETurbulenceElement": false,
-			"SVGFilterElement": false,
-			"SVGFilterPrimitiveStandardAttributes": false,
-			"SVGFitToViewBox": false,
-			"SVGFontElement": false,
-			"SVGFontFaceElement": false,
-			"SVGFontFaceFormatElement": false,
-			"SVGFontFaceNameElement": false,
-			"SVGFontFaceSrcElement": false,
-			"SVGFontFaceUriElement": false,
-			"SVGForeignObjectElement": false,
-			"SVGGElement": false,
-			"SVGGeometryElement": false,
-			"SVGGlyphElement": false,
-			"SVGGlyphRefElement": false,
-			"SVGGradientElement": false,
-			"SVGGraphicsElement": false,
-			"SVGHKernElement": false,
-			"SVGICCColor": false,
-			"SVGImageElement": false,
-			"SVGLangSpace": false,
-			"SVGLength": false,
-			"SVGLengthList": false,
-			"SVGLinearGradientElement": false,
-			"SVGLineElement": false,
-			"SVGLocatable": false,
-			"SVGMarkerElement": false,
-			"SVGMaskElement": false,
-			"SVGMatrix": false,
-			"SVGMetadataElement": false,
-			"SVGMissingGlyphElement": false,
-			"SVGMPathElement": false,
-			"SVGNumber": false,
-			"SVGNumberList": false,
-			"SVGPaint": false,
-			"SVGPathElement": false,
-			"SVGPathSeg": false,
-			"SVGPathSegArcAbs": false,
-			"SVGPathSegArcRel": false,
-			"SVGPathSegClosePath": false,
-			"SVGPathSegCurvetoCubicAbs": false,
-			"SVGPathSegCurvetoCubicRel": false,
-			"SVGPathSegCurvetoCubicSmoothAbs": false,
-			"SVGPathSegCurvetoCubicSmoothRel": false,
-			"SVGPathSegCurvetoQuadraticAbs": false,
-			"SVGPathSegCurvetoQuadraticRel": false,
-			"SVGPathSegCurvetoQuadraticSmoothAbs": false,
-			"SVGPathSegCurvetoQuadraticSmoothRel": false,
-			"SVGPathSegLinetoAbs": false,
-			"SVGPathSegLinetoHorizontalAbs": false,
-			"SVGPathSegLinetoHorizontalRel": false,
-			"SVGPathSegLinetoRel": false,
-			"SVGPathSegLinetoVerticalAbs": false,
-			"SVGPathSegLinetoVerticalRel": false,
-			"SVGPathSegList": false,
-			"SVGPathSegMovetoAbs": false,
-			"SVGPathSegMovetoRel": false,
-			"SVGPatternElement": false,
-			"SVGPoint": false,
-			"SVGPointList": false,
-			"SVGPolygonElement": false,
-			"SVGPolylineElement": false,
-			"SVGPreserveAspectRatio": false,
-			"SVGRadialGradientElement": false,
-			"SVGRect": false,
-			"SVGRectElement": false,
-			"SVGRenderingIntent": false,
-			"SVGScriptElement": false,
-			"SVGSetElement": false,
-			"SVGStopElement": false,
-			"SVGStringList": false,
-			"SVGStylable": false,
-			"SVGStyleElement": false,
-			"SVGSVGElement": false,
-			"SVGSwitchElement": false,
-			"SVGSymbolElement": false,
-			"SVGTests": false,
-			"SVGTextContentElement": false,
-			"SVGTextElement": false,
-			"SVGTextPathElement": false,
-			"SVGTextPositioningElement": false,
-			"SVGTitleElement": false,
-			"SVGTransform": false,
-			"SVGTransformable": false,
-			"SVGTransformList": false,
-			"SVGTRefElement": false,
-			"SVGTSpanElement": false,
-			"SVGUnitTypes": false,
-			"SVGURIReference": false,
-			"SVGUseElement": false,
-			"SVGViewElement": false,
-			"SVGViewSpec": false,
-			"SVGVKernElement": false,
-			"SVGZoomAndPan": false,
-			"SVGZoomEvent": false,
-			"Text": false,
-			"TextDecoder": false,
-			"TextEncoder": false,
-			"TextEvent": false,
-			"TextMetrics": false,
-			"TextTrack": false,
-			"TextTrackCue": false,
-			"TextTrackCueList": false,
-			"TextTrackList": false,
-			"TimeEvent": false,
-			"TimeRanges": false,
-			"toolbar": false,
-			"top": false,
-			"Touch": false,
-			"TouchEvent": false,
-			"TouchList": false,
-			"TrackEvent": false,
-			"TransitionEvent": false,
-			"TreeWalker": false,
-			"UIEvent": false,
-			"URL": false,
-			"URLSearchParams": false,
-			"ValidityState": false,
-			"VTTCue": false,
-			"WaveShaperNode": false,
-			"WebGLActiveInfo": false,
-			"WebGLBuffer": false,
-			"WebGLContextEvent": false,
-			"WebGLFramebuffer": false,
-			"WebGLProgram": false,
-			"WebGLRenderbuffer": false,
-			"WebGLRenderingContext": false,
-			"WebGLShader": false,
-			"WebGLShaderPrecisionFormat": false,
-			"WebGLTexture": false,
-			"WebGLUniformLocation": false,
-			"WebSocket": false,
-			"WheelEvent": false,
-			"window": false,
-			"Window": false,
-			"Worker": false,
-			"XDomainRequest": false,
-			"XMLDocument": false,
-			"XMLHttpRequest": false,
-			"XMLHttpRequestEventTarget": false,
-			"XMLHttpRequestProgressEvent": false,
-			"XMLHttpRequestUpload": false,
-			"XMLSerializer": false,
-			"XPathEvaluator": false,
-			"XPathException": false,
-			"XPathExpression": false,
-			"XPathNamespace": false,
-			"XPathNSResolver": false,
-			"XPathResult": false,
-			"XSLTProcessor": false
-		},
-		"worker": {
-			"applicationCache": false,
-			"atob": false,
-			"Blob": false,
-			"BroadcastChannel": false,
-			"btoa": false,
-			"Cache": false,
-			"caches": false,
-			"clearInterval": false,
-			"clearTimeout": false,
-			"close": true,
-			"console": false,
-			"fetch": false,
-			"FileReaderSync": false,
-			"FormData": false,
-			"Headers": false,
-			"IDBCursor": false,
-			"IDBCursorWithValue": false,
-			"IDBDatabase": false,
-			"IDBFactory": false,
-			"IDBIndex": false,
-			"IDBKeyRange": false,
-			"IDBObjectStore": false,
-			"IDBOpenDBRequest": false,
-			"IDBRequest": false,
-			"IDBTransaction": false,
-			"IDBVersionChangeEvent": false,
-			"ImageData": false,
-			"importScripts": true,
-			"indexedDB": false,
-			"location": false,
-			"MessageChannel": false,
-			"MessagePort": false,
-			"name": false,
-			"navigator": false,
-			"Notification": false,
-			"onclose": true,
-			"onconnect": true,
-			"onerror": true,
-			"onlanguagechange": true,
-			"onmessage": true,
-			"onoffline": true,
-			"ononline": true,
-			"onrejectionhandled": true,
-			"onunhandledrejection": true,
-			"performance": false,
-			"Performance": false,
-			"PerformanceEntry": false,
-			"PerformanceMark": false,
-			"PerformanceMeasure": false,
-			"PerformanceNavigation": false,
-			"PerformanceResourceTiming": false,
-			"PerformanceTiming": false,
-			"postMessage": true,
-			"Promise": false,
-			"Request": false,
-			"Response": false,
-			"self": true,
-			"ServiceWorkerRegistration": false,
-			"setInterval": false,
-			"setTimeout": false,
-			"TextDecoder": false,
-			"TextEncoder": false,
-			"URL": false,
-			"URLSearchParams": false,
-			"WebSocket": false,
-			"Worker": false,
-			"XMLHttpRequest": false
-		},
-		"node": {
-			"__dirname": false,
-			"__filename": false,
-			"arguments": false,
-			"Buffer": false,
-			"clearImmediate": false,
-			"clearInterval": false,
-			"clearTimeout": false,
-			"console": false,
-			"exports": true,
-			"GLOBAL": false,
-			"global": false,
-			"Intl": false,
-			"module": false,
-			"process": false,
-			"require": false,
-			"root": false,
-			"setImmediate": false,
-			"setInterval": false,
-			"setTimeout": false
-		},
-		"commonjs": {
-			"exports": true,
-			"module": false,
-			"require": false,
-			"global": false
-		},
-		"amd": {
-			"define": false,
-			"require": false
-		},
-		"mocha": {
-			"after": false,
-			"afterEach": false,
-			"before": false,
-			"beforeEach": false,
-			"context": false,
-			"describe": false,
-			"it": false,
-			"mocha": false,
-			"run": false,
-			"setup": false,
-			"specify": false,
-			"suite": false,
-			"suiteSetup": false,
-			"suiteTeardown": false,
-			"teardown": false,
-			"test": false,
-			"xcontext": false,
-			"xdescribe": false,
-			"xit": false,
-			"xspecify": false
-		},
-		"jasmine": {
-			"afterAll": false,
-			"afterEach": false,
-			"beforeAll": false,
-			"beforeEach": false,
-			"describe": false,
-			"expect": false,
-			"fail": false,
-			"fdescribe": false,
-			"fit": false,
-			"it": false,
-			"jasmine": false,
-			"pending": false,
-			"runs": false,
-			"spyOn": false,
-			"spyOnProperty": false,
-			"waits": false,
-			"waitsFor": false,
-			"xdescribe": false,
-			"xit": false
-		},
-		"jest": {
-			"afterAll": false,
-			"afterEach": false,
-			"beforeAll": false,
-			"beforeEach": false,
-			"check": false,
-			"describe": false,
-			"expect": false,
-			"gen": false,
-			"it": false,
-			"fdescribe": false,
-			"fit": false,
-			"jest": false,
-			"pit": false,
-			"require": false,
-			"test": false,
-			"xdescribe": false,
-			"xit": false,
-			"xtest": false
-		},
-		"qunit": {
-			"asyncTest": false,
-			"deepEqual": false,
-			"equal": false,
-			"expect": false,
-			"module": false,
-			"notDeepEqual": false,
-			"notEqual": false,
-			"notOk": false,
-			"notPropEqual": false,
-			"notStrictEqual": false,
-			"ok": false,
-			"propEqual": false,
-			"QUnit": false,
-			"raises": false,
-			"start": false,
-			"stop": false,
-			"strictEqual": false,
-			"test": false,
-			"throws": false
-		},
-		"phantomjs": {
-			"console": true,
-			"exports": true,
-			"phantom": true,
-			"require": true,
-			"WebPage": true
-		},
-		"couch": {
-			"emit": false,
-			"exports": false,
-			"getRow": false,
-			"log": false,
-			"module": false,
-			"provides": false,
-			"require": false,
-			"respond": false,
-			"send": false,
-			"start": false,
-			"sum": false
-		},
-		"rhino": {
-			"defineClass": false,
-			"deserialize": false,
-			"gc": false,
-			"help": false,
-			"importClass": false,
-			"importPackage": false,
-			"java": false,
-			"load": false,
-			"loadClass": false,
-			"Packages": false,
-			"print": false,
-			"quit": false,
-			"readFile": false,
-			"readUrl": false,
-			"runCommand": false,
-			"seal": false,
-			"serialize": false,
-			"spawn": false,
-			"sync": false,
-			"toint32": false,
-			"version": false
-		},
-		"nashorn": {
-			"__DIR__": false,
-			"__FILE__": false,
-			"__LINE__": false,
-			"com": false,
-			"edu": false,
-			"exit": false,
-			"Java": false,
-			"java": false,
-			"javafx": false,
-			"JavaImporter": false,
-			"javax": false,
-			"JSAdapter": false,
-			"load": false,
-			"loadWithNewGlobal": false,
-			"org": false,
-			"Packages": false,
-			"print": false,
-			"quit": false
-		},
-		"wsh": {
-			"ActiveXObject": true,
-			"Enumerator": true,
-			"GetObject": true,
-			"ScriptEngine": true,
-			"ScriptEngineBuildVersion": true,
-			"ScriptEngineMajorVersion": true,
-			"ScriptEngineMinorVersion": true,
-			"VBArray": true,
-			"WScript": true,
-			"WSH": true,
-			"XDomainRequest": true
-		},
-		"jquery": {
-			"$": false,
-			"jQuery": false
-		},
-		"yui": {
-			"Y": false,
-			"YUI": false,
-			"YUI_config": false
-		},
-		"shelljs": {
-			"cat": false,
-			"cd": false,
-			"chmod": false,
-			"config": false,
-			"cp": false,
-			"dirs": false,
-			"echo": false,
-			"env": false,
-			"error": false,
-			"exec": false,
-			"exit": false,
-			"find": false,
-			"grep": false,
-			"ls": false,
-			"ln": false,
-			"mkdir": false,
-			"mv": false,
-			"popd": false,
-			"pushd": false,
-			"pwd": false,
-			"rm": false,
-			"sed": false,
-			"set": false,
-			"target": false,
-			"tempdir": false,
-			"test": false,
-			"touch": false,
-			"which": false
-		},
-		"prototypejs": {
-			"$": false,
-			"$$": false,
-			"$A": false,
-			"$break": false,
-			"$continue": false,
-			"$F": false,
-			"$H": false,
-			"$R": false,
-			"$w": false,
-			"Abstract": false,
-			"Ajax": false,
-			"Autocompleter": false,
-			"Builder": false,
-			"Class": false,
-			"Control": false,
-			"Draggable": false,
-			"Draggables": false,
-			"Droppables": false,
-			"Effect": false,
-			"Element": false,
-			"Enumerable": false,
-			"Event": false,
-			"Field": false,
-			"Form": false,
-			"Hash": false,
-			"Insertion": false,
-			"ObjectRange": false,
-			"PeriodicalExecuter": false,
-			"Position": false,
-			"Prototype": false,
-			"Scriptaculous": false,
-			"Selector": false,
-			"Sortable": false,
-			"SortableObserver": false,
-			"Sound": false,
-			"Template": false,
-			"Toggle": false,
-			"Try": false
-		},
-		"meteor": {
-			"$": false,
-			"_": false,
-			"Accounts": false,
-			"AccountsClient": false,
-			"AccountsServer": false,
-			"AccountsCommon": false,
-			"App": false,
-			"Assets": false,
-			"Blaze": false,
-			"check": false,
-			"Cordova": false,
-			"DDP": false,
-			"DDPServer": false,
-			"DDPRateLimiter": false,
-			"Deps": false,
-			"EJSON": false,
-			"Email": false,
-			"HTTP": false,
-			"Log": false,
-			"Match": false,
-			"Meteor": false,
-			"Mongo": false,
-			"MongoInternals": false,
-			"Npm": false,
-			"Package": false,
-			"Plugin": false,
-			"process": false,
-			"Random": false,
-			"ReactiveDict": false,
-			"ReactiveVar": false,
-			"Router": false,
-			"ServiceConfiguration": false,
-			"Session": false,
-			"share": false,
-			"Spacebars": false,
-			"Template": false,
-			"Tinytest": false,
-			"Tracker": false,
-			"UI": false,
-			"Utils": false,
-			"WebApp": false,
-			"WebAppInternals": false
-		},
-		"mongo": {
-			"_isWindows": false,
-			"_rand": false,
-			"BulkWriteResult": false,
-			"cat": false,
-			"cd": false,
-			"connect": false,
-			"db": false,
-			"getHostName": false,
-			"getMemInfo": false,
-			"hostname": false,
-			"ISODate": false,
-			"listFiles": false,
-			"load": false,
-			"ls": false,
-			"md5sumFile": false,
-			"mkdir": false,
-			"Mongo": false,
-			"NumberInt": false,
-			"NumberLong": false,
-			"ObjectId": false,
-			"PlanCache": false,
-			"print": false,
-			"printjson": false,
-			"pwd": false,
-			"quit": false,
-			"removeFile": false,
-			"rs": false,
-			"sh": false,
-			"UUID": false,
-			"version": false,
-			"WriteResult": false
-		},
-		"applescript": {
-			"$": false,
-			"Application": false,
-			"Automation": false,
-			"console": false,
-			"delay": false,
-			"Library": false,
-			"ObjC": false,
-			"ObjectSpecifier": false,
-			"Path": false,
-			"Progress": false,
-			"Ref": false
-		},
-		"serviceworker": {
-			"caches": false,
-			"Cache": false,
-			"CacheStorage": false,
-			"Client": false,
-			"clients": false,
-			"Clients": false,
-			"ExtendableEvent": false,
-			"ExtendableMessageEvent": false,
-			"FetchEvent": false,
-			"importScripts": false,
-			"registration": false,
-			"self": false,
-			"ServiceWorker": false,
-			"ServiceWorkerContainer": false,
-			"ServiceWorkerGlobalScope": false,
-			"ServiceWorkerMessageEvent": false,
-			"ServiceWorkerRegistration": false,
-			"skipWaiting": false,
-			"WindowClient": false
-		},
-		"atomtest": {
-			"advanceClock": false,
-			"fakeClearInterval": false,
-			"fakeClearTimeout": false,
-			"fakeSetInterval": false,
-			"fakeSetTimeout": false,
-			"resetTimeouts": false,
-			"waitsForPromise": false
-		},
-		"embertest": {
-			"andThen": false,
-			"click": false,
-			"currentPath": false,
-			"currentRouteName": false,
-			"currentURL": false,
-			"fillIn": false,
-			"find": false,
-			"findWithAssert": false,
-			"keyEvent": false,
-			"pauseTest": false,
-			"resumeTest": false,
-			"triggerEvent": false,
-			"visit": false
-		},
-		"protractor": {
-			"$": false,
-			"$$": false,
-			"browser": false,
-			"By": false,
-			"by": false,
-			"DartObject": false,
-			"element": false,
-			"protractor": false
-		},
-		"shared-node-browser": {
-			"clearInterval": false,
-			"clearTimeout": false,
-			"console": false,
-			"setInterval": false,
-			"setTimeout": false
-		},
-		"webextensions": {
-			"browser": false,
-			"chrome": false,
-			"opr": false
-		},
-		"greasemonkey": {
-			"GM_addStyle": false,
-			"GM_deleteValue": false,
-			"GM_getResourceText": false,
-			"GM_getResourceURL": false,
-			"GM_getValue": false,
-			"GM_info": false,
-			"GM_listValues": false,
-			"GM_log": false,
-			"GM_openInTab": false,
-			"GM_registerMenuCommand": false,
-			"GM_setClipboard": false,
-			"GM_setValue": false,
-			"GM_xmlhttpRequest": false,
-			"unsafeWindow": false
-		}
-	};
+	module.exports = {"builtin":{"Array":false,"ArrayBuffer":false,"Boolean":false,"constructor":false,"DataView":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"Float32Array":false,"Float64Array":false,"Function":false,"hasOwnProperty":false,"Infinity":false,"Int16Array":false,"Int32Array":false,"Int8Array":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Map":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"Promise":false,"propertyIsEnumerable":false,"Proxy":false,"RangeError":false,"ReferenceError":false,"Reflect":false,"RegExp":false,"Set":false,"String":false,"Symbol":false,"SyntaxError":false,"System":false,"toLocaleString":false,"toString":false,"TypeError":false,"Uint16Array":false,"Uint32Array":false,"Uint8Array":false,"Uint8ClampedArray":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false,"WeakMap":false,"WeakSet":false},"es5":{"Array":false,"Boolean":false,"constructor":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"Function":false,"hasOwnProperty":false,"Infinity":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"propertyIsEnumerable":false,"RangeError":false,"ReferenceError":false,"RegExp":false,"String":false,"SyntaxError":false,"toLocaleString":false,"toString":false,"TypeError":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false},"es6":{"Array":false,"ArrayBuffer":false,"Boolean":false,"constructor":false,"DataView":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"Float32Array":false,"Float64Array":false,"Function":false,"hasOwnProperty":false,"Infinity":false,"Int16Array":false,"Int32Array":false,"Int8Array":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Map":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"Promise":false,"propertyIsEnumerable":false,"Proxy":false,"RangeError":false,"ReferenceError":false,"Reflect":false,"RegExp":false,"Set":false,"String":false,"Symbol":false,"SyntaxError":false,"System":false,"toLocaleString":false,"toString":false,"TypeError":false,"Uint16Array":false,"Uint32Array":false,"Uint8Array":false,"Uint8ClampedArray":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false,"WeakMap":false,"WeakSet":false},"browser":{"addEventListener":false,"alert":false,"AnalyserNode":false,"Animation":false,"AnimationEffectReadOnly":false,"AnimationEffectTiming":false,"AnimationEffectTimingReadOnly":false,"AnimationEvent":false,"AnimationPlaybackEvent":false,"AnimationTimeline":false,"applicationCache":false,"ApplicationCache":false,"ApplicationCacheErrorEvent":false,"atob":false,"Attr":false,"Audio":false,"AudioBuffer":false,"AudioBufferSourceNode":false,"AudioContext":false,"AudioDestinationNode":false,"AudioListener":false,"AudioNode":false,"AudioParam":false,"AudioProcessingEvent":false,"AutocompleteErrorEvent":false,"BarProp":false,"BatteryManager":false,"BeforeUnloadEvent":false,"BiquadFilterNode":false,"Blob":false,"blur":false,"btoa":false,"Cache":false,"caches":false,"CacheStorage":false,"cancelAnimationFrame":false,"cancelIdleCallback":false,"CanvasGradient":false,"CanvasPattern":false,"CanvasRenderingContext2D":false,"CDATASection":false,"ChannelMergerNode":false,"ChannelSplitterNode":false,"CharacterData":false,"clearInterval":false,"clearTimeout":false,"clientInformation":false,"ClientRect":false,"ClientRectList":false,"ClipboardEvent":false,"close":false,"closed":false,"CloseEvent":false,"Comment":false,"CompositionEvent":false,"confirm":false,"console":false,"ConvolverNode":false,"createImageBitmap":false,"Credential":false,"CredentialsContainer":false,"crypto":false,"Crypto":false,"CryptoKey":false,"CSS":false,"CSSAnimation":false,"CSSFontFaceRule":false,"CSSImportRule":false,"CSSKeyframeRule":false,"CSSKeyframesRule":false,"CSSMediaRule":false,"CSSPageRule":false,"CSSRule":false,"CSSRuleList":false,"CSSStyleDeclaration":false,"CSSStyleRule":false,"CSSStyleSheet":false,"CSSSupportsRule":false,"CSSTransition":false,"CSSUnknownRule":false,"CSSViewportRule":false,"customElements":false,"CustomEvent":false,"DataTransfer":false,"DataTransferItem":false,"DataTransferItemList":false,"Debug":false,"defaultStatus":false,"defaultstatus":false,"DelayNode":false,"DeviceMotionEvent":false,"DeviceOrientationEvent":false,"devicePixelRatio":false,"dispatchEvent":false,"document":false,"Document":false,"DocumentFragment":false,"DocumentTimeline":false,"DocumentType":false,"DOMError":false,"DOMException":false,"DOMImplementation":false,"DOMParser":false,"DOMSettableTokenList":false,"DOMStringList":false,"DOMStringMap":false,"DOMTokenList":false,"DragEvent":false,"DynamicsCompressorNode":false,"Element":false,"ElementTimeControl":false,"ErrorEvent":false,"event":false,"Event":false,"EventSource":false,"EventTarget":false,"external":false,"FederatedCredential":false,"fetch":false,"File":false,"FileError":false,"FileList":false,"FileReader":false,"find":false,"focus":false,"FocusEvent":false,"FontFace":false,"FormData":false,"frameElement":false,"frames":false,"GainNode":false,"Gamepad":false,"GamepadButton":false,"GamepadEvent":false,"getComputedStyle":false,"getSelection":false,"HashChangeEvent":false,"Headers":false,"history":false,"History":false,"HTMLAllCollection":false,"HTMLAnchorElement":false,"HTMLAppletElement":false,"HTMLAreaElement":false,"HTMLAudioElement":false,"HTMLBaseElement":false,"HTMLBlockquoteElement":false,"HTMLBodyElement":false,"HTMLBRElement":false,"HTMLButtonElement":false,"HTMLCanvasElement":false,"HTMLCollection":false,"HTMLContentElement":false,"HTMLDataListElement":false,"HTMLDetailsElement":false,"HTMLDialogElement":false,"HTMLDirectoryElement":false,"HTMLDivElement":false,"HTMLDListElement":false,"HTMLDocument":false,"HTMLElement":false,"HTMLEmbedElement":false,"HTMLFieldSetElement":false,"HTMLFontElement":false,"HTMLFormControlsCollection":false,"HTMLFormElement":false,"HTMLFrameElement":false,"HTMLFrameSetElement":false,"HTMLHeadElement":false,"HTMLHeadingElement":false,"HTMLHRElement":false,"HTMLHtmlElement":false,"HTMLIFrameElement":false,"HTMLImageElement":false,"HTMLInputElement":false,"HTMLIsIndexElement":false,"HTMLKeygenElement":false,"HTMLLabelElement":false,"HTMLLayerElement":false,"HTMLLegendElement":false,"HTMLLIElement":false,"HTMLLinkElement":false,"HTMLMapElement":false,"HTMLMarqueeElement":false,"HTMLMediaElement":false,"HTMLMenuElement":false,"HTMLMetaElement":false,"HTMLMeterElement":false,"HTMLModElement":false,"HTMLObjectElement":false,"HTMLOListElement":false,"HTMLOptGroupElement":false,"HTMLOptionElement":false,"HTMLOptionsCollection":false,"HTMLOutputElement":false,"HTMLParagraphElement":false,"HTMLParamElement":false,"HTMLPictureElement":false,"HTMLPreElement":false,"HTMLProgressElement":false,"HTMLQuoteElement":false,"HTMLScriptElement":false,"HTMLSelectElement":false,"HTMLShadowElement":false,"HTMLSourceElement":false,"HTMLSpanElement":false,"HTMLStyleElement":false,"HTMLTableCaptionElement":false,"HTMLTableCellElement":false,"HTMLTableColElement":false,"HTMLTableElement":false,"HTMLTableRowElement":false,"HTMLTableSectionElement":false,"HTMLTemplateElement":false,"HTMLTextAreaElement":false,"HTMLTitleElement":false,"HTMLTrackElement":false,"HTMLUListElement":false,"HTMLUnknownElement":false,"HTMLVideoElement":false,"IDBCursor":false,"IDBCursorWithValue":false,"IDBDatabase":false,"IDBEnvironment":false,"IDBFactory":false,"IDBIndex":false,"IDBKeyRange":false,"IDBObjectStore":false,"IDBOpenDBRequest":false,"IDBRequest":false,"IDBTransaction":false,"IDBVersionChangeEvent":false,"Image":false,"ImageBitmap":false,"ImageData":false,"indexedDB":false,"innerHeight":false,"innerWidth":false,"InputEvent":false,"InputMethodContext":false,"IntersectionObserver":false,"IntersectionObserverEntry":false,"Intl":false,"KeyboardEvent":false,"KeyframeEffect":false,"KeyframeEffectReadOnly":false,"length":false,"localStorage":false,"location":false,"Location":false,"locationbar":false,"matchMedia":false,"MediaElementAudioSourceNode":false,"MediaEncryptedEvent":false,"MediaError":false,"MediaKeyError":false,"MediaKeyEvent":false,"MediaKeyMessageEvent":false,"MediaKeys":false,"MediaKeySession":false,"MediaKeyStatusMap":false,"MediaKeySystemAccess":false,"MediaList":false,"MediaQueryList":false,"MediaQueryListEvent":false,"MediaSource":false,"MediaRecorder":false,"MediaStream":false,"MediaStreamAudioDestinationNode":false,"MediaStreamAudioSourceNode":false,"MediaStreamEvent":false,"MediaStreamTrack":false,"menubar":false,"MessageChannel":false,"MessageEvent":false,"MessagePort":false,"MIDIAccess":false,"MIDIConnectionEvent":false,"MIDIInput":false,"MIDIInputMap":false,"MIDIMessageEvent":false,"MIDIOutput":false,"MIDIOutputMap":false,"MIDIPort":false,"MimeType":false,"MimeTypeArray":false,"MouseEvent":false,"moveBy":false,"moveTo":false,"MutationEvent":false,"MutationObserver":false,"MutationRecord":false,"name":false,"NamedNodeMap":false,"navigator":false,"Navigator":false,"Node":false,"NodeFilter":false,"NodeIterator":false,"NodeList":false,"Notification":false,"OfflineAudioCompletionEvent":false,"OfflineAudioContext":false,"offscreenBuffering":false,"onbeforeunload":true,"onblur":true,"onerror":true,"onfocus":true,"onload":true,"onresize":true,"onunload":true,"open":false,"openDatabase":false,"opener":false,"opera":false,"Option":false,"OscillatorNode":false,"outerHeight":false,"outerWidth":false,"PageTransitionEvent":false,"pageXOffset":false,"pageYOffset":false,"parent":false,"PasswordCredential":false,"Path2D":false,"performance":false,"Performance":false,"PerformanceEntry":false,"PerformanceMark":false,"PerformanceMeasure":false,"PerformanceNavigation":false,"PerformanceResourceTiming":false,"PerformanceTiming":false,"PeriodicWave":false,"Permissions":false,"PermissionStatus":false,"personalbar":false,"Plugin":false,"PluginArray":false,"PopStateEvent":false,"postMessage":false,"print":false,"ProcessingInstruction":false,"ProgressEvent":false,"PromiseRejectionEvent":false,"prompt":false,"PushManager":false,"PushSubscription":false,"RadioNodeList":false,"Range":false,"ReadableByteStream":false,"ReadableStream":false,"removeEventListener":false,"Request":false,"requestAnimationFrame":false,"requestIdleCallback":false,"resizeBy":false,"resizeTo":false,"Response":false,"RTCIceCandidate":false,"RTCSessionDescription":false,"RTCPeerConnection":false,"screen":false,"Screen":false,"screenLeft":false,"ScreenOrientation":false,"screenTop":false,"screenX":false,"screenY":false,"ScriptProcessorNode":false,"scroll":false,"scrollbars":false,"scrollBy":false,"scrollTo":false,"scrollX":false,"scrollY":false,"SecurityPolicyViolationEvent":false,"Selection":false,"self":false,"ServiceWorker":false,"ServiceWorkerContainer":false,"ServiceWorkerRegistration":false,"sessionStorage":false,"setInterval":false,"setTimeout":false,"ShadowRoot":false,"SharedKeyframeList":false,"SharedWorker":false,"showModalDialog":false,"SiteBoundCredential":false,"speechSynthesis":false,"SpeechSynthesisEvent":false,"SpeechSynthesisUtterance":false,"status":false,"statusbar":false,"stop":false,"Storage":false,"StorageEvent":false,"styleMedia":false,"StyleSheet":false,"StyleSheetList":false,"SubtleCrypto":false,"SVGAElement":false,"SVGAltGlyphDefElement":false,"SVGAltGlyphElement":false,"SVGAltGlyphItemElement":false,"SVGAngle":false,"SVGAnimateColorElement":false,"SVGAnimatedAngle":false,"SVGAnimatedBoolean":false,"SVGAnimatedEnumeration":false,"SVGAnimatedInteger":false,"SVGAnimatedLength":false,"SVGAnimatedLengthList":false,"SVGAnimatedNumber":false,"SVGAnimatedNumberList":false,"SVGAnimatedPathData":false,"SVGAnimatedPoints":false,"SVGAnimatedPreserveAspectRatio":false,"SVGAnimatedRect":false,"SVGAnimatedString":false,"SVGAnimatedTransformList":false,"SVGAnimateElement":false,"SVGAnimateMotionElement":false,"SVGAnimateTransformElement":false,"SVGAnimationElement":false,"SVGCircleElement":false,"SVGClipPathElement":false,"SVGColor":false,"SVGColorProfileElement":false,"SVGColorProfileRule":false,"SVGComponentTransferFunctionElement":false,"SVGCSSRule":false,"SVGCursorElement":false,"SVGDefsElement":false,"SVGDescElement":false,"SVGDiscardElement":false,"SVGDocument":false,"SVGElement":false,"SVGElementInstance":false,"SVGElementInstanceList":false,"SVGEllipseElement":false,"SVGEvent":false,"SVGExternalResourcesRequired":false,"SVGFEBlendElement":false,"SVGFEColorMatrixElement":false,"SVGFEComponentTransferElement":false,"SVGFECompositeElement":false,"SVGFEConvolveMatrixElement":false,"SVGFEDiffuseLightingElement":false,"SVGFEDisplacementMapElement":false,"SVGFEDistantLightElement":false,"SVGFEDropShadowElement":false,"SVGFEFloodElement":false,"SVGFEFuncAElement":false,"SVGFEFuncBElement":false,"SVGFEFuncGElement":false,"SVGFEFuncRElement":false,"SVGFEGaussianBlurElement":false,"SVGFEImageElement":false,"SVGFEMergeElement":false,"SVGFEMergeNodeElement":false,"SVGFEMorphologyElement":false,"SVGFEOffsetElement":false,"SVGFEPointLightElement":false,"SVGFESpecularLightingElement":false,"SVGFESpotLightElement":false,"SVGFETileElement":false,"SVGFETurbulenceElement":false,"SVGFilterElement":false,"SVGFilterPrimitiveStandardAttributes":false,"SVGFitToViewBox":false,"SVGFontElement":false,"SVGFontFaceElement":false,"SVGFontFaceFormatElement":false,"SVGFontFaceNameElement":false,"SVGFontFaceSrcElement":false,"SVGFontFaceUriElement":false,"SVGForeignObjectElement":false,"SVGGElement":false,"SVGGeometryElement":false,"SVGGlyphElement":false,"SVGGlyphRefElement":false,"SVGGradientElement":false,"SVGGraphicsElement":false,"SVGHKernElement":false,"SVGICCColor":false,"SVGImageElement":false,"SVGLangSpace":false,"SVGLength":false,"SVGLengthList":false,"SVGLinearGradientElement":false,"SVGLineElement":false,"SVGLocatable":false,"SVGMarkerElement":false,"SVGMaskElement":false,"SVGMatrix":false,"SVGMetadataElement":false,"SVGMissingGlyphElement":false,"SVGMPathElement":false,"SVGNumber":false,"SVGNumberList":false,"SVGPaint":false,"SVGPathElement":false,"SVGPathSeg":false,"SVGPathSegArcAbs":false,"SVGPathSegArcRel":false,"SVGPathSegClosePath":false,"SVGPathSegCurvetoCubicAbs":false,"SVGPathSegCurvetoCubicRel":false,"SVGPathSegCurvetoCubicSmoothAbs":false,"SVGPathSegCurvetoCubicSmoothRel":false,"SVGPathSegCurvetoQuadraticAbs":false,"SVGPathSegCurvetoQuadraticRel":false,"SVGPathSegCurvetoQuadraticSmoothAbs":false,"SVGPathSegCurvetoQuadraticSmoothRel":false,"SVGPathSegLinetoAbs":false,"SVGPathSegLinetoHorizontalAbs":false,"SVGPathSegLinetoHorizontalRel":false,"SVGPathSegLinetoRel":false,"SVGPathSegLinetoVerticalAbs":false,"SVGPathSegLinetoVerticalRel":false,"SVGPathSegList":false,"SVGPathSegMovetoAbs":false,"SVGPathSegMovetoRel":false,"SVGPatternElement":false,"SVGPoint":false,"SVGPointList":false,"SVGPolygonElement":false,"SVGPolylineElement":false,"SVGPreserveAspectRatio":false,"SVGRadialGradientElement":false,"SVGRect":false,"SVGRectElement":false,"SVGRenderingIntent":false,"SVGScriptElement":false,"SVGSetElement":false,"SVGStopElement":false,"SVGStringList":false,"SVGStylable":false,"SVGStyleElement":false,"SVGSVGElement":false,"SVGSwitchElement":false,"SVGSymbolElement":false,"SVGTests":false,"SVGTextContentElement":false,"SVGTextElement":false,"SVGTextPathElement":false,"SVGTextPositioningElement":false,"SVGTitleElement":false,"SVGTransform":false,"SVGTransformable":false,"SVGTransformList":false,"SVGTRefElement":false,"SVGTSpanElement":false,"SVGUnitTypes":false,"SVGURIReference":false,"SVGUseElement":false,"SVGViewElement":false,"SVGViewSpec":false,"SVGVKernElement":false,"SVGZoomAndPan":false,"SVGZoomEvent":false,"Text":false,"TextDecoder":false,"TextEncoder":false,"TextEvent":false,"TextMetrics":false,"TextTrack":false,"TextTrackCue":false,"TextTrackCueList":false,"TextTrackList":false,"TimeEvent":false,"TimeRanges":false,"toolbar":false,"top":false,"Touch":false,"TouchEvent":false,"TouchList":false,"TrackEvent":false,"TransitionEvent":false,"TreeWalker":false,"UIEvent":false,"URL":false,"URLSearchParams":false,"ValidityState":false,"VTTCue":false,"WaveShaperNode":false,"WebGLActiveInfo":false,"WebGLBuffer":false,"WebGLContextEvent":false,"WebGLFramebuffer":false,"WebGLProgram":false,"WebGLRenderbuffer":false,"WebGLRenderingContext":false,"WebGLShader":false,"WebGLShaderPrecisionFormat":false,"WebGLTexture":false,"WebGLUniformLocation":false,"WebSocket":false,"WheelEvent":false,"window":false,"Window":false,"Worker":false,"XDomainRequest":false,"XMLDocument":false,"XMLHttpRequest":false,"XMLHttpRequestEventTarget":false,"XMLHttpRequestProgressEvent":false,"XMLHttpRequestUpload":false,"XMLSerializer":false,"XPathEvaluator":false,"XPathException":false,"XPathExpression":false,"XPathNamespace":false,"XPathNSResolver":false,"XPathResult":false,"XSLTProcessor":false},"worker":{"applicationCache":false,"atob":false,"Blob":false,"BroadcastChannel":false,"btoa":false,"Cache":false,"caches":false,"clearInterval":false,"clearTimeout":false,"close":true,"console":false,"fetch":false,"FileReaderSync":false,"FormData":false,"Headers":false,"IDBCursor":false,"IDBCursorWithValue":false,"IDBDatabase":false,"IDBFactory":false,"IDBIndex":false,"IDBKeyRange":false,"IDBObjectStore":false,"IDBOpenDBRequest":false,"IDBRequest":false,"IDBTransaction":false,"IDBVersionChangeEvent":false,"ImageData":false,"importScripts":true,"indexedDB":false,"location":false,"MessageChannel":false,"MessagePort":false,"name":false,"navigator":false,"Notification":false,"onclose":true,"onconnect":true,"onerror":true,"onlanguagechange":true,"onmessage":true,"onoffline":true,"ononline":true,"onrejectionhandled":true,"onunhandledrejection":true,"performance":false,"Performance":false,"PerformanceEntry":false,"PerformanceMark":false,"PerformanceMeasure":false,"PerformanceNavigation":false,"PerformanceResourceTiming":false,"PerformanceTiming":false,"postMessage":true,"Promise":false,"Request":false,"Response":false,"self":true,"ServiceWorkerRegistration":false,"setInterval":false,"setTimeout":false,"TextDecoder":false,"TextEncoder":false,"URL":false,"URLSearchParams":false,"WebSocket":false,"Worker":false,"XMLHttpRequest":false},"node":{"__dirname":false,"__filename":false,"arguments":false,"Buffer":false,"clearImmediate":false,"clearInterval":false,"clearTimeout":false,"console":false,"exports":true,"GLOBAL":false,"global":false,"Intl":false,"module":false,"process":false,"require":false,"root":false,"setImmediate":false,"setInterval":false,"setTimeout":false},"commonjs":{"exports":true,"module":false,"require":false,"global":false},"amd":{"define":false,"require":false},"mocha":{"after":false,"afterEach":false,"before":false,"beforeEach":false,"context":false,"describe":false,"it":false,"mocha":false,"run":false,"setup":false,"specify":false,"suite":false,"suiteSetup":false,"suiteTeardown":false,"teardown":false,"test":false,"xcontext":false,"xdescribe":false,"xit":false,"xspecify":false},"jasmine":{"afterAll":false,"afterEach":false,"beforeAll":false,"beforeEach":false,"describe":false,"expect":false,"fail":false,"fdescribe":false,"fit":false,"it":false,"jasmine":false,"pending":false,"runs":false,"spyOn":false,"spyOnProperty":false,"waits":false,"waitsFor":false,"xdescribe":false,"xit":false},"jest":{"afterAll":false,"afterEach":false,"beforeAll":false,"beforeEach":false,"check":false,"describe":false,"expect":false,"gen":false,"it":false,"fdescribe":false,"fit":false,"jest":false,"pit":false,"require":false,"test":false,"xdescribe":false,"xit":false,"xtest":false},"qunit":{"asyncTest":false,"deepEqual":false,"equal":false,"expect":false,"module":false,"notDeepEqual":false,"notEqual":false,"notOk":false,"notPropEqual":false,"notStrictEqual":false,"ok":false,"propEqual":false,"QUnit":false,"raises":false,"start":false,"stop":false,"strictEqual":false,"test":false,"throws":false},"phantomjs":{"console":true,"exports":true,"phantom":true,"require":true,"WebPage":true},"couch":{"emit":false,"exports":false,"getRow":false,"log":false,"module":false,"provides":false,"require":false,"respond":false,"send":false,"start":false,"sum":false},"rhino":{"defineClass":false,"deserialize":false,"gc":false,"help":false,"importClass":false,"importPackage":false,"java":false,"load":false,"loadClass":false,"Packages":false,"print":false,"quit":false,"readFile":false,"readUrl":false,"runCommand":false,"seal":false,"serialize":false,"spawn":false,"sync":false,"toint32":false,"version":false},"nashorn":{"__DIR__":false,"__FILE__":false,"__LINE__":false,"com":false,"edu":false,"exit":false,"Java":false,"java":false,"javafx":false,"JavaImporter":false,"javax":false,"JSAdapter":false,"load":false,"loadWithNewGlobal":false,"org":false,"Packages":false,"print":false,"quit":false},"wsh":{"ActiveXObject":true,"Enumerator":true,"GetObject":true,"ScriptEngine":true,"ScriptEngineBuildVersion":true,"ScriptEngineMajorVersion":true,"ScriptEngineMinorVersion":true,"VBArray":true,"WScript":true,"WSH":true,"XDomainRequest":true},"jquery":{"$":false,"jQuery":false},"yui":{"Y":false,"YUI":false,"YUI_config":false},"shelljs":{"cat":false,"cd":false,"chmod":false,"config":false,"cp":false,"dirs":false,"echo":false,"env":false,"error":false,"exec":false,"exit":false,"find":false,"grep":false,"ls":false,"ln":false,"mkdir":false,"mv":false,"popd":false,"pushd":false,"pwd":false,"rm":false,"sed":false,"set":false,"target":false,"tempdir":false,"test":false,"touch":false,"which":false},"prototypejs":{"$":false,"$$":false,"$A":false,"$break":false,"$continue":false,"$F":false,"$H":false,"$R":false,"$w":false,"Abstract":false,"Ajax":false,"Autocompleter":false,"Builder":false,"Class":false,"Control":false,"Draggable":false,"Draggables":false,"Droppables":false,"Effect":false,"Element":false,"Enumerable":false,"Event":false,"Field":false,"Form":false,"Hash":false,"Insertion":false,"ObjectRange":false,"PeriodicalExecuter":false,"Position":false,"Prototype":false,"Scriptaculous":false,"Selector":false,"Sortable":false,"SortableObserver":false,"Sound":false,"Template":false,"Toggle":false,"Try":false},"meteor":{"$":false,"_":false,"Accounts":false,"AccountsClient":false,"AccountsServer":false,"AccountsCommon":false,"App":false,"Assets":false,"Blaze":false,"check":false,"Cordova":false,"DDP":false,"DDPServer":false,"DDPRateLimiter":false,"Deps":false,"EJSON":false,"Email":false,"HTTP":false,"Log":false,"Match":false,"Meteor":false,"Mongo":false,"MongoInternals":false,"Npm":false,"Package":false,"Plugin":false,"process":false,"Random":false,"ReactiveDict":false,"ReactiveVar":false,"Router":false,"ServiceConfiguration":false,"Session":false,"share":false,"Spacebars":false,"Template":false,"Tinytest":false,"Tracker":false,"UI":false,"Utils":false,"WebApp":false,"WebAppInternals":false},"mongo":{"_isWindows":false,"_rand":false,"BulkWriteResult":false,"cat":false,"cd":false,"connect":false,"db":false,"getHostName":false,"getMemInfo":false,"hostname":false,"ISODate":false,"listFiles":false,"load":false,"ls":false,"md5sumFile":false,"mkdir":false,"Mongo":false,"NumberInt":false,"NumberLong":false,"ObjectId":false,"PlanCache":false,"print":false,"printjson":false,"pwd":false,"quit":false,"removeFile":false,"rs":false,"sh":false,"UUID":false,"version":false,"WriteResult":false},"applescript":{"$":false,"Application":false,"Automation":false,"console":false,"delay":false,"Library":false,"ObjC":false,"ObjectSpecifier":false,"Path":false,"Progress":false,"Ref":false},"serviceworker":{"caches":false,"Cache":false,"CacheStorage":false,"Client":false,"clients":false,"Clients":false,"ExtendableEvent":false,"ExtendableMessageEvent":false,"FetchEvent":false,"importScripts":false,"registration":false,"self":false,"ServiceWorker":false,"ServiceWorkerContainer":false,"ServiceWorkerGlobalScope":false,"ServiceWorkerMessageEvent":false,"ServiceWorkerRegistration":false,"skipWaiting":false,"WindowClient":false},"atomtest":{"advanceClock":false,"fakeClearInterval":false,"fakeClearTimeout":false,"fakeSetInterval":false,"fakeSetTimeout":false,"resetTimeouts":false,"waitsForPromise":false},"embertest":{"andThen":false,"click":false,"currentPath":false,"currentRouteName":false,"currentURL":false,"fillIn":false,"find":false,"findWithAssert":false,"keyEvent":false,"pauseTest":false,"resumeTest":false,"triggerEvent":false,"visit":false},"protractor":{"$":false,"$$":false,"browser":false,"By":false,"by":false,"DartObject":false,"element":false,"protractor":false},"shared-node-browser":{"clearInterval":false,"clearTimeout":false,"console":false,"setInterval":false,"setTimeout":false},"webextensions":{"browser":false,"chrome":false,"opr":false},"greasemonkey":{"GM_addStyle":false,"GM_deleteValue":false,"GM_getResourceText":false,"GM_getResourceURL":false,"GM_getValue":false,"GM_info":false,"GM_listValues":false,"GM_log":false,"GM_openInTab":false,"GM_registerMenuCommand":false,"GM_setClipboard":false,"GM_setValue":false,"GM_xmlhttpRequest":false,"unsafeWindow":false}}
 
 /***/ },
 /* 618 */
@@ -29870,6 +28589,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 900 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* This Source Code Form is subject to the terms of the Mozilla Public
+	 * License, v. 2.0. If a copy of the MPL was not distributed with this
+	 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 	const networkRequest = __webpack_require__(901);
 	const workerUtils = __webpack_require__(902);
 
@@ -29882,6 +28605,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 901 */
 /***/ function(module, exports) {
 
+	/* This Source Code Form is subject to the terms of the Mozilla Public
+	 * License, v. 2.0. If a copy of the MPL was not distributed with this
+	 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 	function networkRequest(url, opts) {
 	  return new Promise((resolve, reject) => {
 	    const req = new XMLHttpRequest();
@@ -29891,7 +28618,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (req.status === 200) {
 	          resolve({ content: req.responseText });
 	        } else {
-	          resolve(req.statusText);
+	          reject(req.statusText);
 	        }
 	      }
 	    });
@@ -29921,7 +28648,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	function WorkerDispatcher() {
 	  this.msgId = 1;
 	  this.worker = null;
-	}
+	} /* This Source Code Form is subject to the terms of the Mozilla Public
+	   * License, v. 2.0. If a copy of the MPL was not distributed with this
+	   * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 	WorkerDispatcher.prototype = {
 	  start(url) {
@@ -30069,6 +28798,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  getClosestExpression: _closest.getClosestExpression,
 	  getOutOfScopeLocations: _getOutOfScopeLocations2.default,
 	  getSymbols: _getSymbols2.default,
+	  clearSymbols: _getSymbols.clearSymbols,
 	  getVariablesInScope: _scopes.getVariablesInScope
 	});
 
@@ -30472,6 +29202,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  value: true
 	});
 	exports.default = getSymbols;
+	exports.formatSymbols = formatSymbols;
+	exports.clearSymbols = clearSymbols;
 
 	var _ast = __webpack_require__(1051);
 
@@ -30518,6 +29250,143 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }));
 	}
 
+	function getComments(ast) {
+	  if (!ast || !ast.comments) {
+	    return [];
+	  }
+	  return ast.comments.map(comment => ({
+	    name: comment.location,
+	    location: comment.loc
+	  }));
+	}
+
+	function extractSymbols(source) {
+	  var functions = [];
+	  var variables = [];
+	  var memberExpressions = [];
+	  var callExpressions = [];
+	  var objectProperties = [];
+	  var identifiers = [];
+
+	  var ast = (0, _ast.traverseAst)(source, {
+	    enter(path) {
+	      if ((0, _helpers.isVariable)(path)) {
+	        variables.push.apply(variables, _toConsumableArray(getVariableNames(path)));
+	      }
+
+	      if ((0, _helpers.isFunction)(path)) {
+	        functions.push({
+	          name: (0, _getFunctionName2.default)(path),
+	          location: path.node.loc,
+	          parameterNames: getFunctionParameterNames(path),
+	          identifier: path.node.id
+	        });
+	      }
+
+	      if (t.isClassDeclaration(path)) {
+	        variables.push({
+	          name: path.node.id.name,
+	          location: path.node.loc
+	        });
+	      }
+
+	      if (t.isObjectProperty(path)) {
+	        var _path$node$key$loc = path.node.key.loc,
+	            start = _path$node$key$loc.start,
+	            end = _path$node$key$loc.end,
+	            identifierName = _path$node$key$loc.identifierName;
+
+	        objectProperties.push({
+	          name: identifierName,
+	          location: { start, end },
+	          expression: getSnippet(path)
+	        });
+	      }
+
+	      if (t.isMemberExpression(path)) {
+	        var _path$node$property$l = path.node.property.loc,
+	            _start = _path$node$property$l.start,
+	            _end = _path$node$property$l.end;
+
+	        memberExpressions.push({
+	          name: path.node.property.name,
+	          location: { start: _start, end: _end },
+	          expressionLocation: path.node.loc,
+	          expression: getSnippet(path)
+	        });
+	      }
+
+	      if (t.isCallExpression(path)) {
+	        var callee = path.node.callee;
+	        if (!t.isMemberExpression(callee)) {
+	          var _callee$loc = callee.loc,
+	              _start2 = _callee$loc.start,
+	              _end2 = _callee$loc.end,
+	              _identifierName = _callee$loc.identifierName;
+
+	          callExpressions.push({
+	            name: _identifierName,
+	            location: { start: _start2, end: _end2 }
+	          });
+	        }
+	      }
+
+	      if (t.isIdentifier(path)) {
+	        var _path$node$loc = path.node.loc,
+	            _start3 = _path$node$loc.start,
+	            _end3 = _path$node$loc.end;
+
+
+	        identifiers.push({
+	          name: path.node.name,
+	          expression: path.node.name,
+	          location: { start: _start3, end: _end3 }
+	        });
+	      }
+
+	      if (t.isThisExpression(path.node)) {
+	        var _path$node$loc2 = path.node.loc,
+	            _start4 = _path$node$loc2.start,
+	            _end4 = _path$node$loc2.end;
+
+	        identifiers.push({
+	          name: "this",
+	          location: { start: _start4, end: _end4 },
+	          expressionLocation: path.node.loc,
+	          expression: "this"
+	        });
+	      }
+
+	      if (t.isVariableDeclarator(path)) {
+	        var node = path.node.id;
+	        var _path$node$loc3 = path.node.loc,
+	            _start5 = _path$node$loc3.start,
+	            _end5 = _path$node$loc3.end;
+
+
+	        identifiers.push({
+	          name: node.name,
+	          expression: node.name,
+	          location: { start: _start5, end: _end5 }
+	        });
+	      }
+	    }
+	  });
+
+	  // comments are extracted separately from the AST
+	  var comments = getComments(ast);
+
+	  return {
+	    functions,
+	    variables,
+	    callExpressions,
+	    memberExpressions,
+	    objectProperties,
+	    comments,
+	    identifiers
+	  };
+	}
+
 	function getSymbols(source) {
 	  if (symbolDeclarations.has(source.id)) {
 	    var _symbols = symbolDeclarations.get(source.id);
@@ -30526,35 +29395,178 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }
 
-	  var symbols = { functions: [], variables: [] };
-
-	  (0, _ast.traverseAst)(source, {
-	    enter(path) {
-	      if ((0, _helpers.isVariable)(path)) {
-	        var _symbols$variables;
-
-	        (_symbols$variables = symbols.variables).push.apply(_symbols$variables, _toConsumableArray(getVariableNames(path)));
-	      }
-
-	      if ((0, _helpers.isFunction)(path)) {
-	        symbols.functions.push({
-	          name: (0, _getFunctionName2.default)(path),
-	          location: path.node.loc,
-	          parameterNames: getFunctionParameterNames(path)
-	        });
-	      }
-
-	      if (t.isClassDeclaration(path)) {
-	        symbols.variables.push({
-	          name: path.node.id.name,
-	          location: path.node.loc
-	        });
-	      }
-	    }
-	  });
-
+	  var symbols = extractSymbols(source);
 	  symbolDeclarations.set(source.id, symbols);
 	  return symbols;
+	}
+
+	function extendSnippet(name, expression, path, prevPath) {
+	  var computed = path && path.node.computed;
+	  var prevComputed = prevPath && prevPath.node.computed;
+	  var prevArray = t.isArrayExpression(prevPath);
+	  var array = t.isArrayExpression(path);
+
+	  if (expression === "") {
+	    if (computed) {
+	      return `[${name}]`;
+	    }
+	    return name;
+	  }
+
+	  if (computed || array) {
+	    if (prevComputed || prevArray) {
+	      return `[${name}]${expression}`;
+	    }
+	    return `[${name}].${expression}`;
+	  }
+
+	  if (prevComputed || prevArray) {
+	    return `${name}${expression}`;
+	  }
+
+	  return `${name}.${expression}`;
+	}
+
+	function getMemberSnippet(node) {
+	  var expression = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "";
+
+	  if (t.isMemberExpression(node)) {
+	    var _name = node.property.name;
+
+	    return getMemberSnippet(node.object, extendSnippet(_name, expression));
+	  }
+
+	  if (t.isCallExpression(node)) {
+	    return "";
+	  }
+
+	  if (t.isThisExpression(node)) {
+	    return `this.${expression}`;
+	  }
+
+	  if (t.isIdentifier(node)) {
+	    return `${node.name}.${expression}`;
+	  }
+
+	  return expression;
+	}
+
+	function getObjectSnippet(path, prevPath) {
+	  var expression = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "";
+
+	  if (!path) {
+	    return expression;
+	  }
+
+	  var name = path.node.key.name;
+
+	  var extendedExpression = extendSnippet(name, expression, path, prevPath);
+
+	  var nextPrevPath = path;
+	  var nextPath = path.parentPath && path.parentPath.parentPath;
+
+	  return getSnippet(nextPath, nextPrevPath, extendedExpression);
+	}
+
+	function getArraySnippet(path, prevPath, expression) {
+	  var index = prevPath.parentPath.key;
+	  var extendedExpression = extendSnippet(index, expression, path, prevPath);
+
+	  var nextPrevPath = path;
+	  var nextPath = path.parentPath && path.parentPath.parentPath;
+
+	  return getSnippet(nextPath, nextPrevPath, extendedExpression);
+	}
+
+	function getSnippet(path, prevPath) {
+	  var expression = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "";
+
+	  if (t.isVariableDeclaration(path)) {
+	    var node = path.node.declarations[0];
+	    var _name2 = node.id.name;
+	    return extendSnippet(_name2, expression, path, prevPath);
+	  }
+
+	  if (t.isVariableDeclarator(path)) {
+	    var _node = path.node.id;
+	    if (t.isObjectPattern(_node)) {
+	      return expression;
+	    }
+
+	    var _name3 = _node.name;
+	    var prop = extendSnippet(_name3, expression, path, prevPath);
+	    return prop;
+	  }
+
+	  if (t.isAssignmentExpression(path)) {
+	    var _node2 = path.node.left;
+	    var _name4 = t.isMemberExpression(_node2) ? getMemberSnippet(_node2) : _node2.name;
+
+	    var _prop = extendSnippet(_name4, expression, path, prevPath);
+	    return _prop;
+	  }
+
+	  if ((0, _helpers.isFunction)(path)) {
+	    return expression;
+	  }
+
+	  if (t.isIdentifier(path)) {
+	    var _node3 = path.node;
+	    return `${_node3.name}.${expression}`;
+	  }
+
+	  if (t.isObjectProperty(path)) {
+	    return getObjectSnippet(path, prevPath, expression);
+	  }
+
+	  if (t.isObjectExpression(path)) {
+	    var parentPath = prevPath && prevPath.parentPath;
+	    return getObjectSnippet(parentPath, prevPath, expression);
+	  }
+
+	  if (t.isMemberExpression(path)) {
+	    return getMemberSnippet(path.node, expression);
+	  }
+
+	  if (t.isArrayExpression(path)) {
+	    return getArraySnippet(path, prevPath, expression);
+	  }
+	}
+
+	function formatSymbols(source) {
+	  var _getSymbols = getSymbols(source),
+	      objectProperties = _getSymbols.objectProperties,
+	      memberExpressions = _getSymbols.memberExpressions,
+	      callExpressions = _getSymbols.callExpressions,
+	      identifiers = _getSymbols.identifiers,
+	      variables = _getSymbols.variables;
+
+	  function formatLocation(loc) {
+	    if (!loc) {
+	      return "";
+	    }
+	    var start = loc.start,
+	        end = loc.end;
+
+
+	    var startLoc = `(${start.line}, ${start.column})`;
+	    var endLoc = `(${end.line}, ${end.column})`;
+	    return `[${startLoc}, ${endLoc}]`;
+	  }
+
+	  function summarize(symbol) {
+	    var loc = formatLocation(symbol.location);
+	    var exprLoc = formatLocation(symbol.expressionLocation);
+	    var params = symbol.parameterNames ? symbol.parameterNames.join(", ") : "";
+	    var expression = symbol.expression || "";
+	    return `${loc} ${exprLoc} ${expression} ${symbol.name} ${params}`;
+	  }
+
+	  return ["properties", objectProperties.map(summarize).join("\n"), "member expressions", memberExpressions.map(summarize).join("\n"), "call expressions", callExpressions.map(summarize).join("\n"), "identifiers", identifiers.map(summarize).join("\n"), "variables", variables.map(summarize).join("\n")].join("\n");
+	}
+
+	function clearSymbols() {
+	  symbolDeclarations = new Map();
 	}
 
 /***/ },
@@ -30596,7 +29608,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _parse(code, opts) {
 	  return babylon.parse(code, Object.assign({}, opts, {
 	    sourceType: "module",
-	    plugins: ["jsx", "flow"]
+	    plugins: ["jsx", "flow", "objectRestSpread"]
 	  }));
 	}
 
@@ -30619,39 +29631,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return ast;
 	}
 
-	function getAst(sourceText) {
-	  if (ASTs.has(sourceText.id)) {
-	    return ASTs.get(sourceText.id);
+	// Custom parser for parse-script-tags that adapts its input structure to
+	// our parser's signature
+	function htmlParser(_ref) {
+	  var source = _ref.source,
+	      line = _ref.line;
+
+	  return parse(source, {
+	    startLine: line
+	  });
+	}
+
+	function getAst(source) {
+	  if (!source || !source.text) {
+	    return {};
+	  }
+
+	  if (ASTs.has(source.id)) {
+	    return ASTs.get(source.id);
 	  }
 
 	  var ast = {};
-	  if (sourceText.contentType == "text/html") {
-	    // Custom parser for parse-script-tags that adapts its input structure to
-	    // our parser's signature
-	    var parser = (_ref) => {
-	      var source = _ref.source,
-	          line = _ref.line;
-
-	      return parse(source, {
-	        startLine: line
-	      });
-	    };
-	    ast = (0, _parseScriptTags2.default)(sourceText.text, parser) || {};
-	  } else if (sourceText.contentType == "text/javascript") {
-	    ast = parse(sourceText.text);
+	  if (source.contentType == "text/html") {
+	    ast = (0, _parseScriptTags2.default)(source.text, htmlParser) || {};
+	  } else if (source.contentType == "text/javascript") {
+	    ast = parse(source.text);
 	  }
 
-	  ASTs.set(sourceText.id, ast);
+	  ASTs.set(source.id, ast);
 	  return ast;
 	}
 
-	function traverseAst(sourceText, visitor) {
-	  var ast = getAst(sourceText);
+	function traverseAst(source, visitor) {
+	  var ast = getAst(source);
 	  if ((0, _isEmpty2.default)(ast)) {
 	    return null;
 	  }
 
 	  (0, _babelTraverse2.default)(ast, visitor);
+	  return ast;
 	}
 
 /***/ },
@@ -30803,7 +29821,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    enter(path) {
 	      var node = path.node;
 
-	      if (t.isMemberExpression(node) && node.property.name === token && (0, _helpers.nodeContainsPosition)(node, location)) {
+	      if (!(0, _helpers.nodeContainsPosition)(node, location)) {
+	        return path.skip();
+	      }
+
+	      if (t.isMemberExpression(node) && node.property.name === token) {
 	        var memberExpression = (0, _helpers.getMemberExpression)(node);
 	        expression = {
 	          expression: memberExpression,
@@ -30837,7 +29859,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  (0, _ast.traverseAst)(source, {
 	    enter(path) {
-	      if ((0, _helpers.isLexicalScope)(path) && (0, _helpers.nodeContainsPosition)(path.node, location)) {
+	      if (!(0, _helpers.nodeContainsPosition)(path.node, location)) {
+	        return path.skip();
+	      }
+
+	      if ((0, _helpers.isLexicalScope)(path)) {
 	        closestPath = path;
 	      }
 	    }
@@ -30855,9 +29881,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  (0, _ast.traverseAst)(source, {
 	    enter(path) {
-	      if ((0, _helpers.nodeContainsPosition)(path.node, location)) {
-	        closestPath = path;
+	      if (!(0, _helpers.nodeContainsPosition)(path.node, location)) {
+	        return path.skip();
 	      }
+	      closestPath = path;
 	    }
 	  });
 
@@ -30961,31 +29988,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	  value: true
 	});
 
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 	var _get = __webpack_require__(1073);
 
 	var _get2 = _interopRequireDefault(_get);
 
 	var _helpers = __webpack_require__(1052);
 
-	var _ast = __webpack_require__(1051);
+	var _getSymbols2 = __webpack_require__(1050);
+
+	var _getSymbols3 = _interopRequireDefault(_getSymbols2);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	/**
-	 * Returns all functions (declarations, expressions, arrows) for the given
-	 * source
-	 */
-	function findFunctions(source) {
-	  var fns = [];
-	  (0, _ast.traverseAst)(source, {
-	    enter(path) {
-	      if ((0, _helpers.isFunction)(path)) {
-	        fns.push(path);
-	      }
-	    }
-	  });
+	function findSymbols(source) {
+	  var _getSymbols = (0, _getSymbols3.default)(source),
+	      functions = _getSymbols.functions,
+	      comments = _getSymbols.comments;
 
-	  return fns;
+	  return { functions, comments };
 	}
 
 	/**
@@ -30994,19 +30016,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * but before the function parameters.
 	 */
 
-
-	var getLocation = path => {
-	  var location = Object.assign({}, (0, _get2.default)("node.loc", path));
+	function getLocation(func) {
+	  var location = _extends({}, func.location);
 
 	  // if the function has an identifier, start the block after it so the
 	  // identifier is included in the "scope" of its parent
-	  var identifierEnd = (0, _get2.default)("node.id.loc.end", path);
+	  var identifierEnd = (0, _get2.default)("identifier.loc.end", func);
 	  if (identifierEnd) {
 	    location.start = identifierEnd;
 	  }
 
 	  return location;
-	};
+	}
 
 	/**
 	 * Reduces an array of locations to remove items that are completely enclosed
@@ -31045,7 +30066,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * location.
 	 */
 	function getOutOfScopeLocations(source, position) {
-	  return findFunctions(source).map(getLocation).filter(loc => !(0, _helpers.containsPosition)(loc, position)).reduce(removeOverlaps, []).sort(sortByStart);
+	  var _findSymbols = findSymbols(source),
+	      functions = _findSymbols.functions,
+	      comments = _findSymbols.comments;
+
+	  var commentLocations = comments.map(c => c.location);
+
+	  return functions.map(getLocation).concat(commentLocations).filter(loc => !(0, _helpers.containsPosition)(loc, position)).reduce(removeOverlaps, []).sort(sortByStart);
 	}
 
 	exports.default = getOutOfScopeLocations;

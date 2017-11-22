@@ -100,6 +100,8 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
 
+#include "mozilla/dom/HTMLBodyElement.h"
+
 #include "ContentPrincipal.h"
 
 #ifdef XP_WIN
@@ -270,16 +272,15 @@ nsFrameLoader::LoadFrame()
   }
 
   nsCOMPtr<nsIURI> base_uri = mOwnerContent->GetBaseURI();
-  const nsAFlatCString &doc_charset = doc->GetDocumentCharacterSet();
-  const char *charset = doc_charset.IsEmpty() ? nullptr : doc_charset.get();
+  auto encoding = doc->GetDocumentCharacterSet();
 
   nsCOMPtr<nsIURI> uri;
-  nsresult rv = NS_NewURI(getter_AddRefs(uri), src, charset, base_uri);
+  nsresult rv = NS_NewURI(getter_AddRefs(uri), src, encoding, base_uri);
 
   // If the URI was malformed, try to recover by loading about:blank.
   if (rv == NS_ERROR_MALFORMED_URI) {
     rv = NS_NewURI(getter_AddRefs(uri), NS_LITERAL_STRING("about:blank"),
-                   charset, base_uri);
+                   encoding, base_uri);
   }
 
   if (NS_SUCCEEDED(rv)) {
@@ -778,8 +779,7 @@ nsFrameLoader::ReallyStartLoadingInternal()
 {
   NS_ENSURE_STATE(mURIToLoad && mOwnerContent && mOwnerContent->IsInComposedDoc());
 
-  PROFILER_LABEL("nsFrameLoader", "ReallyStartLoading",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsFrameLoader::ReallyStartLoadingInternal", OTHER);
 
   if (IsRemoteFrame()) {
     if (!mRemoteBrowser && !TryRemoteBrowser()) {
@@ -1264,7 +1264,7 @@ bool
 nsFrameLoader::ShowRemoteFrame(const ScreenIntSize& size,
                                nsSubDocumentFrame *aFrame)
 {
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("nsFrameLoader::ShowRemoteFrame", GRAPHICS);
   NS_ASSERTION(IsRemoteFrame(), "ShowRemote only makes sense on remote frames.");
 
   if (!mRemoteBrowser && !TryRemoteBrowser()) {
@@ -1671,6 +1671,14 @@ nsFrameLoader::SwapWithOtherLoader(nsFrameLoader* aOther,
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
+  bool ourPaymentRequestAllowed =
+    ourContent->HasAttr(kNameSpaceID_None, nsGkAtoms::allowpaymentrequest);
+  bool otherPaymentRequestAllowed =
+    otherContent->HasAttr(kNameSpaceID_None, nsGkAtoms::allowpaymentrequest);
+  if (ourPaymentRequestAllowed != otherPaymentRequestAllowed) {
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
   // Divert to a separate path for the remaining steps in the remote case
   if (IsRemoteFrame()) {
     MOZ_ASSERT(aOther->IsRemoteFrame());
@@ -1997,7 +2005,11 @@ class nsFrameLoaderDestroyRunnable : public Runnable
 
 public:
   explicit nsFrameLoaderDestroyRunnable(nsFrameLoader* aFrameLoader)
-   : mFrameLoader(aFrameLoader), mPhase(eDestroyDocShell) {}
+    : mozilla::Runnable("nsFrameLoaderDestroyRunnable")
+    , mFrameLoader(aFrameLoader)
+    , mPhase(eDestroyDocShell)
+  {
+  }
 
   NS_IMETHOD Run() override;
 };
@@ -2082,9 +2094,10 @@ nsFrameLoader::StartDestroy()
     nsCOMPtr<nsIGroupedSHistory> groupedSHistory;
     GetGroupedSHistory(getter_AddRefs(groupedSHistory));
     if (groupedSHistory) {
-      NS_DispatchToCurrentThread(NS_NewRunnableFunction([groupedSHistory] () {
-        groupedSHistory->CloseInactiveFrameLoaderOwners();
-      }));
+      NS_DispatchToCurrentThread(NS_NewRunnableFunction(
+        "nsFrameLoader::StartDestroy", [groupedSHistory]() {
+          groupedSHistory->CloseInactiveFrameLoaderOwners();
+        }));
     }
   }
 
@@ -2725,6 +2738,11 @@ nsFrameLoader::UpdatePositionAndSize(nsSubDocumentFrame *aIFrame)
   if (IsRemoteFrame()) {
     if (mRemoteBrowser) {
       ScreenIntSize size = aIFrame->GetSubdocumentSize();
+      // If we were not able to show remote frame before, we should probably
+      // retry now to send correct showInfo.
+      if (!mRemoteBrowserShown) {
+        ShowRemoteFrame(size, aIFrame);
+      }
       nsIntRect dimensions;
       NS_ENSURE_SUCCESS(GetWindowDimensions(dimensions), NS_ERROR_FAILURE);
       mLazySize = size;
@@ -2987,8 +3005,7 @@ nsFrameLoader::TryRemoteBrowser()
     return false;
   }
 
-  PROFILER_LABEL("nsFrameLoader", "CreateRemoteBrowser",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsFrameLoader::TryRemoteBrowser:Create", OTHER);
 
   MutableTabContext context;
   nsresult rv = GetNewTabContext(&context);
@@ -3179,6 +3196,7 @@ public:
                         JS::Handle<JSObject*> aCpows,
                         nsFrameLoader* aFrameLoader)
     : nsSameProcessAsyncMessageBase(aRootingCx, aCpows)
+    , mozilla::Runnable("nsAsyncMessageToChild")
     , mFrameLoader(aFrameLoader)
   {
   }

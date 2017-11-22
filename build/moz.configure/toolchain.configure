@@ -65,9 +65,9 @@ add_old_configure_assignment('YASM', have_yasm)
 # Android NDK
 # ==============================================================
 
-@depends('--disable-compile-environment', build_project, gonkdir, '--help')
-def compiling_android(compile_env, build_project, gonkdir, _):
-    return compile_env and (gonkdir or build_project in ('mobile/android', 'js'))
+@depends('--disable-compile-environment', build_project, '--help')
+def compiling_android(compile_env, build_project, _):
+    return compile_env and build_project in ('mobile/android', 'js')
 
 include('android-ndk.configure', when=compiling_android)
 
@@ -127,7 +127,7 @@ def using_ccache(ccache, ccache_is_sccache):
 
 @depends_if(ccache, ccache_is_sccache)
 def using_sccache(ccache, ccache_is_sccache):
-    return True
+    return ccache and ccache_is_sccache
 
 set_config('MOZ_USING_CCACHE', using_ccache)
 set_config('MOZ_USING_SCCACHE', using_sccache)
@@ -873,6 +873,20 @@ host_cxx_compiler = compiler('C++', host, c_compiler=host_c_compiler,
 non_msvc_compiler = depends(c_compiler)(lambda info: info.type != 'msvc')
 building_with_gcc = depends(c_compiler)(lambda info: info.type == 'gcc')
 
+@depends(c_compiler)
+def msvs_version(info):
+    # clang-cl emulates the same version scheme as cl. And MSVS_VERSION needs to
+    # be set for GYP on Windows.
+    if info.type in ('clang-cl', 'msvc'):
+        if info.version >= '19.10':
+            return '2017'
+        elif info.version >= '19.00':
+            return '2015'
+
+    return ''
+
+set_config('MSVS_VERSION', msvs_version)
+
 include('compile-checks.configure')
 
 @depends(have_64_bit,
@@ -883,6 +897,20 @@ def check_have_64_bit(have_64_bit, compiler_have_64_bit):
         configure_error('The target compiler does not agree with configure '
                         'about the target bitness.')
 
+option(env='BINDGEN_CFLAGS',
+       nargs=1,
+       help='Options bindgen should pass to the C/C++ parser')
+
+@depends('BINDGEN_CFLAGS')
+@checking('bindgen cflags', lambda s: s if s and s.strip() else 'no')
+def bindgen_cflags(value):
+    if value and len(value):
+        # Reformat the env value for substitution into a toml list.
+        flags = value[0].split()
+        return ', '.join('"' + flag + '"' for flag in flags)
+    return ''
+
+set_config('BINDGEN_CFLAGS', bindgen_cflags)
 
 @depends(c_compiler)
 def default_debug_flags(compiler_info):
@@ -977,13 +1005,18 @@ set_config('COLOR_CFLAGS', color_cflags)
 # we are properly managing visibility ourselves) and avoid this whole mess.
 # Note that we don't need to do this with gcc, as libc++ detects gcc and
 # effectively does the same thing we are doing here.
+#
+# _LIBCPP_ALWAYS_INLINE needs similar workarounds, since it too declares
+# hidden visibility.
 @depends(c_compiler, target)
-def libcxx_inline_visibility(c_compiler, target):
+def libcxx_override_visibility(c_compiler, target):
     if c_compiler.type == 'clang' and target.os == 'Android':
         return ''
 
-set_define('_LIBCPP_INLINE_VISIBILITY', libcxx_inline_visibility)
-set_define('_LIBCPP_INLINE_VISIBILITY_EXCEPT_GCC49', libcxx_inline_visibility)
+set_define('_LIBCPP_INLINE_VISIBILITY', libcxx_override_visibility)
+set_define('_LIBCPP_INLINE_VISIBILITY_EXCEPT_GCC49', libcxx_override_visibility)
+set_define('_LIBCPP_ALWAYS_INLINE', libcxx_override_visibility)
+set_define('_LIBCPP_ALWAYS_INLINE_EXCEPT_GCC49', libcxx_override_visibility)
 
 @depends(target, check_build_environment)
 def visibility_flags(target, env):
@@ -1014,6 +1047,14 @@ def is_windows(target, host):
 
 include('windows.configure', when=is_windows)
 
+# Shader Compiler for Windows (and MinGW Cross Compile)
+# ==============================================================
+
+fxc = check_prog('FXC', ('fxc.exe', 'fxc2.exe'), when=depends(target)
+                 (lambda t: t.kernel == 'WINNT'))
+wine = check_prog('WINE', ['wine'], when=depends(target, host)
+                  (lambda t, h: t.kernel == 'WINNT' and h.kernel == 'Linux'))
+
 # Security Hardening
 # ==============================================================
 
@@ -1032,3 +1073,107 @@ option(env='RUSTFLAGS',
        nargs=1,
        help='Rust compiler flags')
 set_config('RUSTFLAGS', depends('RUSTFLAGS')(lambda flags: flags))
+
+
+imply_option('--enable-release', mozilla_official)
+imply_option('--enable-release', depends_if('MOZ_AUTOMATION')(lambda x: True))
+
+js_option('--enable-release',
+          help='Build with more conservative, release engineering-oriented '
+               'options. This may slow down builds.')
+
+@depends('--enable-release')
+def developer_options(value):
+    if not value:
+        return True
+
+add_old_configure_assignment('DEVELOPER_OPTIONS', developer_options)
+
+# Linker detection
+# ==============================================================
+
+@depends(target)
+def build_not_win_mac(target):
+    if target.kernel not in ('Darwin', 'WINNT'):
+        return True
+
+
+option('--enable-gold',
+       env='MOZ_FORCE_GOLD',
+       help='Enable GNU Gold Linker when it is not already the default',
+       when=build_not_win_mac)
+
+
+@depends('--enable-gold', c_compiler, developer_options, check_build_environment, when=build_not_win_mac)
+@checking('for ld', lambda x: x.KIND)
+@imports('os')
+@imports('shutil')
+def enable_gold(enable_gold_option, c_compiler, developer_options, build_env):
+    linker = None
+    # Used to check the kind of linker
+    version_check = ['-Wl,--version']
+    cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
+
+    def resolve_gold():
+        # Try to force the usage of gold
+        targetDir = os.path.join(build_env.topobjdir, 'build', 'unix', 'gold')
+
+        gold_detection_arg = '-print-prog-name=ld.gold'
+        gold = check_cmd_output(c_compiler.compiler, gold_detection_arg).strip()
+        if not gold:
+            return
+
+        goldFullPath = find_program(gold)
+        if goldFullPath is None:
+            return
+
+        if os.path.exists(targetDir):
+            shutil.rmtree(targetDir)
+        os.makedirs(targetDir)
+        os.symlink(goldFullPath, os.path.join(targetDir, 'ld'))
+
+        linker = ['-B', targetDir]
+        cmd = cmd_base + linker + version_check
+        if 'GNU gold' in check_cmd_output(*cmd).decode('utf-8'):
+            # We have detected gold, will build with the -B workaround
+            return namespace(
+                KIND='gold',
+                LINKER_FLAG=linker,
+            )
+        else:
+            # The -B trick didn't work, removing the directory
+            shutil.rmtree(targetDir)
+
+    if enable_gold_option or developer_options:
+        result = resolve_gold()
+
+        if result:
+            return result
+        # gold is only required if --enable-gold is used.
+        elif enable_gold_option:
+            die('Could not find gold')
+        # Else fallthrough.
+
+    cmd = cmd_base + version_check
+    cmd_output = check_cmd_output(*cmd).decode('utf-8')
+    # using decode because ld can be localized and python will
+    # have problems with french accent for example
+    if 'GNU ld' in cmd_output:
+        # We are using the normal linker
+        return namespace(
+            KIND='bfd'
+        )
+
+    # Special case for Android. In the ndk, it is gold
+    if 'GNU gold' in cmd_output:
+        return namespace(
+            KIND='gold'
+        )
+
+    # For other platforms without gold or the GNU linker
+    return namespace(
+        KIND='other'
+    )
+
+set_config('LD_IS_BFD', depends(enable_gold.KIND)(lambda x: x == 'bfd' or None))
+set_config('LINKER_LDFLAGS', enable_gold.LINKER_FLAG)

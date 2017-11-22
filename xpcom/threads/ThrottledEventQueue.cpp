@@ -65,7 +65,8 @@ class ThrottledEventQueue::Inner final : public nsIObserver
 
   public:
     explicit Executor(Inner* aInner)
-      : mInner(aInner)
+      : Runnable("ThrottledEventQueue::Inner::Executor")
+      , mInner(aInner)
     { }
 
     NS_IMETHODIMP
@@ -91,7 +92,7 @@ class ThrottledEventQueue::Inner final : public nsIObserver
   nsEventQueue mEventQueue;
 
   // written on main thread, read on any thread
-  nsCOMPtr<nsIEventTarget> mBaseTarget;
+  nsCOMPtr<nsISerialEventTarget> mBaseTarget;
 
   // any thread, protected by mutex
   nsCOMPtr<nsIRunnable> mExecutor;
@@ -99,7 +100,7 @@ class ThrottledEventQueue::Inner final : public nsIObserver
   // any thread, protected by mutex
   bool mShutdownStarted;
 
-  explicit Inner(nsIEventTarget* aBaseTarget)
+  explicit Inner(nsISerialEventTarget* aBaseTarget)
     : mMutex("ThrottledEventQueue")
     , mIdleCondVar(mMutex, "ThrottledEventQueue:Idle")
     , mEventsAvailable(mMutex, "[ThrottledEventQueue::Inner.mEventsAvailable]")
@@ -210,7 +211,7 @@ class ThrottledEventQueue::Inner final : public nsIObserver
 
 public:
   static already_AddRefed<Inner>
-  Create(nsIEventTarget* aBaseTarget)
+  Create(nsISerialEventTarget* aBaseTarget)
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -363,10 +364,10 @@ public:
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
-  nsresult
-  IsOnCurrentThread(bool* aResult)
+  bool
+  IsOnCurrentThread()
   {
-    return mBaseTarget->IsOnCurrentThread(aResult);
+    return mBaseTarget->IsOnCurrentThread();
   }
 
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -374,7 +375,10 @@ public:
 
 NS_IMPL_ISUPPORTS(ThrottledEventQueue::Inner, nsIObserver);
 
-NS_IMPL_ISUPPORTS(ThrottledEventQueue, ThrottledEventQueue, nsIEventTarget);
+NS_IMPL_ISUPPORTS(ThrottledEventQueue,
+                  ThrottledEventQueue,
+                  nsIEventTarget,
+                  nsISerialEventTarget);
 
 ThrottledEventQueue::ThrottledEventQueue(already_AddRefed<Inner> aInner)
   : mInner(aInner)
@@ -394,7 +398,7 @@ ThrottledEventQueue::MaybeStartShutdown()
 }
 
 already_AddRefed<ThrottledEventQueue>
-ThrottledEventQueue::Create(nsIEventTarget* aBaseTarget)
+ThrottledEventQueue::Create(nsISerialEventTarget* aBaseTarget)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aBaseTarget);
@@ -450,7 +454,14 @@ ThrottledEventQueue::DelayedDispatch(already_AddRefed<nsIRunnable> aEvent,
 NS_IMETHODIMP
 ThrottledEventQueue::IsOnCurrentThread(bool* aResult)
 {
-  return mInner->IsOnCurrentThread(aResult);
+  *aResult = mInner->IsOnCurrentThread();
+  return NS_OK;
+}
+
+NS_IMETHODIMP_(bool)
+ThrottledEventQueue::IsOnCurrentThreadInfallible()
+{
+  return mInner->IsOnCurrentThread();
 }
 
 } // namespace mozilla

@@ -46,6 +46,9 @@ add_task(function* testWebExtension() {
   let container = document.querySelector(`[data-addon-id="${addonId}"]`);
   testFilePath(container, "/test/addons/test-devtools-webextension-nobg/");
 
+  let extensionID = container.querySelector(".extension-id span");
+  ok(extensionID.textContent === "test-devtools-webextension-nobg@mozilla.org");
+
   let internalUUID = container.querySelector(".internal-uuid span");
   ok(internalUUID.textContent.match(UUID_REGEX), "internalUUID is correct");
 
@@ -74,8 +77,40 @@ add_task(function* testTemporaryWebExtension() {
   let container = addons[addons.length - 1];
   let addonId = container.dataset.addonId;
 
+  let extensionID = container.querySelector(".extension-id span");
+  ok(extensionID.textContent.endsWith("@temporary-addon"));
+
   let temporaryID = container.querySelector(".temporary-id-url");
   ok(temporaryID, "Temporary ID message does appear");
+
+  yield uninstallAddon({document, id: addonId, name: addonName});
+
+  yield closeAboutDebugging(tab);
+});
+
+add_task(function* testUnknownManifestProperty() {
+  let addonId = "test-devtools-webextension-unknown-prop@mozilla.org";
+  let addonName = "test-devtools-webextension-unknown-prop";
+  let { tab, document } = yield openAboutDebugging("addons");
+
+  yield waitForInitialAddonList(document);
+  yield installAddon({
+    document,
+    path: "addons/test-devtools-webextension-unknown-prop/manifest.json",
+    name: addonName,
+    isWebExtension: true
+  });
+
+  let container = document.querySelector(`[data-addon-id="${addonId}"]`);
+
+  yield waitForInstallMessages(container);
+
+  let messages = container.querySelectorAll(".addon-target-message");
+  ok(messages.length === 1, "there is one message");
+  ok(messages[0].textContent.match(/Error processing browser_actions/),
+     "the message is helpful");
+  ok(messages[0].classList.contains("addon-target-warning-message"),
+     "the message is a warning");
 
   yield uninstallAddon({document, id: addonId, name: addonName});
 

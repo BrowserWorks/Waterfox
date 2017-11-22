@@ -21,6 +21,14 @@ function getAllMessagesTableDataById(state) {
   return state.messages.messagesTableDataById;
 }
 
+function getAllMessagesObjectPropertiesById(state) {
+  return state.messages.messagesObjectPropertiesById;
+}
+
+function getAllMessagesObjectEntriesById(state) {
+  return state.messages.messagesObjectEntriesById;
+}
+
 function getAllGroupsById(state) {
   return state.messages.groupsById;
 }
@@ -30,7 +38,7 @@ function getCurrentGroup(state) {
 }
 
 function getVisibleMessages(state) {
-  return state.messages.visibleMessages.map(id => getMessage(state, id));
+  return state.messages.visibleMessages;
 }
 
 function getAllRepeatById(state) {
@@ -51,4 +59,6 @@ module.exports = {
   getVisibleMessages,
   getAllRepeatById,
   getAllNetworkMessagesUpdateById,
+  getAllMessagesObjectPropertiesById,
+  getAllMessagesObjectEntriesById,
 };

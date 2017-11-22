@@ -10,12 +10,16 @@
 #include "Compatibility.h"
 #include "HyperTextAccessibleWrap.h"
 #include "ia2AccessibleText.h"
+#include "nsIWindowsRegKey.h"
 #include "nsIXULRuntime.h"
 #include "nsWinUtils.h"
 #include "mozilla/a11y/ProxyAccessible.h"
+#include "mozilla/mscom/ActivationContext.h"
 #include "mozilla/mscom/InterceptorLog.h"
 #include "mozilla/mscom/Registration.h"
+#include "mozilla/mscom/Utils.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/WindowsVersion.h"
 #include "ProxyWrappers.h"
 
 using namespace mozilla;
@@ -26,7 +30,6 @@ static StaticAutoPtr<RegisteredProxy> gRegCustomProxy;
 static StaticAutoPtr<RegisteredProxy> gRegProxy;
 static StaticAutoPtr<RegisteredProxy> gRegAccTlb;
 static StaticAutoPtr<RegisteredProxy> gRegMiscTlb;
-
 void
 a11y::PlatformInit()
 {
@@ -144,7 +147,8 @@ a11y::ProxyTextChangeEvent(ProxyAccessible* aText, const nsString& aStr,
   }
 
   static const bool useHandler =
-    Preferences::GetBool("accessibility.handler.enabled", false);
+    Preferences::GetBool("accessibility.handler.enabled", false) &&
+    IsHandlerRegistered();
 
   if (useHandler) {
     wrapper->DispatchTextChangeToHandler(aInsert, aStr, aStart, aLen);
@@ -175,4 +179,30 @@ a11y::ProxySelectionEvent(ProxyAccessible* aTarget, ProxyAccessible*, uint32_t a
 {
   AccessibleWrap* wrapper = WrapperFor(aTarget);
   AccessibleWrap::FireWinEvent(wrapper, aType);
+}
+
+bool
+a11y::IsHandlerRegistered()
+{
+  nsresult rv;
+  nsCOMPtr<nsIWindowsRegKey> regKey =
+    do_CreateInstance("@mozilla.org/windows-registry-key;1", &rv);
+  if (NS_FAILED(rv)) {
+    return false;
+  }
+
+  nsAutoString subKey;
+  subKey.AppendLiteral("CLSID\\");
+  nsAutoString iid;
+  GUIDToString(CLSID_AccessibleHandler, iid);
+  subKey.Append(iid);
+  subKey.AppendLiteral("\\InprocHandler32");
+
+  rv = regKey->Open(nsIWindowsRegKey::ROOT_KEY_CLASSES_ROOT, subKey,
+                    nsIWindowsRegKey::ACCESS_READ);
+  if (NS_FAILED(rv)) {
+    return false;
+  }
+
+  return true;
 }

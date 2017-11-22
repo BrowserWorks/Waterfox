@@ -27,13 +27,19 @@ const consoleApiCommands = [
 let consoleApi = new Map(consoleApiCommands.map(
   cmd => [cmd, {keys: [cmd], code: cmd}]));
 
-consoleApi.set("console.map('mymap')", {
-  keys: ["console.map('mymap')"],
+consoleApi.set("console.log('mymap')", {
+  keys: ["console.log('mymap')"],
   code: `
 var map = new Map();
 map.set("key1", "value1");
 map.set("key2", "value2");
 console.log('mymap', map);
+`});
+
+consoleApi.set("console.log('myset')", {
+  keys: ["console.log('myset')"],
+  code: `
+console.log('myset', new Set(["a", "b"]));
 `});
 
 consoleApi.set("console.trace()", {
@@ -121,6 +127,11 @@ console.groupCollapsed(
 console.groupEnd();
 `});
 
+consoleApi.set("console.dir({C, M, Y, K})", {
+  keys: ["console.dir({C, M, Y, K})"],
+  code: "console.dir({cyan: 'C', magenta: 'M', yellow: 'Y', black: 'K'});"
+});
+
 // CSS messages
 const cssMessage = new Map();
 
@@ -140,7 +151,8 @@ p {
 const evaluationResultCommands = [
   "new Date(0)",
   "asdf()",
-  "1 + @"
+  "1 + @",
+  "inspect({a: 1})"
 ];
 
 let evaluationResult = new Map(evaluationResultCommands.map(cmd => [cmd, cmd]));

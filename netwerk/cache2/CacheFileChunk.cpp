@@ -64,14 +64,14 @@ CacheFileChunkBuffer::FillInvalidRanges(CacheFileChunkBuffer *aOther,
     MOZ_RELEASE_ASSERT(invalidOffset <= validOffset);
     invalidLength = validOffset - invalidOffset;
     if (invalidLength > 0) {
-      MOZ_RELEASE_ASSERT(invalidOffset + invalidLength <= aOther->mBufSize);
+      MOZ_RELEASE_ASSERT(invalidOffset + invalidLength <= aOther->mDataSize);
       memcpy(mBuf + invalidOffset, aOther->mBuf + invalidOffset, invalidLength);
     }
     invalidOffset = validOffset + validLength;
   }
 
-  if (invalidOffset < aOther->mBufSize) {
-    invalidLength = aOther->mBufSize - invalidOffset;
+  if (invalidOffset < aOther->mDataSize) {
+    invalidLength = aOther->mDataSize - invalidOffset;
     memcpy(mBuf + invalidOffset, aOther->mBuf + invalidOffset, invalidLength);
   }
 
@@ -246,9 +246,10 @@ CacheFileChunkWriteHandle::UpdateDataSize(uint32_t aOffset, uint32_t aLen)
 
 class NotifyUpdateListenerEvent : public Runnable {
 public:
-  NotifyUpdateListenerEvent(CacheFileChunkListener *aCallback,
-                            CacheFileChunk *aChunk)
-    : mCallback(aCallback)
+  NotifyUpdateListenerEvent(CacheFileChunkListener* aCallback,
+                            CacheFileChunk* aChunk)
+    : Runnable("net::NotifyUpdateListenerEvent")
+    , mCallback(aCallback)
     , mChunk(aChunk)
   {
     LOG(("NotifyUpdateListenerEvent::NotifyUpdateListenerEvent() [this=%p]",
@@ -283,7 +284,8 @@ CacheFileChunk::DispatchRelease()
     return false;
   }
 
-  NS_DispatchToMainThread(NewNonOwningRunnableMethod(this, &CacheFileChunk::Release));
+  NS_DispatchToMainThread(NewNonOwningRunnableMethod(
+    "net::CacheFileChunk::Release", this, &CacheFileChunk::Release));
 
   return true;
 }
@@ -487,7 +489,7 @@ CacheFileChunk::WaitForUpdate(CacheFileChunkListener *aCallback)
   if (!item->mTarget) {
     LOG(("CacheFileChunk::WaitForUpdate() - Cannot get Cache I/O thread! Using "
          "main thread for callback."));
-    item->mTarget = do_GetMainThread();
+    item->mTarget = GetMainThreadEventTarget();
   }
   item->mCallback = aCallback;
   MOZ_ASSERT(item->mTarget);
@@ -565,7 +567,6 @@ CacheFileChunk::Index() const
 CacheHash::Hash16_t
 CacheFileChunk::Hash() const
 {
-  MOZ_ASSERT(!mListener);
   MOZ_ASSERT(IsReady());
 
   return CacheHash::Hash16(mBuf->Buf(), mBuf->DataSize());

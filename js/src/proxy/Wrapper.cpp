@@ -30,13 +30,16 @@ Wrapper::finalizeInBackground(const Value& priv) const
     /*
      * Make the 'background-finalized-ness' of the wrapper the same as the
      * wrapped object, to allow transplanting between them.
-     *
-     * If the wrapped object is in the nursery then we know it doesn't have a
-     * finalizer, and so background finalization is ok.
      */
-    if (IsInsideNursery(&priv.toObject()))
-        return true;
-    return IsBackgroundFinalized(priv.toObject().asTenured().getAllocKind());
+    JSObject* wrapped = MaybeForwarded(&priv.toObject());
+    gc::AllocKind wrappedKind;
+    if (IsInsideNursery(wrapped)) {
+        JSRuntime *rt = wrapped->runtimeFromActiveCooperatingThread();
+        wrappedKind = wrapped->allocKindForTenure(rt->gc.nursery());
+    } else {
+        wrappedKind = wrapped->asTenured().getAllocKind();
+    }
+    return IsBackgroundFinalized(wrappedKind);
 }
 
 bool
@@ -73,13 +76,13 @@ Wrapper::delete_(JSContext* cx, HandleObject proxy, HandleId id, ObjectOpResult&
     return DeleteProperty(cx, target, id, result);
 }
 
-bool
-Wrapper::enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const
+JSObject*
+Wrapper::enumerate(JSContext* cx, HandleObject proxy) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
     MOZ_ASSERT(!hasPrototype()); // Should never be called if there's a prototype.
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return GetIterator(cx, target, 0, objp);
+    return GetIterator(cx, target, 0);
 }
 
 bool
@@ -261,18 +264,18 @@ Wrapper::className(JSContext* cx, HandleObject proxy) const
 }
 
 JSString*
-Wrapper::fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const
+Wrapper::fun_toString(JSContext* cx, HandleObject proxy, bool isToSource) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, GET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return fun_toStringHelper(cx, target, indent);
+    return fun_toStringHelper(cx, target, isToSource);
 }
 
-bool
-Wrapper::regexp_toShared(JSContext* cx, HandleObject proxy, MutableHandleRegExpShared shared) const
+RegExpShared*
+Wrapper::regexp_toShared(JSContext* cx, HandleObject proxy) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return RegExpToShared(cx, target, shared);
+    return RegExpToShared(cx, target);
 }
 
 bool
@@ -338,9 +341,9 @@ Wrapper::wrappedObject(JSObject* wrapper)
     // of black wrappers black but while it is in progress we can observe gray
     // targets. Expose rather than returning a gray object in this case.
     if (target) {
-        if (wrapper->isMarked(gc::BLACK) && !wrapper->isMarked(gc::GRAY))
+        if (wrapper->isMarkedBlack())
             MOZ_ASSERT(JS::ObjectIsNotGray(target));
-        if (!wrapper->isMarked(gc::GRAY))
+        if (!wrapper->isMarkedGray())
             JS::ExposeObjectToActiveJS(target);
     }
 

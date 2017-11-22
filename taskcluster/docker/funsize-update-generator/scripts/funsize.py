@@ -13,7 +13,9 @@ import requests
 import sh
 
 import redo
-from mardor.marfile import MarFile
+from mardor.reader import MarReader
+from mardor.signing import get_keysize
+
 
 log = logging.getLogger(__name__)
 ALLOWED_URL_PREFIXES = [
@@ -30,10 +32,21 @@ DEFAULT_FILENAME_TEMPLATE = "{appName}-{branch}-{version}-{platform}-" \
                             "{locale}-{from_buildid}-{to_buildid}.partial.mar"
 
 
-def verify_signature(mar, signature):
+def verify_signature(mar, certs):
     log.info("Checking %s signature", mar)
-    m = MarFile(mar, signature_versions=[(1, signature)])
-    m.verify_signatures()
+    with open(mar, 'rb') as mar_fh:
+        m = MarReader(mar_fh)
+        m.verify(verify_key=certs.get(m.signature_type))
+
+
+def is_lzma_compressed_mar(mar):
+    log.info("Checking %s for lzma compression", mar)
+    result = MarReader(open(mar, 'rb')).compression_type == 'xz'
+    if result:
+        log.info("%s is lzma compressed", mar)
+    else:
+        log.info("%s is not lzma compressed", mar)
+    return result
 
 
 @redo.retriable()
@@ -64,7 +77,12 @@ def unpack(work_env, mar, dest_dir):
     unwrap_cmd = sh.Command(os.path.join(work_env.workdir,
                                          "unwrap_full_update.pl"))
     log.debug("Unwrapping %s", mar)
-    out = unwrap_cmd(mar, _cwd=dest_dir, _env=work_env.env, _timeout=240,
+    env = work_env.env
+    if not is_lzma_compressed_mar(mar):
+        env['MAR_OLD_FORMAT'] = '1'
+    elif 'MAR_OLD_FORMAT' in env:
+        del env['MAR_OLD_FORMAT']
+    out = unwrap_cmd(mar, _cwd=dest_dir, _env=env, _timeout=240,
                      _err_to_out=True)
     if out:
         log.debug(out)
@@ -91,11 +109,15 @@ def get_option(directory, filename, section, option):
 
 
 def generate_partial(work_env, from_dir, to_dir, dest_mar, channel_ids,
-                     version):
+                     version, use_old_format):
     log.debug("Generating partial %s", dest_mar)
     env = work_env.env
     env["MOZ_PRODUCT_VERSION"] = version
     env["MOZ_CHANNEL_ID"] = channel_ids
+    if use_old_format:
+        env['MAR_OLD_FORMAT'] = '1'
+    elif 'MAR_OLD_FORMAT' in env:
+        del env['MAR_OLD_FORMAT']
     make_incremental_update = os.path.join(work_env.workdir,
                                            "make_incremental_update.sh")
     out = sh.bash(make_incremental_update, dest_mar, from_dir, to_dir,
@@ -166,7 +188,8 @@ def verify_allowed_url(mar):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifacts-dir", required=True)
-    parser.add_argument("--signing-cert", required=True)
+    parser.add_argument("--sha1-signing-cert", required=True)
+    parser.add_argument("--sha384-signing-cert", required=True)
     parser.add_argument("--task-definition", required=True,
                         type=argparse.FileType('r'))
     parser.add_argument("--filename-template",
@@ -182,6 +205,14 @@ def main():
                         level=args.log_level)
     task = json.load(args.task_definition)
     # TODO: verify task["extra"]["funsize"]["partials"] with jsonschema
+
+    signing_certs = {
+        'sha1': open(args.sha1_signing_cert, 'rb').read(),
+        'sha384': open(args.sha384_signing_cert, 'rb').read(),
+    }
+
+    assert(get_keysize(signing_certs['sha1']) == 2048)
+    assert(get_keysize(signing_certs['sha384']) == 4096)
 
     if args.no_freshclam:
         log.info("Skipping freshclam")
@@ -202,15 +233,25 @@ def main():
         # TODO: run setup once
         work_env.setup()
         complete_mars = {}
+        use_old_format = False
         for mar_type, f in (("from", e["from_mar"]), ("to", e["to_mar"])):
             dest = os.path.join(work_env.workdir, "{}.mar".format(mar_type))
             unpack_dir = os.path.join(work_env.workdir, mar_type)
             download(f, dest)
             if not os.getenv("MOZ_DISABLE_MAR_CERT_VERIFICATION"):
-                verify_signature(dest, args.signing_cert)
+                verify_signature(dest, signing_certs)
             complete_mars["%s_size" % mar_type] = os.path.getsize(dest)
             complete_mars["%s_hash" % mar_type] = get_hash(dest)
             unpack(work_env, dest, unpack_dir)
+            if mar_type == 'from':
+                version = get_option(unpack_dir, filename="application.ini",
+                                     section="App", option="Version")
+                major = int(version.split(".")[0])
+                # The updater for versions less than 56.0 requires BZ2
+                # compressed MAR files
+                if major < 56:
+                    use_old_format = True
+                    log.info("Forcing BZ2 compression for %s", f)
             log.info("AV-scanning %s ...", unpack_dir)
             sh.clamscan("-r", unpack_dir, _timeout=600, _err_to_out=True)
             log.info("Done.")
@@ -259,7 +300,8 @@ def main():
                                            revision=mar_data["revision"])
         generate_partial(work_env, from_path, path, dest_mar,
                          mar_data["ACCEPTED_MAR_CHANNEL_IDS"],
-                         mar_data["version"])
+                         mar_data["version"],
+                         use_old_format)
         mar_data["size"] = os.path.getsize(dest_mar)
         mar_data["hash"] = get_hash(dest_mar)
 

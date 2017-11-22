@@ -446,9 +446,10 @@ DataTransferItem::GetAsString(FunctionStringCallback* aCallback,
   class GASRunnable final : public Runnable
   {
   public:
-    GASRunnable(FunctionStringCallback* aCallback,
-                const nsAString& aStringData)
-      : mCallback(aCallback), mStringData(aStringData)
+    GASRunnable(FunctionStringCallback* aCallback, const nsAString& aStringData)
+      : mozilla::Runnable("GASRunnable")
+      , mCallback(aCallback)
+      , mStringData(aStringData)
     {}
 
     NS_IMETHOD Run() override
@@ -477,7 +478,7 @@ DataTransferItem::GetAsString(FunctionStringCallback* aCallback,
     }
   }
   if (global) {
-    rv = global->Dispatch("GASRunnable", TaskCategory::Other, runnable.forget());
+    rv = global->Dispatch(TaskCategory::Other, runnable.forget());
   } else {
     rv = NS_DispatchToMainThread(runnable);
   }

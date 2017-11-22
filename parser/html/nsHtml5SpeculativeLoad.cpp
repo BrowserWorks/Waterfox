@@ -6,9 +6,12 @@
 #include "nsHtml5TreeOpExecutor.h"
 
 nsHtml5SpeculativeLoad::nsHtml5SpeculativeLoad()
+  :
 #ifdef DEBUG
- : mOpCode(eSpeculativeLoadUninitialized)
+  mOpCode(eSpeculativeLoadUninitialized),
 #endif
+  mIsAsync(false),
+  mIsDefer(false)
 {
   MOZ_COUNT_CTOR(nsHtml5SpeculativeLoad);
 }
@@ -48,11 +51,11 @@ nsHtml5SpeculativeLoad::Perform(nsHtml5TreeOpExecutor* aExecutor)
       break;
     case eSpeculativeLoadScript:
       aExecutor->PreloadScript(mUrl, mCharset, mTypeOrCharsetSourceOrDocumentMode,
-                               mCrossOrigin, mIntegrity, false);
+                               mCrossOrigin, mIntegrity, false, mIsAsync, mIsDefer);
       break;
     case eSpeculativeLoadScriptFromHead:
       aExecutor->PreloadScript(mUrl, mCharset, mTypeOrCharsetSourceOrDocumentMode,
-                               mCrossOrigin, mIntegrity, true);
+                               mCrossOrigin, mIntegrity, true, mIsAsync, mIsDefer);
       break;
     case eSpeculativeLoadStyle:
       aExecutor->PreloadStyle(mUrl, mCharset, mCrossOrigin, mIntegrity);
@@ -66,7 +69,7 @@ nsHtml5SpeculativeLoad::Perform(nsHtml5TreeOpExecutor* aExecutor)
         NS_ASSERTION(mTypeOrCharsetSourceOrDocumentMode.Length() == 1,
             "Unexpected charset source string");
         int32_t intSource = (int32_t)mTypeOrCharsetSourceOrDocumentMode.First();
-        aExecutor->SetDocumentCharsetAndSource(narrowName,
+        aExecutor->SetDocumentCharsetAndSource(Encoding::ForName(narrowName),
                                                intSource);
       }
       break;

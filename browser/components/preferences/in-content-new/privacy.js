@@ -7,8 +7,6 @@
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/PluralForm.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
-                                  "resource://gre/modules/ContextualIdentityService.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
@@ -61,8 +59,9 @@ var gPrivacyPane = {
 
     this.trackingProtectionReadPrefs();
 
-    document.getElementById("trackingprotectionbox").hidden = false;
-    document.getElementById("trackingprotectionpbmbox").hidden = true;
+    document.getElementById("trackingProtectionExceptions").hidden = false;
+    document.getElementById("trackingProtectionBox").hidden = false;
+    document.getElementById("trackingProtectionPBMBox").hidden = true;
   },
 
   /**
@@ -84,63 +83,6 @@ var gPrivacyPane = {
   },
 
   /**
-   * Show the Containers UI depending on the privacy.userContext.ui.enabled pref.
-   */
-  _initBrowserContainers() {
-    if (!Services.prefs.getBoolPref("privacy.userContext.ui.enabled")) {
-      // The browserContainersGroup element has its own internal padding that
-      // is visible even if the browserContainersbox is visible, so hide the whole
-      // groupbox if the feature is disabled to prevent a gap in the preferences.
-      document.getElementById("browserContainersGroup").setAttribute("data-hidden-from-search", "true");
-      return;
-    }
-
-    let link = document.getElementById("browserContainersLearnMore");
-    link.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "containers";
-
-    document.getElementById("browserContainersbox").hidden = false;
-
-    document.getElementById("browserContainersCheckbox").checked =
-      Services.prefs.getBoolPref("privacy.userContext.enabled");
-  },
-
-  _checkBrowserContainers(event) {
-    let checkbox = document.getElementById("browserContainersCheckbox");
-    if (checkbox.checked) {
-      Services.prefs.setBoolPref("privacy.userContext.enabled", true);
-      return;
-    }
-
-    let count = ContextualIdentityService.countContainerTabs();
-    if (count == 0) {
-      Services.prefs.setBoolPref("privacy.userContext.enabled", false);
-      return;
-    }
-
-    let bundlePreferences = document.getElementById("bundlePreferences");
-
-    let title = bundlePreferences.getString("disableContainersAlertTitle");
-    let message = PluralForm.get(count, bundlePreferences.getString("disableContainersMsg"))
-                            .replace("#S", count)
-    let okButton = PluralForm.get(count, bundlePreferences.getString("disableContainersOkButton"))
-                             .replace("#S", count)
-    let cancelButton = bundlePreferences.getString("disableContainersButton2");
-
-    let buttonFlags = (Ci.nsIPrompt.BUTTON_TITLE_IS_STRING * Ci.nsIPrompt.BUTTON_POS_0) +
-                      (Ci.nsIPrompt.BUTTON_TITLE_IS_STRING * Ci.nsIPrompt.BUTTON_POS_1);
-
-    let rv = Services.prompt.confirmEx(window, title, message, buttonFlags,
-                                       okButton, cancelButton, null, null, {});
-    if (rv == 0) {
-      ContextualIdentityService.closeContainerTabs();
-      Services.prefs.setBoolPref("privacy.userContext.enabled", false);
-      return;
-    }
-
-    checkbox.checked = true;
-  },
-
-  /**
    * Sets up the UI for the number of days of history to keep, and updates the
    * label of the "Clear Now..." button.
    */
@@ -148,13 +90,6 @@ var gPrivacyPane = {
     function setEventListener(aId, aEventType, aCallback) {
       document.getElementById(aId)
               .addEventListener(aEventType, aCallback.bind(gPrivacyPane));
-    }
-
-    function appendSearchKeywords(aId, keywords) {
-      let element = document.getElementById(aId);
-      let searchKeywords = element.getAttribute("searchkeywords");
-      searchKeywords && keywords.push(searchKeywords);
-      element.setAttribute("searchkeywords", keywords.join(" "));
     }
 
     this._updateSanitizeSettingsButton();
@@ -165,7 +100,6 @@ var gPrivacyPane = {
     this._initTrackingProtection();
     this._initTrackingProtectionPBM();
     this._initAutocomplete();
-    this._initBrowserContainers();
 
     setEventListener("privacy.sanitize.sanitizeOnShutdown", "change",
                      gPrivacyPane._updateSanitizeSettingsButton);
@@ -189,10 +123,6 @@ var gPrivacyPane = {
       gPrivacyPane.clearPrivateDataNow(true);
       return false;
     });
-    setEventListener("doNotTrackSettings", "click", function() {
-      gPrivacyPane.showDoNotTrackSettings();
-      return false;
-    });
     setEventListener("privateBrowsingAutoStart", "command",
                      gPrivacyPane.updateAutostart);
     setEventListener("cookieExceptions", "command",
@@ -207,12 +137,6 @@ var gPrivacyPane = {
                      gPrivacyPane.showTrackingProtectionExceptions);
     setEventListener("changeBlockList", "command",
                      gPrivacyPane.showBlockLists);
-    setEventListener("changeBlockListPBM", "command",
-                     gPrivacyPane.showBlockLists);
-    setEventListener("browserContainersCheckbox", "command",
-                     gPrivacyPane._checkBrowserContainers);
-    setEventListener("browserContainersSettings", "command",
-                     gPrivacyPane.showContainerSettings);
     setEventListener("passwordExceptions", "command",
       gPrivacyPane.showPasswordExceptions);
     setEventListener("useMasterPassword", "command",
@@ -227,8 +151,6 @@ var gPrivacyPane = {
                      gPrivacyPane.showCertificates);
     setEventListener("viewSecurityDevicesButton", "command",
                      gPrivacyPane.showSecurityDevices);
-    setEventListener("connectionSettings", "command",
-                     gPrivacyPane.showConnections);
     setEventListener("clearCacheButton", "command",
                      gPrivacyPane.clearCache);
 
@@ -274,7 +196,6 @@ var gPrivacyPane = {
       document.getElementById("offlineAppsList")
               .style.height = bundlePrefs.getString("offlineAppsList.height");
       let offlineGroup = document.getElementById("offlineGroup");
-      offlineGroup.hidden = false;
       offlineGroup.removeAttribute("data-hidden-from-search");
     }
 
@@ -295,7 +216,6 @@ var gPrivacyPane = {
       let url = Services.urlFormatter.formatURLPref("app.support.baseURL") + "storage-permissions";
       document.getElementById("siteDataLearnMoreLink").setAttribute("href", url);
       let siteDataGroup = document.getElementById("siteDataGroup");
-      siteDataGroup.hidden = false;
       siteDataGroup.removeAttribute("data-hidden-from-search");
     }
 
@@ -317,38 +237,43 @@ var gPrivacyPane = {
       document.getElementById("drmGroup").setAttribute("style", "display: none !important");
     }
 
+    this.initDataCollection();
     if (AppConstants.MOZ_CRASHREPORTER) {
       this.initSubmitCrashes();
     }
-    this.initTelemetry();
-    if (AppConstants.MOZ_TELEMETRY_REPORTING) {
-      this.initSubmitHealthReport();
-      setEventListener("submitHealthReportBox", "command",
-                       gPrivacyPane.updateSubmitHealthReport);
-    }
+    this.initSubmitHealthReport();
+    setEventListener("submitHealthReportBox", "command",
+                     gPrivacyPane.updateSubmitHealthReport);
 
-    // Append search keywords into the elements could open subdialogs.
     let bundlePrefs = document.getElementById("bundlePreferences");
     let signonBundle = document.getElementById("signonBundle");
     let pkiBundle = document.getElementById("pkiBundle");
-    let browserBundle = document.getElementById("browserBundle");
     appendSearchKeywords("passwordExceptions", [
       bundlePrefs.getString("savedLoginsExceptions_title"),
-      bundlePrefs.getString("savedLoginsExceptions_desc"),
+      bundlePrefs.getString("savedLoginsExceptions_desc2"),
     ]);
     appendSearchKeywords("showPasswords", [
       signonBundle.getString("loginsDescriptionAll"),
     ]);
+    appendSearchKeywords("cookieExceptions", [
+      bundlePrefs.getString("cookiepermissionstext")
+    ]);
+    appendSearchKeywords("showCookiesButton", [
+      bundlePrefs.getString("cookiesAll"),
+      bundlePrefs.getString("removeAllCookies.label"),
+      bundlePrefs.getString("removeAllShownCookies.label"),
+      bundlePrefs.getString("removeSelectedCookies.label"),
+    ]);
     appendSearchKeywords("trackingProtectionExceptions", [
       bundlePrefs.getString("trackingprotectionpermissionstitle"),
-      bundlePrefs.getString("trackingprotectionpermissionstext"),
+      bundlePrefs.getString("trackingprotectionpermissionstext2"),
     ]);
     appendSearchKeywords("changeBlockList", [
       bundlePrefs.getString("blockliststitle"),
       bundlePrefs.getString("blockliststext"),
     ]);
     appendSearchKeywords("popupPolicyButton", [
-      bundlePrefs.getString("popuppermissionstitle"),
+      bundlePrefs.getString("popuppermissionstitle2"),
       bundlePrefs.getString("popuppermissionstext"),
     ]);
     appendSearchKeywords("notificationsPolicyButton", [
@@ -356,23 +281,22 @@ var gPrivacyPane = {
       bundlePrefs.getString("notificationspermissionstext4"),
     ]);
     appendSearchKeywords("addonExceptions", [
-      bundlePrefs.getString("addons_permissions_title"),
+      bundlePrefs.getString("addons_permissions_title2"),
       bundlePrefs.getString("addonspermissionstext"),
     ]);
     appendSearchKeywords("viewSecurityDevicesButton", [
       pkiBundle.getString("enable_fips"),
     ]);
-    appendSearchKeywords("browserContainersSettings", [
-      browserBundle.getString("userContextPersonal.label"),
-      browserBundle.getString("userContextWork.label"),
-      browserBundle.getString("userContextBanking.label"),
-      browserBundle.getString("userContextShopping.label"),
-    ]);
     appendSearchKeywords("siteDataSettings", [
-      bundlePrefs.getString("siteDataSettings.description"),
+      bundlePrefs.getString("siteDataSettings2.description"),
       bundlePrefs.getString("removeAllCookies.label"),
       bundlePrefs.getString("removeSelectedCookies.label"),
     ]);
+
+    // Notify observers that the UI is now ready
+    Components.classes["@mozilla.org/observer-service;1"]
+              .getService(Components.interfaces.nsIObserverService)
+              .notifyObservers(window, "privacy-pane-loaded");
   },
 
   // TRACKING PROTECTION MODE
@@ -659,17 +583,10 @@ var gPrivacyPane = {
       permissionType: "trackingprotection",
       hideStatusColumn: true,
       windowTitle: bundlePreferences.getString("trackingprotectionpermissionstitle"),
-      introText: bundlePreferences.getString("trackingprotectionpermissionstext"),
+      introText: bundlePreferences.getString("trackingprotectionpermissionstext2"),
     };
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
                     null, params);
-  },
-
-  /**
-   * Displays container panel for customising and adding containers.
-   */
-  showContainerSettings() {
-    gotoPref("containers");
   },
 
   /**
@@ -922,7 +839,7 @@ var gPrivacyPane = {
     var bundlePreferences = document.getElementById("bundlePreferences");
     var params = { blockVisible: false, sessionVisible: false, allowVisible: true,
                    prefilledHost: "", permissionType: "popup" }
-    params.windowTitle = bundlePreferences.getString("popuppermissionstitle");
+    params.windowTitle = bundlePreferences.getString("popuppermissionstitle2");
     params.introText = bundlePreferences.getString("popuppermissionstext");
 
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
@@ -967,7 +884,7 @@ var gPrivacyPane = {
       prefilledHost: "",
       permissionType: "login-saving",
       windowTitle: bundlePrefs.getString("savedLoginsExceptions_title"),
-      introText: bundlePrefs.getString("savedLoginsExceptions_desc")
+      introText: bundlePrefs.getString("savedLoginsExceptions_desc2")
     };
 
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
@@ -1103,24 +1020,32 @@ var gPrivacyPane = {
       safeBrowsingMalwarePref.value = enableSafeBrowsing.checked;
 
       if (enableSafeBrowsing.checked) {
-        blockDownloads.removeAttribute("disabled");
-        if (blockDownloads.checked) {
+        if (blockDownloads) {
+          blockDownloads.removeAttribute("disabled");
+          if (blockDownloads.checked) {
+            blockUncommonUnwanted.removeAttribute("disabled");
+          }
+        } else {
           blockUncommonUnwanted.removeAttribute("disabled");
         }
       } else {
-        blockDownloads.setAttribute("disabled", "true");
+        if (blockDownloads) {
+          blockDownloads.setAttribute("disabled", "true");
+        }
         blockUncommonUnwanted.setAttribute("disabled", "true");
       }
     });
 
-    blockDownloads.addEventListener("command", function() {
-      blockDownloadsPref.value = blockDownloads.checked;
-      if (blockDownloads.checked) {
-        blockUncommonUnwanted.removeAttribute("disabled");
-      } else {
-        blockUncommonUnwanted.setAttribute("disabled", "true");
-      }
-    });
+    if (blockDownloads) {
+      blockDownloads.addEventListener("command", function() {
+        blockDownloadsPref.value = blockDownloads.checked;
+        if (blockDownloads.checked) {
+          blockUncommonUnwanted.removeAttribute("disabled");
+        } else {
+          blockUncommonUnwanted.setAttribute("disabled", "true");
+        }
+      });
+    }
 
     blockUncommonUnwanted.addEventListener("command", function() {
       blockUnwantedPref.value = blockUncommonUnwanted.checked;
@@ -1128,10 +1053,17 @@ var gPrivacyPane = {
 
       let malware = malwareTable.value
         .split(",")
-        .filter(x => x !== "goog-unwanted-shavar" && x !== "test-unwanted-simple");
+        .filter(x => x !== "goog-unwanted-proto" &&
+                     x !== "goog-unwanted-shavar" &&
+                     x !== "test-unwanted-simple");
 
       if (blockUncommonUnwanted.checked) {
-        malware.push("goog-unwanted-shavar");
+        if (malware.indexOf("goog-malware-shavar") != -1) {
+          malware.push("goog-unwanted-shavar");
+        } else {
+          malware.push("goog-unwanted-proto");
+        }
+
         malware.push("test-unwanted-simple");
       }
 
@@ -1145,13 +1077,18 @@ var gPrivacyPane = {
 
     enableSafeBrowsing.checked = safeBrowsingPhishingPref.value && safeBrowsingMalwarePref.value;
     if (!enableSafeBrowsing.checked) {
-      blockDownloads.setAttribute("disabled", "true");
+      if (blockDownloads) {
+        blockDownloads.setAttribute("disabled", "true");
+      }
+
       blockUncommonUnwanted.setAttribute("disabled", "true");
     }
 
-    blockDownloads.checked = blockDownloadsPref.value;
-    if (!blockDownloadsPref.value) {
-      blockUncommonUnwanted.setAttribute("disabled", "true");
+    if (blockDownloads) {
+      blockDownloads.checked = blockDownloadsPref.value;
+      if (!blockDownloadsPref.value) {
+        blockUncommonUnwanted.setAttribute("disabled", "true");
+      }
     }
 
     blockUncommonUnwanted.checked = blockUnwantedPref.value && blockUncommonPref.value;
@@ -1165,7 +1102,7 @@ var gPrivacyPane = {
 
     var params = this._addonParams;
     if (!params.windowTitle || !params.introText) {
-      params.windowTitle = bundlePrefs.getString("addons_permissions_title");
+      params.windowTitle = bundlePrefs.getString("addons_permissions_title2");
       params.introText = bundlePrefs.getString("addonspermissionstext");
     }
 
@@ -1241,14 +1178,6 @@ var gPrivacyPane = {
     gSubDialog.open("chrome://pippki/content/device_manager.xul");
   },
 
-  // NETWORK
-  /**
-   * Displays a dialog in which proxy settings may be changed.
-   */
-  showConnections() {
-    gSubDialog.open("chrome://browser/content/preferences/connection.xul");
-  },
-
   /**
    * Clears the cache.
    */
@@ -1322,7 +1251,7 @@ var gPrivacyPane = {
         if (!prefStrBundle.getFormattedString) {
           return;
         }
-        actualSizeLabel.value = prefStrBundle.getFormattedString("actualDiskCacheSize", size);
+        actualSizeLabel.textContent = prefStrBundle.getFormattedString("actualDiskCacheSize", size);
       },
 
       QueryInterface: XPCOMUtils.generateQI([
@@ -1331,7 +1260,7 @@ var gPrivacyPane = {
       ])
     };
 
-    actualSizeLabel.value = prefStrBundle.getString("actualDiskCacheSizeCalculated");
+    actualSizeLabel.textContent = prefStrBundle.getString("actualDiskCacheSizeCalculated");
 
     try {
       var cacheService =
@@ -1403,20 +1332,14 @@ var gPrivacyPane = {
     }
   },
 
+  initDataCollection() {
+    this._setupLearnMoreLink("toolkit.datacollection.infoURL",
+                             "dataCollectionPrivacyNotice");
+  },
+
   initSubmitCrashes() {
     this._setupLearnMoreLink("toolkit.crashreporter.infoURL",
                              "crashReporterLearnMore");
-  },
-
-  /**
-   * The preference/checkbox is configured in XUL.
-   *
-   * In all cases, set up the Learn More link sanely.
-   */
-  initTelemetry() {
-    if (AppConstants.MOZ_TELEMETRY_REPORTING) {
-      this._setupLearnMoreLink("toolkit.telemetry.infoURL", "telemetryLearnMore");
-    }
   },
 
   /**
@@ -1435,53 +1358,32 @@ var gPrivacyPane = {
   },
 
   /**
-   * Set the status of the telemetry controls based on the input argument.
-   * @param {Boolean} aEnabled False disables the controls, true enables them.
-   */
-  setTelemetrySectionEnabled(aEnabled) {
-    if (!AppConstants.MOZ_TELEMETRY_REPORTING) {
-      return;
-    }
-    // If FHR is disabled, additional data sharing should be disabled as well.
-    let disabled = !aEnabled;
-    document.getElementById("submitTelemetryBox").disabled = disabled;
-    if (disabled) {
-      // If we disable FHR, untick the telemetry checkbox.
-      Services.prefs.setBoolPref("toolkit.telemetry.enabled", false);
-    }
-    document.getElementById("telemetryDataDesc").disabled = disabled;
-  },
-
-  /**
    * Initialize the health report service reference and checkbox.
    */
   initSubmitHealthReport() {
-    if (!AppConstants.MOZ_TELEMETRY_REPORTING) {
-      return;
-    }
     this._setupLearnMoreLink("datareporting.healthreport.infoURL", "FHRLearnMore");
 
     let checkbox = document.getElementById("submitHealthReportBox");
 
-    if (Services.prefs.prefIsLocked(PREF_UPLOAD_ENABLED)) {
+    // Telemetry is only sending data if MOZ_TELEMETRY_REPORTING is defined.
+    // We still want to display the preferences panel if that's not the case, but
+    // we want it to be disabled and unchecked.
+    if (Services.prefs.prefIsLocked(PREF_UPLOAD_ENABLED) ||
+        !AppConstants.MOZ_TELEMETRY_REPORTING) {
       checkbox.setAttribute("disabled", "true");
       return;
     }
 
-    checkbox.checked = Services.prefs.getBoolPref(PREF_UPLOAD_ENABLED);
-    this.setTelemetrySectionEnabled(checkbox.checked);
+    checkbox.checked = Services.prefs.getBoolPref(PREF_UPLOAD_ENABLED) &&
+                       AppConstants.MOZ_TELEMETRY_REPORTING;
   },
 
   /**
    * Update the health report preference with state from checkbox.
    */
   updateSubmitHealthReport() {
-    if (!AppConstants.MOZ_TELEMETRY_REPORTING) {
-      return;
-    }
     let checkbox = document.getElementById("submitHealthReportBox");
     Services.prefs.setBoolPref(PREF_UPLOAD_ENABLED, checkbox.checked);
-    this.setTelemetrySectionEnabled(checkbox.checked);
   },
 
   // Methods for Offline Apps (AppCache)

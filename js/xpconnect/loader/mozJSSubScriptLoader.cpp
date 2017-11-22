@@ -35,6 +35,7 @@
 #include "nsContentUtils.h"
 #include "nsStringGlue.h"
 #include "nsCycleCollectionParticipant.h"
+#include "GeckoProfiler.h"
 
 using namespace mozilla::scache;
 using namespace JS;
@@ -203,19 +204,6 @@ EvalScript(JSContext* cx,
         cachePath.AppendPrintf("jssubloader/%d", version);
         PathifyURI(uri, cachePath);
 
-        nsCOMPtr<nsIScriptSecurityManager> secman =
-            do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID);
-        if (!secman) {
-            return false;
-        }
-
-        nsCOMPtr<nsIPrincipal> principal;
-        nsresult rv = secman->GetSystemPrincipal(getter_AddRefs(principal));
-        if (NS_FAILED(rv) || !principal) {
-            ReportError(cx, LOAD_ERROR_NOPRINCIPALS, uri);
-            return false;
-        }
-
         nsCString uriStr;
         if (preloadCache && NS_SUCCEEDED(uri->GetSpec(uriStr))) {
             // Note that, when called during startup, this will keep the
@@ -243,8 +231,7 @@ EvalScript(JSContext* cx,
 
         if (startupCache) {
             JSAutoCompartment ac(cx, script);
-            WriteCachedScript(StartupCache::GetSingleton(),
-                              cachePath, cx, principal, script);
+            WriteCachedScript(StartupCache::GetSingleton(), cachePath, cx, script);
         }
     }
 
@@ -571,19 +558,6 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
                                                  MutableHandleValue retval)
 {
     nsresult rv = NS_OK;
-
-    /* set the system principal if it's not here already */
-    if (!mSystemPrincipal) {
-        nsCOMPtr<nsIScriptSecurityManager> secman =
-            do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID);
-        if (!secman)
-            return NS_OK;
-
-        rv = secman->GetSystemPrincipal(getter_AddRefs(mSystemPrincipal));
-        if (NS_FAILED(rv) || !mSystemPrincipal)
-            return rv;
-    }
-
     RootedObject targetObj(cx);
     if (options.target) {
         targetObj = options.target;
@@ -593,16 +567,9 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
         MOZ_ASSERT(JS_IsGlobalObject(targetObj));
     }
 
-    // Remember an object out of the calling compartment so that we
-    // can properly wrap the result later.
-    nsCOMPtr<nsIPrincipal> principal = mSystemPrincipal;
-    RootedObject result_obj(cx, targetObj);
     targetObj = JS_FindCompilationScope(cx, targetObj);
     if (!targetObj)
         return NS_ERROR_FAILURE;
-
-    if (targetObj != result_obj)
-        principal = GetObjectPrincipal(targetObj);
 
     /* load up the url.  From here on, failures are reflected as ``custom''
      * js exceptions */
@@ -619,19 +586,20 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
 
     JSAutoCompartment ac(cx, targetObj);
 
-    // Suppress caching if we're compiling as content.
-    bool ignoreCache = options.ignoreCache || principal != mSystemPrincipal;
-    StartupCache* cache = ignoreCache ? nullptr : StartupCache::GetSingleton();
-
     nsCOMPtr<nsIIOService> serv = do_GetService(NS_IOSERVICE_CONTRACTID);
     if (!serv) {
         ReportError(cx, NS_LITERAL_CSTRING(LOAD_ERROR_NOSERVICE));
         return NS_OK;
     }
 
+    const nsCString& asciiUrl = NS_LossyConvertUTF16toASCII(url);
+    AUTO_PROFILER_LABEL_DYNAMIC(
+        "mozJSSubScriptLoader::DoLoadSubScriptWithOptions", OTHER,
+        asciiUrl.get());
+
     // Make sure to explicitly create the URI, since we'll need the
     // canonicalized spec.
-    rv = NS_NewURI(getter_AddRefs(uri), NS_LossyConvertUTF16toASCII(url).get(), nullptr, serv);
+    rv = NS_NewURI(getter_AddRefs(uri), asciiUrl.get(), nullptr, serv);
     if (NS_FAILED(rv)) {
         ReportError(cx, NS_LITERAL_CSTRING(LOAD_ERROR_NOURI));
         return NS_OK;
@@ -649,7 +617,8 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
         return NS_OK;
     }
 
-    if (!scheme.EqualsLiteral("chrome") && !scheme.EqualsLiteral("app")) {
+    if (!scheme.EqualsLiteral("chrome") && !scheme.EqualsLiteral("app") &&
+        !scheme.EqualsLiteral("blob")) {
         // This might be a URI to a local file, though!
         nsCOMPtr<nsIURI> innerURI = NS_GetInnermostURI(uri);
         nsCOMPtr<nsIFileURL> fileURL = do_QueryInterface(innerURI);
@@ -667,6 +636,13 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
         uriStr = tmp;
     }
 
+    // Suppress caching if we're compiling as content or if we're loading a
+    // blob: URI.
+    bool ignoreCache = options.ignoreCache
+        || !GetObjectPrincipal(targetObj)->GetIsSystemPrincipal()
+        || scheme.EqualsLiteral("blob");
+    StartupCache* cache = ignoreCache ? nullptr : StartupCache::GetSingleton();
+
     JSVersion version = JS_GetVersion(cx);
     nsAutoCString cachePath;
     cachePath.AppendPrintf("jssubloader/%d", version);
@@ -677,7 +653,7 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
         if (!options.wantReturnValue)
             script = ScriptPreloader::GetSingleton().GetCachedScript(cx, cachePath);
         if (!script && cache)
-            rv = ReadCachedScript(cache, cachePath, cx, mSystemPrincipal, &script);
+            rv = ReadCachedScript(cache, cachePath, cx, &script);
         if (NS_FAILED(rv) || !script) {
             // ReadCachedScript may have set a pending exception.
             JS_ClearPendingException(cx);
@@ -753,9 +729,11 @@ class NotifyPrecompilationCompleteRunnable : public Runnable
 public:
     NS_DECL_NSIRUNNABLE
 
-    explicit NotifyPrecompilationCompleteRunnable(ScriptPrecompiler* aPrecompiler)
-        : mPrecompiler(aPrecompiler)
-        , mToken(nullptr)
+    explicit NotifyPrecompilationCompleteRunnable(
+      ScriptPrecompiler* aPrecompiler)
+      : mozilla::Runnable("NotifyPrecompilationCompleteRunnable")
+      , mPrecompiler(aPrecompiler)
+      , mToken(nullptr)
     {}
 
     void SetToken(void* aToken) {

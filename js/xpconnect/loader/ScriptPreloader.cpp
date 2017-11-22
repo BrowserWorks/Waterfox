@@ -610,8 +610,10 @@ ScriptPreloader::WriteCache()
         MonitorAutoUnlock mau(mSaveMonitor);
 
         NS_DispatchToMainThread(
-            NewRunnableMethod(this, &ScriptPreloader::PrepareCacheWrite),
-            NS_DISPATCH_SYNC);
+          NewRunnableMethod("ScriptPreloader::PrepareCacheWrite",
+                            this,
+                            &ScriptPreloader::PrepareCacheWrite),
+          NS_DISPATCH_SYNC);
     }
 
     mBlockedOnSyncDispatch = false;
@@ -700,7 +702,8 @@ ScriptPreloader::Run()
     Unused << NS_WARN_IF(result.isErr());
 
     mSaveComplete = true;
-    NS_ReleaseOnMainThread(mSaveThread.forget());
+    NS_ReleaseOnMainThreadSystemGroup("ScriptPreloader::mSaveThread",
+                                      mSaveThread.forget());
 
     mal.NotifyAll();
     return NS_OK;
@@ -876,7 +879,9 @@ ScriptPreloader::OffThreadDecodeCallback(void* token, void* context)
     if (cache->mToken && !cache->mFinishDecodeRunnablePending) {
         cache->mFinishDecodeRunnablePending = true;
         NS_DispatchToMainThread(
-            NewRunnableMethod(cache, &ScriptPreloader::DoFinishOffThreadDecode));
+          NewRunnableMethod("ScriptPreloader::DoFinishOffThreadDecode",
+                            cache,
+                            &ScriptPreloader::DoFinishOffThreadDecode));
     }
 }
 

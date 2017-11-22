@@ -110,9 +110,9 @@ public:
 
   void TransformBy(const gfxMatrix& aMatrix)
   {
-    mRect = aMatrix.Transform(mRect);
+    mRect = aMatrix.TransformRect(mRect);
     if (mIsRestricted) {
-      mRestriction = aMatrix.Transform(mRestriction);
+      mRestriction = aMatrix.TransformRect(mRestriction);
     }
   }
 

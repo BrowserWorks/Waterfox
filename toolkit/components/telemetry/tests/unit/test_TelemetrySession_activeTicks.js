@@ -10,20 +10,27 @@ add_task(async function test_setup() {
   // Addon manager needs a profile directory
   do_get_profile();
   loadAddonManager("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
+  finishAddonManagerStartup();
   // Make sure we don't generate unexpected pings due to pref changes.
   await setEmptyPrefWatchlist();
 
-  Services.prefs.setBoolPref(PREF_TELEMETRY_ENABLED, true);
+  Services.prefs.setBoolPref(TelemetryUtils.Preferences.TelemetryEnabled, true);
 });
 
 add_task(async function test_record_activeTicks() {
   await TelemetryController.testSetup();
 
   let checkActiveTicks = (expected) => {
-    let payload = TelemetrySession.getPayload();
+    // Scalars are only present in subsession payloads.
+    let payload = TelemetrySession.getPayload("main");
     Assert.equal(payload.simpleMeasurements.activeTicks, expected,
-                 "TelemetrySession must record the expected number of active ticks.");
-  };
+                 "TelemetrySession must record the expected number of active ticks (in simpleMeasurements).");
+    // Subsessions are not yet supported on Android.
+    if (!gIsAndroid) {
+      Assert.equal(payload.processes.parent.scalars["browser.engagement.active_ticks"], expected,
+                   "TelemetrySession must record the expected number of active ticks (in scalars).");
+    }
+  }
 
   for (let i = 0; i < 3; i++) {
     Services.obs.notifyObservers(null, "user-interaction-active");

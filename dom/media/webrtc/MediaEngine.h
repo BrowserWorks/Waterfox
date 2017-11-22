@@ -105,6 +105,7 @@ public:
     , mExtendedFilter(false)
     , mDelayAgnostic(false)
     , mFakeDeviceChangeEventOn(false)
+    , mChannels(0)
   {}
 
   int32_t mWidth;
@@ -123,6 +124,7 @@ public:
   bool mExtendedFilter;
   bool mDelayAgnostic;
   bool mFakeDeviceChangeEventOn;
+  int32_t mChannels;
 
   // mWidth and/or mHeight may be zero (=adaptive default), so use functions.
 
@@ -352,7 +354,7 @@ public:
   void GetSettings(dom::MediaTrackSettings& aOutSettings)
   {
     MOZ_ASSERT(NS_IsMainThread());
-    aOutSettings = mSettings;
+    aOutSettings = *mSettings;
   }
 
 protected:
@@ -360,6 +362,7 @@ protected:
   explicit MediaEngineSource(MediaEngineState aState)
     : mState(aState)
     , mInShutdown(false)
+    , mSettings(MakeRefPtr<media::Refcountable<dom::MediaTrackSettings>>())
   {}
 
   /* UpdateSingleSource - Centralized abstract function to implement in those
@@ -446,8 +449,10 @@ protected:
   nsTArray<RefPtr<AllocationHandle>> mRegisteredHandles;
   bool mInShutdown;
 
-  // Main-thread only:
-  dom::MediaTrackSettings mSettings;
+  // The following is accessed on main-thread only. It has its own ref-count to
+  // avoid ref-counting MediaEngineSource itself in runnables.
+  // (MediaEngineSource subclasses balk on ref-counts too late during shutdown.)
+  RefPtr<media::Refcountable<dom::MediaTrackSettings>> mSettings;
 };
 
 class MediaEngineVideoSource : public MediaEngineSource

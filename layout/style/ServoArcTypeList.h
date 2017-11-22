@@ -7,8 +7,7 @@
 /* a list of all Servo Arc types used in stylo bindings for preprocessing */
 
 SERVO_ARC_TYPE(CssRules, ServoCssRules)
-SERVO_ARC_TYPE(StyleSheet, RawServoStyleSheet)
-SERVO_ARC_TYPE(ComputedValues, ServoComputedValues)
+SERVO_ARC_TYPE(StyleSheetContents, RawServoStyleSheetContents)
 SERVO_ARC_TYPE(DeclarationBlock, RawServoDeclarationBlock)
 SERVO_ARC_TYPE(StyleRule, RawServoStyleRule)
 SERVO_ARC_TYPE(ImportRule, RawServoImportRule)
@@ -21,4 +20,5 @@ SERVO_ARC_TYPE(NamespaceRule, RawServoNamespaceRule)
 SERVO_ARC_TYPE(PageRule, RawServoPageRule)
 SERVO_ARC_TYPE(SupportsRule, RawServoSupportsRule)
 SERVO_ARC_TYPE(DocumentRule, RawServoDocumentRule)
+SERVO_ARC_TYPE(FontFeatureValuesRule, RawServoFontFeatureValuesRule)
 SERVO_ARC_TYPE(RuleNode, RawServoRuleNode)

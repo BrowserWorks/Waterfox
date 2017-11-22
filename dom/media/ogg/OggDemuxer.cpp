@@ -6,7 +6,6 @@
 
 #include "nsError.h"
 #include "MediaDecoderStateMachine.h"
-#include "AbstractMediaDecoder.h"
 #include "OggDemuxer.h"
 #include "OggCodecState.h"
 #include "mozilla/AbstractThread.h"
@@ -129,17 +128,21 @@ OggDemuxer::~OggDemuxer()
     // a chained stream or not.
     bool isChained = mIsChained;
     void* ptr = this;
-    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([ptr, isChained]() -> void {
-      // We can't use OGG_DEBUG here because it implicitly refers to `this`,
-      // which we can't capture in this runnable.
-      MOZ_LOG(gMediaDemuxerLog, mozilla::LogLevel::Debug,
-              ("OggDemuxer(%p)::%s: Reporting telemetry MEDIA_OGG_LOADED_IS_CHAINED=%d",
-               ptr, __func__, isChained));
-      Telemetry::Accumulate(Telemetry::HistogramID::MEDIA_OGG_LOADED_IS_CHAINED, isChained);
-    });
-    SystemGroup::Dispatch("~OggDemuxer::report_telemetry",
-                          TaskCategory::Other,
-                          task.forget());
+    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction(
+      "OggDemuxer::~OggDemuxer", [ptr, isChained]() -> void {
+        // We can't use OGG_DEBUG here because it implicitly refers to `this`,
+        // which we can't capture in this runnable.
+        MOZ_LOG(gMediaDemuxerLog,
+                mozilla::LogLevel::Debug,
+                ("OggDemuxer(%p)::%s: Reporting telemetry "
+                 "MEDIA_OGG_LOADED_IS_CHAINED=%d",
+                 ptr,
+                 __func__,
+                 isChained));
+        Telemetry::Accumulate(
+          Telemetry::HistogramID::MEDIA_OGG_LOADED_IS_CHAINED, isChained);
+      });
+    SystemGroup::Dispatch(TaskCategory::Other, task.forget());
   }
 }
 
@@ -402,7 +405,7 @@ OggDemuxer::SetupMediaTracksInfo(const nsTArray<uint32_t>& aSerials)
     OggCodecState* codecState = mCodecStore.Get(serial);
 
     MessageField* msgInfo = nullptr;
-    if (mSkeletonState && mSkeletonState->mMsgFieldStore.Contains(serial)) {
+    if (mSkeletonState) {
       mSkeletonState->mMsgFieldStore.Get(serial, &msgInfo);
     }
 
@@ -660,7 +663,7 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
   }
 
   MessageField* msgInfo = nullptr;
-  if (mSkeletonState && mSkeletonState->mMsgFieldStore.Contains(serial)) {
+  if (mSkeletonState) {
     mSkeletonState->mMsgFieldStore.Get(serial, &msgInfo);
   }
 

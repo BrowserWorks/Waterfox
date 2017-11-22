@@ -226,7 +226,8 @@ ThrottleInputStream::AllowInput()
 {
   MOZ_ASSERT(mCallback);
   nsCOMPtr<nsIInputStreamCallback> callbackEvent =
-    NS_NewInputStreamReadyEvent(mCallback, mEventTarget);
+    NS_NewInputStreamReadyEvent("ThrottleInputStream::AllowInput",
+                                mCallback, mEventTarget);
   mCallback = nullptr;
   mEventTarget = nullptr;
   callbackEvent->OnInputStreamReady(this);
@@ -234,7 +235,7 @@ ThrottleInputStream::AllowInput()
 
 //-----------------------------------------------------------------------------
 
-NS_IMPL_ISUPPORTS(ThrottleQueue, nsIInputChannelThrottleQueue, nsITimerCallback)
+NS_IMPL_ISUPPORTS(ThrottleQueue, nsIInputChannelThrottleQueue, nsITimerCallback, nsINamed)
 
 ThrottleQueue::ThrottleQueue()
   : mMeanBytesPerSecond(0)
@@ -351,6 +352,13 @@ ThrottleQueue::Notify(nsITimer* aTimer)
   }
 
   mTimerArmed = false;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+ThrottleQueue::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("net::ThrottleQueue");
   return NS_OK;
 }
 

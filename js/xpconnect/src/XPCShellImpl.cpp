@@ -35,8 +35,6 @@
 #include "nsIXULRuntime.h"
 #include "GeckoProfiler.h"
 
-#include "base/histogram.h"
-
 #ifdef ANDROID
 #include <android/log.h>
 #endif
@@ -47,6 +45,10 @@
 #if defined(MOZ_SANDBOX)
 #include "SandboxBroker.h"
 #endif
+#endif
+
+#ifdef MOZ_CODE_COVERAGE
+#include "mozilla/CodeCoverageHandler.h"
 #endif
 
 // all this crap is needed to do the interactive shell stuff
@@ -801,7 +803,7 @@ env_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
 
 static const JSClassOps env_classOps = {
     nullptr, nullptr, nullptr, env_setProperty,
-    env_enumerate, env_resolve
+    env_enumerate, nullptr, env_resolve
 };
 
 static const JSClass env_class = {
@@ -1221,11 +1223,6 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
 
     mozilla::LogModule::Init();
 
-    // A initializer to initialize histogram collection
-    // used by telemetry.
-    auto telStats =
-       mozilla::MakeUnique<base::StatisticsRecorder>();
-
     char aLocal;
     profiler_init(&aLocal);
 
@@ -1243,6 +1240,9 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
         printf_stderr("*** You are running in chaos test mode. See ChaosMode.h. ***\n");
     }
 
+    // The provider needs to outlive the call to shutting down XPCOM.
+    XPCShellDirProvider dirprovider;
+
     { // Start scoping nsCOMPtrs
         nsCOMPtr<nsIFile> appFile;
         rv = XRE_GetBinaryPath(argv[0], getter_AddRefs(appFile));
@@ -1256,8 +1256,6 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
             printf("Couldn't get application directory.\n");
             return 1;
         }
-
-        XPCShellDirProvider dirprovider;
 
         dirprovider.SetAppFile(appFile);
 
@@ -1470,6 +1468,10 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
 #endif
 #endif
 
+#ifdef MOZ_CODE_COVERAGE
+        CodeCoverageHandler::Init();
+#endif
+
         {
             JS::Rooted<JSObject*> glob(cx, holder->GetJSObject());
             if (!glob) {
@@ -1549,8 +1551,6 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
     // no nsCOMPtrs are allowed to be alive when you call NS_ShutdownXPCOM
     rv = NS_ShutdownXPCOM( nullptr );
     MOZ_ASSERT(NS_SUCCEEDED(rv), "NS_ShutdownXPCOM failed");
-
-    telStats = nullptr;
 
 #ifdef MOZ_CRASHREPORTER
     // Shut down the crashreporter service to prevent leaking some strings it holds.

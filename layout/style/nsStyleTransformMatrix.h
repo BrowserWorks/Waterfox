@@ -10,8 +10,11 @@
 #ifndef nsStyleTransformMatrix_h_
 #define nsStyleTransformMatrix_h_
 
+#include "gfxPoint.h"
+#include "mozilla/gfx/Matrix.h"
 #include "mozilla/EnumeratedArray.h"
 #include "nsCSSValue.h"
+#include "nsSize.h"
 
 #include <limits>
 
@@ -21,6 +24,7 @@ class nsPresContext;
 struct gfxQuaternion;
 struct nsRect;
 namespace mozilla {
+class GeckoStyleContext;
 class RuleNodeCacheConditions;
 } // namespace mozilla
 
@@ -154,7 +158,7 @@ namespace nsStyleTransformMatrix {
   void SetIdentityMatrix(nsCSSValue::Array* aMatrix);
 
   float ProcessTranslatePart(const nsCSSValue& aValue,
-                             nsStyleContext* aContext,
+                             mozilla::GeckoStyleContext* aContext,
                              nsPresContext* aPresContext,
                              mozilla::RuleNodeCacheConditions& aConditions,
                              TransformReferenceBox* aRefBox,
@@ -163,7 +167,7 @@ namespace nsStyleTransformMatrix {
   void
   ProcessInterpolateMatrix(mozilla::gfx::Matrix4x4& aMatrix,
                            const nsCSSValue::Array* aData,
-                           nsStyleContext* aContext,
+                           mozilla::GeckoStyleContext* aContext,
                            nsPresContext* aPresContext,
                            mozilla::RuleNodeCacheConditions& aConditions,
                            TransformReferenceBox& aBounds,
@@ -172,7 +176,7 @@ namespace nsStyleTransformMatrix {
   void
   ProcessAccumulateMatrix(mozilla::gfx::Matrix4x4& aMatrix,
                           const nsCSSValue::Array* aData,
-                          nsStyleContext* aContext,
+                          mozilla::GeckoStyleContext* aContext,
                           nsPresContext* aPresContext,
                           mozilla::RuleNodeCacheConditions& aConditions,
                           TransformReferenceBox& aBounds,
@@ -204,6 +208,14 @@ namespace nsStyleTransformMatrix {
                                          TransformReferenceBox& aBounds,
                                          float aAppUnitsPerMatrixUnit,
                                          bool* aContains3dTransform);
+
+  /**
+   * Given two nsStyleCoord values, compute the 2d position with respect to the
+   * given TransformReferenceBox that these values describe, in device pixels.
+   */
+  mozilla::gfx::Point Convert2DPosition(nsStyleCoord const (&aValue)[2],
+                                        TransformReferenceBox& aRefBox,
+                                        int32_t aAppUnitsPerDevPixel);
 
   // Shear type for decomposition.
   enum class ShearType {

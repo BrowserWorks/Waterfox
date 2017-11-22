@@ -10,7 +10,7 @@
 #include "mozilla/layers/Effects.h"     // for TexturedEffect, Effect, etc
 #include "mozilla/layers/LayerManagerComposite.h"     // for TexturedEffect, Effect, etc
 #include "mozilla/layers/WebRenderBridgeParent.h"
-#include "mozilla/layers/WebRenderCompositableHolder.h"
+#include "mozilla/layers/AsyncImagePipelineManager.h"
 #include "nsAString.h"
 #include "nsDebug.h"                    // for NS_WARNING, NS_ASSERTION
 #include "nsPrintfCString.h"            // for nsPrintfCString
@@ -77,12 +77,12 @@ WebRenderImageHost::UseTextureHost(const nsTArray<TimedTexture>& aTextures)
   // means that any CompositeUntil() call we made in Composite() may no longer
   // guarantee that we'll composite until the next frame is ready. Fix that here.
   if (mWrBridge && mLastFrameID >= 0) {
-    MOZ_ASSERT(mWrBridge->CompositableHolder());
+    MOZ_ASSERT(mWrBridge->AsyncImageManager());
     for (size_t i = 0; i < mImages.Length(); ++i) {
       bool frameComesAfter = mImages[i].mFrameID > mLastFrameID ||
                              mImages[i].mProducerID != mLastProducerID;
       if (frameComesAfter && !mImages[i].mTimeStamp.IsNull()) {
-        mWrBridge->CompositableHolder()->CompositeUntil(mImages[i].mTimeStamp +
+        mWrBridge->AsyncImageManager()->CompositeUntil(mImages[i].mTimeStamp +
                            TimeDuration::FromMilliseconds(BIAS_TIME_MS));
         break;
       }
@@ -124,8 +124,8 @@ WebRenderImageHost::GetCompositionTime() const
 {
   TimeStamp time;
   if (mWrBridge) {
-    MOZ_ASSERT(mWrBridge->CompositableHolder());
-    time = mWrBridge->CompositableHolder()->GetCompositionTime();
+    MOZ_ASSERT(mWrBridge->AsyncImageManager());
+    time = mWrBridge->AsyncImageManager()->GetCompositionTime();
   }
   return time;
 }
@@ -143,24 +143,40 @@ WebRenderImageHost::GetAsTextureHost(IntRect* aPictureRect)
 TextureHost*
 WebRenderImageHost::GetAsTextureHostForComposite()
 {
+  if (!mWrBridge) {
+    return nullptr;
+  }
+
   int imageIndex = ChooseImageIndex();
   if (imageIndex < 0) {
     SetCurrentTextureHost(nullptr);
     return nullptr;
   }
 
-  if (mWrBridge && uint32_t(imageIndex) + 1 < mImages.Length()) {
-    MOZ_ASSERT(mWrBridge->CompositableHolder());
-    mWrBridge->CompositableHolder()->CompositeUntil(mImages[imageIndex + 1].mTimeStamp + TimeDuration::FromMilliseconds(BIAS_TIME_MS));
+  if (uint32_t(imageIndex) + 1 < mImages.Length()) {
+    MOZ_ASSERT(mWrBridge->AsyncImageManager());
+    mWrBridge->AsyncImageManager()->CompositeUntil(mImages[imageIndex + 1].mTimeStamp + TimeDuration::FromMilliseconds(BIAS_TIME_MS));
   }
 
   TimedImage* img = &mImages[imageIndex];
 
   if (mLastFrameID != img->mFrameID || mLastProducerID != img->mProducerID) {
+    if (mAsyncRef) {
+      ImageCompositeNotificationInfo info;
+      info.mImageBridgeProcessId = mAsyncRef.mProcessId;
+      info.mNotification = ImageCompositeNotification(
+        mAsyncRef.mHandle,
+        img->mTimeStamp, mWrBridge->AsyncImageManager()->GetCompositionTime(),
+        img->mFrameID, img->mProducerID);
+      mWrBridge->AsyncImageManager()->AppendImageCompositeNotification(info);
+    }
     mLastFrameID = img->mFrameID;
     mLastProducerID = img->mProducerID;
   }
   SetCurrentTextureHost(img->mTextureHost);
+
+  // XXX Add UpdateBias()
+
   return mCurrentTextureHost;
 }
 
@@ -175,10 +191,10 @@ WebRenderImageHost::SetCurrentTextureHost(TextureHost* aTexture)
       !!mCurrentTextureHost &&
       mCurrentTextureHost != aTexture &&
       mCurrentTextureHost->AsWebRenderTextureHost()) {
-    MOZ_ASSERT(mWrBridge->CompositableHolder());
+    MOZ_ASSERT(mWrBridge->AsyncImageManager());
     wr::PipelineId piplineId = mWrBridge->PipelineId();
     wr::Epoch epoch = mWrBridge->WrEpoch();
-    mWrBridge->CompositableHolder()->HoldExternalImage(
+    mWrBridge->AsyncImageManager()->HoldExternalImage(
       piplineId,
       epoch,
       mCurrentTextureHost->AsWebRenderTextureHost());

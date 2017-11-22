@@ -754,6 +754,11 @@ D3D11DXVA2Manager::InitInternal(layers::KnowsCompositor* aKnowsCompositor,
     }
   }
 
+  RefPtr<ID3D10Multithread> mt;
+  hr = mDevice->QueryInterface((ID3D10Multithread**)getter_AddRefs(mt));
+  NS_ENSURE_TRUE(SUCCEEDED(hr) && mt, hr);
+  mt->SetMultithreadProtected(TRUE);
+
   mDevice->GetImmediateContext(getter_AddRefs(mContext));
 
   hr = wmf::MFCreateDXGIDeviceManager(&mDeviceManagerToken,
@@ -949,7 +954,10 @@ D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
       hr = mTransform->Output(&sample);
     }
   }
-  if (!mutex && mDevice != DeviceManagerDx::Get()->GetCompositorDevice()) {
+
+  if (!mutex && mDevice != DeviceManagerDx::Get()->GetCompositorDevice() && mSyncObject) {
+    // It appears some race-condition may allow us to arrive here even when mSyncObject
+    // is null. It's better to avoid that crash.
     client->SyncWithObject(mSyncObject);
     mSyncObject->FinalizeFrame();
   }

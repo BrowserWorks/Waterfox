@@ -74,6 +74,7 @@
         './src/sdp/sipcc',
         '../../../dom/base',
         '../../../dom/media',
+        '../../../dom/media/platforms',
         '../../../media/mtransport',
         '../trunk',
         '../../libyuv/libyuv/include',
@@ -224,27 +225,6 @@
             '../../../netwerk/srtp/src/crypto/include',
           ],
         }],
-        ['moz_webrtc_omx==1', {
-          'sources': [
-            './src/media-conduit/WebrtcOMXH264VideoCodec.cpp',
-            './src/media-conduit/OMXVideoCodec.cpp',
-          ],
-          'include_dirs': [
-            # hack on hack to re-add it after SrtpFlow removes it
-            '../../../dom/media/omx',
-            '../../../gfx/layers/client',
-          ],
-          'cflags_mozilla': [
-            '-I$(ANDROID_SOURCE)/frameworks/av/include/media/stagefright',
-            '-I$(ANDROID_SOURCE)/frameworks/av/include',
-            '-I$(ANDROID_SOURCE)/frameworks/native/include/media/openmax',
-            '-I$(ANDROID_SOURCE)/frameworks/native/include',
-            '-I$(ANDROID_SOURCE)/frameworks/native/opengl/include',
-          ],
-          'defines' : [
-            'MOZ_WEBRTC_OMX'
-          ],
-        }],
         ['moz_webrtc_mediacodec==1', {
           'include_dirs': [
             '../../../widget/android',
@@ -279,7 +259,9 @@
         ['build_for_standalone==0', {
           'sources': [
             './src/media-conduit/GmpVideoCodec.cpp',
+            './src/media-conduit/MediaDataDecoderCodec.cpp',
             './src/media-conduit/WebrtcGmpVideoCodec.cpp',
+            './src/media-conduit/WebrtcMediaDataDecoderCodec.cpp',
           ],
         }],
         ['build_for_standalone!=0', {
@@ -289,6 +271,12 @@
           'defines' : [
             'NO_CHROMIUM_LOGGING',
             'USE_FAKE_PCOBSERVER',
+          ],
+        }],
+        # See webrtc/base/task_queue.h
+        ['OS!="mac" and OS!="ios" and OS!="win"', {
+          'defines': [
+            'WEBRTC_BUILD_LIBEVENT',
           ],
         }],
         ['(OS=="linux") or (OS=="android")', {
@@ -350,6 +338,7 @@
           ],
           'defines': [
             'WEBRTC_POSIX',
+            'WEBRTC_MAC',
             'OS_MACOSX',
             'SIP_OS_OSX',
             'OSX',
@@ -363,6 +352,11 @@
           'cflags_mozilla': [
             '-Wno-inconsistent-missing-override',
             '-Wno-macro-redefined',
+         ],
+        }],
+        ['libfuzzer == 1', {
+          'cflags_mozilla': [
+            '-fsanitize-coverage=trace-pc-guard',
          ],
         }],
       ],

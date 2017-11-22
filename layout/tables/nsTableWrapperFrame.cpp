@@ -183,7 +183,7 @@ nsTableWrapperFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
   nsDisplayListCollection set;
   BuildDisplayListForInnerTable(aBuilder, aDirtyRect, set);
-  
+
   nsDisplayListSet captionSet(set, set.BlockBorderBackgrounds());
   BuildDisplayListForChild(aBuilder, mCaptionFrames.FirstChild(),
                            aDirtyRect, captionSet);
@@ -229,10 +229,11 @@ nsTableWrapperFrame::GetParentStyleContext(nsIFrame** aProviderFrame) const
   return (*aProviderFrame = InnerTableFrame())->StyleContext();
 }
 
-// INCREMENTAL REFLOW HELPER FUNCTIONS 
+// INCREMENTAL REFLOW HELPER FUNCTIONS
 
 void
 nsTableWrapperFrame::InitChildReflowInput(nsPresContext& aPresContext,
+                                          const ReflowInput& aOuterRI,
                                           ReflowInput&   aReflowInput)
 {
   nsMargin collapseBorder;
@@ -255,6 +256,11 @@ nsTableWrapperFrame::InitChildReflowInput(nsPresContext& aPresContext,
         cbSize.emplace(*cb);
         *cbSize -= aReflowInput.ComputedLogicalMargin().Size(wm);
       }
+    }
+    if (!cbSize) {
+      // For inner table frames, the containing block is the same as for
+      // the outer table frame.
+      cbSize.emplace(aOuterRI.mContainingBlockSize);
     }
   }
   aReflowInput.Init(&aPresContext, cbSize.ptrOr(nullptr), pCollapseBorder,
@@ -282,7 +288,7 @@ nsTableWrapperFrame::GetChildMargin(nsPresContext*           aPresContext,
   LogicalSize availSize(wm, aAvailISize, aOuterRI.AvailableSize(wm).BSize(wm));
   ReflowInput childRI(aPresContext, aOuterRI, aChildFrame, availSize,
                             nullptr, ReflowInput::CALLER_WILL_INIT);
-  InitChildReflowInput(*aPresContext, childRI);
+  InitChildReflowInput(*aPresContext, aOuterRI, childRI);
 
   aMargin = childRI.ComputedLogicalMargin();
 }
@@ -307,7 +313,7 @@ GetContainingBlockSize(const ReflowInput& aOuterRI)
 }
 
 /* virtual */ nscoord
-nsTableWrapperFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsTableWrapperFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord iSize = nsLayoutUtils::IntrinsicForContainer(aRenderingContext,
                     InnerTableFrame(), nsLayoutUtils::MIN_ISIZE);
@@ -329,7 +335,7 @@ nsTableWrapperFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsTableWrapperFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsTableWrapperFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord maxISize;
   DISPLAY_PREF_WIDTH(this, maxISize);
@@ -376,7 +382,7 @@ nsTableWrapperFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 }
 
 nscoord
-nsTableWrapperFrame::ChildShrinkWrapISize(nsRenderingContext* aRenderingContext,
+nsTableWrapperFrame::ChildShrinkWrapISize(gfxContext*         aRenderingContext,
                                           nsIFrame*           aChildFrame,
                                           WritingMode         aWM,
                                           LogicalSize         aCBSize,
@@ -425,7 +431,7 @@ nsTableWrapperFrame::ChildShrinkWrapISize(nsRenderingContext* aRenderingContext,
 
 /* virtual */
 LogicalSize
-nsTableWrapperFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
+nsTableWrapperFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
                                      WritingMode         aWM,
                                      const LogicalSize&  aCBSize,
                                      nscoord             aAvailableISize,
@@ -595,7 +601,7 @@ nsTableWrapperFrame::GetCaptionOrigin(uint32_t             aCaptionSide,
   if (mCaptionFrames.IsEmpty()) {
     return NS_OK;
   }
-  
+
   NS_ASSERTION(NS_AUTOMARGIN != aCaptionMargin.IStart(aWM) &&
                NS_AUTOMARGIN != aCaptionMargin.BStart(aWM) &&
                NS_AUTOMARGIN != aCaptionMargin.BEnd(aWM),
@@ -685,7 +691,7 @@ nsTableWrapperFrame::GetInnerOrigin(uint32_t             aCaptionSide,
                NS_AUTOMARGIN != aInnerMargin.BStart(aWM) &&
                NS_AUTOMARGIN != aInnerMargin.BEnd(aWM),
                "The computed inner margin is auto?");
-  
+
   aOrigin.I(aWM) = aOrigin.B(aWM) = 0;
   if ((NS_UNCONSTRAINEDSIZE == aInnerSize.ISize(aWM)) ||
       (NS_UNCONSTRAINEDSIZE == aInnerSize.BSize(aWM)) ||
@@ -721,7 +727,7 @@ nsTableWrapperFrame::GetInnerOrigin(uint32_t             aCaptionSide,
       aOrigin.I(aWM) = aInnerMargin.IStart(aWM);
       break;
   }
-  
+
   // block-dir computation
   switch (aCaptionSide) {
     case NS_STYLE_CAPTION_SIDE_BOTTOM:
@@ -792,7 +798,7 @@ nsTableWrapperFrame::OuterBeginReflowChild(nsPresContext*            aPresContex
   // so that caller can use it after we return.
   aChildRI.emplace(aPresContext, aOuterRI, aChildFrame, availSize,
                   nullptr, ReflowInput::CALLER_WILL_INIT);
-  InitChildReflowInput(*aPresContext, *aChildRI);
+  InitChildReflowInput(*aPresContext, aOuterRI, *aChildRI);
 
   // see if we need to reset top-of-page due to a caption
   if (aChildRI->mFlags.mIsTopOfPage &&
@@ -883,7 +889,7 @@ nsTableWrapperFrame::Reflow(nsPresContext*           aPresContext,
     captionFirstReflow =
       mCaptionFrames.FirstChild()->HasAnyStateBits(NS_FRAME_FIRST_REFLOW);
   }
-  
+
   // ComputeAutoSize has to match this logic.
   WritingMode wm = aOuterRI.GetWritingMode();
   uint8_t captionSide = GetCaptionSide();
@@ -1036,9 +1042,12 @@ nsTableWrapperFrame::Reflow(nsPresContext*           aPresContext,
                     wm, innerOrigin, containerSize, 0);
   innerRI.reset();
 
-  nsTableFrame::InvalidateTableFrame(InnerTableFrame(), origInnerRect,
-                                     origInnerVisualOverflow,
-                                     innerFirstReflow);
+  if (InnerTableFrame()->IsBorderCollapse()) {
+    nsTableFrame::InvalidateTableFrame(InnerTableFrame(), origInnerRect,
+                                       origInnerVisualOverflow,
+                                       innerFirstReflow);
+  }
+
   if (mCaptionFrames.NotEmpty()) {
     nsTableFrame::InvalidateTableFrame(mCaptionFrames.FirstChild(),
                                        origCaptionRect,

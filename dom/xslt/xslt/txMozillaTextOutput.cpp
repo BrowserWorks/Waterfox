@@ -16,7 +16,7 @@
 #include "nsContentCreatorFunctions.h"
 #include "nsContentUtils.h"
 #include "nsGkAtoms.h"
-#include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/Encoding.h"
 #include "nsTextNode.h"
 #include "nsNameSpaceManager.h"
 
@@ -49,7 +49,7 @@ txMozillaTextOutput::attribute(nsIAtom* aPrefix, nsIAtom* aLocalName,
 }
 
 nsresult
-txMozillaTextOutput::attribute(nsIAtom* aPrefix, const nsSubstring& aName,
+txMozillaTextOutput::attribute(nsIAtom* aPrefix, const nsAString& aName,
                                const int32_t aNsID,
                                const nsString& aValue)
 {
@@ -57,7 +57,7 @@ txMozillaTextOutput::attribute(nsIAtom* aPrefix, const nsSubstring& aName,
 }
 
 nsresult
-txMozillaTextOutput::characters(const nsSubstring& aData, bool aDOE)
+txMozillaTextOutput::characters(const nsAString& aData, bool aDOE)
 {
     mText.Append(aData);
 
@@ -76,7 +76,7 @@ txMozillaTextOutput::endDocument(nsresult aResult)
     NS_ENSURE_TRUE(mDocument && mTextParent, NS_ERROR_FAILURE);
 
     RefPtr<nsTextNode> text = new nsTextNode(mDocument->NodeInfoManager());
-    
+
     text->SetText(mText, false);
     nsresult rv = mTextParent->AppendChildTo(text, true);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -160,12 +160,10 @@ txMozillaTextOutput::createResultDocument(nsIDOMDocument* aSourceDocument,
 
     // Set the charset
     if (!mOutputFormat.mEncoding.IsEmpty()) {
-        nsAutoCString canonicalCharset;
-
-        if (EncodingUtils::FindEncodingForLabel(mOutputFormat.mEncoding,
-                                                canonicalCharset)) {
+        const Encoding* encoding = Encoding::ForLabel(mOutputFormat.mEncoding);
+        if (encoding) {
             mDocument->SetDocumentCharacterSetSource(kCharsetFromOtherComponent);
-            mDocument->SetDocumentCharacterSet(canonicalCharset);
+            mDocument->SetDocumentCharacterSet(WrapNotNull(encoding));
         }
     }
 
@@ -237,7 +235,7 @@ txMozillaTextOutput::startElement(nsIAtom* aPrefix, nsIAtom* aLocalName,
 }
 
 nsresult
-txMozillaTextOutput::startElement(nsIAtom* aPrefix, const nsSubstring& aName,
+txMozillaTextOutput::startElement(nsIAtom* aPrefix, const nsAString& aName,
                                   const int32_t aNsID)
 {
     return NS_OK;

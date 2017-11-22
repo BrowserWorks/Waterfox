@@ -41,7 +41,7 @@ namespace mozilla {
     } // namespace ipc
 }
 
-class nsWindow : public nsBaseWidget
+class nsWindow final : public nsBaseWidget
 {
 private:
     virtual ~nsWindow();
@@ -319,7 +319,7 @@ public:
     mozilla::java::GeckoEditable::Ref& GetEditableParent() { return mEditable; }
 
     void RecvToolbarAnimatorMessageFromCompositor(int32_t aMessage) override;
-    void UpdateRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom, const CSSRect& aPage) override;
+    void UpdateRootFrameMetrics(const ScreenPoint& aScrollOffset, const CSSToScreenScale& aZoom) override;
     void RecvScreenPixels(mozilla::ipc::Shmem&& aMem, const ScreenIntSize& aSize) override;
 protected:
     void BringToFront();
@@ -340,7 +340,6 @@ protected:
 
     nsCOMPtr<nsIIdleServiceInternal> mIdleService;
 
-    bool mAwaitingFullScreen;
     bool mIsFullScreen;
 
     bool UseExternalCompositingSurface() const override {

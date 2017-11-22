@@ -94,6 +94,7 @@ private:
            nsIPrincipal* aTriggeringPrincipal,
            nsIPrincipal* aPrincipalToInherit,
            nsIPrincipal* aSandboxedLoadingPrincipal,
+           nsIURI* aResultPrincipalURI,
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType,
            LoadTainting aTainting,
@@ -115,7 +116,9 @@ private:
            bool aForcePreflight,
            bool aIsPreflight,
            bool aForceHSTSPriming,
-           bool aMixedContentWouldBlock);
+           bool aMixedContentWouldBlock,
+           bool aIsHSTSPriming,
+           bool aIsHSTSPrimingUpgrade);
   LoadInfo(const LoadInfo& rhs);
 
   NS_IMETHOD GetRedirects(JSContext* aCx, JS::MutableHandle<JS::Value> aRedirects,
@@ -141,6 +144,7 @@ private:
   nsCOMPtr<nsIPrincipal>           mTriggeringPrincipal;
   nsCOMPtr<nsIPrincipal>           mPrincipalToInherit;
   nsCOMPtr<nsIPrincipal>           mSandboxedLoadingPrincipal;
+  nsCOMPtr<nsIURI>                 mResultPrincipalURI;
   nsWeakPtr                        mLoadingContext;
   nsSecurityFlags                  mSecurityFlags;
   nsContentPolicyType              mInternalContentPolicyType;
@@ -165,6 +169,8 @@ private:
 
   bool                             mForceHSTSPriming : 1;
   bool                             mMixedContentWouldBlock : 1;
+  bool                             mIsHSTSPriming: 1;
+  bool                             mIsHSTSPrimingUpgrade: 1;
 };
 
 } // namespace net

@@ -12,7 +12,6 @@
 #include "mozilla/AutoRestore.h"
 #include "mozilla/MiscEvents.h"
 #include "mozilla/MouseEvents.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TextEvents.h"
 
@@ -369,7 +368,7 @@ TISInputSourceWrapper::TranslateToString(UInt32 aKeyCode, UInt32 aModifiers,
                                   &deadKeyState, 5, &len, chars);
 
   MOZ_LOG(gLog, LogLevel::Info,
-    ("%p TISInputSourceWrapper::TranslateToString, err=0x%X, len=%" PRIuSIZE,
+    ("%p TISInputSourceWrapper::TranslateToString, err=0x%X, len=%zu",
      this, static_cast<int>(err), len));
 
   NS_ENSURE_TRUE(err == noErr, false);
@@ -432,7 +431,7 @@ TISInputSourceWrapper::IsDeadKey(UInt32 aKeyCode,
 
   MOZ_LOG(gLog, LogLevel::Info,
     ("%p TISInputSourceWrapper::IsDeadKey, err=0x%X, "
-     "len=%" PRIuSIZE ", deadKeyState=%u",
+     "len=%zu, deadKeyState=%u",
      this, static_cast<int>(err), len, deadKeyState));
 
   if (NS_WARN_IF(err != noErr)) {
@@ -456,7 +455,7 @@ TISInputSourceWrapper::InitByInputSourceID(const char* aID)
 }
 
 void
-TISInputSourceWrapper::InitByInputSourceID(const nsAFlatString &aID)
+TISInputSourceWrapper::InitByInputSourceID(const nsString& aID)
 {
   Clear();
   if (aID.IsEmpty())
@@ -2186,13 +2185,13 @@ TextInputHandler::InsertText(NSAttributedString* aAttrString,
   MOZ_LOG(gLog, LogLevel::Info,
     ("%p TextInputHandler::InsertText, aAttrString=\"%s\", "
      "aReplacementRange=%p { location=%lu, length=%lu }, "
-     "IsIMEComposing()=%s, IgnoreIMEComposition()=%s, "
+     "IsIMEComposing()=%s, "
      "keyevent=%p, keydownHandled=%s, keypressDispatched=%s, "
      "causedOtherKeyEvents=%s, compositionDispatched=%s",
      this, GetCharacters([aAttrString string]), aReplacementRange,
      static_cast<unsigned long>(aReplacementRange ? aReplacementRange->location : 0),
      static_cast<unsigned long>(aReplacementRange ? aReplacementRange->length : 0),
-     TrueOrFalse(IsIMEComposing()), TrueOrFalse(IgnoreIMEComposition()),
+     TrueOrFalse(IsIMEComposing()),
      currentKeyEvent ? currentKeyEvent->mKeyEvent : nullptr,
      currentKeyEvent ?
        TrueOrFalse(currentKeyEvent->mKeyDownHandled) : "N/A",
@@ -2202,10 +2201,6 @@ TextInputHandler::InsertText(NSAttributedString* aAttrString,
        TrueOrFalse(currentKeyEvent->mCausedOtherKeyEvents) : "N/A",
      currentKeyEvent ?
        TrueOrFalse(currentKeyEvent->mCompositionDispatched) : "N/A"));
-
-  if (IgnoreIMEComposition()) {
-    return;
-  }
 
   InputContext context = mWidget->GetInputContext();
   bool isEditable = (context.mIMEState.mEnabled == IMEState::ENABLED ||
@@ -2368,10 +2363,10 @@ TextInputHandler::InsertNewline()
 
   MOZ_LOG(gLog, LogLevel::Info,
     ("%p TextInputHandler::InsertNewline, "
-     "IsIMEComposing()=%s, IgnoreIMEComposition()=%s, "
+     "IsIMEComposing()=%s, "
      "keyevent=%p, keydownHandled=%s, keypressDispatched=%s, "
      "causedOtherKeyEvents=%s, compositionDispatched=%s",
-     this, TrueOrFalse(IsIMEComposing()), TrueOrFalse(IgnoreIMEComposition()),
+     this, TrueOrFalse(IsIMEComposing()),
      currentKeyEvent ? currentKeyEvent->mKeyEvent : nullptr,
      currentKeyEvent ?
        TrueOrFalse(currentKeyEvent->mKeyDownHandled) : "N/A",
@@ -2381,10 +2376,6 @@ TextInputHandler::InsertNewline()
        TrueOrFalse(currentKeyEvent->mCausedOtherKeyEvents) : "N/A",
      currentKeyEvent ?
        TrueOrFalse(currentKeyEvent->mCompositionDispatched) : "N/A"));
-
-  if (IgnoreIMEComposition()) {
-    return;
-  }
 
   // If "insertNewline:" command shouldn't be handled, let's ignore it.
   if (currentKeyEvent && !currentKeyEvent->CanHandleCommand()) {
@@ -2772,6 +2763,9 @@ IMEInputHandler::NotifyIME(TextEventDispatcher* aTextEventDispatcher,
     case NOTIFY_IME_OF_SELECTION_CHANGE:
       OnSelectionChange(aNotification);
       return NS_OK;
+    case NOTIFY_IME_OF_POSITION_CHANGE:
+      OnLayoutChange();
+      return NS_OK;
     default:
       return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -2812,7 +2806,12 @@ IMEInputHandler::WillDispatchKeyboardEvent(
       (!insertString || insertString->IsEmpty())) {
     // Inform the child process that this is an event that we want a reply
     // from.
-    aKeyboardEvent.mFlags.mWantReplyFromContentProcess = true;
+    // XXX This should be called only when the target is a remote process.
+    //     However, it's difficult to check it under widget/.
+    //     So, let's do this here for now, then,
+    //     EventStateManager::PreHandleEvent() will reset the flags if
+    //     the event target isn't in remote process.
+    aKeyboardEvent.MarkAsWaitingReplyFromRemoteProcess();
   }
   if (KeyboardLayoutOverrideRef().mOverrideEnabled) {
     TISInputSourceWrapper tis;
@@ -2861,37 +2860,6 @@ IMEInputHandler::NotifyIMEOfFocusChangeInGecko()
   [inputContext activate];
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
-}
-
-void
-IMEInputHandler::DiscardIMEComposition()
-{
-  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
-
-  MOZ_LOG(gLog, LogLevel::Info,
-    ("%p IMEInputHandler::DiscardIMEComposition, "
-     "Destroyed()=%s, IsFocused()=%s, mView=%p, inputContext=%p",
-     this, TrueOrFalse(Destroyed()), TrueOrFalse(IsFocused()),
-     mView, mView ? [mView inputContext] : nullptr));
-
-  if (Destroyed()) {
-    return;
-  }
-
-  if (!IsFocused()) {
-    // retry at next focus event
-    mPendingMethods |= kDiscardIMEComposition;
-    return;
-  }
-
-  NS_ENSURE_TRUE_VOID(mView);
-  NSTextInputContext* inputContext = [mView inputContext];
-  NS_ENSURE_TRUE_VOID(inputContext);
-  mIgnoreIMECommit = true;
-  [inputContext discardMarkedText];
-  mIgnoreIMECommit = false;
-
-  NS_OBJC_END_TRY_ABORT_BLOCK
 }
 
 void
@@ -2951,8 +2919,9 @@ IMEInputHandler::ResetTimer()
     mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
     NS_ENSURE_TRUE(mTimer, );
   }
-  mTimer->InitWithFuncCallback(FlushPendingMethods, this, 0,
-                               nsITimer::TYPE_ONE_SHOT);
+  mTimer->InitWithNamedFuncCallback(FlushPendingMethods, this, 0,
+                                    nsITimer::TYPE_ONE_SHOT,
+                                    "IMEInputHandler::FlushPendingMethods");
 }
 
 void
@@ -2966,7 +2935,6 @@ IMEInputHandler::ExecutePendingMethods()
   }
 
   if (![[NSApplication sharedApplication] isActive]) {
-    mIsInFocusProcessing = false;
     // If we're not active, we should retry at focus event
     return;
   }
@@ -2976,15 +2944,11 @@ IMEInputHandler::ExecutePendingMethods()
   // run now, they can reentry to the pending flags by theirselves.
   mPendingMethods = 0;
 
-  if (pendingMethods & kDiscardIMEComposition)
-    DiscardIMEComposition();
   if (pendingMethods & kSyncASCIICapableOnly)
     SyncASCIICapableOnly();
   if (pendingMethods & kNotifyIMEOfFocusChangeInGecko) {
     NotifyIMEOfFocusChangeInGecko();
   }
-
-  mIsInFocusProcessing = false;
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
@@ -3409,7 +3373,7 @@ IMEInputHandler::SetMarkedText(NSAttributedString* aAttrString,
     ("%p IMEInputHandler::SetMarkedText, "
      "aAttrString=\"%s\", aSelectedRange={ location=%lu, length=%lu }, "
      "aReplacementRange=%p { location=%lu, length=%lu }, "
-     "Destroyed()=%s, IgnoreIMEComposition()=%s, IsIMEComposing()=%s, "
+     "Destroyed()=%s, IsIMEComposing()=%s, "
      "mMarkedRange={ location=%lu, length=%lu }, keyevent=%p, "
      "keydownHandled=%s, keypressDispatched=%s, causedOtherKeyEvents=%s, "
      "compositionDispatched=%s",
@@ -3418,8 +3382,7 @@ IMEInputHandler::SetMarkedText(NSAttributedString* aAttrString,
      static_cast<unsigned long>(aSelectedRange.length), aReplacementRange,
      static_cast<unsigned long>(aReplacementRange ? aReplacementRange->location : 0),
      static_cast<unsigned long>(aReplacementRange ? aReplacementRange->length : 0),
-     TrueOrFalse(Destroyed()), TrueOrFalse(IgnoreIMEComposition()),
-     TrueOrFalse(IsIMEComposing()),
+     TrueOrFalse(Destroyed()), TrueOrFalse(IsIMEComposing()),
      static_cast<unsigned long>(mMarkedRange.location),
      static_cast<unsigned long>(mMarkedRange.length),
      currentKeyEvent ? currentKeyEvent->mKeyEvent : nullptr,
@@ -3439,7 +3402,7 @@ IMEInputHandler::SetMarkedText(NSAttributedString* aAttrString,
     currentKeyEvent->mCompositionDispatched = true;
   }
 
-  if (Destroyed() || IgnoreIMEComposition()) {
+  if (Destroyed()) {
     return;
   }
 
@@ -3904,7 +3867,6 @@ IMEInputHandler::IMEInputHandler(nsChildView* aWidget,
   , mIsIMEEnabled(true)
   , mIsASCIICapableOnly(false)
   , mIgnoreIMECommit(false)
-  , mIsInFocusProcessing(false)
   , mIMEHasFocus(false)
 {
   InitStaticMembers();
@@ -3950,7 +3912,6 @@ IMEInputHandler::OnFocusChangeInGecko(bool aFocus)
   }
 
   sFocusedIMEHandler = this;
-  mIsInFocusProcessing = true;
 
   // We need to notify IME of focus change in Gecko as native focus change
   // because the window level of the focused element in Gecko may be changed.
@@ -4043,26 +4004,15 @@ IMEInputHandler::KillIMEComposition()
      TrueOrFalse(mIsIMEComposing), TrueOrFalse(Destroyed()),
      TrueOrFalse(IsFocused())));
 
-  if (Destroyed()) {
+  if (Destroyed() || NS_WARN_IF(!mView)) {
     return;
   }
 
-  if (IsFocused()) {
-    NS_ENSURE_TRUE_VOID(mView);
-    NSTextInputContext* inputContext = [mView inputContext];
-    NS_ENSURE_TRUE_VOID(inputContext);
-    [inputContext discardMarkedText];
+  NSTextInputContext* inputContext = [mView inputContext];
+  if (NS_WARN_IF(!inputContext)) {
     return;
   }
-
-  MOZ_LOG(gLog, LogLevel::Info,
-    ("%p IMEInputHandler::KillIMEComposition, Pending...", this));
-
-  // Commit the composition internally.
-  SendCommittedText(mIMECompositionString);
-  NS_ASSERTION(!mIsIMEComposing, "We're still in a composition");
-  // The pending method will be fired by the next focus event.
-  mPendingMethods |= kDiscardIMEComposition;
+  [inputContext discardMarkedText];
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
@@ -4268,6 +4218,20 @@ IMEInputHandler::OnSelectionChange(const IMENotification& aIMENotification)
   if (mIMEHasFocus) {
     mSelectedRange = mRangeForWritingMode;
   }
+}
+
+void
+IMEInputHandler::OnLayoutChange()
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
+
+  if (!IsFocused()) {
+    return;
+  }
+  NSTextInputContext* inputContext = [mView inputContext];
+  [inputContext invalidateCharacterCoordinates];
+
+  NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
 bool

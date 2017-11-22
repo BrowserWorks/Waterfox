@@ -11,8 +11,6 @@ const {interfaces: Ci, utils: Cu, classes: Cc} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyPreferenceGetter(this, "useRemoteWebExtensions",
-                                      "extensions.webextensions.remote", false);
 XPCOMUtils.defineLazyPreferenceGetter(this, "useSeparateFileUriProcess",
                                       "browser.tabs.remote.separateFileUriProcess", false);
 XPCOMUtils.defineLazyPreferenceGetter(this, "allowLinkedWebInFileUriProcess",
@@ -47,6 +45,13 @@ const LARGE_ALLOCATION_REMOTE_TYPE = "webLargeAllocation";
 const DEFAULT_REMOTE_TYPE = WEB_REMOTE_TYPE;
 
 function validatedWebRemoteType(aPreferredRemoteType, aTargetUri, aCurrentUri) {
+  // If the domain is whitelisted to allow it to use file:// URIs, then we have
+  // to run it in a file content process, in case it uses file:// sub-resources.
+  const sm = Services.scriptSecurityManager;
+  if (sm.inFileURIWhitelist(aTargetUri)) {
+    return FILE_REMOTE_TYPE;
+  }
+
   if (!aPreferredRemoteType) {
     return WEB_REMOTE_TYPE;
   }
@@ -60,7 +65,6 @@ function validatedWebRemoteType(aPreferredRemoteType, aTargetUri, aCurrentUri) {
     // If aCurrentUri is passed then we should only allow FILE_REMOTE_TYPE
     // when it is same origin as target.
     if (aCurrentUri) {
-      const sm = Services.scriptSecurityManager;
       try {
         // checkSameOriginURI throws when not same origin.
         sm.checkSameOriginURI(aCurrentUri, aTargetUri, false);
@@ -179,7 +183,7 @@ this.E10SUtils = {
         return NOT_REMOTE;
 
       case "moz-extension":
-        return useRemoteWebExtensions ? EXTENSION_REMOTE_TYPE : NOT_REMOTE;
+        return WebExtensionPolicy.useRemoteWebExtensions ? EXTENSION_REMOTE_TYPE : NOT_REMOTE;
 
       default:
         // For any other nested URIs, we use the innerURI to determine the

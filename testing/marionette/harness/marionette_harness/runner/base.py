@@ -300,8 +300,12 @@ class BaseMarionetteArguments(ArgumentParser):
                           help="addon to install; repeat for multiple addons.")
         self.add_argument('--repeat',
                           type=int,
-                          default=0,
                           help='number of times to repeat the test(s)')
+        self.add_argument("--run-until-failure",
+                          action="store_true",
+                          help="Run tests repeatedly and stop on the first time a test fails. "
+                               "Default cap is 30 runs, which can be overwritten "
+                               "with the --repeat parameter.")
         self.add_argument('--testvars',
                           action='append',
                           help='path to a json file with any test data required')
@@ -433,6 +437,9 @@ class BaseMarionetteArguments(ArgumentParser):
         if not args.address and not args.binary and not args.emulator:
             self.error('You must specify --binary, or --address, or --emulator')
 
+        if args.repeat is not None and args.repeat < 0:
+            self.error('The value of --repeat has to be equal or greater than 0.')
+
         if args.total_chunks is not None and args.this_chunk is None:
             self.error('You must specify which chunk to run.')
 
@@ -502,7 +509,9 @@ class BaseMarionetteTestRunner(object):
     def __init__(self, address=None,
                  app=None, app_args=None, binary=None, profile=None,
                  logger=None, logdir=None,
-                 repeat=0, testvars=None,
+                 repeat=None,
+                 run_until_failure=None,
+                 testvars=None,
                  symbols_path=None,
                  shuffle=False, shuffle_seed=random.randint(0, sys.maxint), this_chunk=1,
                  total_chunks=1,
@@ -511,7 +520,6 @@ class BaseMarionetteTestRunner(object):
                  socket_timeout=BaseMarionetteArguments.socket_timeout_default,
                  startup_timeout=None, addons=None, workspace=None,
                  verbose=0, e10s=True, emulator=False, headless=False, **kwargs):
-        self._appinfo = None
         self._appName = None
         self._capabilities = None
         self._filename_pattern = None
@@ -531,7 +539,8 @@ class BaseMarionetteTestRunner(object):
         self.logger = logger
         self.marionette = None
         self.logdir = logdir
-        self.repeat = repeat
+        self.repeat = repeat or 0
+        self.run_until_failure = run_until_failure or False
         self.symbols_path = symbols_path
         self.socket_timeout = socket_timeout
         self.shuffle = shuffle
@@ -552,13 +561,22 @@ class BaseMarionetteTestRunner(object):
         self.workspace_path = workspace or os.getcwd()
         self.verbose = verbose
         self.headless = headless
+
+        # self.e10s stores the desired configuration, whereas
+        # self._e10s_from_browser is the cached value from querying e10s
+        # in self.is_e10s
         self.e10s = e10s
+        self._e10s_from_browser = None
         if self.e10s:
             self.prefs.update({
                 'browser.tabs.remote.autostart': True,
                 'browser.tabs.remote.force-enable': True,
-                'extensions.e10sBlocksEnabling': False
+                'extensions.e10sBlocksEnabling': False,
             })
+
+        # If no repeat has been set, default to 30 extra runs
+        if self.run_until_failure and repeat is None:
+            self.repeat = 30
 
         def gather_debug(test, status):
             # No screenshots and page source for skipped tests
@@ -655,23 +673,6 @@ class BaseMarionetteTestRunner(object):
         self._capabilities = self.marionette.session_capabilities
         self.marionette.delete_session()
         return self._capabilities
-
-    @property
-    def appinfo(self):
-        if self._appinfo:
-            return self._appinfo
-
-        self.marionette.start_session()
-        with self.marionette.using_context('chrome'):
-            self._appinfo = self.marionette.execute_script("""
-            try {
-              return Services.appinfo;
-            } catch (e) {
-              return null;
-            }""")
-        self.marionette.delete_session()
-        self._appinfo = self._appinfo or {}
-        return self._appinfo
 
     @property
     def appName(self):
@@ -817,6 +818,22 @@ class BaseMarionetteTestRunner(object):
                                  message=test['disabled'])
             self.todo += 1
 
+    @property
+    def is_e10s(self):
+        """Query the browser on whether E10s (Electrolysis) is enabled."""
+        if self.marionette is None or self.marionette.session is None:
+            self._e10s_from_browser = None
+            raise Exception("No Marionette session to query e10s state")
+
+        if self._e10s_from_browser is not None:
+            return self._e10s_from_browser
+
+        with self.marionette.using_context("chrome"):
+            self._e10s_from_browser = self.marionette.execute_script(
+                "return Services.appinfo.browserTabsRemoteAutostart")
+
+        return self._e10s_from_browser
+
     def run_tests(self, tests):
         start_time = time.time()
         self._initialize_test_run(tests)
@@ -844,13 +861,13 @@ class BaseMarionetteTestRunner(object):
             except Exception:
                 self.logger.warning('Could not get device info', exc_info=True)
 
-        appinfo_e10s = self.appinfo.get('browserTabsRemoteAutostart', False)
-        self.logger.info("e10s is {}".format("enabled" if appinfo_e10s else "disabled"))
-        if self.e10s != appinfo_e10s:
-            message_e10s = ("BaseMarionetteTestRunner configuration (self.e10s) does "
-                            "not match browser appinfo")
+        self.marionette.start_session()
+        self.logger.info("e10s is {}".format("enabled" if self.is_e10s else "disabled"))
+        if self.e10s != self.is_e10s:
             self.cleanup()
-            raise AssertionError(message_e10s)
+            raise AssertionError("BaseMarionetteTestRunner configuration (self.e10s) "
+                                 "does not match browser appinfo (self.is_e10s)")
+        self.marionette.delete_session()
 
         tests_by_group = defaultdict(list)
         for test in self.tests:
@@ -864,13 +881,16 @@ class BaseMarionetteTestRunner(object):
 
         interrupted = None
         try:
-            counter = self.repeat
-            while counter >= 0:
-                round_num = self.repeat - counter
-                if round_num > 0:
-                    self.logger.info('\nREPEAT {}\n-------'.format(round_num))
+            repeat_index = 0
+            while repeat_index <= self.repeat:
+                if repeat_index > 0:
+                    self.logger.info("\nREPEAT {}\n-------".format(repeat_index))
                 self.run_test_sets()
-                counter -= 1
+                if self.run_until_failure and self.failed > 0:
+                    break
+
+                repeat_index += 1
+
         except KeyboardInterrupt:
             # in case of KeyboardInterrupt during the test execution
             # we want to display current test results.

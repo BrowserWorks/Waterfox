@@ -753,12 +753,69 @@ StackTrace::Get(Thread* aT)
   StackTrace tmp;
   {
     AutoUnlockState unlock;
-    uint32_t skipFrames = 2;
-    if (MozStackWalk(StackWalkCallback, skipFrames,
-                     MaxFrames, &tmp, 0, nullptr)) {
-      // Handle the common case first.  All is ok.  Nothing to do.
-    } else {
-      tmp.mLength = 0;
+    // In each of the following cases, skipFrames is chosen so that the
+    // first frame in each stack trace is a replace_* function (or as close as
+    // possible, given the vagaries of inlining on different platforms).
+#if defined(XP_WIN) && defined(_M_IX86)
+    // This avoids MozStackWalk(), which causes unusably slow startup on Win32
+    // when it is called during static initialization (see bug 1241684).
+    //
+    // This code is cribbed from the Gecko Profiler, which also uses
+    // FramePointerStackWalk() on Win32: Registers::SyncPopulate() for the
+    // frame pointer, and GetStackTop() for the stack end.
+    CONTEXT context;
+    RtlCaptureContext(&context);
+    void* fp = reinterpret_cast<void*>(context.Ebp);
+
+    // Offset 0x18 from the FS segment register gives a pointer to the thread
+    // information block for the current thread.
+#if defined(_MSC_VER)
+    NT_TIB* pTib;
+    __asm {
+      MOV EAX, FS:[18h]
+      MOV pTib, EAX
+    }
+#elif defined(__GNUC__)
+    NT_TIB* pTib;
+    asm ( "movl %%fs:0x18, %0\n"
+         : "=r" (pTib)
+        );
+#else
+#   error "unknown compiler"
+#endif
+    void* stackEnd = static_cast<void*>(pTib->StackBase);
+    bool ok = FramePointerStackWalk(StackWalkCallback, /* skipFrames = */ 0,
+                                    MaxFrames, &tmp,
+                                    reinterpret_cast<void**>(fp), stackEnd);
+#elif defined(XP_MACOSX)
+    // This avoids MozStackWalk(), which has become unusably slow on Mac due to
+    // changes in libunwind.
+    //
+    // This code is cribbed from the Gecko Profiler, which also uses
+    // FramePointerStackWalk() on Mac: Registers::SyncPopulate() for the frame
+    // pointer, and GetStackTop() for the stack end.
+    void* fp;
+    asm (
+        // Dereference %rbp to get previous %rbp
+        "movq (%%rbp), %0\n\t"
+        :
+        "=r"(fp)
+    );
+    void* stackEnd = pthread_get_stackaddr_np(pthread_self());
+    bool ok = FramePointerStackWalk(StackWalkCallback, /* skipFrames = */ 0,
+                                    MaxFrames, &tmp,
+                                    reinterpret_cast<void**>(fp), stackEnd);
+#else
+#if defined(XP_WIN) && defined(_M_X64)
+    int skipFrames = 1;
+#else
+    int skipFrames = 2;
+#endif
+    bool ok = MozStackWalk(StackWalkCallback, skipFrames, MaxFrames, &tmp, 0,
+                           nullptr);
+#endif
+    if (!ok) {
+      tmp.mLength = 0; // re-zero in case the stack walk function changed it
     }
   }
 

@@ -18,6 +18,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "ConsoleAPI",
                                   "resource://gre/modules/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "MessageChannel",
                                   "resource://gre/modules/MessageChannel.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "OS",
+                                  "resource://gre/modules/osfile.jsm");
 
 function getConsole() {
   return new ConsoleAPI({
@@ -28,11 +30,18 @@ function getConsole() {
 
 XPCOMUtils.defineLazyGetter(this, "console", getConsole);
 
+const appinfo = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
+
 let nextId = 0;
-XPCOMUtils.defineLazyGetter(this, "uniqueProcessID", () => Services.appinfo.uniqueProcessID);
+XPCOMUtils.defineLazyGetter(this, "uniqueProcessID", () => appinfo.uniqueProcessID);
 
 function getUniqueId() {
   return `${nextId++}-${uniqueProcessID}`;
+}
+
+async function promiseFileContents(file) {
+  let res = await OS.File.read(file.path);
+  return res.buffer;
 }
 
 
@@ -147,6 +156,15 @@ const getWinUtils = win => _winUtils.get(win);
 
 function getInnerWindowID(window) {
   return getWinUtils(window).currentInnerWindowID;
+}
+
+function withHandlingUserInput(window, callable) {
+  let handle = getWinUtils(window).setHandlingUserInput(true);
+  try {
+    return callable();
+  } finally {
+    handle.destruct();
+  }
 }
 
 const LISTENERS = Symbol("listeners");
@@ -637,11 +655,13 @@ this.ExtensionUtils = {
   promiseDocumentLoaded,
   promiseDocumentReady,
   promiseEvent,
+  promiseFileContents,
   promiseObserved,
   runSafe,
   runSafeSync,
   runSafeSyncWithoutClone,
   runSafeWithoutClone,
+  withHandlingUserInput,
   DefaultMap,
   DefaultWeakMap,
   EventEmitter,

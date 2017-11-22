@@ -39,10 +39,10 @@ class KnownTabs {
  * reliably create the StorageDBChild instance, and its corresponding
  * StorageDBParent will send the set of origins when it is constructed.)
  */
-function* openTestTabInOwnProcess(name, knownTabs) {
+async function openTestTabInOwnProcess(name, knownTabs) {
   let realUrl = HELPER_PAGE_URL + '?' + encodeURIComponent(name);
   // Load and wait for about:blank.
-  let tab = yield BrowserTestUtils.openNewForegroundTab({
+  let tab = await BrowserTestUtils.openNewForegroundTab({
     gBrowser, opening: 'about:blank', forceNewProcess: true
   });
   let pid = tab.linkedBrowser.frameLoader.tabParent.osPid;
@@ -55,7 +55,7 @@ function* openTestTabInOwnProcess(name, knownTabs) {
 
   // Now trigger the actual load of our page.
   tab.linkedBrowser.loadURI(realUrl);
-  yield BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+  await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
   is(tab.linkedBrowser.frameLoader.tabParent.osPid, pid, "still same pid");
   return knownTab;
 }
@@ -63,9 +63,9 @@ function* openTestTabInOwnProcess(name, knownTabs) {
 /**
  * Close all the tabs we opened.
  */
-function* cleanupTabs(knownTabs) {
+async function cleanupTabs(knownTabs) {
   for (let knownTab of knownTabs.byName.values()) {
-    yield BrowserTestUtils.removeTab(knownTab.tab);
+    await BrowserTestUtils.removeTab(knownTab.tab);
     knownTab.cleanup();
   }
   knownTabs.cleanup();
@@ -138,8 +138,8 @@ function clearOriginStorageEnsuringNoPreload() {
   return triggerAndWaitForLocalStorageFlush();
 }
 
-function* verifyTabPreload(knownTab, expectStorageExists) {
-  let storageExists = yield ContentTask.spawn(
+async function verifyTabPreload(knownTab, expectStorageExists) {
+  let storageExists = await ContentTask.spawn(
     knownTab.tab.linkedBrowser,
     HELPER_PAGE_ORIGIN,
     function(origin) {
@@ -155,12 +155,12 @@ function* verifyTabPreload(knownTab, expectStorageExists) {
  * Instruct the given tab to execute the given series of mutations.  For
  * simplicity, the mutations representation matches the expected events rep.
  */
-function* mutateTabStorage(knownTab, mutations) {
-  yield ContentTask.spawn(
+async function mutateTabStorage(knownTab, mutations, sentinelValue) {
+  await ContentTask.spawn(
     knownTab.tab.linkedBrowser,
-    { mutations },
+    { mutations, sentinelValue },
     function(args) {
-      return content.wrappedJSObject.mutateStorage(args.mutations);
+      return content.wrappedJSObject.mutateStorage(args);
     });
 }
 
@@ -169,25 +169,33 @@ function* mutateTabStorage(knownTab, mutations) {
  * received events.  verifyTabStorageEvents is the corresponding method to
  * check and assert the recorded events.
  */
-function* recordTabStorageEvents(knownTab) {
-  yield ContentTask.spawn(
+async function recordTabStorageEvents(knownTab, sentinelValue) {
+  await ContentTask.spawn(
     knownTab.tab.linkedBrowser,
-    {},
-    function() {
-      return content.wrappedJSObject.listenForStorageEvents();
+    sentinelValue,
+    function(sentinelValue) {
+      return content.wrappedJSObject.listenForStorageEvents(sentinelValue);
     });
 }
 
 /**
  * Retrieve the current localStorage contents perceived by the tab and assert
  * that they match the provided expected state.
+ *
+ * If maybeSentinel is non-null, it's assumed to be a string that identifies the
+ * value we should be waiting for the sentinel key to take on.  This is
+ * necessary because we cannot make any assumptions about when state will be
+ * propagated to the given process.  See the comments in
+ * page_localstorage_e10s.js for more context.  In general, a sentinel value is
+ * required for correctness unless the process in question is the one where the
+ * writes were performed or verifyTabStorageEvents was used.
  */
-function* verifyTabStorageState(knownTab, expectedState) {
-  let actualState = yield ContentTask.spawn(
+async function verifyTabStorageState(knownTab, expectedState, maybeSentinel) {
+  let actualState = await ContentTask.spawn(
     knownTab.tab.linkedBrowser,
-    {},
-    function() {
-      return content.wrappedJSObject.getStorageState();
+    maybeSentinel,
+    function(maybeSentinel) {
+      return content.wrappedJSObject.getStorageState(maybeSentinel);
     });
 
   for (let [expectedKey, expectedValue] of Object.entries(expectedState)) {
@@ -205,9 +213,12 @@ function* verifyTabStorageState(knownTab, expectedState) {
  * Retrieve and clear the storage events recorded by the tab and assert that
  * they match the provided expected events.  For simplicity, the expected events
  * representation is the same as that used by mutateTabStorage.
+ *
+ * Note that by convention for test readability we are passed a 3rd argument of
+ * the sentinel value, but we don't actually care what it is.
  */
-function* verifyTabStorageEvents(knownTab, expectedEvents) {
-  let actualEvents = yield ContentTask.spawn(
+async function verifyTabStorageEvents(knownTab, expectedEvents) {
+  let actualEvents = await ContentTask.spawn(
     knownTab.tab.linkedBrowser,
     {},
     function() {
@@ -273,8 +284,8 @@ requestLongerTimeout(4);
  *   it preloads/precaches the data without us having touched localStorage or
  *   added an event listener.
  */
-add_task(function*() {
-  yield SpecialPowers.pushPrefEnv({
+add_task(async function() {
+  await SpecialPowers.pushPrefEnv({
     set: [
       // Stop the preallocated process manager from speculatively creating
       // processes.  Our test explicitly asserts on whether preload happened or
@@ -299,28 +310,31 @@ add_task(function*() {
   // Ensure that there is no localstorage data or potential false positives for
   // localstorage preloads by forcing the origin to be cleared prior to the
   // start of our test.
-  yield clearOriginStorageEnsuringNoPreload();
+  await clearOriginStorageEnsuringNoPreload();
 
   // Make sure mOriginsHavingData gets updated.
-  yield triggerAndWaitForLocalStorageFlush();
+  await triggerAndWaitForLocalStorageFlush();
 
   // - Open tabs.  Don't configure any of them yet.
   const knownTabs = new KnownTabs();
-  const writerTab = yield* openTestTabInOwnProcess("writer", knownTabs);
-  const listenerTab = yield* openTestTabInOwnProcess("listener", knownTabs);
-  const readerTab = yield* openTestTabInOwnProcess("reader", knownTabs);
-  const lateWriteThenListenTab = yield* openTestTabInOwnProcess(
+  const writerTab = await openTestTabInOwnProcess("writer", knownTabs);
+  const listenerTab = await openTestTabInOwnProcess("listener", knownTabs);
+  const readerTab = await openTestTabInOwnProcess("reader", knownTabs);
+  const lateWriteThenListenTab = await openTestTabInOwnProcess(
     "lateWriteThenListen", knownTabs);
 
   // Sanity check that preloading did not occur in the tabs.
-  yield* verifyTabPreload(writerTab, false);
-  yield* verifyTabPreload(listenerTab, false);
-  yield* verifyTabPreload(readerTab, false);
+  await verifyTabPreload(writerTab, false);
+  await verifyTabPreload(listenerTab, false);
+  await verifyTabPreload(readerTab, false);
 
   // - Configure the tabs.
-  yield* recordTabStorageEvents(listenerTab);
+  const initialSentinel = 'initial';
+  const noSentinelCheck = null;
+  await recordTabStorageEvents(listenerTab, initialSentinel);
 
   // - Issue the initial batch of writes and verify.
+  info("initial writes");
   const initialWriteMutations = [
     //[key (null=clear), newValue (null=delete), oldValue (verification)]
     ["getsCleared", "1", null],
@@ -341,14 +355,40 @@ add_task(function*() {
     alsoStays: "6"
   };
 
-  yield* mutateTabStorage(writerTab, initialWriteMutations);
+  await mutateTabStorage(writerTab, initialWriteMutations, initialSentinel);
 
-  yield* verifyTabStorageState(writerTab, initialWriteState);
-  yield* verifyTabStorageEvents(listenerTab, initialWriteMutations);
-  yield* verifyTabStorageState(listenerTab, initialWriteState);
-  yield* verifyTabStorageState(readerTab, initialWriteState);
+  // We expect the writer tab to have the correct state because it just did the
+  // writes.  We do not perform a sentinel-check because the writes should be
+  // locally available and consistent.
+  await verifyTabStorageState(writerTab, initialWriteState, noSentinelCheck);
+  // We expect the listener tab to have heard all events despite preload not
+  // having occurred and despite not issuing any reads or writes itself.  We
+  // intentionally check the events before the state because we're most
+  // interested in adding the listener having had a side-effect of subscribing
+  // to changes for the process.
+  //
+  // We ensure it had a chance to hear all of the events because we told
+  // recordTabStorageEvents to listen for the given sentinel.  The state check
+  // then does not need to do a sentinel check.
+  await verifyTabStorageEvents(
+    listenerTab, initialWriteMutations, initialSentinel);
+  await verifyTabStorageState(
+    listenerTab, initialWriteState, noSentinelCheck);
+  // We expect the reader tab to retrieve the current localStorage state from
+  // the database.  Because of the above checks, we are confident that the
+  // writes have hit PBackground and therefore that the (synchronous) state
+  // retrieval contains all the data we need.  No sentinel-check is required.
+  await verifyTabStorageState(readerTab, initialWriteState, noSentinelCheck);
 
   // - Issue second set of writes from lateWriteThenListen
+  // This tests that our new tab that begins by issuing only writes is building
+  // on top of the existing state (although we don't verify that until after the
+  // next set of mutations).  We also verify that the initial "writerTab" that
+  // was our first tab and started with only writes sees the writes, even though
+  // it did not add an event listener.
+
+  info("late writes");
+  const lateWriteSentinel = 'lateWrite';
   const lateWriteMutations = [
     ["lateStays", "10", null],
     ["lateClobbered", "latePre", null],
@@ -361,15 +401,24 @@ add_task(function*() {
     lateClobbered: "lastPost"
   });
 
-  yield* mutateTabStorage(lateWriteThenListenTab, lateWriteMutations);
-  yield* recordTabStorageEvents(lateWriteThenListenTab);
+  await recordTabStorageEvents(listenerTab, lateWriteSentinel);
 
-  yield* verifyTabStorageState(writerTab, lateWriteState);
-  yield* verifyTabStorageEvents(listenerTab, lateWriteMutations);
-  yield* verifyTabStorageState(listenerTab, lateWriteState);
-  yield* verifyTabStorageState(readerTab, lateWriteState);
+  await mutateTabStorage(
+    lateWriteThenListenTab, lateWriteMutations, lateWriteSentinel);
+
+  // Verify the writer tab saw the writes.  It has to wait for the sentinel to
+  // appear before checking.
+  await verifyTabStorageState(writerTab, lateWriteState, lateWriteSentinel);
+  // Wait for the sentinel event before checking the events and then the state.
+  await verifyTabStorageEvents(
+    listenerTab, lateWriteMutations, lateWriteSentinel);
+  await verifyTabStorageState(listenerTab, lateWriteState, noSentinelCheck);
+  // We need to wait for the sentinel to show up for the reader.
+  await verifyTabStorageState(readerTab, lateWriteState, lateWriteSentinel);
 
   // - Issue last set of writes from writerTab.
+  info("last set of writes");
+  const lastWriteSentinel = 'lastWrite';
   const lastWriteMutations = [
     ["lastStays", "20", null],
     ["lastDeleted", "21", null],
@@ -382,14 +431,24 @@ add_task(function*() {
     lastClobbered: "lastPost"
   });
 
-  yield* mutateTabStorage(writerTab, lastWriteMutations);
+  await recordTabStorageEvents(listenerTab, lastWriteSentinel);
+  await recordTabStorageEvents(lateWriteThenListenTab, lastWriteSentinel);
 
-  yield* verifyTabStorageState(writerTab, lastWriteState);
-  yield* verifyTabStorageEvents(listenerTab, lastWriteMutations);
-  yield* verifyTabStorageState(listenerTab, lastWriteState);
-  yield* verifyTabStorageState(readerTab, lastWriteState);
-  yield* verifyTabStorageEvents(lateWriteThenListenTab, lastWriteMutations);
-  yield* verifyTabStorageState(lateWriteThenListenTab, lastWriteState);
+  await mutateTabStorage(writerTab, lastWriteMutations, lastWriteSentinel);
+
+  // The writer performed the writes, no need to wait for the sentinel.
+  await verifyTabStorageState(writerTab, lastWriteState, noSentinelCheck);
+  // Wait for the sentinel event to be received, then check.
+  await verifyTabStorageEvents(
+    listenerTab, lastWriteMutations, lastWriteSentinel);
+  await verifyTabStorageState(listenerTab, lastWriteState, noSentinelCheck);
+  // We need to wait for the sentinel to show up for the reader.
+  await verifyTabStorageState(readerTab, lastWriteState, lastWriteSentinel);
+  // Wait for the sentinel event to be received, then check.
+  await verifyTabStorageEvents(
+    lateWriteThenListenTab, lastWriteMutations, lastWriteSentinel);
+  await verifyTabStorageState(
+    lateWriteThenListenTab, lastWriteState, noSentinelCheck);
 
   // - Force a LocalStorage DB flush so mOriginsHavingData is updated.
   // mOriginsHavingData is only updated when the storage thread runs its
@@ -397,15 +456,17 @@ add_task(function*() {
   // that a flush has occurred before moving on to the next step,
   // mOriginsHavingData may not include our origin when it's sent down to the
   // child process.
-  yield triggerAndWaitForLocalStorageFlush();
+  info("flush to make preload check work");
+  await triggerAndWaitForLocalStorageFlush();
 
   // - Open a fresh tab and make sure it sees the precache/preload
+  info("late open preload check");
   const lateOpenSeesPreload =
-    yield* openTestTabInOwnProcess("lateOpenSeesPreload", knownTabs);
-  yield* verifyTabPreload(lateOpenSeesPreload, true);
+    await openTestTabInOwnProcess("lateOpenSeesPreload", knownTabs);
+  await verifyTabPreload(lateOpenSeesPreload, true);
 
   // - Clean up.
-  yield* cleanupTabs(knownTabs);
+  await cleanupTabs(knownTabs);
 
   clearOriginStorageEnsuringNoPreload();
 });

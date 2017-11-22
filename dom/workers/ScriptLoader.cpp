@@ -242,12 +242,6 @@ struct ScriptLoadInfo
     }
   }
 
-  bool
-  ReadyToExecute()
-  {
-    return !mChannel && NS_SUCCEEDED(mLoadResult) && !mExecutionScheduled;
-  }
-
   nsString mURL;
 
   // This full URL string is populated only if this object is used in a
@@ -442,7 +436,10 @@ public:
     , mIsWorkerScript(aIsWorkerScript)
     , mFailed(false)
   {
+    MOZ_ASSERT(aWorkerPrivate);
     MOZ_ASSERT(aWorkerPrivate->IsServiceWorker());
+    mMainThreadEventTarget = aWorkerPrivate->MainThreadEventTarget();
+    MOZ_ASSERT(mMainThreadEventTarget);
     mBaseURI = GetBaseURI(mIsWorkerScript, aWorkerPrivate);
     AssertIsOnMainThread();
   }
@@ -477,6 +474,7 @@ private:
   nsCString mCSPHeaderValue;
   nsCString mCSPReportOnlyHeaderValue;
   nsCString mReferrerPolicyHeaderValue;
+  nsCOMPtr<nsIEventTarget> mMainThreadEventTarget;
 };
 
 NS_IMPL_ISUPPORTS(CacheScriptLoader, nsIStreamLoaderObserver)
@@ -619,12 +617,6 @@ private:
     return NS_OK;
   }
 
-  NS_IMETHOD
-  SetName(const char* aName) override
-  {
-    return NS_ERROR_NOT_IMPLEMENTED;
-  }
-
   void
   LoadingFinished(uint32_t aIndex, nsresult aRv)
   {
@@ -762,7 +754,8 @@ private:
       mCanceled = true;
 
       MOZ_ALWAYS_SUCCEEDS(
-        NS_DispatchToMainThread(NewRunnableMethod(this,
+        NS_DispatchToMainThread(NewRunnableMethod("ScriptLoaderRunnable::CancelMainThreadWithBindingAborted",
+                                                  this,
                                                   &ScriptLoaderRunnable::CancelMainThreadWithBindingAborted)));
     }
 
@@ -1706,7 +1699,14 @@ CacheScriptLoader::ResolvedCallback(JSContext* aCx,
   }
 
   MOZ_ASSERT(!mPump);
-  rv = NS_NewInputStreamPump(getter_AddRefs(mPump), inputStream);
+  rv = NS_NewInputStreamPump(getter_AddRefs(mPump),
+                             inputStream,
+                             -1, /* default streamPos */
+                             -1, /* default streamLen */
+                             0, /* default segsize */
+                             0, /* default segcount */
+                             false, /* default closeWhenDone */
+                             mMainThreadEventTarget);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     Fail(rv);
     return;

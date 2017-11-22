@@ -6,6 +6,7 @@
 
 #include "mozilla/DebugOnly.h"
 
+#include "DecoderTraits.h"
 #include "MediaResource.h"
 #include "MediaResourceCallback.h"
 
@@ -62,10 +63,10 @@ MediaResource::Destroy()
     delete this;
     return;
   }
-  nsresult rv =
-    SystemGroup::Dispatch("MediaResource::Destroy",
-                          TaskCategory::Other,
-                          NewNonOwningRunnableMethod(this, &MediaResource::Destroy));
+  nsresult rv = SystemGroup::Dispatch(
+    TaskCategory::Other,
+    NewNonOwningRunnableMethod(
+      "MediaResource::Destroy", this, &MediaResource::Destroy));
   MOZ_ALWAYS_SUCCEEDS(rv);
 }
 
@@ -73,13 +74,11 @@ NS_IMPL_ADDREF(MediaResource)
 NS_IMPL_RELEASE_WITH_DESTROY(MediaResource, Destroy())
 NS_IMPL_QUERY_INTERFACE0(MediaResource)
 
-ChannelMediaResource::ChannelMediaResource(
-  MediaResourceCallback* aCallback,
-  nsIChannel* aChannel,
-  nsIURI* aURI,
-  const MediaContainerType& aContainerType,
-  bool aIsPrivateBrowsing)
-  : BaseMediaResource(aCallback, aChannel, aURI, aContainerType)
+ChannelMediaResource::ChannelMediaResource(MediaResourceCallback* aCallback,
+                                           nsIChannel* aChannel,
+                                           nsIURI* aURI,
+                                           bool aIsPrivateBrowsing)
+  : BaseMediaResource(aCallback, aChannel, aURI)
   , mOffset(0)
   , mReopenOnError(false)
   , mIgnoreClose(false)
@@ -94,9 +93,8 @@ ChannelMediaResource::ChannelMediaResource(
   MediaResourceCallback* aCallback,
   nsIChannel* aChannel,
   nsIURI* aURI,
-  const MediaContainerType& aContainerType,
   const MediaChannelStatistics& aStatistics)
-  : BaseMediaResource(aCallback, aChannel, aURI, aContainerType)
+  : BaseMediaResource(aCallback, aChannel, aURI)
   , mOffset(0)
   , mReopenOnError(false)
   , mIgnoreClose(false)
@@ -476,8 +474,6 @@ ChannelMediaResource::CopySegmentToCache(nsIPrincipal* aPrincipal,
                                          uint32_t aCount,
                                          uint32_t* aWriteCount)
 {
-  mCallback->NotifyDataArrived();
-
   // Keep track of where we're up to.
   LOG("CopySegmentToCache at mOffset [%" PRId64 "] add "
       "[%d] bytes for decoder[%p]",
@@ -544,7 +540,17 @@ nsresult ChannelMediaResource::Open(nsIStreamListener **aStreamListener)
 {
   NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
 
-  nsresult rv = mCacheStream.Init();
+  int64_t cl = -1;
+  if (mChannel) {
+    nsCOMPtr<nsIHttpChannel> hc = do_QueryInterface(mChannel);
+    if (hc && !IsPayloadCompressed(hc)) {
+      if (NS_FAILED(hc->GetContentLength(&cl))) {
+        cl = -1;
+      }
+    }
+  }
+
+  nsresult rv = mCacheStream.Init(cl);
   if (NS_FAILED(rv))
     return rv;
   NS_ASSERTION(mOffset == 0, "Who set mOffset already?");
@@ -662,8 +668,8 @@ already_AddRefed<MediaResource> ChannelMediaResource::CloneData(MediaResourceCal
   NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
   NS_ASSERTION(mCacheStream.IsAvailableForSharing(), "Stream can't be cloned");
 
-  RefPtr<ChannelMediaResource> resource = new ChannelMediaResource(
-    aCallback, nullptr, mURI, GetContentType(), mChannelStatistics);
+  RefPtr<ChannelMediaResource> resource =
+    new ChannelMediaResource(aCallback, nullptr, mURI, mChannelStatistics);
   if (resource) {
     // Initially the clone is treated as suspended by the cache, because
     // we don't have a channel. If the cache needs to read data from the clone
@@ -725,31 +731,6 @@ nsresult ChannelMediaResource::ReadAt(int64_t aOffset,
     DispatchBytesConsumed(*aBytes, aOffset);
   }
   return rv;
-}
-
-already_AddRefed<MediaByteBuffer>
-ChannelMediaResource::MediaReadAt(int64_t aOffset, uint32_t aCount)
-{
-  NS_ASSERTION(!NS_IsMainThread(), "Don't call on main thread");
-
-  RefPtr<MediaByteBuffer> bytes = new MediaByteBuffer();
-  bool ok = bytes->SetLength(aCount, fallible);
-  NS_ENSURE_TRUE(ok, nullptr);
-  char* curr = reinterpret_cast<char*>(bytes->Elements());
-  const char* start = curr;
-  while (aCount > 0) {
-    uint32_t bytesRead;
-    nsresult rv = mCacheStream.ReadAt(aOffset, curr, aCount, &bytesRead);
-    NS_ENSURE_SUCCESS(rv, nullptr);
-    if (!bytesRead) {
-      break;
-    }
-    aOffset += bytesRead;
-    aCount -= bytesRead;
-    curr += bytesRead;
-  }
-  bytes->SetLength(curr - start);
-  return bytes.forget();
 }
 
 void
@@ -886,11 +867,6 @@ ChannelMediaResource::RecreateChannel()
                               loadFlags);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // We have cached the Content-Type, which should not change. Give a hint to
-  // the channel to avoid a sniffing failure, which would be expected because we
-  // are probably seeking in the middle of the bitstream, and sniffing relies
-  // on the presence of a magic number at the beginning of the stream.
-  mChannel->SetContentType(GetContentType().OriginalString());
   mSuspendAgent.NotifyChannelOpened(mChannel);
 
   // Tell the cache to reset the download status when the channel is reopened.
@@ -903,7 +879,7 @@ void
 ChannelMediaResource::DoNotifyDataReceived()
 {
   mDataReceivedEvent.Revoke();
-  mCallback->NotifyBytesDownloaded();
+  mCallback->NotifyDataArrived();
 }
 
 void
@@ -977,26 +953,6 @@ ChannelMediaResource::CacheClientSeek(int64_t aOffset, bool aResume)
   NS_ENSURE_SUCCESS(rv, rv);
 
   return OpenChannel(nullptr);
-}
-
-void
-ChannelMediaResource::FlushCache()
-{
-  NS_ASSERTION(NS_IsMainThread(), "Should be on main thread.");
-
-  // Ensure that data in the cache's partial block is written to disk.
-  mCacheStream.FlushPartialBlock();
-}
-
-void
-ChannelMediaResource::NotifyLastByteRange()
-{
-  NS_ASSERTION(NS_IsMainThread(), "Should be on main thread.");
-
-  // Tell media cache that the last data has been downloaded.
-  // Note: subsequent seeks will require re-opening the channel etc.
-  mCacheStream.NotifyDataEnded(NS_OK);
-
 }
 
 nsresult
@@ -1165,12 +1121,11 @@ class FileMediaResource : public BaseMediaResource
 public:
   FileMediaResource(MediaResourceCallback* aCallback,
                     nsIChannel* aChannel,
-                    nsIURI* aURI,
-                    const MediaContainerType& aContainerType) :
-    BaseMediaResource(aCallback, aChannel, aURI, aContainerType),
-    mSize(-1),
-    mLock("FileMediaResource.mLock"),
-    mSizeInitialized(false)
+                    nsIURI* aURI)
+    : BaseMediaResource(aCallback, aChannel, aURI)
+    , mSize(-1)
+    , mLock("FileMediaResource.mLock")
+    , mSizeInitialized(false)
   {
   }
   ~FileMediaResource()
@@ -1183,8 +1138,6 @@ public:
   void     Suspend(bool aCloseImmediately) override {}
   void     Resume() override {}
   already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override;
-  bool     CanClone() override;
-  already_AddRefed<MediaResource> CloneData(MediaResourceCallback* aCallback) override;
   nsresult ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount) override;
 
   // These methods are called off the main thread.
@@ -1196,7 +1149,6 @@ public:
                   uint32_t aCount, uint32_t* aBytes) override;
   // (Probably) file-based, caching recommended.
   bool ShouldCacheReads() override { return true; }
-  already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount) override;
   int64_t  Tell() override;
 
   // Any thread
@@ -1317,30 +1269,26 @@ nsresult FileMediaResource::GetCachedRanges(MediaByteRangeSet& aRanges)
 nsresult FileMediaResource::Open(nsIStreamListener** aStreamListener)
 {
   NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+  MOZ_ASSERT(aStreamListener);
 
-  if (aStreamListener) {
-    *aStreamListener = nullptr;
-  }
-
+  *aStreamListener = nullptr;
   nsresult rv = NS_OK;
-  if (aStreamListener) {
-    // The channel is already open. We need a synchronous stream that
-    // implements nsISeekableStream, so we have to find the underlying
-    // file and reopen it
-    nsCOMPtr<nsIFileChannel> fc(do_QueryInterface(mChannel));
-    if (fc) {
-      nsCOMPtr<nsIFile> file;
-      rv = fc->GetFile(getter_AddRefs(file));
-      NS_ENSURE_SUCCESS(rv, rv);
 
-      rv = NS_NewLocalFileInputStream(
-        getter_AddRefs(mInput), file, -1, -1, nsIFileInputStream::SHARE_DELETE);
-    } else if (IsBlobURI(mURI)) {
-      rv = NS_GetStreamForBlobURI(mURI, getter_AddRefs(mInput));
-    }
-  } else {
-    rv = mChannel->Open2(getter_AddRefs(mInput));
+  // The channel is already open. We need a synchronous stream that
+  // implements nsISeekableStream, so we have to find the underlying
+  // file and reopen it
+  nsCOMPtr<nsIFileChannel> fc(do_QueryInterface(mChannel));
+  if (fc) {
+    nsCOMPtr<nsIFile> file;
+    rv = fc->GetFile(getter_AddRefs(file));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = NS_NewLocalFileInputStream(
+      getter_AddRefs(mInput), file, -1, -1, nsIFileInputStream::SHARE_DELETE);
+  } else if (IsBlobURI(mURI)) {
+    rv = NS_GetStreamForBlobURI(mURI, getter_AddRefs(mInput));
   }
+
   NS_ENSURE_SUCCESS(rv, rv);
 
   mSeekable = do_QueryInterface(mInput);
@@ -1379,52 +1327,6 @@ already_AddRefed<nsIPrincipal> FileMediaResource::GetCurrentPrincipal()
     return nullptr;
   secMan->GetChannelResultPrincipal(mChannel, getter_AddRefs(principal));
   return principal.forget();
-}
-
-bool FileMediaResource::CanClone()
-{
-  return true;
-}
-
-already_AddRefed<MediaResource> FileMediaResource::CloneData(MediaResourceCallback* aCallback)
-{
-  NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
-
-  MediaDecoderOwner* owner = mCallback->GetMediaOwner();
-  if (!owner) {
-    // The decoder is being shut down, so we can't clone
-    return nullptr;
-  }
-  dom::HTMLMediaElement* element = owner->GetMediaElement();
-  if (!element) {
-    // The decoder is being shut down, so we can't clone
-    return nullptr;
-  }
-  nsCOMPtr<nsILoadGroup> loadGroup = element->GetDocumentLoadGroup();
-  NS_ENSURE_TRUE(loadGroup, nullptr);
-
-  MOZ_ASSERT(element->IsAnyOfHTMLElements(nsGkAtoms::audio, nsGkAtoms::video));
-  nsContentPolicyType contentPolicyType = element->IsHTMLElement(nsGkAtoms::audio) ?
-    nsIContentPolicy::TYPE_INTERNAL_AUDIO : nsIContentPolicy::TYPE_INTERNAL_VIDEO;
-
-  nsLoadFlags loadFlags = nsIRequest::LOAD_NORMAL | nsIChannel::LOAD_CLASSIFY_URI;
-
-  nsCOMPtr<nsIChannel> channel;
-  nsresult rv =
-    NS_NewChannel(getter_AddRefs(channel),
-                  mURI,
-                  element,
-                  nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
-                  contentPolicyType,
-                  loadGroup,
-                  nullptr,  // aCallbacks
-                  loadFlags);
-
-  if (NS_FAILED(rv))
-    return nullptr;
-
-  RefPtr<MediaResource> resource(new FileMediaResource(aCallback, channel, mURI, GetContentType()));
-  return resource.forget();
 }
 
 nsresult FileMediaResource::ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount)
@@ -1484,15 +1386,6 @@ nsresult FileMediaResource::ReadAt(int64_t aOffset, char* aBuffer,
     DispatchBytesConsumed(*aBytes, aOffset);
   }
   return rv;
-}
-
-already_AddRefed<MediaByteBuffer>
-FileMediaResource::MediaReadAt(int64_t aOffset, uint32_t aCount)
-{
-  NS_ASSERTION(!NS_IsMainThread(), "Don't call on main thread");
-
-  MutexAutoLock lock(mLock);
-  return UnsafeMediaReadAt(aOffset, aCount);
 }
 
 already_AddRefed<MediaByteBuffer>
@@ -1567,7 +1460,7 @@ MediaResource::Create(MediaResourceCallback* aCallback,
   // Let's try to create a FileMediaResource in case the channel is a nsIFile
   nsCOMPtr<nsIFileChannel> fc = do_QueryInterface(aChannel);
   if (fc) {
-    resource = new FileMediaResource(aCallback, aChannel, uri, *containerType);
+    resource = new FileMediaResource(aCallback, aChannel, uri);
   }
 
   // If the URL is blobURL with a seekable inputStream, we can still use a
@@ -1580,15 +1473,13 @@ MediaResource::Create(MediaResourceCallback* aCallback,
     if (IsBlobURI(uri) &&
         NS_SUCCEEDED(NS_GetStreamForBlobURI(uri, getter_AddRefs(stream))) &&
         (seekableStream = do_QueryInterface(stream))) {
-      resource =
-        new FileMediaResource(aCallback, aChannel, uri, *containerType);
+      resource = new FileMediaResource(aCallback, aChannel, uri);
     }
   }
 
   if (!resource) {
     resource =
-      new ChannelMediaResource(aCallback, aChannel, uri, *containerType,
-                               aIsPrivateBrowsing);
+      new ChannelMediaResource(aCallback, aChannel, uri, aIsPrivateBrowsing);
   }
 
   return resource.forget();
@@ -1678,6 +1569,10 @@ MediaResourceIndex::Read(char* aBuffer, uint32_t aCount, uint32_t* aBytes)
     return rv;
   }
   mOffset += *aBytes;
+  if (mOffset < 0) {
+    // Very unlikely overflow; just return to position 0.
+    mOffset = 0;
+  }
   return NS_OK;
 }
 
@@ -1706,6 +1601,10 @@ MediaResourceIndex::ReadAt(int64_t aOffset,
   }
 
   const int64_t endOffset = aOffset + aCount;
+  if (aOffset < 0 || endOffset < aOffset) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+
   const int64_t lastBlockOffset = CacheOffsetContaining(endOffset - 1);
 
   if (mCachedBytes != 0 && mCachedOffset + mCachedBytes >= aOffset &&
@@ -1889,58 +1788,82 @@ MediaResourceIndex::CacheOrReadAt(int64_t aOffset,
     const int64_t cachedDataEnd = mResource->GetCachedDataEnd(aOffset);
     if (cachedDataEnd >= aOffset + aCount) {
       // Try to read as much resource-cached data as can fill our local cache.
+      // Assume we can read as much as is cached without blocking.
       const uint32_t cacheIndex = IndexInCache(aOffset);
       const uint32_t toRead =
         uint32_t(std::min(cachedDataEnd - aOffset,
                           int64_t(mCacheBlockSize - cacheIndex)));
       MOZ_ASSERT(toRead >= aCount);
-      nsresult rv =
-        mResource->ReadFromCache(&mCachedBlock[cacheIndex], aOffset, toRead);
+      uint32_t read = 0;
+      // We would like `toRead` if possible, but ok with at least `aCount`.
+      nsresult rv = UncachedRangedReadAt(
+        aOffset, &mCachedBlock[cacheIndex], aCount, toRead - aCount, &read);
       if (NS_SUCCEEDED(rv)) {
-        // Success means we have read the full `toRead` amount.
+        if (read == 0) {
+          ILOG("ReadAt(%" PRIu32 "@%" PRId64 ") - UncachedRangedReadAt(%" PRIu32
+               "..%" PRIu32 "@%" PRId64
+               ") to top-up succeeded but read nothing -> OK anyway",
+               aCount,
+               aOffset,
+               aCount,
+               toRead,
+               aOffset);
+          // Couldn't actually read anything, but didn't error out, so count
+          // that as success.
+          return NS_OK;
+        }
         if (mCachedOffset + mCachedBytes == aOffset) {
           // We were topping-up the cache, just update its size.
-          ILOG("ReadAt(%" PRIu32 "@%" PRId64 ") - ReadFromCache(%" PRIu32
-               "@%" PRId64 ") to top-up succeeded...",
+          ILOG("ReadAt(%" PRIu32 "@%" PRId64 ") - UncachedRangedReadAt(%" PRIu32
+               "..%" PRIu32 "@%" PRId64 ") to top-up succeeded to read %" PRIu32
+               "...",
                aCount,
                aOffset,
+               aCount,
                toRead,
-               aOffset);
-          mCachedBytes += toRead;
+               aOffset,
+               read);
+          mCachedBytes += read;
         } else {
           // We were filling the cache from scratch, save new cache information.
-          ILOG("ReadAt(%" PRIu32 "@%" PRId64 ") - ReadFromCache(%" PRIu32
-               "@%" PRId64 ") to fill cache succeeded...",
+          ILOG("ReadAt(%" PRIu32 "@%" PRId64 ") - UncachedRangedReadAt(%" PRIu32
+               "..%" PRIu32 "@%" PRId64
+               ") to fill cache succeeded to read %" PRIu32 "...",
                aCount,
                aOffset,
+               aCount,
                toRead,
-               aOffset);
+               aOffset,
+               read);
           mCachedOffset = aOffset;
-          mCachedBytes = toRead;
+          mCachedBytes = read;
         }
         // Copy relevant part into output.
-        memcpy(aBuffer, &mCachedBlock[cacheIndex], aCount);
-        *aBytes += aCount;
+        uint32_t toCopy = std::min(aCount, read);
+        memcpy(aBuffer, &mCachedBlock[cacheIndex], toCopy);
+        *aBytes += toCopy;
         ILOG("ReadAt(%" PRIu32 "@%" PRId64 ") - copied %" PRIu32 "@%" PRId64
              " -> OK, %" PRIu32,
              aCount,
              aOffset,
-             aCount,
+             toCopy,
              aOffset,
              *aBytes);
         // We may not have read all that was requested, but we got everything
         // we could get, so we're done.
         return NS_OK;
       }
-      ILOG("ReadAt(%" PRIu32 "@%" PRId64 ") - ReadFromCache(%" PRIu32
-           "@%" PRId64 ") failed: %s, will fallback to blocking read...",
+      ILOG("ReadAt(%" PRIu32 "@%" PRId64 ") - UncachedRangedReadAt(%" PRIu32
+           "..%" PRIu32 "@%" PRId64
+           ") failed: %s, will fallback to blocking read...",
            aCount,
            aOffset,
+           aCount,
            toRead,
            aOffset,
            ResultName(rv).get());
       // Failure during reading. Note that this may be due to the cache
-      // changing between `GetCachedDataEnd` and `ReadFromCache`, so it's not
+      // changing between `GetCachedDataEnd` and `ReadAt`, so it's not
       // totally unexpected, just hopefully rare; but we do need to handle it.
 
       // Invalidate part of cache that may have been partially overridden.
@@ -1994,6 +1917,9 @@ MediaResourceIndex::UncachedReadAt(int64_t aOffset,
                                    uint32_t* aBytes) const
 {
   *aBytes = 0;
+  if (aOffset < 0) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
   if (aCount != 0) {
     for (;;) {
       uint32_t bytesRead = 0;
@@ -2010,6 +1936,49 @@ MediaResourceIndex::UncachedReadAt(int64_t aOffset,
         break;
       }
       aOffset += bytesRead;
+      if (aOffset < 0) {
+        // Very unlikely overflow.
+        return NS_ERROR_FAILURE;
+      }
+      aBuffer += bytesRead;
+    }
+  }
+  return NS_OK;
+}
+
+nsresult
+MediaResourceIndex::UncachedRangedReadAt(int64_t aOffset,
+                                         char* aBuffer,
+                                         uint32_t aRequestedCount,
+                                         uint32_t aExtraCount,
+                                         uint32_t* aBytes) const
+{
+  *aBytes = 0;
+  uint32_t count = aRequestedCount + aExtraCount;
+  if (aOffset < 0 || count < aRequestedCount) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  if (count != 0) {
+    for (;;) {
+      uint32_t bytesRead = 0;
+      nsresult rv = mResource->ReadAt(aOffset, aBuffer, count, &bytesRead);
+      if (NS_FAILED(rv)) {
+        return rv;
+      }
+      if (bytesRead == 0) {
+        break;
+      }
+      *aBytes += bytesRead;
+      count -= bytesRead;
+      if (count <= aExtraCount) {
+        // We have read at least aRequestedCount, don't loop anymore.
+        break;
+      }
+      aOffset += bytesRead;
+      if (aOffset < 0) {
+        // Very unlikely overflow.
+        return NS_ERROR_FAILURE;
+      }
       aBuffer += bytesRead;
     }
   }
@@ -2038,6 +2007,9 @@ MediaResourceIndex::Seek(int32_t aWhence, int64_t aOffset)
       return NS_ERROR_FAILURE;
   }
 
+  if (aOffset < 0) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
   mOffset = aOffset;
 
   return NS_OK;

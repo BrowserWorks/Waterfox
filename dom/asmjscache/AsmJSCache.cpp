@@ -242,11 +242,12 @@ class FileDescriptorHolder : public Runnable
 {
 public:
   FileDescriptorHolder()
-  : mQuotaObject(nullptr),
-    mFileSize(INT64_MIN),
-    mFileDesc(nullptr),
-    mFileMap(nullptr),
-    mMappedMemory(nullptr)
+    : Runnable("dom::asmjscache::FileDescriptorHolder")
+    , mQuotaObject(nullptr)
+    , mFileSize(INT64_MIN)
+    , mFileDesc(nullptr)
+    , mFileMap(nullptr)
+    , mMappedMemory(nullptr)
   { }
 
   ~FileDescriptorHolder() override
@@ -345,7 +346,7 @@ public:
   ParentRunnable(const PrincipalInfo& aPrincipalInfo,
                  OpenMode aOpenMode,
                  WriteParams aWriteParams)
-  : mOwningThread(NS_GetCurrentThread()),
+  : mOwningEventTarget(GetCurrentThreadEventTarget()),
     mPrincipalInfo(aPrincipalInfo),
     mOpenMode(aOpenMode),
     mWriteParams(aWriteParams),
@@ -367,14 +368,16 @@ private:
     MOZ_ASSERT(mActorDestroyed);
   }
 
+#ifdef DEBUG
   bool
   IsOnOwningThread() const
   {
-    MOZ_ASSERT(mOwningThread);
+    MOZ_ASSERT(mOwningEventTarget);
 
     bool current;
-    return NS_SUCCEEDED(mOwningThread->IsOnCurrentThread(&current)) && current;
+    return NS_SUCCEEDED(mOwningEventTarget->IsOnCurrentThread(&current)) && current;
   }
+#endif
 
   void
   AssertIsOnOwningThread() const
@@ -435,7 +438,7 @@ private:
                mState != eFinished);
 
     mState = eFailing;
-    MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+    MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
   }
 
   nsresult
@@ -543,7 +546,7 @@ private:
     return IPC_OK();
   }
 
-  nsCOMPtr<nsIEventTarget> mOwningThread;
+  nsCOMPtr<nsIEventTarget> mOwningEventTarget;
   const PrincipalInfo mPrincipalInfo;
   const OpenMode mOpenMode;
   const WriteParams mWriteParams;
@@ -820,7 +823,7 @@ ParentRunnable::Run()
       }
 
       mState = eWaitingToFinishInit;
-      MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+      MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
 
       return NS_OK;
     }
@@ -867,7 +870,7 @@ ParentRunnable::Run()
 
       if (mOpenMode == eOpenForRead) {
         mState = eSendingMetadataForRead;
-        MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+        MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
 
         return NS_OK;
       }
@@ -879,7 +882,7 @@ ParentRunnable::Run()
       }
 
       mState = eSendingCacheFile;
-      MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+      MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
       return NS_OK;
     }
 
@@ -909,7 +912,7 @@ ParentRunnable::Run()
       }
 
       mState = eSendingCacheFile;
-      MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+      MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
       return NS_OK;
     }
 

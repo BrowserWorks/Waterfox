@@ -15,20 +15,24 @@ XPCOMUtils.defineLazyModuleGetter(this, "FormHistory",
                                   "resource://gre/modules/FormHistory.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadsCommon",
                                   "resource:///modules/DownloadsCommon.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
                                   "resource://gre/modules/TelemetryStopwatch.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "console",
                                   "resource://gre/modules/Console.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
-                                  "resource://gre/modules/Preferences.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
                                   "resource://gre/modules/Timer.jsm");
 
-var {classes: Cc, interfaces: Ci} = Components;
+
+XPCOMUtils.defineLazyServiceGetter(this, "serviceWorkerManager",
+                                   "@mozilla.org/serviceworkers/manager;1",
+                                   "nsIServiceWorkerManager");
+XPCOMUtils.defineLazyServiceGetter(this, "quotaManagerService",
+                                   "@mozilla.org/dom/quota-manager-service;1",
+                                   "nsIQuotaManagerService");
+
+var {classes: Cc, interfaces: Ci, results: Cr} = Components;
 
 /**
  * A number of iterations after which to yield time back
@@ -112,8 +116,8 @@ Sanitizer.prototype = {
 
     // Store the list of items to clear, in case we are killed before we
     // get a chance to complete.
-    Preferences.set(Sanitizer.PREF_SANITIZE_IN_PROGRESS,
-                    JSON.stringify(itemsToClear));
+    Services.prefs.setStringPref(Sanitizer.PREF_SANITIZE_IN_PROGRESS,
+                                 JSON.stringify(itemsToClear));
 
     // Store the list of items to clear, for debugging/forensics purposes
     for (let k of itemsToClear) {
@@ -179,7 +183,7 @@ Sanitizer.prototype = {
     TelemetryStopwatch.finish("FX_SANITIZE_TOTAL", refObj);
     // Reset the inProgress preference since we were not killed during
     // sanitization.
-    Preferences.reset(Sanitizer.PREF_SANITIZE_IN_PROGRESS);
+    Services.prefs.clearUserPref(Sanitizer.PREF_SANITIZE_IN_PROGRESS);
     progress = {};
     if (seenError) {
       throw new Error("Error sanitizing");
@@ -289,9 +293,48 @@ Sanitizer.prototype = {
 
     offlineApps: {
       async clear(range) {
+        // AppCache
         Components.utils.import("resource:///modules/offlineAppCache.jsm");
         // This doesn't wait for the cleanup to be complete.
         OfflineAppCacheHelper.clear();
+
+        // LocalStorage
+        Services.obs.notifyObservers(null, "extension:purge-localStorage");
+
+        // ServiceWorkers
+        let serviceWorkers = serviceWorkerManager.getAllRegistrations();
+        for (let i = 0; i < serviceWorkers.length; i++) {
+          let sw = serviceWorkers.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
+          let host = sw.principal.URI.host;
+          serviceWorkerManager.removeAndPropagate(host);
+        }
+
+        // QuotaManager
+        let promises = [];
+        await new Promise(resolve => {
+          quotaManagerService.getUsage(request => {
+            if (request.resultCode != Cr.NS_OK) {
+              // We are probably shutting down. We don't want to propagate the
+              // error, rejecting the promise.
+              resolve();
+              return;
+            }
+
+            for (let item of request.result) {
+              let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(item.origin);
+              let uri = principal.URI;
+              if (uri.scheme == "http" || uri.scheme == "https" || uri.scheme == "file") {
+                promises.push(new Promise(r => {
+                  let req = quotaManagerService.clearStoragesForPrincipal(principal, null, true);
+                  req.callback = () => { r(); };
+                }));
+              }
+            }
+            resolve();
+          });
+        });
+
+        return Promise.all(promises);
       }
     },
 
@@ -809,14 +852,14 @@ Sanitizer.sanitize = function(aParentWindow) {
 Sanitizer.onStartup = async function() {
   // Check if we were interrupted during the last shutdown sanitization.
   let shutownSanitizationWasInterrupted =
-    Preferences.get(Sanitizer.PREF_SANITIZE_ON_SHUTDOWN, false) &&
-    !Preferences.has(Sanitizer.PREF_SANITIZE_DID_SHUTDOWN);
+    Services.prefs.getBoolPref(Sanitizer.PREF_SANITIZE_ON_SHUTDOWN, false) &&
+    Services.prefs.getPrefType(Sanitizer.PREF_SANITIZE_DID_SHUTDOWN) == Ci.nsIPrefBranch.PREF_INVALID;
 
-  if (Preferences.has(Sanitizer.PREF_SANITIZE_DID_SHUTDOWN)) {
+  if (Services.prefs.prefHasUserValue(Sanitizer.PREF_SANITIZE_DID_SHUTDOWN)) {
     // Reset the pref, so that if we crash before having a chance to
     // sanitize on shutdown, we will do at the next startup.
     // Flushing prefs has a cost, so do this only if necessary.
-    Preferences.reset(Sanitizer.PREF_SANITIZE_DID_SHUTDOWN);
+    Services.prefs.clearUserPref(Sanitizer.PREF_SANITIZE_DID_SHUTDOWN);
     Services.prefs.savePrefFile(null);
   }
 
@@ -839,7 +882,7 @@ Sanitizer.onStartup = async function() {
   );
 
   // Check if Firefox crashed during a sanitization.
-  let lastInterruptedSanitization = Preferences.get(Sanitizer.PREF_SANITIZE_IN_PROGRESS, "");
+  let lastInterruptedSanitization = Services.prefs.getStringPref(Sanitizer.PREF_SANITIZE_IN_PROGRESS, "");
   if (lastInterruptedSanitization) {
     let s = new Sanitizer();
     // If the json is invalid this will just throw and reject the Task.
@@ -854,7 +897,7 @@ Sanitizer.onStartup = async function() {
 };
 
 var sanitizeOnShutdown = async function(options = {}) {
-  if (!Preferences.get(Sanitizer.PREF_SANITIZE_ON_SHUTDOWN)) {
+  if (!Services.prefs.getBoolPref(Sanitizer.PREF_SANITIZE_ON_SHUTDOWN)) {
     return;
   }
   // Need to sanitize upon shutdown
@@ -863,6 +906,6 @@ var sanitizeOnShutdown = async function(options = {}) {
   await s.sanitize(null, options);
   // We didn't crash during shutdown sanitization, so annotate it to avoid
   // sanitizing again on startup.
-  Preferences.set(Sanitizer.PREF_SANITIZE_DID_SHUTDOWN, true);
+  Services.prefs.setBoolPref(Sanitizer.PREF_SANITIZE_DID_SHUTDOWN, true);
   Services.prefs.savePrefFile(null);
 };

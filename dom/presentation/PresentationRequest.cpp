@@ -47,11 +47,13 @@ GetAbsoluteURL(const nsAString& aUrl,
                nsAString& aAbsoluteUrl)
 {
   nsCOMPtr<nsIURI> uri;
-  nsresult rv = NS_NewURI(getter_AddRefs(uri),
-                          aUrl,
-                          aDocument ? aDocument->GetDocumentCharacterSet().get()
-                                    : nullptr,
-                          aBaseUri);
+  nsresult rv;
+  if (aDocument) {
+    rv = NS_NewURI(getter_AddRefs(uri), aUrl,
+                   aDocument->GetDocumentCharacterSet(), aBaseUri);
+  } else {
+    rv = NS_NewURI(getter_AddRefs(uri), aUrl, nullptr, aBaseUri);
+  }
 
   if (NS_FAILED(rv)) {
     return rv;
@@ -281,12 +283,12 @@ PresentationRequest::Reconnect(const nsAString& aPresentationId,
   }
 
   nsString presentationId = nsString(aPresentationId);
-  nsCOMPtr<nsIRunnable> r =
-    NewRunnableMethod<nsString, RefPtr<Promise>>(
-      this,
-      &PresentationRequest::FindOrCreatePresentationConnection,
-      presentationId,
-      promise);
+  nsCOMPtr<nsIRunnable> r = NewRunnableMethod<nsString, RefPtr<Promise>>(
+    "dom::PresentationRequest::FindOrCreatePresentationConnection",
+    this,
+    &PresentationRequest::FindOrCreatePresentationConnection,
+    presentationId,
+    promise);
 
   if (NS_WARN_IF(NS_FAILED(NS_DispatchToMainThread(r)))) {
     promise->MaybeReject(NS_ERROR_DOM_OPERATION_ERR);

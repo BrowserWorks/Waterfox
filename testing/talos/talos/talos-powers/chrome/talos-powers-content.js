@@ -4,6 +4,8 @@
 
 // This file is loaded as a framescript
 
+/* globals docShell */
+
 var { interfaces: Ci, utils: Cu } = Components;
 
 /**
@@ -38,8 +40,8 @@ addMessageListener("TalosContentProfiler:Response", (msg) => {
   let event = Cu.cloneInto({
     bubbles: true,
     detail: {
-      name: name,
-      data: data,
+      name,
+      data,
     },
   }, content);
   content.dispatchEvent(
@@ -91,14 +93,14 @@ addEventListener("TalosPowersContentGetStartupInfo", (e) => {
  * The consumer API for this mechanism is at content/TalosPowersContent.js
  * and the callees are at ParentExecServices at components/TalosPowersService.js
  */
-addEventListener("TalosPowers:ParentExec:QueryEvent", function (e) {
+addEventListener("TalosPowers:ParentExec:QueryEvent", function(e) {
   if (content.location.protocol != "file:" &&
       content.location.hostname != "localhost" &&
       content.location.hostname != "127.0.0.1") {
     throw new Error("TalosPowers:ParentExec may only be used with local content");
   }
   let uniqueMessageId = "TalosPowers:ParentExec:"
-                      + content.document.documentURI + Date.now() + Math.random();
+                      + content.document.documentURI + Date.now() + Math.random();  // eslint-disable-line mozilla/avoid-Date-timing
 
   // Listener for the reply from the parent process
   addMessageListener("TalosPowers:ParentExec:ReplyMsg", function done(reply) {

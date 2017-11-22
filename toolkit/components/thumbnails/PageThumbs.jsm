@@ -30,7 +30,6 @@ const THUMBNAIL_DIRECTORY = "thumbnails";
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/PromiseWorker.jsm", this);
-Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/osfile.jsm", this);
 
 Cu.importGlobalProperties(["FileReader"]);
@@ -534,9 +533,7 @@ this.PageThumbsStorage = {
     // future operations can proceed without having to check whether
     // the directory exists.
     return PageThumbsWorker.post("makeDir",
-      [this.path, {ignoreExisting: true}]).then(
-        null,
-        function onError(aReason) {
+      [this.path, {ignoreExisting: true}]).catch(function onError(aReason) {
           Components.utils.reportError("Could not create thumbnails directory" + aReason);
         });
   },

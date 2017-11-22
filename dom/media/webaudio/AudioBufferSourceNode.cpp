@@ -582,8 +582,10 @@ public:
   int32_t mResamplerOutRate;
   uint32_t mChannels;
   float mDopplerShift;
-  AudioNodeStream* mDestination;
-  AudioNodeStream* mSource;
+  RefPtr<AudioNodeStream> mDestination;
+
+  // mSource deletes the engine in its destructor.
+  AudioNodeStream* MOZ_NON_OWNING_REF mSource;
   AudioParamTimeline mPlaybackRateTimeline;
   AudioParamTimeline mDetuneTimeline;
   bool mLoop;
@@ -809,7 +811,10 @@ AudioBufferSourceNode::NotifyMainThreadStreamFinished()
   {
   public:
     explicit EndedEventDispatcher(AudioBufferSourceNode* aNode)
-      : mNode(aNode) {}
+      : mozilla::Runnable("EndedEventDispatcher")
+      , mNode(aNode)
+    {
+    }
     NS_IMETHOD Run() override
     {
       // If it's not safe to run scripts right now, schedule this to run later

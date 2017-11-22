@@ -80,6 +80,10 @@ def create_parser(mach_interface=False):
                  " an environment variable")
     add_arg("--mozAfterPaint", action='store_true', dest="tpmozafterpaint",
             help="wait for MozAfterPaint event before recording the time")
+    add_arg("--firstPaint", action='store_true', dest="firstpaint",
+            help="Also report the first paint value in supported tests")
+    add_arg("--userReady", action='store_true', dest="userready",
+            help="Also report the user ready value in supported tests")
     add_arg('--spsProfile', action="store_true", dest="gecko_profile",
             help="(Deprecated - Use --geckoProfile instead.) Profile the "
                  "run and output the results in $MOZ_UPLOAD_DIR.")
@@ -121,7 +125,7 @@ def create_parser(mach_interface=False):
                  'path and name of the mitmdump file to playback')
     add_arg('--mitmdumpPath',
             help="Path to mitmproxy's mitmdump playback tool")
-    add_arg("--firstNonBlankPaint", action='store_true', dest="first_non_blank_paint",
+    add_arg("--firstNonBlankPaint", action='store_true', dest="fnbpaint",
             help="Wait for firstNonBlankPaint event before recording the time")
     add_arg('--webServer', dest='webserver',
             help="DEPRECATED")
@@ -161,6 +165,16 @@ def create_parser(mach_interface=False):
             help="print available tests")
     add_arg('--print-suites', action=_ListSuite,
             help="list available suites")
+    add_arg('--no-upload-results', action="store_true",
+            dest='no_upload_results',
+            help="If given, it disables uploading of talos results.")
+    add_arg('--stylo', action="store_true",
+            dest='stylo',
+            help='If given, enable Stylo via Environment variables and '
+                 'upload results with Stylo options.')
+    add_arg('--stylo-threads', type=int,
+            dest='stylothreads',
+            help='If given, run stylo with a certain number of threads')
 
     add_logging_group(parser)
     return parser

@@ -11,9 +11,11 @@
 #ifndef WEBRTC_MODULES_DESKTOP_CAPTURE_DESKTOP_CAPTURE_TYPES_H_
 #define WEBRTC_MODULES_DESKTOP_CAPTURE_DESKTOP_CAPTURE_TYPES_H_
 
+#ifndef XP_WIN
+#include <sys/types.h> // pid_t
+#endif
 #include <stdint.h>
 
-#include "webrtc/modules/desktop_capture/desktop_geometry.h"
 #include "webrtc/typedefs.h"
 
 namespace webrtc {
@@ -48,4 +50,3 @@ typedef int pid_t;
 }  // namespace webrtc
 
 #endif  // WEBRTC_MODULES_DESKTOP_CAPTURE_DESKTOP_CAPTURE_TYPES_H_
-

@@ -162,6 +162,7 @@ public class GeckoPreferences
     public static final String PREFS_READ_PARTNER_CUSTOMIZATIONS_PROVIDER = NON_PREF_PREFIX + "distribution.read_partner_customizations_provider";
     public static final String PREFS_READ_PARTNER_BOOKMARKS_PROVIDER = NON_PREF_PREFIX + "distribution.read_partner_bookmarks_provider";
     public static final String PREFS_CUSTOM_TABS = NON_PREF_PREFIX + "customtabs";
+    public static final String PREFS_PWA = NON_PREF_PREFIX + "pwa";
     public static final String PREFS_ACTIVITY_STREAM = NON_PREF_PREFIX + "experiments.activitystream";
     public static final String PREFS_CATEGORY_EXPERIMENTAL_FEATURES = NON_PREF_PREFIX + "category_experimental";
     public static final String PREFS_COMPACT_TABS = NON_PREF_PREFIX + "compact_tabs";
@@ -216,7 +217,6 @@ public class GeckoPreferences
      * Track the last locale so we know whether to redisplay.
      */
     private Locale lastLocale = Locale.getDefault();
-    private boolean localeSwitchingIsEnabled;
 
     private void startActivityForResultChoosingTransition(final Intent intent, final int requestCode) {
         startActivityForResult(intent, requestCode);
@@ -358,10 +358,6 @@ public class GeckoPreferences
         // Apply the current user-selected locale, if necessary.
         checkLocale();
 
-        // Track this so we can decide whether to show locale options.
-        // See also the workaround below for Bug 1015209.
-        localeSwitchingIsEnabled = BrowserLocaleManager.getInstance().isEnabled();
-
         // For Android v11+ where we use Fragments (v11+ only due to bug 866352),
         // check that PreferenceActivity.EXTRA_SHOW_FRAGMENT has been set
         // (or set it) before super.onCreate() is called so Android can display
@@ -384,13 +380,6 @@ public class GeckoPreferences
             // all) in the action bar.
             updateActionBarTitle(R.string.settings_title);
 
-            if (Build.VERSION.SDK_INT < 13) {
-                // Affected by Bug 1015209 -- no detach/attach.
-                // If we try rejigging fragments, we'll crash, so don't
-                // enable locale switching at all.
-                localeSwitchingIsEnabled = false;
-                throw new IllegalStateException("foobar");
-            }
         }
 
         // Use setResourceToOpen to specify these extras.
@@ -672,17 +661,6 @@ public class GeckoPreferences
     private void setupPreferences(PreferenceGroup preferences, ArrayList<String> prefs) {
         for (int i = 0; i < preferences.getPreferenceCount(); i++) {
             final Preference pref = preferences.getPreference(i);
-
-            // Eliminate locale switching if necessary.
-            // This logic will need to be extended when
-            // content language selection (Bug 881510) is implemented.
-            if (!localeSwitchingIsEnabled &&
-                "preferences_locale".equals(pref.getExtras().getString("resource"))) {
-                preferences.removePreference(pref);
-                i--;
-                continue;
-            }
-
             String key = pref.getKey();
             if (pref instanceof PreferenceGroup) {
                 // If datareporting is disabled, remove UI.
@@ -698,6 +676,7 @@ public class GeckoPreferences
                     i--;
                     continue;
                 } else if (PREFS_CATEGORY_EXPERIMENTAL_FEATURES.equals(key)
+                        && !AppConstants.MOZ_ANDROID_PWA
                         && !AppConstants.MOZ_ANDROID_CUSTOM_TABS
                         && !ActivityStream.isUserSwitchable(this)) {
                     preferences.removePreference(pref);
@@ -893,6 +872,10 @@ public class GeckoPreferences
                     preferences.removePreference(pref);
                     i--;
                     continue;
+                } else if (PREFS_PWA.equals(key) && !AppConstants.MOZ_ANDROID_PWA) {
+                    preferences.removePreference(pref);
+                    i--;
+                    continue;
                 } else if (PREFS_ACTIVITY_STREAM.equals(key)
                         && !ActivityStream.isUserSwitchable(this)) {
                     preferences.removePreference(pref);
@@ -964,7 +947,7 @@ public class GeckoPreferences
         int itemId = item.getItemId();
         switch (itemId) {
             case android.R.id.home:
-                finishChoosingTransition();
+                onBackPressed();
                 return true;
         }
 

@@ -14,7 +14,6 @@
 #include "gfxPlatform.h"
 #include "gfxPrefs.h"
 #include "gfxUtils.h"
-#include "gfxAlphaRecovery.h"
 
 #include "GeckoProfiler.h"
 #include "MainThreadUtils.h"
@@ -27,6 +26,9 @@
 #include "nsMargin.h"
 #include "nsThreadUtils.h"
 
+#ifdef ANDROID
+#define ANIMATED_FRAMES_USE_HEAP
+#endif
 
 namespace mozilla {
 
@@ -84,6 +86,21 @@ AllocateBufferForImage(const IntSize& size,
                        bool aIsAnimated = false)
 {
   int32_t stride = VolatileSurfaceStride(size, format);
+
+#ifdef ANIMATED_FRAMES_USE_HEAP
+  if (aIsAnimated) {
+    // For as long as an animated image is retained, its frames will never be
+    // released to let the OS purge volatile buffers. On Android, a volatile
+    // buffer actually keeps a file handle active, which we would like to avoid
+    // since many images and frames could easily exhaust the pool. As such, we
+    // use the heap. On the other platforms we do not have the file handle
+    // problem, and additionally we may avoid a superfluous memset since the
+    // volatile memory starts out as zero-filled.
+    return Factory::CreateDataSourceSurfaceWithStride(size, format,
+                                                      stride, false);
+  }
+#endif
+
   if (!aIsAnimated && gfxPrefs::ImageMemShared()) {
     RefPtr<SourceSurfaceSharedData> newSurf = new SourceSurfaceSharedData();
     if (newSurf->Init(size, stride, format)) {
@@ -363,7 +380,7 @@ imgFrame::InitWithDrawable(gfxDrawable* aDrawable,
   // Draw using the drawable the caller provided.
   RefPtr<gfxContext> ctx = gfxContext::CreateOrNull(target);
   MOZ_ASSERT(ctx);  // Already checked the draw target above.
-  gfxUtils::DrawPixelSnapped(ctx, aDrawable, mFrameRect.Size(),
+  gfxUtils::DrawPixelSnapped(ctx, aDrawable, SizeDouble(mFrameRect.Size()),
                              ImageRegion::Create(ThebesRect(mFrameRect)),
                              mFormat, aSamplingFilter, aImageFlags);
 
@@ -398,7 +415,7 @@ imgFrame::Optimize(DrawTarget* aTarget)
 {
   MOZ_ASSERT(NS_IsMainThread());
   mMonitor.AssertCurrentThreadOwns();
-  
+
   if (mLockCount > 0 || !mOptimizable) {
     // Don't optimize right now.
     return NS_OK;
@@ -529,8 +546,7 @@ bool imgFrame::Draw(gfxContext* aContext, const ImageRegion& aRegion,
                     SamplingFilter aSamplingFilter, uint32_t aImageFlags,
                     float aOpacity)
 {
-  PROFILER_LABEL("imgFrame", "Draw",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("imgFrame::Draw", GRAPHICS);
 
   MOZ_ASSERT(NS_IsMainThread());
   NS_ASSERTION(!aRegion.Rect().IsEmpty(), "Drawing empty region!");

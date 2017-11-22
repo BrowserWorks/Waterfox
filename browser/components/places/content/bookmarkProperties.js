@@ -309,18 +309,18 @@ var BookmarkPropertiesPanel = {
 
     switch (this._action) {
       case ACTION_EDIT:
-        gEditItemOverlay.initPanel({ node: this._node
-                                   , hiddenRows: this._hiddenRows
-                                   , focusedElement: "first" });
+        gEditItemOverlay.initPanel({ node: this._node,
+                                     hiddenRows: this._hiddenRows,
+                                     focusedElement: "first" });
         acceptButton.disabled = gEditItemOverlay.readOnly;
         break;
       case ACTION_ADD:
         this._node = await this._promiseNewItem();
         // Edit the new item
-        gEditItemOverlay.initPanel({ node: this._node
-                                   , hiddenRows: this._hiddenRows
-                                   , postData: this._postData
-                                   , focusedElement: "first" });
+        gEditItemOverlay.initPanel({ node: this._node,
+                                     hiddenRows: this._hiddenRows,
+                                     postData: this._postData,
+                                     focusedElement: "first" });
 
         // Empty location field if the uri is about:blank, this way inserting a new
         // url will be easier for the user, Accept button will be automatically
@@ -371,9 +371,9 @@ var BookmarkPropertiesPanel = {
     }
   },
 
-	// Hack for implementing batched-Undo around the editBookmarkOverlay
-	// instant-apply code. For all the details see the comment above beginBatch
-	// in browser-places.js
+  // Hack for implementing batched-Undo around the editBookmarkOverlay
+  // instant-apply code. For all the details see the comment above beginBatch
+  // in browser-places.js
   _batchBlockingDeferred: null,
   _beginBatch() {
     if (this._batching)
@@ -550,8 +550,9 @@ var BookmarkPropertiesPanel = {
   _getTransactionsForURIList: function BPP__getTransactionsForURIList() {
     var transactions = [];
     for (let uri of this._URIs) {
-      // uri should be an object in the form { url, title }. Though add-ons
+      // uri should be an object in the form { uri, title }. Though add-ons
       // could still use the legacy form, where it's an nsIURI.
+      // TODO: Remove This from v57 on.
       let [_uri, _title] = uri instanceof Ci.nsIURI ?
         [uri, this._getURITitleFromHistory(uri)] : [uri.uri, uri.title];
 
@@ -618,7 +619,12 @@ var BookmarkPropertiesPanel = {
       uri: this._uri ? this._uri.spec : "",
       type: this._itemType == BOOKMARK_ITEM ?
               Ci.nsINavHistoryResultNode.RESULT_TYPE_URI :
-              Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER
+              Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER,
+      parent: {
+        itemId: container,
+        bookmarkGuid: await PlacesUtils.promiseItemGuid(container),
+        type: Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER
+      }
     });
   },
 
@@ -630,12 +636,12 @@ var BookmarkPropertiesPanel = {
     let parentGuid = await PlacesUtils.promiseItemGuid(containerId);
     let annotations = [];
     if (this._description) {
-      annotations.push({ name: PlacesUIUtils.DESCRIPTION_ANNO
-                       , value: this._description });
+      annotations.push({ name: PlacesUIUtils.DESCRIPTION_ANNO,
+                         value: this._description });
     }
     if (this._loadInSidebar) {
-      annotations.push({ name: PlacesUIUtils.LOAD_IN_SIDEBAR_ANNO
-                       , value: true });
+      annotations.push({ name: PlacesUIUtils.LOAD_IN_SIDEBAR_ANNO,
+                         value: true });
     }
 
     let itemGuid;
@@ -659,10 +665,12 @@ var BookmarkPropertiesPanel = {
       itemGuid = await PlacesTransactions.NewLivemark(info).transact();
     } else if (this._itemType == BOOKMARK_FOLDER) {
       itemGuid = await PlacesTransactions.NewFolder(info).transact();
-      for (let uri of this._URIs) {
-        let placeInfo = await PlacesUtils.history.fetch(uri);
-        let title = placeInfo ? placeInfo.title : "";
-        await PlacesTransactions.transact({ parentGuid: itemGuid, uri, title });
+      // URIs is an array of objects in the form { uri, title }.  It is still
+      // named URIs because for backwards compatibility it could also be an
+      // array of nsIURIs. TODO: Fix the property names from v57.
+      for (let { uri: url, title } of this._URIs) {
+        await PlacesTransactions.NewBookmark({ parentGuid: itemGuid, url, title })
+                                .transact();
       }
     } else {
       throw new Error(`unexpected value for _itemType:  ${this._itemType}`);
@@ -677,7 +685,12 @@ var BookmarkPropertiesPanel = {
       uri: this._uri ? this._uri.spec : "",
       type: this._itemType == BOOKMARK_ITEM ?
               Ci.nsINavHistoryResultNode.RESULT_TYPE_URI :
-              Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER
+              Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER,
+      parent: {
+        itemId: containerId,
+        bookmarkGuid: parentGuid,
+        type: Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER
+      }
     });
   }
 };

@@ -23,13 +23,13 @@ add_task(function* () {
   ok(msgWithText && msgWithObj && msgNested, "Three messages should have appeared");
 
   let text = msgWithText.querySelector(".objectBox-string");
-  let objInMsgWithObj = msgWithObj.querySelector(".cm-variable");
+  let objInMsgWithObj = msgWithObj.querySelector(".objectBox-object");
   let textInMsgWithObj = msgWithObj.querySelector(".objectBox-string");
 
   // The third message has an object nested in an array, the array is therefore the top
   // object, the object is the nested object.
-  let topObjInMsg = msgNested.querySelector(".objectBox-array > .cm-variable");
-  let nestedObjInMsg = msgNested.querySelector(".objectBox-object > .cm-variable");
+  let topObjInMsg = msgNested.querySelector(".objectBox-array");
+  let nestedObjInMsg = msgNested.querySelector(".objectBox-object");
 
   info("Check store as global variable is disabled for text only messages");
   let menuPopup = yield openContextMenu(hud, text);
@@ -59,7 +59,7 @@ add_task(function* () {
   is(hud.jsterm.getInputValue(), "temp1", "Input was set");
 
   executedResult = yield hud.jsterm.execute();
-  ok(executedResult.textContent.includes("[ \"foo\", Object, 2 ]"),
+  ok(executedResult.textContent.includes(`[ "foo", {\u2026}, 2 ]`),
      "Correct variable assigned into console " + executedResult.textContent);
 
   info("Check store as global variable is enabled for nested object in nested messages");

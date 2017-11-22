@@ -173,7 +173,8 @@ public:
 
     virtual void ResetDocumentDirection() override;
 
-    virtual int GetDocumentLWTheme() override;
+    virtual nsIDocument::DocumentTheme GetDocumentLWTheme() override;
+    virtual nsIDocument::DocumentTheme ThreadSafeGetDocumentLWTheme() const override;
 
     virtual void ResetDocumentLWTheme() override { mDocLWTheme = Doc_Theme_Uninitialized; }
 
@@ -254,7 +255,7 @@ protected:
                            nsIPrincipal* aDocumentPrincipal,
                            nsIParser** aResult);
 
-    nsresult 
+    nsresult
     LoadOverlayInternal(nsIURI* aURI, bool aIsDynamic, bool* aShouldReturn,
                         bool* aFailureFromContent);
 
@@ -474,7 +475,7 @@ protected:
      * Create a XUL template builder on the specified node.
      */
     static nsresult
-    CreateTemplateBuilder(nsIContent* aElement);
+    CreateTemplateBuilder(Element* aElement);
 
     /**
      * Add the current prototype's style sheets (currently it's just
@@ -484,7 +485,7 @@ protected:
 
 
 protected:
-    /* Declarations related to forward references. 
+    /* Declarations related to forward references.
      *
      * Forward references are declarations which are added to the temporary
      * list (mForwardReferences) during the document (or overlay) load and
@@ -566,10 +567,10 @@ protected:
     class TemplateBuilderHookup : public nsForwardReference
     {
     protected:
-        nsCOMPtr<nsIContent> mElement; // [OWNER]
+        nsCOMPtr<Element> mElement; // [OWNER]
 
     public:
-        explicit TemplateBuilderHookup(nsIContent* aElement)
+        explicit TemplateBuilderHookup(Element* aElement)
             : mElement(aElement) {}
 
         virtual Phase GetPhase() override { return eHookup; }
@@ -603,7 +604,7 @@ protected:
     nsresult
     InsertElement(nsINode* aParent, nsIContent* aChild, bool aNotify);
 
-    static 
+    static
     nsresult
     RemoveElement(nsINode* aParent, nsINode* aChild);
 

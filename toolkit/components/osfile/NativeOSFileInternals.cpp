@@ -6,6 +6,8 @@
  * Native implementation of some OS.File operations.
  */
 
+#include "NativeOSFileInternals.h"
+
 #include "nsString.h"
 #include "nsNetCID.h"
 #include "nsThreadUtils.h"
@@ -15,13 +17,11 @@
 #include "nsProxyRelease.h"
 
 #include "nsINativeOSFileInternals.h"
-#include "NativeOSFileInternals.h"
 #include "mozilla/dom/NativeOSFileInternalsBinding.h"
 
-#include "nsIUnicodeDecoder.h"
+#include "mozilla/Encoding.h"
 #include "nsIEventTarget.h"
 
-#include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Scoped.h"
 #include "mozilla/HoldDropJSObjects.h"
@@ -95,10 +95,7 @@ struct MOZ_NON_TEMPORARY_CLASS ScopedArrayBufferContents: public Scoped<ScopedAr
   explicit ScopedArrayBufferContents(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM):
     Scoped<ScopedArrayBufferContentsTraits>(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_TO_PARENT)
   { }
-  explicit ScopedArrayBufferContents(const ArrayBufferContents& v
-                            MOZ_GUARD_OBJECT_NOTIFIER_PARAM):
-    Scoped<ScopedArrayBufferContentsTraits>(v MOZ_GUARD_OBJECT_NOTIFIER_PARAM_TO_PARENT)
-  { }
+
   ScopedArrayBufferContents& operator=(ArrayBufferContents ptr) {
     Scoped<ScopedArrayBufferContentsTraits>::operator=(ptr);
     return *this;
@@ -411,13 +408,14 @@ public:
              already_AddRefed<AbstractResult>& aDiscardedResult,
              const nsACString& aOperation,
              int32_t aOSError)
-    : mOnSuccess(aOnSuccess)
+    : Runnable("ErrorEvent")
+    , mOnSuccess(aOnSuccess)
     , mOnError(aOnError)
     , mDiscardedResult(aDiscardedResult)
     , mOSError(aOSError)
     , mOperation(aOperation)
-    {
-      MOZ_ASSERT(!NS_IsMainThread());
+  {
+    MOZ_ASSERT(!NS_IsMainThread());
     }
 
   NS_IMETHOD Run() override {
@@ -460,14 +458,16 @@ public:
    * we do not manipulate xpconnect refcounters off the main thread
    * (which is illegal).
    */
-  SuccessEvent(nsMainThreadPtrHandle<nsINativeOSFileSuccessCallback>& aOnSuccess,
-               nsMainThreadPtrHandle<nsINativeOSFileErrorCallback>& aOnError,
-               already_AddRefed<nsINativeOSFileResult>& aResult)
-    : mOnSuccess(aOnSuccess)
+  SuccessEvent(
+    nsMainThreadPtrHandle<nsINativeOSFileSuccessCallback>& aOnSuccess,
+    nsMainThreadPtrHandle<nsINativeOSFileErrorCallback>& aOnError,
+    already_AddRefed<nsINativeOSFileResult>& aResult)
+    : Runnable("SuccessEvent")
+    , mOnSuccess(aOnSuccess)
     , mOnError(aOnError)
     , mResult(aResult)
-    {
-      MOZ_ASSERT(!NS_IsMainThread());
+  {
+    MOZ_ASSERT(!NS_IsMainThread());
     }
 
   NS_IMETHOD Run() override {
@@ -500,9 +500,11 @@ public:
  */
 class AbstractDoEvent: public Runnable {
 public:
-  AbstractDoEvent(nsMainThreadPtrHandle<nsINativeOSFileSuccessCallback>& aOnSuccess,
-                  nsMainThreadPtrHandle<nsINativeOSFileErrorCallback>& aOnError)
-    : mOnSuccess(aOnSuccess)
+  AbstractDoEvent(
+    nsMainThreadPtrHandle<nsINativeOSFileSuccessCallback>& aOnSuccess,
+    nsMainThreadPtrHandle<nsINativeOSFileErrorCallback>& aOnError)
+    : Runnable("AbstractDoEvent")
+    , mOnSuccess(aOnSuccess)
     , mOnError(aOnError)
 #if defined(DEBUG)
     , mResolved(false)
@@ -528,7 +530,8 @@ public:
       // Last ditch attempt to release on the main thread - some of
       // the members of event are not thread-safe, so letting the
       // pointer go out of scope would cause a crash.
-      NS_ReleaseOnMainThread(event.forget());
+      NS_ReleaseOnMainThreadSystemGroup("AbstractDoEvent::ErrorEvent",
+                                        event.forget());
     }
   }
 
@@ -545,7 +548,8 @@ public:
       // Last ditch attempt to release on the main thread - some of
       // the members of event are not thread-safe, so letting the
       // pointer go out of scope would cause a crash.
-      NS_ReleaseOnMainThread(event.forget());
+      NS_ReleaseOnMainThreadSystemGroup("AbstractDoEvent::SuccessEvent",
+                                        event.forget());
     }
 
   }
@@ -746,7 +750,8 @@ public:
     if (!mResult) {
       return;
     }
-    NS_ReleaseOnMainThread(mResult.forget());
+    NS_ReleaseOnMainThreadSystemGroup("DoReadToTypedArrayEvent::mResult",
+                                      mResult.forget());
   }
 
 protected:
@@ -783,7 +788,8 @@ public:
     if (!mResult) {
       return;
     }
-    NS_ReleaseOnMainThread(mResult.forget());
+    NS_ReleaseOnMainThreadSystemGroup("DoReadToStringEvent::mResult",
+                                      mResult.forget());
   }
 
 protected:
@@ -791,12 +797,12 @@ protected:
     // Obtain the decoder. We do this before reading to avoid doing
     // any unnecessary I/O in case the name of the encoding is incorrect.
     MOZ_ASSERT(!NS_IsMainThread());
-    nsAutoCString encodingName;
-    if (!dom::EncodingUtils::FindEncodingForLabel(mEncoding, encodingName)) {
+    const Encoding* encoding = Encoding::ForLabel(mEncoding);
+    if (!encoding) {
       Fail(NS_LITERAL_CSTRING("Decode"), mResult.forget(), OS_ERROR_INVAL);
       return NS_ERROR_FAILURE;
     }
-    mDecoder = dom::EncodingUtils::DecoderForEncoding(encodingName);
+    mDecoder = encoding->NewDecoderWithBOMRemoval();
     if (!mDecoder) {
       Fail(NS_LITERAL_CSTRING("DecoderForEncoding"), mResult.forget(), OS_ERROR_INVAL);
       return NS_ERROR_FAILURE;
@@ -809,37 +815,41 @@ protected:
                  ScopedArrayBufferContents& aBuffer) override {
     MOZ_ASSERT(!NS_IsMainThread());
 
-    int32_t maxChars;
-    const char* sourceChars = reinterpret_cast<const char*>(aBuffer.get().data);
-    int32_t sourceBytes = aBuffer.get().nbytes;
-    if (sourceBytes < 0) {
-      Fail(NS_LITERAL_CSTRING("arithmetics"), mResult.forget(), OS_ERROR_TOO_LARGE);
-      return;
-    }
+    auto src = MakeSpan(aBuffer.get().data, aBuffer.get().nbytes);
 
-    nsresult rv = mDecoder->GetMaxLength(sourceChars, sourceBytes, &maxChars);
-    if (NS_FAILED(rv)) {
-      Fail(NS_LITERAL_CSTRING("GetMaxLength"), mResult.forget(), OS_ERROR_INVAL);
-      return;
-    }
-
-    if (maxChars < 0) {
+    CheckedInt<size_t> needed = mDecoder->MaxUTF16BufferLength(src.Length());
+    if (!needed.isValid() ||
+        needed.value() > MaxValue<nsAString::size_type>::value) {
       Fail(NS_LITERAL_CSTRING("arithmetics"), mResult.forget(), OS_ERROR_TOO_LARGE);
       return;
     }
 
     nsString resultString;
-    resultString.SetLength(maxChars);
-    if (resultString.Length() != (nsString::size_type)maxChars) {
+    bool ok = resultString.SetLength(needed.value(), fallible);
+    if (!ok) {
       Fail(NS_LITERAL_CSTRING("allocation"), mResult.forget(), OS_ERROR_TOO_LARGE);
       return;
     }
 
-
-    rv = mDecoder->Convert(sourceChars, &sourceBytes,
-                           resultString.BeginWriting(), &maxChars);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    resultString.SetLength(maxChars);
+    // Yoric said on IRC that this method is normally called for the entire file,
+    // but that's not guaranteed. Retaining the bug that EOF in conversion isn't
+    // handled anywhere.
+    uint32_t result;
+    size_t read;
+    size_t written;
+    bool hadErrors;
+    Tie(result, read, written, hadErrors) =
+      mDecoder->DecodeToUTF16(src, resultString, false);
+    MOZ_ASSERT(result == kInputEmpty);
+    MOZ_ASSERT(read == src.Length());
+    MOZ_ASSERT(written <= needed.value());
+    Unused << hadErrors;
+    ok = resultString.SetLength(written, fallible);
+    if (!ok) {
+      Fail(
+        NS_LITERAL_CSTRING("allocation"), mResult.forget(), OS_ERROR_TOO_LARGE);
+      return;
+    }
 
     mResult->Init(aDispatchDate, TimeStamp::Now() - aDispatchDate, resultString);
     Succeed(mResult.forget());
@@ -847,7 +857,7 @@ protected:
 
  private:
   nsCString mEncoding;
-  nsCOMPtr<nsIUnicodeDecoder> mDecoder;
+  mozilla::UniquePtr<mozilla::Decoder> mDecoder;
   RefPtr<StringResult> mResult;
 };
 
@@ -886,10 +896,12 @@ NativeOSFileInternalsService::Read(const nsAString& aPath,
   // Prepare the off main thread event and dispatch it
   nsCOMPtr<nsINativeOSFileSuccessCallback> onSuccess(aOnSuccess);
   nsMainThreadPtrHandle<nsINativeOSFileSuccessCallback> onSuccessHandle(
-    new nsMainThreadPtrHolder<nsINativeOSFileSuccessCallback>(onSuccess));
+    new nsMainThreadPtrHolder<nsINativeOSFileSuccessCallback>(
+      "nsINativeOSFileSuccessCallback", onSuccess));
   nsCOMPtr<nsINativeOSFileErrorCallback> onError(aOnError);
   nsMainThreadPtrHandle<nsINativeOSFileErrorCallback> onErrorHandle(
-    new nsMainThreadPtrHolder<nsINativeOSFileErrorCallback>(onError));
+    new nsMainThreadPtrHolder<nsINativeOSFileErrorCallback>(
+      "nsINativeOSFileErrorCallback", onError));
 
   RefPtr<AbstractDoEvent> event;
   if (encoding.IsEmpty()) {
@@ -912,4 +924,3 @@ NativeOSFileInternalsService::Read(const nsAString& aPath,
 }
 
 } // namespace mozilla
-

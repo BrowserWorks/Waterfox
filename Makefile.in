@@ -147,7 +147,12 @@ endif
 
 .PHONY: tup
 tup:
-	$(call BUILDSTATUS,TIERS make tup)
+	$(call BUILDSTATUS,TIERS $(if $(MOZ_ARTIFACT_BUILDS),artifact )make tup)
+ifdef MOZ_ARTIFACT_BUILDS
+	$(call BUILDSTATUS,TIER_START artifact)
+	$(MAKE) recurse_artifact
+	$(call BUILDSTATUS,TIER_FINISH artifact)
+endif
 	$(call BUILDSTATUS,TIER_START make)
 	$(MAKE) buildid.h source-repo.h
 	$(call BUILDSTATUS,TIER_FINISH make)
@@ -243,6 +248,11 @@ default::
 	@echo "===SCCACHE STATS==="
 	-$(CCACHE) --show-stats
 	@echo "==================="
+ifndef MOZ_PROFILE_GENERATE
+# Ideally we'd do that in the same file as we set the sccache.log location for
+# sccache, but it's too late in the build.
+	-gzip -9 $(DIST)/sccache.log
+endif
 endif
 
 distclean::
@@ -265,7 +275,7 @@ endif
 .PHONY: symbolsfullarchive
 symbolsfullarchive: prepsymbolsarchive
 	$(RM) '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip'
-	$(call py_action,symbols_archive,$(abspath '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip') \
+	$(call py_action,symbols_archive,'$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip' \
                                      $(abspath $(DIST)/crashreporter-symbols) \
                                      --exclude '*test*' \
                                      --exclude '*Test*' \
@@ -274,7 +284,7 @@ symbolsfullarchive: prepsymbolsarchive
 .PHONY: symbolsarchive
 symbolsarchive: prepsymbolsarchive
 	$(RM) '$(DIST)/$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip'
-	$(call py_action,symbols_archive,$(abspath '$(DIST)/$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip') \
+	$(call py_action,symbols_archive,'$(DIST)/$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip' \
                                      $(abspath $(DIST)/crashreporter-symbols) \
                                      --include '**/*.sym')
 

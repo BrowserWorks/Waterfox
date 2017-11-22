@@ -14,6 +14,8 @@
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/layers/TouchCounter.h"// for TouchCounter
 #include "mozilla/layers/IAPZCTreeManager.h" // for IAPZCTreeManager
+#include "mozilla/layers/KeyboardMap.h" // for KeyboardMap
+#include "mozilla/layers/FocusState.h"  // for FocusState
 #include "mozilla/Mutex.h"              // for Mutex
 #include "mozilla/RefPtr.h"             // for RefPtr
 #include "mozilla/TimeStamp.h"          // for mozilla::TimeStamp
@@ -23,13 +25,12 @@
 #include "mozilla/layers/AndroidDynamicToolbarAnimator.h"
 #endif // defined(MOZ_WIDGET_ANDROID)
 
-struct WrTransformProperty;
-
 namespace mozilla {
 class MultiTouchInput;
 
 namespace wr {
 class WebRenderAPI;
+struct WrTransformProperty;
 }
 
 namespace layers {
@@ -40,6 +41,7 @@ class APZCTreeManagerParent;
 class CompositorBridgeParent;
 class OverscrollHandoffChain;
 struct OverscrollHandoffState;
+class FocusTarget;
 struct FlingHandoffState;
 struct ScrollableLayerGuidHash;
 class LayerMetricsWrapper;
@@ -112,6 +114,19 @@ public:
   static void InitializeGlobalState();
 
   /**
+   * Rebuild the focus state based on the focus target from the layer tree update
+   * that just occurred.
+   *
+   * @param aRootLayerTreeId The layer tree ID of the root layer corresponding
+   *                         to this APZCTreeManager
+   * @param aOriginatingLayersId The layer tree ID of the layer corresponding to
+   *                             this layer tree update.
+   */
+  void UpdateFocusState(uint64_t aRootLayerTreeId,
+                        uint64_t aOriginatingLayersId,
+                        const FocusTarget& aFocusTarget);
+
+  /**
    * Rebuild the hit-testing tree based on the layer update that just came up.
    * Preserve nodes and APZC instances where possible, but retire those whose
    * layers are no longer in the layer tree.
@@ -163,7 +178,7 @@ public:
    */
   bool PushStateToWR(wr::WebRenderAPI* aWrApi,
                      const TimeStamp& aSampleTime,
-                     nsTArray<WrTransformProperty>& aTransformArray);
+                     nsTArray<wr::WrTransformProperty>& aTransformArray);
 
   /**
    * Walk the tree of APZCs and flushes the repaint requests for all the APZCS
@@ -210,6 +225,11 @@ public:
       InputData& aEvent,
       ScrollableLayerGuid* aOutTargetGuid,
       uint64_t* aOutInputBlockId) override;
+
+  /**
+   * Set the keyboard shortcuts to use for translating keyboard events.
+   */
+  void SetKeyboardMap(const KeyboardMap& aKeyboardMap) override;
 
   /**
    * Kicks an animation to zoom to a rect. This may be either a zoom out or zoom
@@ -415,6 +435,11 @@ public:
       const ScrollableLayerGuid& aGuid,
       const AsyncDragMetrics& aDragMetrics) override;
 
+  void StartAutoscroll(const ScrollableLayerGuid& aGuid,
+                       const ScreenPoint& aAnchorLocation) override;
+
+  void StopAutoscroll(const ScrollableLayerGuid& aGuid) override;
+
   /*
    * Build the chain of APZCs that will handle overscroll for a pan starting at |aInitialTarget|.
    */
@@ -430,9 +455,10 @@ public:
 
   // Methods to help process WidgetInputEvents (or manage conversion to/from InputData)
 
-  void TransformEventRefPoint(
+  void ProcessUnhandledEvent(
       LayoutDeviceIntPoint* aRefPoint,
-      ScrollableLayerGuid* aOutTargetGuid) override;
+      ScrollableLayerGuid*  aOutTargetGuid,
+      uint64_t*             aOutFocusSequenceNumber) override;
 
   void UpdateWheelTransaction(
       LayoutDeviceIntPoint aRefPoint,
@@ -464,6 +490,7 @@ public:
                                                          const FrameMetrics::ViewID& aScrollId);
   ScreenToParentLayerMatrix4x4 GetScreenToApzcTransform(const AsyncPanZoomController *aApzc) const;
   ParentLayerToScreenMatrix4x4 GetApzcToGeckoTransform(const AsyncPanZoomController *aApzc) const;
+  ScreenPoint GetCurrentMousePosition() const;
 
   /**
    * Process touch velocity.
@@ -550,6 +577,14 @@ private:
   /* Holds the zoom constraints for scrollable layers, as determined by the
    * the main-thread gecko code. */
   std::unordered_map<ScrollableLayerGuid, ZoomConstraints, ScrollableLayerGuidHash> mZoomConstraints;
+  /* A list of keyboard shortcuts to use for translating keyboard inputs into
+   * keyboard actions. This is gathered on the main thread from XBL bindings.
+   */
+  KeyboardMap mKeyboardMap;
+  /* This tracks the focus targets of chrome and content and whether we have
+   * a current focus target or whether we are waiting for a new confirmation.
+   */
+  FocusState mFocusState;
   /* This tracks the APZC that should receive all inputs for the current input event block.
    * This allows touch points to move outside the thing they started on, but still have the
    * touch events delivered to the same initial APZC. This will only ever be touched on the
@@ -568,6 +603,9 @@ private:
   /* Tracks the number of touch points we are tracking that are currently on
    * the screen. */
   TouchCounter mTouchCounter;
+  /* Stores the current mouse position in screen coordinates.
+   */
+  ScreenPoint mCurrentMousePosition;
   /* For logging the APZC tree for debugging (enabled by the apz.printtree
    * pref). */
   gfx::TreeLog mApzcTreeLog;

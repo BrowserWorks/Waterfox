@@ -15,6 +15,7 @@ loader.lazyRequireGetter(this, "SourceActor", "devtools/server/actors/source", t
 loader.lazyRequireGetter(this, "isEvalSource", "devtools/server/actors/source", true);
 loader.lazyRequireGetter(this, "SourceMapConsumer", "source-map", true);
 loader.lazyRequireGetter(this, "SourceMapGenerator", "source-map", true);
+loader.lazyRequireGetter(this, "WasmRemap", "devtools/shared/wasm-source-map", true);
 
 /**
  * Manages the sources for a thread. Handles source maps, locations in the
@@ -409,6 +410,11 @@ TabSources.prototype = {
     }
     let result = this._fetchSourceMap(sourceMapURL, source.url);
 
+    let isWasm = source.introductionType == "wasm";
+    if (isWasm) {
+      result = result.then((map) => new WasmRemap(map));
+    }
+
     // The promises in `_sourceMaps` must be the exact same instances
     // as returned by `_fetchSourceMap` for `clearSourceMapCache` to
     // work.
@@ -459,7 +465,7 @@ TabSources.prototype = {
         this._setSourceMapRoot(map, absSourceMapURL, sourceURL);
         return map;
       })
-      .then(null, error => {
+      .catch(error => {
         if (!DevToolsUtils.reportingDisabled) {
           DevToolsUtils.reportException("TabSources.prototype._fetchSourceMap", error);
         }

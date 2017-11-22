@@ -158,6 +158,10 @@ public:
 
     // vista rebars
 
+    // accent color for title bar
+    eColorID__moz_win_accentcolor,
+    // color from drawing text over the accent color
+    eColorID__moz_win_accentcolortext,
     // media rebar text
     eColorID__moz_win_mediatext,
     // communications rebar text
@@ -237,6 +241,15 @@ public:
     eIntID_TabFocusModel,
     // Should menu items blink when they're chosen?
     eIntID_ChosenMenuItemsShouldBlink,
+
+    /*
+     * A Boolean value to determine whether the Windows accent color
+     * should be applied to the title bar.
+     *
+     * The value of this metric is not used on other platforms. These platforms
+     * should return NS_ERROR_NOT_IMPLEMENTED when queried for this metric.
+     */
+    eIntID_WindowsAccentColorInTitlebar,
 
     /*
      * A Boolean value to determine whether the Windows default theme is
@@ -537,6 +550,18 @@ public:
     return result;
   }
 
+  static nscolor GetColorUsingStandins(ColorID aID,
+                                       nscolor aDefault = NS_RGB(0, 0, 0))
+  {
+    nscolor result = NS_RGB(0, 0, 0);
+    if (NS_FAILED(GetColor(aID,
+                           true, // aUseStandinsForNativeColors
+                           &result))) {
+      return aDefault;
+    }
+    return result;
+  }
+
   static int32_t GetInt(IntID aID, int32_t aDefault = 0)
   {
     int32_t result;
@@ -592,6 +617,16 @@ public:
    * cached data would be released.
    */
   static void Refresh();
+
+  /**
+   * GTK's initialization code can't be run off main thread, call this
+   * if you plan on using LookAndFeel off main thread later.
+   *
+   * This initialized state may get reset due to theme changes, so it
+   * must be called prior to each potential off-main-thread LookAndFeel
+   * call, not just once.
+   */
+  static void NativeInit();
 
   /**
    * If the implementation is caching values, these accessors allow the

@@ -44,7 +44,7 @@ nsDiskCacheMap::Open(nsIFile *  cacheDirectory,
     if (mMapFD)  return NS_ERROR_ALREADY_INITIALIZED;
 
     mCacheDirectory = cacheDirectory;   // save a reference for ourselves
-    
+
     // create nsIFile for _CACHE_MAP_
     nsresult rv;
     nsCOMPtr<nsIFile> file;
@@ -62,7 +62,7 @@ nsDiskCacheMap::Open(nsIFile *  cacheDirectory,
 
     bool cacheFilesExist = CacheFilesExist();
     rv = NS_ERROR_FILE_CORRUPTED;  // presume the worst
-    uint32_t mapSize = PR_Available(mMapFD);    
+    uint32_t mapSize = PR_Available(mMapFD);
 
     if (NS_FAILED(InitCacheClean(cacheDirectory,
                                  corruptInfo))) {
@@ -76,7 +76,7 @@ nsDiskCacheMap::Open(nsIFile *  cacheDirectory,
         // block files shouldn't exist if we're creating the _CACHE_MAP_
         if (cacheFilesExist) {
             *corruptInfo = nsDiskCache::kBlockFilesShouldNotExist;
-            goto error_exit; 
+            goto error_exit;
         }
 
         if (NS_FAILED(CreateCacheSubDirectories())) {
@@ -88,15 +88,15 @@ nsDiskCacheMap::Open(nsIFile *  cacheDirectory,
         memset(&mHeader, 0, sizeof(nsDiskCacheHeader));
         mHeader.mVersion = nsDiskCache::kCurrentVersion;
         mHeader.mRecordCount = kMinRecordCount;
-        mRecordArray = (nsDiskCacheRecord *)
-            PR_CALLOC(mHeader.mRecordCount * sizeof(nsDiskCacheRecord));
+        mRecordArray = (nsDiskCacheRecord*)
+            calloc(mHeader.mRecordCount, sizeof(nsDiskCacheRecord));
         if (!mRecordArray) {
             *corruptInfo = nsDiskCache::kOutOfMemory;
             rv = NS_ERROR_OUT_OF_MEMORY;
             goto error_exit;
         }
     } else if (mapSize >= sizeof(nsDiskCacheHeader)) {  // read existing _CACHE_MAP_
-        
+
         // if _CACHE_MAP_ exists, so should the block files
         if (!cacheFilesExist) {
             *corruptInfo = nsDiskCache::kBlockFilesShouldExist;
@@ -117,7 +117,7 @@ nsDiskCacheMap::Open(nsIFile *  cacheDirectory,
             *corruptInfo = nsDiskCache::kHeaderIsDirty;
             goto error_exit;
         }
-        
+
         if (mHeader.mVersion != nsDiskCache::kCurrentVersion) {
             *corruptInfo = nsDiskCache::kVersionMismatch;
             goto error_exit;
@@ -131,7 +131,7 @@ nsDiskCacheMap::Open(nsIFile *  cacheDirectory,
         }
 
         // Get the space for the records
-        mRecordArray = (nsDiskCacheRecord *) PR_MALLOC(recordArraySize);
+        mRecordArray = (nsDiskCacheRecord*) malloc(recordArraySize);
         if (!mRecordArray) {
             *corruptInfo = nsDiskCache::kOutOfMemory;
             rv = NS_ERROR_OUT_OF_MEMORY;
@@ -155,7 +155,7 @@ nsDiskCacheMap::Open(nsIFile *  cacheDirectory,
                 total ++;
             }
         }
-        
+
         // verify entry count
         if (total != mHeader.mEntryCount) {
             *corruptInfo = nsDiskCache::kEntryCountIncorrect;
@@ -180,16 +180,16 @@ nsDiskCacheMap::Open(nsIFile *  cacheDirectory,
         *corruptInfo = nsDiskCache::kFlushHeaderError;
         goto error_exit;
     }
-    
+
     Telemetry::Accumulate(Telemetry::HTTP_DISK_CACHE_OVERHEAD,
                           (uint32_t)SizeOfExcludingThis(moz_malloc_size_of));
 
     *corruptInfo = nsDiskCache::kNotCorrupt;
     return NS_OK;
-    
+
 error_exit:
     (void) Close(false);
-       
+
     return rv;
 }
 
@@ -230,8 +230,10 @@ nsDiskCacheMap::Close(bool flush)
         mCleanFD = nullptr;
     }
 
-    PR_FREEIF(mRecordArray);
-    PR_FREEIF(mBuffer);
+    free(mRecordArray);
+    mRecordArray = nullptr;
+    free(mBuffer);
+    mBuffer = nullptr;
     mBufferSize = 0;
     return rv;
 }
@@ -256,11 +258,11 @@ nsresult
 nsDiskCacheMap::FlushHeader()
 {
     if (!mMapFD)  return NS_ERROR_NOT_AVAILABLE;
-    
+
     // seek to beginning of cache map
     int32_t filePos = PR_Seek(mMapFD, 0, PR_SEEK_SET);
     if (filePos != 0)  return NS_ERROR_UNEXPECTED;
-    
+
     // write the header
     mHeader.Swap();
     int32_t bytesWritten = PR_Write(mMapFD, &mHeader, sizeof(nsDiskCacheHeader));
@@ -285,20 +287,20 @@ nsresult
 nsDiskCacheMap::FlushRecords(bool unswap)
 {
     if (!mMapFD)  return NS_ERROR_NOT_AVAILABLE;
-    
+
     // seek to beginning of buckets
     int32_t filePos = PR_Seek(mMapFD, sizeof(nsDiskCacheHeader), PR_SEEK_SET);
     if (filePos != sizeof(nsDiskCacheHeader))
         return NS_ERROR_UNEXPECTED;
-    
+
 #if defined(IS_LITTLE_ENDIAN)
     // Swap each record
     for (int32_t i = 0; i < mHeader.mRecordCount; ++i) {
-        if (mRecordArray[i].HashNumber())   
+        if (mRecordArray[i].HashNumber())
             mRecordArray[i].Swap();
     }
 #endif
-    
+
     int32_t recordArraySize = sizeof(nsDiskCacheRecord) * mHeader.mRecordCount;
 
     int32_t bytesWritten = PR_Write(mMapFD, mRecordArray, recordArraySize);
@@ -309,12 +311,12 @@ nsDiskCacheMap::FlushRecords(bool unswap)
     if (unswap) {
         // Unswap each record
         for (int32_t i = 0; i < mHeader.mRecordCount; ++i) {
-            if (mRecordArray[i].HashNumber())   
+            if (mRecordArray[i].HashNumber())
                 mRecordArray[i].Unswap();
         }
     }
 #endif
-    
+
     return NS_OK;
 }
 
@@ -329,7 +331,7 @@ nsDiskCacheMap::GetBucketRank(uint32_t bucketIndex, uint32_t targetRank)
     nsDiskCacheRecord * records = GetFirstRecordInBucket(bucketIndex);
     uint32_t            rank = 0;
 
-    for (int i = mHeader.mBucketUsage[bucketIndex]-1; i >= 0; i--) {          
+    for (int i = mHeader.mBucketUsage[bucketIndex]-1; i >= 0; i--) {
         if ((rank < records[i].EvictionRank()) &&
             ((targetRank == 0) || (records[i].EvictionRank() < targetRank)))
                 rank = records[i].EvictionRank();
@@ -348,8 +350,8 @@ nsDiskCacheMap::GrowRecords()
     int32_t newCount = mHeader.mRecordCount << 1;
     if (newCount > mMaxRecordCount)
         newCount = mMaxRecordCount;
-    nsDiskCacheRecord *newArray = (nsDiskCacheRecord *)
-            PR_REALLOC(mRecordArray, newCount * sizeof(nsDiskCacheRecord));
+    nsDiskCacheRecord* newArray = (nsDiskCacheRecord *)
+            realloc(mRecordArray, newCount * sizeof(nsDiskCacheRecord));
     if (!newArray)
         return NS_ERROR_OUT_OF_MEMORY;
 
@@ -414,7 +416,7 @@ nsDiskCacheMap::ShrinkRecords()
     // Shrink the record array memory block itself
     uint32_t newCount = newRecordsPerBucket * kBuckets;
     nsDiskCacheRecord* newArray = (nsDiskCacheRecord *)
-            PR_REALLOC(mRecordArray, newCount * sizeof(nsDiskCacheRecord));
+            realloc(mRecordArray, newCount * sizeof(nsDiskCacheRecord));
     if (!newArray)
         return NS_ERROR_OUT_OF_MEMORY;
 
@@ -443,13 +445,13 @@ nsDiskCacheMap::AddRecord( nsDiskCacheRecord *  mapRecord,
         // Ignore failure to grow the record space, we will then reuse old records
         GrowRecords();
     }
-    
+
     nsDiskCacheRecord * records = GetFirstRecordInBucket(bucketIndex);
     if (count < GetRecordsPerBucket()) {
         // stick the new record at the end
         records[count] = *mapRecord;
         mHeader.mEntryCount++;
-        mHeader.mBucketUsage[bucketIndex]++;           
+        mHeader.mBucketUsage[bucketIndex]++;
         if (mHeader.mEvictionRank[bucketIndex] < mapRecord->EvictionRank())
             mHeader.mEvictionRank[bucketIndex] = mapRecord->EvictionRank();
         InvalidateCache();
@@ -466,7 +468,7 @@ nsDiskCacheMap::AddRecord( nsDiskCacheRecord *  mapRecord,
         // check if we need to update mostEvictable entry in header
         if (mHeader.mEvictionRank[bucketIndex] < mapRecord->EvictionRank())
             mHeader.mEvictionRank[bucketIndex] = mapRecord->EvictionRank();
-        if (oldRecord->EvictionRank() >= mHeader.mEvictionRank[bucketIndex]) 
+        if (oldRecord->EvictionRank() >= mHeader.mEvictionRank[bucketIndex])
             mHeader.mEvictionRank[bucketIndex] = GetBucketRank(bucketIndex, 0);
         InvalidateCache();
     }
@@ -486,11 +488,11 @@ nsDiskCacheMap::UpdateRecord( nsDiskCacheRecord *  mapRecord)
     const uint32_t      bucketIndex = GetBucketIndex(hashNumber);
     nsDiskCacheRecord * records = GetFirstRecordInBucket(bucketIndex);
 
-    for (int i = mHeader.mBucketUsage[bucketIndex]-1; i >= 0; i--) {          
+    for (int i = mHeader.mBucketUsage[bucketIndex]-1; i >= 0; i--) {
         if (records[i].HashNumber() == hashNumber) {
             const uint32_t oldRank = records[i].EvictionRank();
 
-            // stick the new record here            
+            // stick the new record here
             records[i] = *mapRecord;
 
             // update eviction rank in header if necessary
@@ -517,7 +519,7 @@ nsDiskCacheMap::FindRecord( uint32_t  hashNumber, nsDiskCacheRecord *  result)
     const uint32_t      bucketIndex = GetBucketIndex(hashNumber);
     nsDiskCacheRecord * records = GetFirstRecordInBucket(bucketIndex);
 
-    for (int i = mHeader.mBucketUsage[bucketIndex]-1; i >= 0; i--) {          
+    for (int i = mHeader.mBucketUsage[bucketIndex]-1; i >= 0; i--) {
         if (records[i].HashNumber() == hashNumber) {
             *result = records[i];    // copy the record
             NS_ASSERTION(result->ValidRecord(), "bad cache map record");
@@ -538,7 +540,7 @@ nsDiskCacheMap::DeleteRecord( nsDiskCacheRecord *  mapRecord)
     nsDiskCacheRecord * records = GetFirstRecordInBucket(bucketIndex);
     uint32_t            last = mHeader.mBucketUsage[bucketIndex]-1;
 
-    for (int i = last; i >= 0; i--) {          
+    for (int i = last; i >= 0; i--) {
         if (records[i].HashNumber() == hashNumber) {
             // found it, now delete it.
             uint32_t  evictionRank = records[i].EvictionRank();
@@ -581,9 +583,9 @@ nsDiskCacheMap::VisitEachRecord(uint32_t                    bucketIndex,
         if (evictionRank > records[i].EvictionRank()) continue;
 
         rv = visitor->VisitRecord(&records[i]);
-        if (rv == kStopVisitingRecords) 
+        if (rv == kStopVisitingRecords)
             break;    // Stop visiting records
-        
+
         if (rv == kDeleteRecordAndContinue) {
             --count;
             records[i] = records[count];
@@ -616,7 +618,7 @@ nsDiskCacheMap::VisitRecords( nsDiskCacheRecordVisitor *  visitor)
     for (int bucketIndex = 0; bucketIndex < kBuckets; ++bucketIndex) {
         if (VisitEachRecord(bucketIndex, visitor, 0) == kStopVisitingRecords)
             break;
-    }   
+    }
     return NS_OK;
 }
 
@@ -631,7 +633,7 @@ nsDiskCacheMap::EvictRecords( nsDiskCacheRecordVisitor * visitor)
 {
     uint32_t  tempRank[kBuckets];
     int       bucketIndex = 0;
-    
+
     // copy eviction rank array
     for (bucketIndex = 0; bucketIndex < kBuckets; ++bucketIndex)
         tempRank[bucketIndex] = mHeader.mEvictionRank[bucketIndex];
@@ -641,7 +643,7 @@ nsDiskCacheMap::EvictRecords( nsDiskCacheRecordVisitor * visitor)
     // the value could decrease if some entry is evicted.
     int32_t entryCount = mHeader.mEntryCount;
     for (int n = 0; n < entryCount; ++n) {
-    
+
         // find bucket with highest eviction rank
         uint32_t    rank  = 0;
         for (int i = 0; i < kBuckets; ++i) {
@@ -650,7 +652,7 @@ nsDiskCacheMap::EvictRecords( nsDiskCacheRecordVisitor * visitor)
                 bucketIndex = i;
             }
         }
-        
+
         if (rank == 0) break;  // we've examined all the records
 
         // visit records in bucket with eviction ranks >= target eviction rank
@@ -674,14 +676,14 @@ nsDiskCacheMap::OpenBlockFiles(nsDiskCache::CorruptCacheInfo *  corruptInfo)
     nsCOMPtr<nsIFile> blockFile;
     nsresult rv = NS_OK;
     *corruptInfo = nsDiskCache::kUnexpectedError;
-    
+
     for (int i = 0; i < kNumBlockFiles; ++i) {
         rv = GetBlockFileForIndex(i, getter_AddRefs(blockFile));
         if (NS_FAILED(rv)) {
             *corruptInfo = nsDiskCache::kCouldNotGetBlockFileForIndex;
             break;
         }
-    
+
         uint32_t blockSize = GetBlockSizeForIndex(i+1); // +1 to match file selectors 1,2,3
         uint32_t bitMapSize = GetBitMapSizeForIndex(i+1);
         rv = mBlockFile[i].Open(blockFile, blockSize, bitMapSize, corruptInfo);
@@ -715,7 +717,7 @@ nsDiskCacheMap::CacheFilesExist()
 {
     nsCOMPtr<nsIFile> blockFile;
     nsresult rv;
-    
+
     for (int i = 0; i < kNumBlockFiles; ++i) {
         bool exists;
         rv = GetBlockFileForIndex(i, getter_AddRefs(blockFile));
@@ -763,9 +765,9 @@ nsDiskCacheMap::ReadDiskCacheEntry(nsDiskCacheRecord * record)
     nsDiskCacheEntry *  diskEntry  = nullptr;
     uint32_t            metaFile   = record->MetaFile();
     int32_t             bytesRead  = 0;
-    
+
     if (!record->MetaLocationInitialized())  return nullptr;
-    
+
     if (metaFile == 0) {  // entry/metadata stored in separate file
         // open and read the file
         nsCOMPtr<nsIFile> file;
@@ -783,7 +785,7 @@ nsDiskCacheMap::ReadDiskCacheEntry(nsDiskCacheRecord * record)
         // open the file - restricted to user, the data could be confidential
         rv = file->OpenNSPRFileDesc(PR_RDONLY, 00600, &fd);
         NS_ENSURE_SUCCESS(rv, nullptr);
-        
+
         int32_t fileSize = PR_Available(fd);
         if (fileSize < 0) {
             // an error occurred. We could call PR_GetError(), but how would that help?
@@ -802,20 +804,20 @@ nsDiskCacheMap::ReadDiskCacheEntry(nsDiskCacheRecord * record)
 
     } else if (metaFile < (kNumBlockFiles + 1)) {
         // entry/metadata stored in cache block file
-        
+
         // allocate buffer
         uint32_t blockCount = record->MetaBlockCount();
         bytesRead = blockCount * GetBlockSizeForIndex(metaFile);
 
         rv = EnsureBuffer(bytesRead);
         NS_ENSURE_SUCCESS(rv, nullptr);
-        
-        // read diskEntry, note when the blocks are at the end of file, 
+
+        // read diskEntry, note when the blocks are at the end of file,
         // bytesRead may be less than blockSize*blockCount.
         // But the bytesRead should at least agree with the real disk entry size.
         rv = mBlockFile[metaFile - 1].ReadBlocks(mBuffer,
                                                  record->MetaStartBlock(),
-                                                 blockCount, 
+                                                 blockCount,
                                                  &bytesRead);
         NS_ENSURE_SUCCESS(rv, nullptr);
     }
@@ -841,7 +843,7 @@ nsDiskCacheMap::CreateDiskCacheEntry(nsDiskCacheBinding *  binding,
 {
     nsCacheEntry * entry = binding->mCacheEntry;
     if (!entry)  return nullptr;
-    
+
     // Store security info, if it is serializable
     nsCOMPtr<nsISupports> infoObj = entry->SecurityInfo();
     nsCOMPtr<nsISerializable> serializable = do_QueryInterface(infoObj);
@@ -857,9 +859,9 @@ nsDiskCacheMap::CreateDiskCacheEntry(nsDiskCacheBinding *  binding,
     uint32_t  keySize  = entry->Key()->Length() + 1;
     uint32_t  metaSize = entry->MetaDataSize();
     uint32_t  size     = sizeof(nsDiskCacheEntry) + keySize + metaSize;
-    
+
     if (aSize) *aSize = size;
-    
+
     nsresult rv = EnsureBuffer(size);
     if (NS_FAILED(rv)) return nullptr;
 
@@ -873,12 +875,12 @@ nsDiskCacheMap::CreateDiskCacheEntry(nsDiskCacheBinding *  binding,
     diskEntry->mDataSize        = entry->DataSize();
     diskEntry->mKeySize         = keySize;
     diskEntry->mMetaDataSize    = metaSize;
-    
+
     memcpy(diskEntry->Key(), entry->Key()->get(), keySize);
-    
+
     rv = entry->FlattenMetaData(diskEntry->MetaData(), metaSize);
     if (NS_FAILED(rv)) return nullptr;
-    
+
     return diskEntry;
 }
 
@@ -893,10 +895,10 @@ nsDiskCacheMap::WriteDiskCacheEntry(nsDiskCacheBinding *  binding)
     uint32_t            size;
     nsDiskCacheEntry *  diskEntry =  CreateDiskCacheEntry(binding, &size);
     if (!diskEntry)  return NS_ERROR_UNEXPECTED;
-    
+
     uint32_t  fileIndex = CalculateFileIndex(size);
 
-    // Deallocate old storage if necessary    
+    // Deallocate old storage if necessary
     if (binding->mRecord.MetaLocationInitialized()) {
         // we have existing storage
 
@@ -964,7 +966,7 @@ nsDiskCacheMap::WriteDiskCacheEntry(nsDiskCacheBinding *  binding)
                                             true,
                                             getter_AddRefs(localFile));
         NS_ENSURE_SUCCESS(rv, rv);
-        
+
         // open the file
         PRFileDesc * fd;
         // open the file - restricted to user, the data could be confidential
@@ -973,7 +975,7 @@ nsDiskCacheMap::WriteDiskCacheEntry(nsDiskCacheBinding *  binding)
 
         // write the file
         int32_t bytesWritten = PR_Write(fd, diskEntry, size);
-        
+
         PRStatus err = PR_Close(fd);
         if ((bytesWritten != (int32_t)size) || (err != PR_SUCCESS)) {
             return NS_ERROR_UNEXPECTED;
@@ -994,7 +996,7 @@ nsDiskCacheMap::ReadDataCacheBlocks(nsDiskCacheBinding * binding, char * buffer,
 
     uint32_t  fileIndex = binding->mRecord.DataFile();
     int32_t   readSize = size;
-    
+
     nsresult rv = mBlockFile[fileIndex - 1].ReadBlocks(buffer,
                                                        binding->mRecord.DataStartBlock(),
                                                        binding->mRecord.DataBlockCount(),
@@ -1002,7 +1004,7 @@ nsDiskCacheMap::ReadDataCacheBlocks(nsDiskCacheBinding * binding, char * buffer,
     NS_ENSURE_SUCCESS(rv, rv);
     if (readSize < (int32_t)size) {
         rv = NS_ERROR_UNEXPECTED;
-    } 
+    }
     return rv;
 }
 
@@ -1014,7 +1016,7 @@ nsDiskCacheMap::WriteDataCacheBlocks(nsDiskCacheBinding * binding, char * buffer
         binding->mRecord.HashNumber(), size));
 
     nsresult  rv = NS_OK;
-    
+
     // determine block file & number of blocks
     uint32_t  fileIndex  = CalculateFileIndex(size);
     uint32_t  blockCount = 0;
@@ -1069,7 +1071,7 @@ nsDiskCacheMap::DeleteStorage(nsDiskCacheRecord * record, bool metaData)
     nsresult    rv = NS_ERROR_UNEXPECTED;
     uint32_t    fileIndex = metaData ? record->MetaFile() : record->DataFile();
     nsCOMPtr<nsIFile> file;
-    
+
     if (fileIndex == 0) {
         // delete the file
         uint32_t  sizeK = metaData ? record->MetaFileSize() : record->DataFileSize();
@@ -1080,18 +1082,18 @@ nsDiskCacheMap::DeleteStorage(nsDiskCacheRecord * record, bool metaData)
             rv = file->Remove(false);    // false == non-recursive
         }
         DecrementTotalSize(sizeK);
-        
+
     } else if (fileIndex < (kNumBlockFiles + 1)) {
         // deallocate blocks
         uint32_t  startBlock = metaData ? record->MetaStartBlock() : record->DataStartBlock();
         uint32_t  blockCount = metaData ? record->MetaBlockCount() : record->DataBlockCount();
-        
+
         rv = mBlockFile[fileIndex - 1].DeallocateBlocks(startBlock, blockCount);
         DecrementTotalSize(blockCount, GetBlockSizeForIndex(fileIndex));
     }
     if (metaData)  record->ClearMetaLocation();
     else           record->ClearDataLocation();
-    
+
     return rv;
 }
 
@@ -1103,7 +1105,7 @@ nsDiskCacheMap::GetFileForDiskCacheRecord(nsDiskCacheRecord * record,
                                           nsIFile **          result)
 {
     if (!mCacheDirectory)  return NS_ERROR_NOT_AVAILABLE;
-    
+
     nsCOMPtr<nsIFile> file;
     nsresult rv = mCacheDirectory->Clone(getter_AddRefs(file));
     if (NS_FAILED(rv))  return rv;
@@ -1130,7 +1132,7 @@ nsDiskCacheMap::GetFileForDiskCacheRecord(nsDiskCacheRecord * record,
                      generation);
     rv = file->AppendNative(nsDependentCString(name));
     if (NS_FAILED(rv))  return rv;
-    
+
     NS_IF_ADDREF(*result = file);
     return rv;
 }
@@ -1148,7 +1150,7 @@ nsDiskCacheMap::GetLocalFileForDiskCacheRecord(nsDiskCacheRecord * record,
                                             createPath,
                                             getter_AddRefs(file));
     if (NS_FAILED(rv))  return rv;
-    
+
     NS_IF_ADDREF(*result = file);
     return rv;
 }
@@ -1158,16 +1160,16 @@ nsresult
 nsDiskCacheMap::GetBlockFileForIndex(uint32_t index, nsIFile ** result)
 {
     if (!mCacheDirectory)  return NS_ERROR_NOT_AVAILABLE;
-    
+
     nsCOMPtr<nsIFile> file;
     nsresult rv = mCacheDirectory->Clone(getter_AddRefs(file));
     if (NS_FAILED(rv))  return rv;
-    
+
     char name[32];
     ::SprintfLiteral(name, "_CACHE_%03d_", index + 1);
     rv = file->AppendNative(nsDependentCString(name));
     if (NS_FAILED(rv))  return rv;
-    
+
     NS_IF_ADDREF(*result = file);
 
     return rv;
@@ -1191,7 +1193,7 @@ nsresult
 nsDiskCacheMap::EnsureBuffer(uint32_t bufSize)
 {
     if (mBufferSize < bufSize) {
-        char * buf = (char *)PR_REALLOC(mBuffer, bufSize);
+        char* buf = (char*) realloc(mBuffer, bufSize);
         if (!buf) {
             mBufferSize = 0;
             return NS_ERROR_OUT_OF_MEMORY;
@@ -1200,7 +1202,7 @@ nsDiskCacheMap::EnsureBuffer(uint32_t bufSize)
         mBufferSize = bufSize;
     }
     return NS_OK;
-}        
+}
 
 void
 nsDiskCacheMap::NotifyCapacityChange(uint32_t capacity)
@@ -1239,7 +1241,7 @@ nsDiskCacheMap::InitCacheClean(nsIFile *  cacheDirectory,
                                nsDiskCache::CorruptCacheInfo *  corruptInfo)
 {
     // The _CACHE_CLEAN_ file will be used in the future to determine
-    // if the cache is clean or not. 
+    // if the cache is clean or not.
     bool cacheCleanFileExists = false;
     nsCOMPtr<nsIFile> cacheCleanFile;
     nsresult rv = cacheDirectory->GetParent(getter_AddRefs(cacheCleanFile));
@@ -1330,7 +1332,7 @@ nsDiskCacheMap::InvalidateCache()
     nsCacheService::AssertOwnsLock();
     CACHE_LOG_DEBUG(("CACHE: InvalidateCache\n"));
     nsresult rv;
-  
+
     if (!mIsDirtyCacheFlushed) {
         rv = WriteCacheClean(false);
         if (NS_FAILED(rv)) {
@@ -1350,10 +1352,12 @@ nsresult
 nsDiskCacheMap::ResetCacheTimer(int32_t timeout)
 {
     mCleanCacheTimer->Cancel();
-    nsresult rv =
-      mCleanCacheTimer->InitWithFuncCallback(RevalidateTimerCallback,
-                                             nullptr, timeout,
-                                             nsITimer::TYPE_ONE_SHOT);
+    nsresult rv = mCleanCacheTimer->InitWithNamedFuncCallback(
+      RevalidateTimerCallback,
+      nullptr,
+      timeout,
+      nsITimer::TYPE_ONE_SHOT,
+      "nsDiskCacheMap::ResetCacheTimer");
     NS_ENSURE_SUCCESS(rv, rv);
     mLastInvalidateTime = PR_IntervalNow();
 
@@ -1417,7 +1421,7 @@ nsDiskCacheMap::RevalidateCache()
 
     // If telemetry data shows it is worth it, we'll be flushing headers and
     // records before flushing the clean cache file.
-  
+
     // Write out the _CACHE_CLEAN_ file with '1'
     rv = WriteCacheClean(true);
     if (NS_FAILED(rv)) {

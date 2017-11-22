@@ -4,7 +4,7 @@
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 
-function run_test() {
+add_task(async function run_test() {
   validate_all_future_pings();
   let debug = [];
   let info  = [];
@@ -14,8 +14,14 @@ function run_test() {
     let i = old.info;
     // For the purposes of this test we don't need to do full formatting
     // of the 2nd param, as the ones we care about are always strings.
-    old.debug = function(m, p) { debug.push(p ? m + ": " + p : m); d.call(old, m, p); }
-    old.info  = function(m, p) { info.push(p ? m + ": " + p : m); i.call(old, m, p); }
+    old.debug = function(m, p) {
+      debug.push(p ? m + ": " + (p.message || p) : m);
+      d.call(old, m, p);
+    };
+    old.info = function(m, p) {
+      info.push(p ? m + ": " + (p.message || p) : m);
+      i.call(old, m, p);
+    };
     return old;
   }
 
@@ -28,10 +34,10 @@ function run_test() {
 
   _("Check that sync will log appropriately if already in 'progress'.");
   Service._locked = true;
-  Service.sync();
+  await Service.sync();
   Service._locked = false;
 
   do_check_true(debug[debug.length - 2].startsWith("Exception calling WrappedLock: Could not acquire lock. Label: \"service.js: login\"."));
   do_check_eq(info[info.length - 1], "Cannot start sync: already syncing?");
-}
+});
 

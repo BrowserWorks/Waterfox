@@ -107,9 +107,9 @@ add_task(async function() {
     info(`onClicked from: ${await extension.awaitMessage("onClicked-fired")}`);
   }
 
-  async function getCounts(page) {
+  function getCounts(page) {
     extension.sendMessage(page, "get-click-counts");
-    return await extension.awaitMessage("click-counts");
+    return extension.awaitMessage("click-counts");
   }
   async function resetCounts() {
     extension.sendMessage("tab", "clear-click-counts");
@@ -218,6 +218,7 @@ add_task(async function test_onclick_modifiers() {
   async function click(modifiers = {}) {
     const menu = await openContextMenu();
     const items = menu.getElementsByAttribute("label", "modify");
+    is(items.length, 1, "Got exactly one context menu item");
     await closeExtensionContextMenu(items[0], modifiers);
     return extension.awaitMessage("click");
   }

@@ -10,6 +10,7 @@
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsContentUtils.h"
+#include "nsIAtom.h"
 #include "mozilla/dom/Element.h"
 
 inline bool
@@ -94,10 +95,27 @@ nsIContent::GetFlattenedTreeParent() const
   return (parent && parent->IsContent()) ? parent->AsContent() : nullptr;
 }
 
+inline bool
+nsIContent::IsEventAttributeName(nsIAtom* aName)
+{
+  const char16_t* name = aName->GetUTF16String();
+  if (name[0] != 'o' || name[1] != 'n') {
+    return false;
+  }
+
+  return IsEventAttributeNameInternal(aName);
+}
+
 inline nsINode*
 nsINode::GetFlattenedTreeParentNodeForStyle() const
 {
   return ::GetFlattenedTreeParentNode<nsIContent::eForStyle>(this);
+}
+
+inline bool
+nsINode::NodeOrAncestorHasDirAuto() const
+{
+  return AncestorHasDirAuto() || (IsElement() && AsElement()->HasDirAuto());
 }
 
 #endif // nsIContentInlines_h

@@ -181,13 +181,9 @@ Var PreviousInstallArch
 !define BlurbDisplayMS 19500
 !define BlurbBlankMS 500
 
-; Amount of physical memory required for the 64-bit build to be selected.
-; Machines with less RAM than this get the 32-bit build, even with a 64-bit OS.
-; The value 1800 MB was chosen based on an initial requirement of 2 GB, reduced
-; to allow for hardware such as integrated graphics that reserves some of the
-; installed RAM for its own use.
-; 1800 MB * 1024 KB/MB * 1024 B/KB = 1887436800 bytes
-!define RAM_NEEDED_FOR_64BIT 1887436800
+; Amount of physical memory required for the 64-bit build to be selected (2 GB).
+; Machines with this or less RAM get the 32-bit build, even with a 64-bit OS.
+!define RAM_NEEDED_FOR_64BIT 0x80000000
 
 ; Attempt to elevate Standard Users in addition to users that
 ; are a member of the Administrators group.
@@ -327,7 +323,7 @@ Function .onInit
   System::Free $0
 
   ${If} ${RunningX64}
-  ${AndIf} $1 L>= ${RAM_NEEDED_FOR_64BIT}
+  ${AndIf} $1 L> ${RAM_NEEDED_FOR_64BIT}
     StrCpy $DroplistArch "$(VERSION_64BIT)"
     StrCpy $INSTDIR "${DefaultInstDir64bit}"
   ${Else}
@@ -835,16 +831,16 @@ Function createInstall
 
   ; In some locales, the footer message may be too long to fit on one line.
   ; Figure out how much height it needs and give it that much.
-  ${GetTextWidthHeight} "$(STUB_BLURB_FOOTER)" $FontFooter \
+  ${GetTextWidthHeight} "$(STUB_BLURB_FOOTER2)" $FontFooter \
     ${INSTALL_FOOTER_WIDTH_DU} $R1 $R2
   !ifdef ${AB_CD}_rtl
     nsDialogs::CreateControl STATIC ${DEFAULT_STYLES}|${SS_NOTIFY} \
       ${WS_EX_TRANSPARENT} 30u ${INSTALL_FOOTER_TOP_DU} ${INSTALL_FOOTER_WIDTH_DU} "$R2u" \
-      "$(STUB_BLURB_FOOTER)"
+      "$(STUB_BLURB_FOOTER2)"
   !else
     nsDialogs::CreateControl STATIC ${DEFAULT_STYLES}|${SS_NOTIFY}|${SS_RIGHT} \
       ${WS_EX_TRANSPARENT} 175u ${INSTALL_FOOTER_TOP_DU} ${INSTALL_FOOTER_WIDTH_DU} "$R2u" \
-      "$(STUB_BLURB_FOOTER)"
+      "$(STUB_BLURB_FOOTER2)"
   !endif
   Pop $0
   SendMessage $0 ${WM_SETFONT} $FontFooter 0

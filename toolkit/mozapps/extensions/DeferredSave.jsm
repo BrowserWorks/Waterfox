@@ -10,7 +10,7 @@ const Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/osfile.jsm");
 /* globals OS*/
-Cu.import("resource://gre/modules/Promise.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 
 // Make it possible to mock out timers for testing
 var MakeTimer = () => Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -42,6 +42,11 @@ parentLogger.addAppender(new Log.DumpAppender(formatter));
 // If "extensions.logging.enabled" is set to 'true', messages
 // at DEBUG and higher should go to JS console and standard error.
 Cu.import("resource://gre/modules/Services.jsm");
+
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
+                                  "resource://gre/modules/AsyncShutdown.jsm");
 
 const PREF_LOGGING_ENABLED = "extensions.logging.enabled";
 const NS_PREFBRANCH_PREFCHANGE_TOPIC_ID = "nsPref:changed";
@@ -83,21 +88,30 @@ PrefObserver.init();
  * fulfilled by a single write.
  *
  * @constructor
- * @param aPath
+ * @param {string} aPath
  *        String representing the full path of the file where the data
  *        is to be written.
- * @param aDataProvider
+ * @param {function} aDataProvider
  *        Callback function that takes no argument and returns the data to
  *        be written. If aDataProvider returns an ArrayBufferView, the
  *        bytes it contains are written to the file as is.
  *        If aDataProvider returns a String the data are UTF-8 encoded
  *        and then written to the file.
- * @param [optional] aDelay
+ * @param {object | integer} [aOptions]
  *        The delay in milliseconds between the first saveChanges() call
  *        that marks the data as needing to be saved, and when the DeferredSave
  *        begins writing the data to disk. Default 50 milliseconds.
+ *
+ *        Or, an options object containing:
+ *         - delay: A delay in milliseconds.
+ *         - finalizeAt: An AsyncShutdown blocker during which to
+ *           finalize any pending writes.
  */
-this.DeferredSave = function(aPath, aDataProvider, aDelay) {
+this.DeferredSave = function(aPath, aDataProvider, aOptions = {}) {
+  if (typeof aOptions == "number") {
+    aOptions = {delay: aOptions};
+  }
+
   // Create a new logger (child of 'DeferredSave' logger)
   // for use by this particular instance of DeferredSave object
   let leafName = OS.Path.basename(aPath);
@@ -141,10 +155,15 @@ this.DeferredSave = function(aPath, aDataProvider, aDelay) {
   // Error returned by the most recent write (if any)
   this._lastError = null;
 
-  if (aDelay && (aDelay > 0))
-    this._delay = aDelay;
+  if (aOptions.delay && (aOptions.delay > 0))
+    this._delay = aOptions.delay;
   else
     this._delay = DEFAULT_SAVE_DELAY_MS;
+
+  this._finalizeAt = aOptions.finalizeAt || AsyncShutdown.profileBeforeChange;
+  this._finalize = this._finalize.bind(this);
+  this._finalizeAt.addBlocker(`DeferredSave: writing data to ${aPath}`,
+                              this._finalize);
 }
 
 this.DeferredSave.prototype = {
@@ -154,6 +173,10 @@ this.DeferredSave.prototype = {
 
   get lastError() {
     return this._lastError;
+  },
+
+  get path() {
+    return this._path;
   },
 
   // Start the pending timer if data is dirty
@@ -181,7 +204,7 @@ this.DeferredSave.prototype = {
           this.logger.debug("Data changed while write in progress");
         this.overlappedSaves++;
       }
-      this._pending = Promise.defer();
+      this._pending = PromiseUtils.defer();
       // Wait until the most recent write completes or fails (if it hasn't already)
       // and then restart our timer
       this._writing.then(count => this._startTimer(), error => this._startTimer());
@@ -202,14 +225,14 @@ this.DeferredSave.prototype = {
       toSave = this._dataProvider();
     } catch (e) {
         this.logger.error("Deferred save dataProvider failed", e);
-      writing.then(null, error => {})
+      writing.catch(error => {})
         .then(count => {
           pending.reject(e);
         });
       return;
     }
 
-    writing.then(null, error => { return 0; })
+    writing.catch(error => { return 0; })
     .then(count => {
         this.logger.debug("Starting write");
       this.totalSaves++;
@@ -263,5 +286,10 @@ this.DeferredSave.prototype = {
     }
 
     return this._writing;
-  }
+  },
+
+  _finalize() {
+    return this.flush().catch(Cu.reportError);
+  },
+
 };

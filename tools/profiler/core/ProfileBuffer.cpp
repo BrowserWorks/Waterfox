@@ -8,6 +8,8 @@
 
 #include "ProfilerMarker.h"
 
+using namespace mozilla;
+
 ProfileBuffer::ProfileBuffer(int aEntrySize)
   : mEntries(mozilla::MakeUnique<ProfileBufferEntry[]>(aEntrySize))
   , mWritePos(0)
@@ -25,9 +27,10 @@ ProfileBuffer::~ProfileBuffer()
 }
 
 // Called from signal, call only reentrant functions
-void ProfileBuffer::addTag(const ProfileBufferEntry& aTag)
+void
+ProfileBuffer::AddEntry(const ProfileBufferEntry& aEntry)
 {
-  mEntries[mWritePos++] = aTag;
+  mEntries[mWritePos++] = aEntry;
   if (mWritePos == mEntrySize) {
     // Wrapping around may result in things referenced in the buffer (e.g.,
     // JIT code addresses and markers) being incorrectly collected.
@@ -35,6 +38,7 @@ void ProfileBuffer::addTag(const ProfileBufferEntry& aTag)
     mGeneration++;
     mWritePos = 0;
   }
+
   if (mWritePos == mReadPos) {
     // Keep one slot open.
     mEntries[mReadPos] = ProfileBufferEntry();
@@ -42,22 +46,72 @@ void ProfileBuffer::addTag(const ProfileBufferEntry& aTag)
   }
 }
 
-void ProfileBuffer::addTagThreadId(int aThreadId, LastSample* aLS)
+void
+ProfileBuffer::AddThreadIdEntry(int aThreadId, LastSample* aLS)
 {
   if (aLS) {
     // This is the start of a sample, so make a note of its location in |aLS|.
     aLS->mGeneration = mGeneration;
     aLS->mPos = mWritePos;
   }
-  addTag(ProfileBufferEntry::ThreadId(aThreadId));
+  AddEntry(ProfileBufferEntry::ThreadId(aThreadId));
 }
 
-void ProfileBuffer::addStoredMarker(ProfilerMarker *aStoredMarker) {
+void
+ProfileBuffer::AddStoredMarker(ProfilerMarker *aStoredMarker)
+{
   aStoredMarker->SetGeneration(mGeneration);
   mStoredMarkers.insert(aStoredMarker);
 }
 
-void ProfileBuffer::deleteExpiredStoredMarkers() {
+void
+ProfileBuffer::CollectNativeLeafAddr(void* aAddr)
+{
+  AddEntry(ProfileBufferEntry::NativeLeafAddr(aAddr));
+}
+
+void
+ProfileBuffer::CollectJitReturnAddr(void* aAddr)
+{
+  AddEntry(ProfileBufferEntry::JitReturnAddr(aAddr));
+}
+
+void
+ProfileBuffer::CollectCodeLocation(
+  const char* aLabel, const char* aStr, int aLineNumber,
+  const Maybe<js::ProfileEntry::Category>& aCategory)
+{
+  AddEntry(ProfileBufferEntry::Label(aLabel));
+
+  if (aStr) {
+    // Store the string using one or more DynamicStringFragment entries.
+    size_t strLen = strlen(aStr) + 1;   // +1 for the null terminator
+    for (size_t j = 0; j < strLen; ) {
+      // Store up to kNumChars characters in the entry.
+      char chars[ProfileBufferEntry::kNumChars];
+      size_t len = ProfileBufferEntry::kNumChars;
+      if (j + len >= strLen) {
+        len = strLen - j;
+      }
+      memcpy(chars, &aStr[j], len);
+      j += ProfileBufferEntry::kNumChars;
+
+      AddEntry(ProfileBufferEntry::DynamicStringFragment(chars));
+    }
+  }
+
+  if (aLineNumber != -1) {
+    AddEntry(ProfileBufferEntry::LineNumber(aLineNumber));
+  }
+
+  if (aCategory.isSome()) {
+    AddEntry(ProfileBufferEntry::Category(int(*aCategory)));
+  }
+}
+
+void
+ProfileBuffer::DeleteExpiredStoredMarkers()
+{
   // Delete markers of samples that have been overwritten due to circular
   // buffer wraparound.
   uint32_t generation = mGeneration;
@@ -67,7 +121,9 @@ void ProfileBuffer::deleteExpiredStoredMarkers() {
   }
 }
 
-void ProfileBuffer::reset() {
+void
+ProfileBuffer::Reset()
+{
   mGeneration += 2;
   mReadPos = mWritePos = 0;
 }
@@ -85,32 +141,4 @@ ProfileBuffer::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 
   return n;
 }
-
-#define DYNAMIC_MAX_STRING 8192
-
-char* ProfileBuffer::processDynamicTag(int readPos,
-                                       int* tagsConsumed, char* tagBuff)
-{
-  int readAheadPos = (readPos + 1) % mEntrySize;
-  int tagBuffPos = 0;
-
-  // Read the string stored in mTagData until the null character is seen
-  bool seenNullByte = false;
-  while (readAheadPos != mWritePos && !seenNullByte) {
-    (*tagsConsumed)++;
-    ProfileBufferEntry readAheadEntry = mEntries[readAheadPos];
-    for (size_t pos = 0; pos < sizeof(void*); pos++) {
-      tagBuff[tagBuffPos] = readAheadEntry.mTagChars[pos];
-      if (tagBuff[tagBuffPos] == '\0' || tagBuffPos == DYNAMIC_MAX_STRING-2) {
-        seenNullByte = true;
-        break;
-      }
-      tagBuffPos++;
-    }
-    if (!seenNullByte)
-      readAheadPos = (readAheadPos + 1) % mEntrySize;
-  }
-  return tagBuff;
-}
-
 

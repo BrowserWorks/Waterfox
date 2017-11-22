@@ -6,13 +6,14 @@
 #include "MediaStreamTrack.h"
 
 #include "DOMMediaStream.h"
+#include "MediaStreamError.h"
 #include "MediaStreamGraph.h"
+#include "MediaStreamListener.h"
+#include "mozilla/dom/Promise.h"
+#include "nsContentUtils.h"
 #include "nsIUUIDGenerator.h"
 #include "nsServiceManagerUtils.h"
-#include "MediaStreamListener.h"
 #include "systemservices/MediaUtils.h"
-
-#include "mozilla/dom/Promise.h"
 
 #ifdef LOG
 #undef LOG
@@ -20,6 +21,8 @@
 
 static mozilla::LazyLogModule gMediaStreamTrackLog("MediaStreamTrack");
 #define LOG(type, msg) MOZ_LOG(gMediaStreamTrackLog, type, msg)
+
+using namespace mozilla::media;
 
 namespace mozilla {
 namespace dom {
@@ -85,7 +88,6 @@ class MediaStreamTrack::PrincipalHandleListener : public MediaStreamTrackListene
 public:
   explicit PrincipalHandleListener(MediaStreamTrack* aTrack)
     : mTrack(aTrack)
-    , mAbstractMainThread(aTrack->mOwningStream->AbstractMainThread())
     {}
 
   void Forget()
@@ -109,15 +111,17 @@ public:
                                     const PrincipalHandle& aNewPrincipalHandle) override
   {
     aGraph->DispatchToMainThreadAfterStreamStateUpdate(
-      mAbstractMainThread,
       NewRunnableMethod<StoreCopyPassByConstLRef<PrincipalHandle>>(
-        this, &PrincipalHandleListener::DoNotifyPrincipalHandleChanged, aNewPrincipalHandle));
+        "dom::MediaStreamTrack::PrincipalHandleListener::"
+        "DoNotifyPrincipalHandleChanged",
+        this,
+        &PrincipalHandleListener::DoNotifyPrincipalHandleChanged,
+        aNewPrincipalHandle));
   }
 
 protected:
   // These fields may only be accessed on the main thread
   MediaStreamTrack* mTrack;
-  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 MediaStreamTrack::MediaStreamTrack(DOMMediaStream* aStream, TrackID aTrackID,

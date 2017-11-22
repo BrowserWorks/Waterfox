@@ -166,18 +166,30 @@ public:
     }
     nsresult SetToRangeStart(nsRange* aRange) const
     {
-      nsCOMPtr<nsIDOMNode> domNode(do_QueryInterface(mNode));
-      return aRange->SetStart(domNode, mOffset);
+      if (!IsValid()) {
+        return NS_ERROR_FAILURE;
+      }
+      ErrorResult errorResult;
+      aRange->SetStart(*mNode, mOffset, errorResult);
+      return errorResult.StealNSResult();
     }
     nsresult SetToRangeEnd(nsRange* aRange) const
     {
-      nsCOMPtr<nsIDOMNode> domNode(do_QueryInterface(mNode));
-      return aRange->SetEnd(domNode, mOffset);
+      if (!IsValid()) {
+        return NS_ERROR_FAILURE;
+      }
+      ErrorResult errorResult;
+      aRange->SetEnd(*mNode, mOffset, errorResult);
+      return errorResult.StealNSResult();
     }
     nsresult SetToRangeEndAfter(nsRange* aRange) const
     {
-      nsCOMPtr<nsIDOMNode> domNode(do_QueryInterface(mNode));
-      return aRange->SetEndAfter(domNode);
+      if (!IsValid()) {
+        return NS_ERROR_FAILURE;
+      }
+      ErrorResult errorResult;
+      aRange->SetEndAfter(*mNode, errorResult);
+      return errorResult.StealNSResult();
     }
   };
 
@@ -246,11 +258,11 @@ protected:
   // optimized for native IMEs.  For example, <br> element and some block
   // elements causes "\n" (or "\r\n"), see also ShouldBreakLineBefore().
   nsresult GenerateFlatTextContent(nsIContent* aContent,
-                                   nsAFlatString& aString,
+                                   nsString& aString,
                                    LineBreakType aLineBreakType);
   // Get the contents of aRange as plain text.
   nsresult GenerateFlatTextContent(nsRange* aRange,
-                                   nsAFlatString& aString,
+                                   nsString& aString,
                                    LineBreakType aLineBreakType);
   // Get offset of start of aRange.  Note that the result includes the length
   // of line breaker caused by the start of aContent because aRange never

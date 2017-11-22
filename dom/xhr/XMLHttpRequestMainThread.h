@@ -44,6 +44,7 @@
 #include "mozilla/dom/XMLHttpRequestBinding.h"
 #include "mozilla/dom/XMLHttpRequestEventTarget.h"
 #include "mozilla/dom/XMLHttpRequestString.h"
+#include "mozilla/Encoding.h"
 
 #ifdef Status
 /* Xlib headers insist on this for some reason... Nuke it because
@@ -53,7 +54,6 @@
 
 class nsIJARChannel;
 class nsILoadGroup;
-class nsIUnicodeDecoder;
 class nsIJSID;
 
 namespace mozilla {
@@ -401,7 +401,8 @@ public:
                     ErrorResult& aRv);
 
   void
-  Abort() {
+  Abort()
+  {
     ErrorResult rv;
     Abort(rv);
     MOZ_ASSERT(!rv.Failed());
@@ -607,7 +608,20 @@ protected:
 
   nsresult DispatchToMainThread(already_AddRefed<nsIRunnable> aRunnable);
 
+  void DispatchOrStoreEvent(DOMEventTargetHelper* aTarget, Event* aEvent);
+
   already_AddRefed<nsXMLHttpRequestXPCOMifier> EnsureXPCOMifier();
+
+  void SuspendEventDispatching();
+  void ResumeEventDispatching();
+
+  struct PendingEvent
+  {
+    RefPtr<DOMEventTargetHelper> mTarget;
+    RefPtr<Event> mEvent;
+  };
+
+  nsTArray<PendingEvent> mPendingEvents;
 
   nsCOMPtr<nsISupports> mContext;
   nsCOMPtr<nsIPrincipal> mPrincipal;
@@ -692,9 +706,9 @@ protected:
   // carries the state to remember this. Next time we receive more data we
   // simply feed the new data into the decoder which will handle the second
   // part of the surrogate.
-  nsCOMPtr<nsIUnicodeDecoder> mDecoder;
+  mozilla::UniquePtr<mozilla::Decoder> mDecoder;
 
-  nsCString mResponseCharset;
+  const Encoding* mResponseCharset;
 
   void MatchCharsetAndDecoderToResponseDocument();
 
@@ -779,12 +793,8 @@ protected:
   bool mWaitingForOnStopRequest;
   bool mProgressTimerIsActive;
   bool mIsHtml;
-  bool mWarnAboutMultipartHtml;
   bool mWarnAboutSyncHtml;
   int64_t mLoadTotal; // -1 if not known.
-  // Amount of script-exposed (i.e. after undoing gzip compresion) data
-  // received.
-  uint64_t mDataAvailable;
   // Number of HTTP message body bytes received so far. This quantity is
   // in the same units as Content-Length and mLoadTotal, and hence counts
   // compressed bytes when the channel has gzip Content-Encoding. If the
@@ -837,6 +847,10 @@ protected:
   // Helper object to manage our XPCOM scriptability bits
   nsXMLHttpRequestXPCOMifier* mXPCOMifier;
 
+  // When this is set to true, the event dispatching is suspended. This is
+  // useful to change the correct state when XHR is working sync.
+  bool mEventDispatchingSuspended;
+
   static bool sDontWarnAboutSyncXHR;
 };
 
@@ -864,7 +878,8 @@ class nsXMLHttpRequestXPCOMifier final : public nsIStreamListener,
                                          public nsIAsyncVerifyRedirectCallback,
                                          public nsIProgressEventSink,
                                          public nsIInterfaceRequestor,
-                                         public nsITimerCallback
+                                         public nsITimerCallback,
+                                         public nsINamed
 {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsXMLHttpRequestXPCOMifier,
@@ -889,6 +904,7 @@ public:
   NS_FORWARD_NSIASYNCVERIFYREDIRECTCALLBACK(mXHR->)
   NS_FORWARD_NSIPROGRESSEVENTSINK(mXHR->)
   NS_FORWARD_NSITIMERCALLBACK(mXHR->)
+  NS_FORWARD_NSINAMED(mXHR->)
 
   NS_DECL_NSIINTERFACEREQUESTOR
 

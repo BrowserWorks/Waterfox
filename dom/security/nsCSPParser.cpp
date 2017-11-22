@@ -6,7 +6,6 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
 #include "nsCSPParser.h"
@@ -284,7 +283,7 @@ nsCSPParser::logWarningErrorToConsole(uint32_t aSeverityFlag,
   CSPPARSERLOG(("nsCSPParser::logWarningErrorToConsole: %s", aProperty));
   // send console messages off to the context and let the context
   // deal with it (potentially messages need to be queued up)
-  mCSPContext->logToConsole(NS_ConvertUTF8toUTF16(aProperty).get(),
+  mCSPContext->logToConsole(aProperty,
                             aParams,
                             aParamsLength,
                             EmptyString(), // aSourceName
@@ -879,7 +878,7 @@ nsCSPParser::referrerDirectiveValue(nsCSPDirective* aDir)
   CSPPARSERLOG(("nsCSPParser::referrerDirectiveValue"));
 
   if (mCurDir.Length() != 2) {
-    CSPPARSERLOG(("Incorrect number of tokens in referrer directive, got %" PRIuSIZE " expected 1",
+    CSPPARSERLOG(("Incorrect number of tokens in referrer directive, got %zu expected 1",
                  mCurDir.Length() - 1));
     delete aDir;
     return;
@@ -948,7 +947,7 @@ nsCSPParser::requireSRIForDirectiveValue(nsRequireSRIForDirective* aDir)
     delete aDir;
     return;
   }
-  
+
   mPolicy->addDirective(aDir);
 }
 

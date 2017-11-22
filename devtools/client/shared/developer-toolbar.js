@@ -230,7 +230,9 @@ DeveloperToolbar.prototype.createToolbar = function () {
   let close = this._doc.createElement("toolbarbutton");
   close.setAttribute("id", "developer-toolbar-closebutton");
   close.setAttribute("class", "close-icon");
-  close.setAttribute("oncommand", "DeveloperToolbar.hide();");
+  close.addEventListener("command", (event) => {
+    this.hide();
+  });
   let closeTooltip = L10N.getStr("toolbar.closeButton.tooltip");
   close.setAttribute("tooltiptext", closeTooltip);
 
@@ -1006,7 +1008,7 @@ OutputPanel.prototype._outputChanged = function (ev) {
     this._update();
   } else {
     this.displayedOutput.promise.then(this._update, this._update)
-                                .then(null, console.error);
+                                .catch(console.error);
   }
 };
 

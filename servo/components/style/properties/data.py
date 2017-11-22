@@ -46,6 +46,11 @@ def to_camel_case_lower(ident):
     return camel[0].lower() + camel[1:]
 
 
+# https://drafts.csswg.org/cssom/#css-property-to-idl-attribute
+def to_idl_name(ident):
+    return re.sub("-([a-z])", lambda m: m.group(1).upper(), ident)
+
+
 def parse_aliases(value):
     aliases = {}
     for pair in value.split():
@@ -60,7 +65,7 @@ class Keyword(object):
                  extra_gecko_values=None, extra_servo_values=None,
                  aliases=None,
                  extra_gecko_aliases=None, extra_servo_aliases=None,
-                 gecko_strip_moz_prefix=True,
+                 gecko_strip_moz_prefix=None,
                  gecko_inexhaustive=None):
         self.name = name
         self.values = values.split()
@@ -75,7 +80,8 @@ class Keyword(object):
         self.extra_gecko_aliases = parse_aliases(extra_gecko_aliases or "")
         self.extra_servo_aliases = parse_aliases(extra_servo_aliases or "")
         self.consts_map = {} if custom_consts is None else custom_consts
-        self.gecko_strip_moz_prefix = gecko_strip_moz_prefix
+        self.gecko_strip_moz_prefix = True \
+            if gecko_strip_moz_prefix is None else gecko_strip_moz_prefix
         self.gecko_inexhaustive = gecko_inexhaustive or (gecko_enum_prefix is None)
 
     def gecko_values(self):
@@ -151,7 +157,7 @@ class Longhand(object):
                  allowed_in_keyframe_block=True, cast_type='u8',
                  has_uncacheable_values=False, logical=False, alias=None, extra_prefixes=None, boxed=False,
                  flags=None, allowed_in_page_rule=False, allow_quirks=False, ignored_when_colors_disabled=False,
-                 vector=False):
+                 gecko_pref_ident=None, vector=False):
         self.name = name
         if not spec:
             raise TypeError("Spec should be specified for %s" % name)
@@ -178,6 +184,7 @@ class Longhand(object):
         self.allowed_in_page_rule = arg_to_bool(allowed_in_page_rule)
         self.allow_quirks = allow_quirks
         self.ignored_when_colors_disabled = ignored_when_colors_disabled
+        self.gecko_pref_ident = gecko_pref_ident or self.ident
         self.is_vector = vector
 
         # https://drafts.csswg.org/css-animations/#keyframes
@@ -194,12 +201,15 @@ class Longhand(object):
         self.animation_value_type = animation_value_type
 
         self.animatable = animation_value_type != "none"
+        self.transitionable = animation_value_type != "none" \
+            and animation_value_type != "discrete"
         self.is_animatable_with_computed_value = animation_value_type == "ComputedValue" \
             or animation_value_type == "discrete"
         if self.logical:
             # Logical properties will be animatable (i.e. the animation type is
             # discrete). For now, it is still non-animatable.
             self.animatable = False
+            self.transitionable = False
             self.animation_type = None
         # NB: Animatable implies clone because a property animation requires a
         # copy of the computed value.
@@ -211,7 +221,7 @@ class Longhand(object):
 class Shorthand(object):
     def __init__(self, name, sub_properties, spec=None, experimental=False, internal=False,
                  allowed_in_keyframe_block=True, alias=None, extra_prefixes=None,
-                 allowed_in_page_rule=False, flags=None):
+                 allowed_in_page_rule=False, flags=None, gecko_pref_ident=None):
         self.name = name
         if not spec:
             raise TypeError("Spec should be specified for %s" % name)
@@ -226,6 +236,7 @@ class Shorthand(object):
         self.extra_prefixes = extra_prefixes.split() if extra_prefixes else []
         self.allowed_in_page_rule = arg_to_bool(allowed_in_page_rule)
         self.flags = flags.split() if flags else []
+        self.gecko_pref_ident = gecko_pref_ident or self.ident
 
         # https://drafts.csswg.org/css-animations/#keyframes
         # > The <declaration-list> inside of <keyframe-block> accepts any CSS property
@@ -233,6 +244,25 @@ class Shorthand(object):
         # > but does accept the `animation-play-state` property and interprets it specially.
         self.allowed_in_keyframe_block = allowed_in_keyframe_block \
             and allowed_in_keyframe_block != "False"
+
+    def get_animatable(self):
+        animatable = False
+        for sub in self.sub_properties:
+            if sub.animatable:
+                animatable = True
+                break
+        return animatable
+
+    def get_transitionable(self):
+        transitionable = False
+        for sub in self.sub_properties:
+            if sub.transitionable:
+                transitionable = True
+                break
+        return transitionable
+
+    animatable = property(get_animatable)
+    transitionable = property(get_transitionable)
 
 
 class Method(object):

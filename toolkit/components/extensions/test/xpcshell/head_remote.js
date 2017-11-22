@@ -1,5 +1,7 @@
 "use strict";
 
-/* globals ExtensionTestUtils */
+Services.prefs.setBoolPref("extensions.webextensions.remote", true);
+Services.prefs.setIntPref("dom.ipc.keepProcessesAlive.extension", 1);
 
-ExtensionTestUtils.remoteContentScripts = true;
+/* globals testEnv */
+testEnv.expectRemote = true; // tested in head_test.js

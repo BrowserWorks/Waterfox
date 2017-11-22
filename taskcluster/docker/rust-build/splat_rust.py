@@ -55,6 +55,7 @@ def update_manifest(source_manifest, target, target_filename):
             save_manifest(old, target_filename)
             break
 
+
 '''Mapping from targets to target filenames.'''
 TARGETS = {
         'x86_64-unknown-linux-gnu-repack': [
@@ -62,6 +63,7 @@ TARGETS = {
             'browser/config/tooltool-manifests/linux64/asan.manifest',
             'browser/config/tooltool-manifests/linux64/clang.manifest',
             'browser/config/tooltool-manifests/linux64/clang.manifest.centos6',
+            'browser/config/tooltool-manifests/linux64/fuzzing.manifest',
             'browser/config/tooltool-manifests/linux64/hazard.manifest',
             'browser/config/tooltool-manifests/linux64/msan.manifest',
             'browser/config/tooltool-manifests/linux64/releng.manifest',
@@ -70,6 +72,9 @@ TARGETS = {
             'mobile/android/config/tooltool-manifests/android/releng.manifest',
             'mobile/android/config/tooltool-manifests/android-x86/releng.manifest',
             'mobile/android/config/tooltool-manifests/android-gradle-dependencies/releng.manifest',
+            ],
+        'x86_64-unknown-linux-gnu-mingw32-cross-repack': [
+            'browser/config/tooltool-manifests/mingw32/releng.manifest',
             ],
         'x86_64-unknown-linux-gnu-mac-cross-repack': [
             'browser/config/tooltool-manifests/macosx64/cross-releng.manifest',
@@ -83,7 +88,6 @@ TARGETS = {
             'browser/config/tooltool-manifests/win64/releng.manifest',
             ],
         'i686-pc-windows-msvc-repack': [
-            'browser/config/tooltool-manifests/win32/build-clang-cl.manifest',
             'browser/config/tooltool-manifests/win32/clang.manifest',
             'browser/config/tooltool-manifests/win32/releng.manifest',
             ],

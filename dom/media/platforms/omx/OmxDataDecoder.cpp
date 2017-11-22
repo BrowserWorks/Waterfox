@@ -13,7 +13,6 @@
 #include "OmxPlatformLayer.h"
 
 #include "mozilla/IntegerPrintfMacros.h"
-#include "mozilla/SizePrintfMacros.h"
 
 #ifdef LOG
 #undef LOG
@@ -386,16 +385,17 @@ OmxDataDecoder::EmptyBufferDone(BufferData* aData)
     mCheckingInputExhausted = true;
 
     RefPtr<OmxDataDecoder> self = this;
-    nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([self, this]() {
-      mCheckingInputExhausted = false;
+    nsCOMPtr<nsIRunnable> r =
+      NS_NewRunnableFunction("OmxDataDecoder::EmptyBufferDone", [self, this]() {
+        mCheckingInputExhausted = false;
 
-      if (mMediaRawDatas.Length()) {
-        return;
-      }
+        if (mMediaRawDatas.Length()) {
+          return;
+        }
 
-      mDecodePromise.ResolveIfExists(mDecodedData, __func__);
-      mDecodedData.Clear();
-    });
+        mDecodePromise.ResolveIfExists(mDecodedData, __func__);
+        mDecodedData.Clear();
+      });
 
     mOmxTaskQueue->Dispatch(r.forget());
   }
@@ -729,7 +729,7 @@ OmxDataDecoder::CollectBufferPromises(OMX_DIRTYPE aType)
     }
   }
 
-  LOG("CollectBufferPromises: type %d, total %" PRIuSIZE " promiese", aType, promises.Length());
+  LOG("CollectBufferPromises: type %d, total %zu promiese", aType, promises.Length());
   if (promises.Length()) {
     return OmxBufferPromise::All(mOmxTaskQueue, promises);
   }

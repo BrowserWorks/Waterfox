@@ -47,7 +47,7 @@ using namespace gfx;
 
 namespace layers {
 
-static bool CanUsePartialPresents(ID3D11Device* aDevice);
+bool CanUsePartialPresents(ID3D11Device* aDevice);
 
 const FLOAT sBlendFactor[] = { 0, 0, 0, 0 };
 
@@ -67,9 +67,11 @@ CompositorD3D11::CompositorD3D11(CompositorBridgeParent* aParent, widget::Compos
   , mHwnd(nullptr)
   , mDisableSequenceForNextFrame(false)
   , mAllowPartialPresents(false)
-  , mVerifyBuffersFailed(false)
   , mIsDoubleBuffered(false)
+  , mVerifyBuffersFailed(false)
+  , mUseMutexOnPresent(false)
 {
+  mUseMutexOnPresent = gfxPrefs::UseMutexOnPresent();
 }
 
 CompositorD3D11::~CompositorD3D11()
@@ -255,7 +257,7 @@ CompositorD3D11::Initialize(nsCString* const out_failureReason)
   return true;
 }
 
-static bool
+bool
 CanUsePartialPresents(ID3D11Device* aDevice)
 {
   if (gfxPrefs::PartialPresent() > 0) {
@@ -967,7 +969,7 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   // this is important because resizing our buffers when mimised will fail and
   // cause a crash when we're restored.
   NS_ASSERTION(mHwnd, "Couldn't find an HWND when initialising?");
-  if (::IsIconic(mHwnd)) {
+  if (mWidget->IsHidden()) {
     // We are not going to render, and not going to call EndFrame so we have to
     // read-unlock our textures to prevent them from accumulating.
     ReadUnlockTextures();
@@ -1128,6 +1130,9 @@ CompositorD3D11::EndFrame()
 
   if (oldSize == mSize) {
     Present();
+    if (gfxPrefs::CompositorClearState()) {
+      mContext->ClearState();
+    }
   } else {
     mDiagnostics->Cancel();
   }
@@ -1172,6 +1177,12 @@ CompositorD3D11::Present()
   RefPtr<IDXGISwapChain1> chain;
   HRESULT hr = mSwapChain->QueryInterface((IDXGISwapChain1**)getter_AddRefs(chain));
 
+  RefPtr<IDXGIKeyedMutex> mutex;
+  if (mUseMutexOnPresent && mAttachments->mSyncTexture) {
+    mAttachments->mSyncTexture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
+    MOZ_ASSERT(mutex);
+  }
+
   if (SUCCEEDED(hr) && mAllowPartialPresents) {
     DXGI_PRESENT_PARAMETERS params;
     PodZero(&params);
@@ -1189,9 +1200,29 @@ CompositorD3D11::Present()
     }
 
     params.pDirtyRects = params.DirtyRectsCount ? rects.data() : nullptr;
+
+    if (mutex) {
+      hr = mutex->AcquireSync(0, 2000);
+      NS_ENSURE_TRUE_VOID(SUCCEEDED(hr));
+    }
+
     chain->Present1(presentInterval, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0, &params);
+
+    if (mutex) {
+      mutex->ReleaseSync(0);
+    }
   } else {
-    HRESULT hr = mSwapChain->Present(0, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0);
+    if (mutex) {
+      hr = mutex->AcquireSync(0, 2000);
+      NS_ENSURE_TRUE_VOID(SUCCEEDED(hr));
+    }
+
+    hr = mSwapChain->Present(0, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0);
+
+    if (mutex) {
+      mutex->ReleaseSync(0);
+    }
+
     if (FAILED(hr)) {
       gfxCriticalNote << "D3D11 swap chain preset failed " << hexa(hr);
       HandleError(hr);

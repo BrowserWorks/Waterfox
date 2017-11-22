@@ -10,13 +10,12 @@ const MAX_ORDINAL = 99;
 const SPLITCONSOLE_ENABLED_PREF = "devtools.toolbox.splitconsoleEnabled";
 const SPLITCONSOLE_HEIGHT_PREF = "devtools.toolbox.splitconsoleHeight";
 const DISABLE_AUTOHIDE_PREF = "ui.popup.disable_autohide";
-const OS_HISTOGRAM = "DEVTOOLS_OS_ENUMERATED_PER_USER";
-const OS_IS_64_BITS = "DEVTOOLS_OS_IS_64_BITS_PER_USER";
 const HOST_HISTOGRAM = "DEVTOOLS_TOOLBOX_HOST";
 const SCREENSIZE_HISTOGRAM = "DEVTOOLS_SCREEN_RESOLUTION_ENUMERATED_PER_USER";
+const CURRENT_THEME_SCALAR = "devtools.current_theme";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 
-var {Ci, Cu} = require("chrome");
+var {Ci, Cu, Cc} = require("chrome");
 var promise = require("promise");
 var defer = require("devtools/shared/defer");
 var Services = require("Services");
@@ -29,6 +28,8 @@ var Menu = require("devtools/client/framework/menu");
 var MenuItem = require("devtools/client/framework/menu-item");
 var { DOMHelpers } = require("resource://devtools/client/shared/DOMHelpers.jsm");
 const { KeyCodes } = require("devtools/client/shared/keycodes");
+var Startup = Cc["@mozilla.org/devtools/startup-clh;1"].getService(Ci.nsISupports)
+  .wrappedJSObject;
 
 const { BrowserLoader } =
   Cu.import("resource://devtools/client/shared/browser-loader.js", {});
@@ -139,6 +140,7 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId) {
   this._onPickerStarted = this._onPickerStarted.bind(this);
   this._onPickerStopped = this._onPickerStopped.bind(this);
   this._onInspectObject = this._onInspectObject.bind(this);
+  this._onNewSelectedNodeFront = this._onNewSelectedNodeFront.bind(this);
   this.selectTool = this.selectTool.bind(this);
 
   this._target.on("close", this.destroy);
@@ -219,7 +221,9 @@ Toolbox.prototype = {
 
   set visibleAdditionalTools(tools) {
     this._visibleAdditionalTools = tools;
-    this._combineAndSortPanelDefinitions();
+    if (this.isReady) {
+      this._combineAndSortPanelDefinitions();
+    }
   },
 
   /**
@@ -510,7 +514,7 @@ Toolbox.prototype = {
 
       this.emit("ready");
       this._isOpenDeferred.resolve();
-    }.bind(this)).then(null, console.error.bind(console));
+    }.bind(this)).catch(console.error.bind(console));
   },
 
   /**
@@ -534,14 +538,9 @@ Toolbox.prototype = {
   },
 
   /**
-   * A common access point for the client-side mapping service for source maps that
-   * any panel can use.  This is a "low-level" API that connects to
-   * the source map worker.
+   * Unconditionally create and get the source map service.
    */
-  get sourceMapService() {
-    if (!Services.prefs.getBoolPref("devtools.source-map.client-service.enabled")) {
-      return null;
-    }
+  _createSourceMapService: function () {
     if (this._sourceMapService) {
       return this._sourceMapService;
     }
@@ -550,6 +549,18 @@ Toolbox.prototype = {
       this.browserRequire("devtools/client/shared/source-map/index");
     this._sourceMapService.startSourceMapWorker(SOURCE_MAP_WORKER);
     return this._sourceMapService;
+  },
+
+  /**
+   * A common access point for the client-side mapping service for source maps that
+   * any panel can use.  This is a "low-level" API that connects to
+   * the source map worker.
+   */
+  get sourceMapService() {
+    if (!Services.prefs.getBoolPref("devtools.source-map.client-service.enabled")) {
+      return null;
+    }
+    return this._createSourceMapService();
   },
 
   /**
@@ -563,11 +574,9 @@ Toolbox.prototype = {
     if (this._sourceMapURLService) {
       return this._sourceMapURLService;
     }
-    let sourceMaps = this.sourceMapService;
-    if (!sourceMaps) {
-      return null;
-    }
-    this._sourceMapURLService = new SourceMapURLService(this._target, sourceMaps);
+    let sourceMaps = this._createSourceMapService();
+    this._sourceMapURLService = new SourceMapURLService(this._target, this.threadClient,
+                                                        sourceMaps);
     return this._sourceMapURLService;
   },
 
@@ -585,12 +594,14 @@ Toolbox.prototype = {
   _pingTelemetry: function () {
     this._telemetry.toolOpened("toolbox");
 
-    this._telemetry.logOncePerBrowserVersion(OS_HISTOGRAM, system.getOSCPU());
-    this._telemetry.logOncePerBrowserVersion(OS_IS_64_BITS,
-                                             Services.appinfo.is64Bit ? 1 : 0);
     this._telemetry.logOncePerBrowserVersion(SCREENSIZE_HISTOGRAM,
                                              system.getScreenDimensions());
     this._telemetry.log(HOST_HISTOGRAM, this._getTelemetryHostId());
+
+    // Log current theme. The question we want to answer is:
+    // "What proportion of users use which themes?"
+    let currentTheme = Services.prefs.getCharPref("devtools.theme");
+    this._telemetry.logKeyedScalar(CURRENT_THEME_SCALAR, currentTheme, 1);
   },
 
   /**
@@ -854,24 +865,25 @@ Toolbox.prototype = {
 
     let doc = this.win.parent.document;
 
-    for (let [id, toolDefinition] of gDevTools.getToolDefinitionMap()) {
-      // Prevent multiple entries for the same tool.
-      if (!toolDefinition.key || doc.getElementById("key_" + id)) {
+    for (let item of Startup.KeyShortcuts) {
+      // KeyShortcuts contain tool-specific and global key shortcuts,
+      // here we only need to copy shortcut specific to each tool.
+      if (!item.toolId) {
         continue;
       }
+      let { toolId, shortcut, modifiers } = item;
 
-      let toolId = id;
       let key = doc.createElement("key");
 
       key.id = "key_" + toolId;
 
-      if (toolDefinition.key.startsWith("VK_")) {
-        key.setAttribute("keycode", toolDefinition.key);
+      if (shortcut.startsWith("VK_")) {
+        key.setAttribute("keycode", shortcut);
       } else {
-        key.setAttribute("key", toolDefinition.key);
+        key.setAttribute("key", shortcut);
       }
 
-      key.setAttribute("modifiers", toolDefinition.modifiers);
+      key.setAttribute("modifiers", modifiers);
       // needed. See bug 371900
       key.setAttribute("oncommand", "void(0);");
       key.addEventListener("command", () => {
@@ -1383,11 +1395,17 @@ Toolbox.prototype = {
       throw new Error("Tool definition already registered: " +
                       definition.id);
     }
+
     this.additionalToolDefinitions.set(definition.id, definition);
     this.visibleAdditionalTools = [...this.visibleAdditionalTools, definition.id];
 
-    this._combineAndSortPanelDefinitions();
-    this._buildPanelForTool(definition);
+    const buildPanel = () => this._buildPanelForTool(definition);
+
+    if (this.isReady) {
+      buildPanel();
+    } else {
+      this.once("ready", buildPanel);
+    }
   },
 
   /**
@@ -2211,6 +2229,7 @@ Toolbox.prototype = {
         let showAllAnonymousContent = Services.prefs.getBoolPref(pref);
         this._walker = yield this._inspector.getWalker({ showAllAnonymousContent });
         this._selection = new Selection(this._walker);
+        this._selection.on("new-node-front", this._onNewSelectedNodeFront);
 
         if (this.highlighterUtils.isRemoteHighlightable()) {
           this.walker.on("highlighter-ready", this._highlighterReady);
@@ -2222,6 +2241,13 @@ Toolbox.prototype = {
       }.bind(this));
     }
     return this._initInspector;
+  },
+
+  _onNewSelectedNodeFront: function (evt) {
+    // Emit a "selection-changed" event when the toolbox.selection has been set
+    // to a new node (or cleared). Currently used in the WebExtensions APIs (to
+    // provide the `devtools.panels.elements.onSelectionChanged` event).
+    this.emit("selection-changed");
   },
 
   _onInspectObject: function (evt, packet) {
@@ -2295,6 +2321,7 @@ Toolbox.prototype = {
         yield this._highlighter.destroy();
       }
       if (this._selection) {
+        this._selection.off("new-node-front", this._onNewSelectedNodeFront);
         this._selection.destroy();
       }
 
@@ -2478,7 +2505,7 @@ Toolbox.prototype = {
               .getInterface(Ci.nsIDOMWindowUtils)
               .garbageCollect();
           }
-        }).then(null, console.error));
+        }).catch(console.error));
 
     let leakCheckObserver = ({wrappedJSObject: barrier}) => {
       // Make the leak detector wait until this toolbox is properly destroyed.

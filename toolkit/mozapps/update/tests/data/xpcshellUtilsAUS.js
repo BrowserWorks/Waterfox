@@ -97,6 +97,7 @@ const ERR_BACKUP_DISCARD = "backup_discard: unable to remove";
 const ERR_MOVE_DESTDIR_7 = "Moving destDir to tmpDir failed, err: 7";
 const ERR_BACKUP_CREATE_7 = "backup_create failed: 7";
 const ERR_LOADSOURCEFILE_FAILED = "LoadSourceFile failed";
+const ERR_PARENT_PID_PERSISTS = "The parent process didn't exit! Continuing with update.";
 
 const LOG_SVC_SUCCESSFUL_LAUNCH = "Process was started... waiting on result.";
 
@@ -158,6 +159,8 @@ var gHandle;
 var gGREDirOrig;
 var gGREBinDirOrig;
 var gAppDirOrig;
+
+var gPIDPersistProcess;
 
 // Variables are used instead of contants so tests can override these values if
 // necessary.
@@ -825,8 +828,7 @@ function setupTestCommon() {
   }
 
   if (IS_WIN) {
-    Services.prefs.setBoolPref(PREF_APP_UPDATE_SERVICE_ENABLED,
-                               IS_SERVICE_TEST ? true : false);
+    Services.prefs.setBoolPref(PREF_APP_UPDATE_SERVICE_ENABLED, !!IS_SERVICE_TEST);
   }
 
   // adjustGeneralPaths registers a cleanup function that calls end_test when
@@ -1326,7 +1328,6 @@ XPCOMUtils.defineLazyGetter(this, "gInstallDirPathHash", function test_gIDPH() {
     do_throw("Windows only function called by a different platform!");
   }
 
-  // Figure out where we should check for a cached hash value
   if (!MOZ_APP_BASENAME) {
     return null;
   }
@@ -1686,6 +1687,12 @@ function runUpdate(aExpectedStatus, aSwitchApp, aExpectedExitValue, aCheckSvcLog
     }
   }
 
+  let pid = 0;
+  if (gPIDPersistProcess) {
+    pid = gPIDPersistProcess.pid;
+    gEnv.set("MOZ_TEST_SHORTER_WAIT_PID", "1");
+  }
+
   // Copy the updater binary to the directory where it will apply updates.
   let updateBin = copyTestUpdaterForRunUsingUpdater();
   Assert.ok(updateBin.exists(),
@@ -1704,10 +1711,10 @@ function runUpdate(aExpectedStatus, aSwitchApp, aExpectedExitValue, aCheckSvcLog
   let args = [updatesDirPath, installDirPath];
   if (aSwitchApp) {
     args[2] = stageDirPath;
-    args[3] = "0/replace";
+    args[3] = pid + "/replace";
   } else {
     args[2] = applyToDirPath;
-    args[3] = "0";
+    args[3] = pid;
   }
 
   let launchBin = IS_SERVICE_TEST && isInvalidArgTest ? callbackApp : updateBin;
@@ -1736,6 +1743,10 @@ function runUpdate(aExpectedStatus, aSwitchApp, aExpectedExitValue, aCheckSvcLog
   process.run(true, args, args.length);
 
   resetEnvironment();
+
+  if (gPIDPersistProcess) {
+    gEnv.set("MOZ_TEST_SHORTER_WAIT_PID", "");
+  }
 
   let status = readStatusFile();
   if ((!IS_SERVICE_TEST && process.exitValue != aExpectedExitValue) ||
@@ -1839,15 +1850,13 @@ function checkSymlink() {
  * Sets the active update and related information for updater tests.
  */
 function setupActiveUpdate() {
-  let state = IS_SERVICE_TEST ? STATE_PENDING_SVC : STATE_PENDING;
-  let channel = gDefaultPrefBranch.getCharPref(PREF_APP_UPDATE_CHANNEL);
-  let patches = getLocalPatchString(null, null, null, null, null, "true",
-                                    state);
-  let updates = getLocalUpdateString(patches, null, null, null, null, null,
-                                     null, null, null, null, "true", channel);
+  let pendingState = IS_SERVICE_TEST ? STATE_PENDING_SVC : STATE_PENDING;
+  let patchProps = {state: pendingState};
+  let patches = getLocalPatchString(patchProps);
+  let updates = getLocalUpdateString({}, patches);
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(updates), true);
   writeVersionFile(DEFAULT_UPDATE_VERSION);
-  writeStatusFile(state);
+  writeStatusFile(pendingState);
   reloadUpdateManagerData();
   Assert.ok(!!gUpdateManager.activeUpdate,
             "the active update should be defined");
@@ -2449,16 +2458,21 @@ function lockDirectory(aDirPath) {
  * Launches the test helper binary to make it in use for updater tests and then
  * calls waitForHelperSleep.
  *
- * @param   aTestFile
- *          The test file object that describes the file to make in use.
+ * @param   aRelPath
+ *          The relative path in the apply to directory for the helper binary.
+ * @param   aCopyTestHelper
+ *          Whether to copy the test helper binary to the relative path in the
+ *          apply to directory.
  */
 function runHelperFileInUse(aRelPath, aCopyTestHelper) {
-  logTestInfo("aRelPath: " + aRelPath);
+  debugDump("aRelPath: " + aRelPath);
   // Launch an existing file so it is in use during the update.
   let helperBin = getTestDirFile(FILE_HELPER_BIN);
   let fileInUseBin = getApplyDirFile(aRelPath);
   if (aCopyTestHelper) {
-    fileInUseBin.remove(false);
+    if (fileInUseBin.exists()) {
+      fileInUseBin.remove(false);
+    }
     helperBin.copyTo(fileInUseBin.parent, fileInUseBin.leafName);
   }
   fileInUseBin.permissions = PERMS_DIRECTORY;
@@ -2468,6 +2482,38 @@ function runHelperFileInUse(aRelPath, aCopyTestHelper) {
                          createInstance(Ci.nsIProcess);
   fileInUseProcess.init(fileInUseBin);
   fileInUseProcess.run(false, args, args.length);
+
+  do_execute_soon(waitForHelperSleep);
+}
+
+/**
+ * Launches the test helper binary to provide a pid that is in use for updater
+ * tests and then calls waitForHelperSleep.
+ *
+ * @param   aRelPath
+ *          The relative path in the apply to directory for the helper binary.
+ * @param   aCopyTestHelper
+ *          Whether to copy the test helper binary to the relative path in the
+ *          apply to directory.
+ */
+function runHelperPIDPersists(aRelPath, aCopyTestHelper) {
+  debugDump("aRelPath: " + aRelPath);
+  // Launch an existing file so it is in use during the update.
+  let helperBin = getTestDirFile(FILE_HELPER_BIN);
+  let pidPersistsBin = getApplyDirFile(aRelPath);
+  if (aCopyTestHelper) {
+    if (pidPersistsBin.exists()) {
+      pidPersistsBin.remove(false);
+    }
+    helperBin.copyTo(pidPersistsBin.parent, pidPersistsBin.leafName);
+  }
+  pidPersistsBin.permissions = PERMS_DIRECTORY;
+  let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
+              HELPER_SLEEP_TIMEOUT];
+  gPIDPersistProcess = Cc["@mozilla.org/process/util;1"].
+                       createInstance(Ci.nsIProcess);
+  gPIDPersistProcess.init(pidPersistsBin);
+  gPIDPersistProcess.run(false, args, args.length);
 
   do_execute_soon(waitForHelperSleep);
 }
@@ -2601,6 +2647,7 @@ function waitForHelperExit() {
  */
 function setupUpdaterTest(aMarFile, aPostUpdateAsync,
                           aPostUpdateExeRelPathPrefix = "") {
+  debugDump("start - updater test setup");
   let updatesPatchDir = getUpdatesPatchDir();
   if (!updatesPatchDir.exists()) {
     updatesPatchDir.create(Ci.nsIFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
@@ -2616,6 +2663,7 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
   helperBin.copyToFollowingLinks(afterApplyBinDir, gPostUpdateBinFile);
 
   gTestFiles.forEach(function SUT_TF_FE(aTestFile) {
+    debugDump("start - setup test file: " + aTestFile.fileName);
     if (aTestFile.originalFile || aTestFile.originalContents) {
       let testDir = getApplyDirFile(aTestFile.relPathDir, true);
       if (!testDir.exists()) {
@@ -2644,11 +2692,13 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
         }
       }
     }
+    debugDump("finish - setup test file: " + aTestFile.fileName);
   });
 
   // Add the test directory that will be updated for a successful update or left
   // in the initial state for a failed update.
   gTestDirs.forEach(function SUT_TD_FE(aTestDir) {
+    debugDump("start - setup test directory: " + aTestDir.relPathDir);
     let testDir = getApplyDirFile(aTestDir.relPathDir, true);
     if (!testDir.exists()) {
       testDir.create(Ci.nsIFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
@@ -2680,6 +2730,7 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
         }
       });
     }
+    debugDump("finish - setup test directory: " + aTestDir.relPathDir);
   });
 
   setupActiveUpdate();
@@ -2688,6 +2739,7 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
     createUpdaterINI(aPostUpdateAsync, aPostUpdateExeRelPathPrefix);
   }
 
+  debugDump("finish - updater test setup");
   setupAppFilesAsync();
 }
 
@@ -3742,6 +3794,17 @@ function adjustGeneralPaths() {
       }
       gProcess = null;
       debugDump("finish - kill process");
+    }
+
+    if (gPIDPersistProcess && gPIDPersistProcess.isRunning) {
+      debugDump("start - kill pid persist process");
+      try {
+        gPIDPersistProcess.kill();
+      } catch (e) {
+        debugDump("kill pid persist process failed. Exception: " + e);
+      }
+      gPIDPersistProcess = null;
+      debugDump("finish - kill pid persist process");
     }
 
     if (gHandle) {

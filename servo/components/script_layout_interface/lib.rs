@@ -24,15 +24,18 @@ extern crate ipc_channel;
 extern crate libc;
 #[macro_use]
 extern crate log;
+extern crate metrics;
 extern crate msg;
 extern crate net_traits;
 extern crate profile_traits;
 extern crate range;
 extern crate script_traits;
 extern crate selectors;
+extern crate servo_arc;
+extern crate servo_atoms;
 extern crate servo_url;
 extern crate style;
-extern crate webrender_traits;
+extern crate webrender_api;
 
 pub mod message;
 pub mod reporter;
@@ -65,7 +68,7 @@ pub struct StyleData {
 impl StyleData {
     pub fn new() -> Self {
         Self {
-            element_data: AtomicRefCell::new(ElementData::new(None)),
+            element_data: AtomicRefCell::new(ElementData::default()),
             parallel: DomParallelInfo::new(),
         }
     }

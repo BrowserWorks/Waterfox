@@ -346,6 +346,7 @@ void CleanupOSFileConstants()
 
   gInitialized = false;
   delete gPaths;
+  gPaths = nullptr;
 }
 
 
@@ -874,9 +875,7 @@ bool SetStringProperty(JSContext *cx, JS::Handle<JSObject*> aObject, const char 
  */
 bool DefineOSFileConstants(JSContext *cx, JS::Handle<JSObject*> global)
 {
-  MOZ_ASSERT(gInitialized);
-
-  if (gPaths == nullptr) {
+  if (!gInitialized || gPaths == nullptr) {
     // If an initialization error was ignored, we may end up with
     // |gInitialized == true| but |gPaths == nullptr|. We cannot
     // |MOZ_ASSERT| this, as this would kill precompile_cache.js,
@@ -925,16 +924,6 @@ bool DefineOSFileConstants(JSContext *cx, JS::Handle<JSObject*> global)
     return false;
   }
 
-#if defined(MOZ_WIDGET_GONK)
-    JSString* strVersion = JS_NewStringCopyZ(cx, "Gonk");
-    if (!strVersion){
-      return false;
-    }
-    JS::Rooted<JS::Value> valVersion(cx, JS::StringValue(strVersion));
-    if (!JS_SetProperty(cx, objSys, "Name", valVersion)) {
-      return false;
-  }
-#else
   nsCOMPtr<nsIXULRuntime> runtime = do_GetService(XULRUNTIME_SERVICE_CONTRACTID);
   if (runtime) {
     nsAutoCString os;
@@ -951,7 +940,6 @@ bool DefineOSFileConstants(JSContext *cx, JS::Handle<JSObject*> global)
       return false;
     }
   }
-#endif // defined(MOZ_WIDGET_GONK)
 
 #if defined(DEBUG)
   JS::Rooted<JS::Value> valDebug(cx, JS::TrueValue());

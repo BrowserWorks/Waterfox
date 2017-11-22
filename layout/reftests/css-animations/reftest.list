@@ -1,7 +1,7 @@
 == screen-animations.html screen-animations-ref.html
 != screen-animations.html screen-animations-notref.html
-fails-if(!styloVsGecko) == print-no-animations.html print-no-animations-ref.html # reftest harness doesn't actually make pres context non-dynamic for reftest-print tests
-fails-if(!styloVsGecko) != print-no-animations.html print-no-animations-notref.html # reftest harness doesn't actually make pres context non-dynamic for reftest-print tests
+skip-if(stylo||styloVsGecko) fails-if(!stylo&&!styloVsGecko) == print-no-animations.html print-no-animations-ref.html # reftest harness doesn't actually make pres context non-dynamic for reftest-paged tests. Bug 1374154 for stylo
+skip-if(stylo||styloVsGecko) fails-if(!stylo&&!styloVsGecko) != print-no-animations.html print-no-animations-notref.html # reftest harness doesn't actually make pres context non-dynamic for reftest-paged tests. Bug 1374154 for stylo
 == animate-opacity.html animate-opacity-ref.html
 == animate-preserves3d.html animate-preserves3d-ref.html
 == in-visibility-hidden-animation.html in-visibility-hidden-animation-ref.html
@@ -50,3 +50,7 @@ fails == background-position-important.html background-position-ref.html # This 
 == mask-size-after-finish-1b.html mask-anim-ref.html
 == mask-size-in-delay-1a.html mask-anim-ref.html
 == mask-size-in-delay-1b.html mask-anim-ref.html
+
+== stop-animation-on-discarded-pseudo-element.html about:blank
+
+== updating-animation-on-pseudo-element.html updating-animation-on-pseudo-element-ref.html

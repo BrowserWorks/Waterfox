@@ -14,15 +14,24 @@ namespace mozilla {
 namespace dom {
 
 nsresult
-ConvertStringstoISupportsStrings(const nsTArray<nsString>& aStrings,
-                                 nsIArray** aIStrings);
+SerializeFromJSObject(JSContext* aCx,
+                      JS::HandleObject aObject,
+                      nsAString& aSerializedObject);
 
 nsresult
-ConvertISupportsStringstoStrings(nsIArray* aIStrings,
-                                 nsTArray<nsString>& aStrings);
+SerializeFromJSVal(JSContext* aCx,
+                   JS::HandleValue aValue,
+                   nsAString& aSerializedValue);
 
 nsresult
-CopyISupportsStrings(nsIArray* aSourceStrings, nsIArray** aTargetStrings);
+DeserializeToJSObject(const nsAString& aSerializedObject,
+                      JSContext* aCx,
+                      JS::MutableHandleObject aObject);
+
+nsresult
+DeserializeToJSValue(const nsAString& aSerializedObject,
+                     JSContext* aCx,
+                     JS::MutableHandleValue aValue);
 
 } // end of namespace dom
 } // end of namespace mozilla

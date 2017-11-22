@@ -68,16 +68,14 @@ nsSMILCSSProperty::GetBaseValue() const
 
   AnimationValue computedValue;
   if (mElement->IsStyledByServo()) {
-    const ServoComputedValues* currentStyle =
-      mBaseStyleContext->StyleSource().AsServoComputedValues();
     computedValue.mServo =
-      Servo_ComputedValues_ExtractAnimationValue(currentStyle, mPropID)
+      Servo_ComputedValues_ExtractAnimationValue(mBaseStyleContext->AsServo(), mPropID)
       .Consume();
     if (!computedValue.mServo) {
       return baseValue;
     }
   } else if (!StyleAnimationValue::ExtractComputedValue(mPropID,
-                                                        mBaseStyleContext,
+                                                        mBaseStyleContext->AsGecko(),
                                                         computedValue.mGecko)) {
     return baseValue;
   }

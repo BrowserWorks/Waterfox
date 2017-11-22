@@ -846,7 +846,7 @@ ParserBase::ParserBase(JSContext* cx, LifoAlloc& alloc,
     checkOptionsCalled(false),
 #endif
     isUnexpectedEOF_(false),
-    awaitIsKeyword_(false)
+    awaitHandling_(AwaitIsName)
 {
     cx->frontendCollectionPool().addActiveCompilation();
     tempPoolMark = alloc.mark();
@@ -905,18 +905,18 @@ Parser<ParseHandler, CharT>::~Parser()
 
 template <>
 void
-Parser<SyntaxParseHandler, char16_t>::setAwaitIsKeyword(bool isKeyword)
+Parser<SyntaxParseHandler, char16_t>::setAwaitHandling(AwaitHandling awaitHandling)
 {
-    awaitIsKeyword_ = isKeyword;
+    awaitHandling_ = awaitHandling;
 }
 
 template <>
 void
-Parser<FullParseHandler, char16_t>::setAwaitIsKeyword(bool isKeyword)
+Parser<FullParseHandler, char16_t>::setAwaitHandling(AwaitHandling awaitHandling)
 {
-    awaitIsKeyword_ = isKeyword;
+    awaitHandling_ = awaitHandling;
     if (syntaxParser_)
-        syntaxParser_->setAwaitIsKeyword(isKeyword);
+        syntaxParser_->setAwaitHandling(awaitHandling);
 }
 
 ObjectBox*
@@ -2284,7 +2284,7 @@ Parser<FullParseHandler, char16_t>::moduleBody(ModuleSharedContext* modulesc)
     if (!mn)
         return null();
 
-    AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, true);
+    AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, AwaitIsModuleKeyword);
     ParseNode* pn = statementList(YieldIsKeyword);
     if (!pn)
         return null();
@@ -2552,6 +2552,14 @@ GetYieldHandling(GeneratorKind generatorKind)
     return YieldIsKeyword;
 }
 
+static AwaitHandling
+GetAwaitHandling(FunctionAsyncKind asyncKind)
+{
+    if (asyncKind == SyncFunction)
+        return AwaitIsName;
+    return AwaitIsKeyword;
+}
+
 template <>
 ParseNode*
 Parser<FullParseHandler, char16_t>::standaloneFunction(HandleFunction fun,
@@ -2612,7 +2620,8 @@ Parser<FullParseHandler, char16_t>::standaloneFunction(HandleFunction fun,
     funpc.setIsStandaloneFunctionBody();
 
     YieldHandling yieldHandling = GetYieldHandling(generatorKind);
-    AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, asyncKind == AsyncFunction);
+    AwaitHandling awaitHandling = GetAwaitHandling(asyncKind);
+    AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, awaitHandling);
     if (!functionFormalParametersAndBody(InAllowed, yieldHandling, fn, Statement,
                                          parameterListEnd, /* isStandaloneFunction = */ true))
     {
@@ -2920,6 +2929,10 @@ Parser<ParseHandler, CharT>::matchOrInsertSemicolonHelper(TokenStream::Modifier 
             error(JSMSG_AWAIT_OUTSIDE_ASYNC);
             return false;
         }
+        if (!yieldExpressionsSupported() && tokenStream.currentToken().type == TOK_YIELD) {
+            error(JSMSG_YIELD_OUTSIDE_GENERATOR);
+            return false;
+        }
 
         /* Advance the scanner for proper error location reporting. */
         tokenStream.consumeKnownToken(tt, modifier);
@@ -3045,6 +3058,8 @@ Parser<ParseHandler, CharT>::functionArguments(YieldHandling yieldHandling,
             argModifier = firstTokenModifier;
         }
     }
+
+    TokenPos firstTokenPos;
     if (!parenFreeArrow) {
         TokenKind tt;
         if (!tokenStream.getToken(&tt, firstTokenModifier))
@@ -3054,12 +3069,19 @@ Parser<ParseHandler, CharT>::functionArguments(YieldHandling yieldHandling,
             return false;
         }
 
+        firstTokenPos = pos();
+
         // Record the start of function source (for FunctionToString). If we
         // are parenFreeArrow, we will set this below, after consuming the NAME.
         funbox->setStart(tokenStream);
+    } else {
+        // When delazifying, we may not have a current token and pos() is
+        // garbage. In that case, substitute the first token's position.
+        if (!tokenStream.peekTokenPos(&firstTokenPos, firstTokenModifier))
+            return false;
     }
 
-    Node argsbody = handler.newList(PNK_PARAMSBODY, pos());
+    Node argsbody = handler.newList(PNK_PARAMSBODY, firstTokenPos);
     if (!argsbody)
         return false;
     handler.setFunctionFormalParametersAndBody(funcpn, argsbody);
@@ -3286,13 +3308,7 @@ Parser<FullParseHandler, char16_t>::skipLazyInnerFunction(ParseNode* pn, uint32_
 
     PropagateTransitiveParseFlags(lazy, pc->sc());
 
-    // The position passed to tokenStream.advance() is an offset of the sort
-    // returned by userbuf.offset() and expected by userbuf.rawCharPtrAt(),
-    // while LazyScript::{begin,end} offsets are relative to the outermost
-    // script source.
-    Rooted<LazyScript*> lazyOuter(context, handler.lazyOuterFunction());
-    uint32_t userbufBase = lazyOuter->begin() - lazyOuter->column();
-    if (!tokenStream.advance(fun->lazyScript()->end() - userbufBase))
+    if (!tokenStream.advance(fun->lazyScript()->end()))
         return false;
 
 #if JS_HAS_EXPR_CLOSURES
@@ -3722,8 +3738,10 @@ Parser<ParseHandler, CharT>::functionFormalParametersAndBody(InHandling inHandli
     // See below for an explanation why arrow function parameters and arrow
     // function bodies are parsed with different yield/await settings.
     {
-        bool asyncOrArrowInAsync = funbox->isAsync() || (kind == Arrow && awaitIsKeyword());
-        AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, asyncOrArrowInAsync);
+        AwaitHandling awaitHandling = funbox->isAsync() || (kind == Arrow && awaitIsKeyword())
+                                      ? AwaitIsKeyword
+                                      : AwaitIsName;
+        AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, awaitHandling);
         if (!functionArguments(yieldHandling, kind, pn))
             return false;
     }
@@ -3794,10 +3812,11 @@ Parser<ParseHandler, CharT>::functionFormalParametersAndBody(InHandling inHandli
     // Whereas the |yield| in the function body is always parsed as a name.
     // The same goes when parsing |await| in arrow functions.
     YieldHandling bodyYieldHandling = GetYieldHandling(pc->generatorKind());
+    AwaitHandling bodyAwaitHandling = GetAwaitHandling(pc->asyncKind());
     bool inheritedStrict = pc->sc()->strict();
     Node body;
     {
-        AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, funbox->isAsync());
+        AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, bodyAwaitHandling);
         body = functionBody(inHandling, bodyYieldHandling, kind, bodyType);
         if (!body)
             return false;
@@ -3960,7 +3979,7 @@ Parser<ParseHandler, CharT>::functionExpr(uint32_t toStringStart, InvokedPredict
 {
     MOZ_ASSERT(tokenStream.isCurrentTokenType(TOK_FUNCTION));
 
-    AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, asyncKind == AsyncFunction);
+    AutoAwaitIsKeyword<Parser> awaitIsKeyword(this, GetAwaitHandling(asyncKind));
     GeneratorKind generatorKind = NotGenerator;
     TokenKind tt;
     if (!tokenStream.getToken(&tt))

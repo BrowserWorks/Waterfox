@@ -88,8 +88,8 @@ const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
 
@@ -261,7 +261,7 @@ this.DeferredTask.prototype = {
    * Timer callback used to run the delayed task.
    */
   _timerCallback() {
-    let runningDeferred = Promise.defer();
+    let runningDeferred = PromiseUtils.defer();
 
     // All these state changes must occur at the same time directly inside the
     // timer callback, to prevent race conditions and to ensure that all the
@@ -293,7 +293,7 @@ this.DeferredTask.prototype = {
       // Indicate that the execution of the task has finished.  This happens
       // synchronously with the previous state changes in the function.
       this._runningPromise = null;
-    })().then(null, Cu.reportError));
+    })().catch(Cu.reportError));
   },
 
   /**

@@ -34,6 +34,8 @@
 #ifdef XP_WIN
 #include "gfxWindowsPlatform.h"
 #include <d3d10_1.h>
+#include "mozilla/gfx/DeviceManagerDx.h"
+#include "mozilla/layers/D3D11YCbCrImage.h"
 #endif
 
 namespace mozilla {
@@ -124,6 +126,15 @@ ImageContainerListener::ClearImageContainer()
   mImageContainer = nullptr;
 }
 
+already_AddRefed<ImageClient>
+ImageContainer::GetImageClient()
+{
+  RecursiveMutexAutoLock mon(mRecursiveMutex);
+  EnsureImageClient();
+  RefPtr<ImageClient> imageClient = mImageClient;
+  return imageClient.forget();
+}
+
 void
 ImageContainer::EnsureImageClient()
 {
@@ -152,7 +163,7 @@ ImageContainer::EnsureImageClient()
 }
 
 ImageContainer::ImageContainer(Mode flag)
-: mReentrantMonitor("ImageContainer.mReentrantMonitor"),
+: mRecursiveMutex("ImageContainer.mRecursiveMutex"),
   mGenerationCounter(++sGenerationCounter),
   mPaintCount(0),
   mDroppedImageCount(0),
@@ -167,7 +178,7 @@ ImageContainer::ImageContainer(Mode flag)
 }
 
 ImageContainer::ImageContainer(const CompositableHandle& aHandle)
-  : mReentrantMonitor("ImageContainer.mReentrantMonitor"),
+  : mRecursiveMutex("ImageContainer.mRecursiveMutex"),
   mGenerationCounter(++sGenerationCounter),
   mPaintCount(0),
   mDroppedImageCount(0),
@@ -195,7 +206,7 @@ ImageContainer::~ImageContainer()
 RefPtr<PlanarYCbCrImage>
 ImageContainer::CreatePlanarYCbCrImage()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
   EnsureImageClient();
   if (mImageClient && mImageClient->AsImageClientSingle()) {
     return new SharedPlanarYCbCrImage(mImageClient);
@@ -206,7 +217,7 @@ ImageContainer::CreatePlanarYCbCrImage()
 RefPtr<SharedRGBImage>
 ImageContainer::CreateSharedRGBImage()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
   EnsureImageClient();
   if (!mImageClient || !mImageClient->AsImageClientSingle()) {
     return nullptr;
@@ -217,7 +228,7 @@ ImageContainer::CreateSharedRGBImage()
 void
 ImageContainer::SetCurrentImageInternal(const nsTArray<NonOwningImage>& aImages)
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   mGenerationCounter = ++sGenerationCounter;
 
@@ -287,7 +298,7 @@ ImageContainer::SetCurrentImageInternal(const nsTArray<NonOwningImage>& aImages)
 void
 ImageContainer::ClearImagesFromImageBridge()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
   SetCurrentImageInternal(nsTArray<NonOwningImage>());
 }
 
@@ -295,10 +306,10 @@ void
 ImageContainer::SetCurrentImages(const nsTArray<NonOwningImage>& aImages)
 {
   MOZ_ASSERT(!aImages.IsEmpty());
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-  if (mImageClient) {
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
+  if (mIsAsync) {
     if (RefPtr<ImageBridgeChild> imageBridge = ImageBridgeChild::GetSingleton()) {
-      imageBridge->UpdateImageClient(mImageClient, this);
+      imageBridge->UpdateImageClient(this);
     }
   }
   SetCurrentImageInternal(aImages);
@@ -316,14 +327,14 @@ ImageContainer::ClearAllImages()
     return;
   }
 
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
   SetCurrentImageInternal(nsTArray<NonOwningImage>());
 }
 
 void
 ImageContainer::ClearCachedResources()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
   if (mImageClient && mImageClient->AsImageClientSingle()) {
     if (!mImageClient->HasTextureClientRecycler()) {
       return;
@@ -367,7 +378,7 @@ CompositableHandle ImageContainer::GetAsyncContainerHandle()
 bool
 ImageContainer::HasCurrentImage()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   return !mCurrentImages.IsEmpty();
 }
@@ -376,7 +387,7 @@ void
 ImageContainer::GetCurrentImages(nsTArray<OwningImage>* aImages,
                                  uint32_t* aGenerationCounter)
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   *aImages = mCurrentImages;
   if (aGenerationCounter) {
@@ -387,7 +398,7 @@ ImageContainer::GetCurrentImages(nsTArray<OwningImage>* aImages,
 gfx::IntSize
 ImageContainer::GetCurrentSize()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   if (mCurrentImages.IsEmpty()) {
     return gfx::IntSize(0, 0);
@@ -399,7 +410,7 @@ ImageContainer::GetCurrentSize()
 void
 ImageContainer::NotifyComposite(const ImageCompositeNotification& aNotification)
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   // An image composition notification is sent the first time a particular
   // image is composited by an ImageHost. Thus, every time we receive such
@@ -430,6 +441,40 @@ ImageContainer::NotifyComposite(const ImageCompositeNotification& aNotification)
         aNotification.imageTimeStamp();
   }
 }
+
+#ifdef XP_WIN
+D3D11YCbCrRecycleAllocator*
+ImageContainer::GetD3D11YCbCrRecycleAllocator(KnowsCompositor* aAllocator)
+{
+  if (mD3D11YCbCrRecycleAllocator &&
+      aAllocator == mD3D11YCbCrRecycleAllocator->GetAllocator()) {
+    return mD3D11YCbCrRecycleAllocator;
+  }
+
+  RefPtr<ID3D11Device> device = gfx::DeviceManagerDx::Get()->GetContentDevice();
+  if (!device) {
+    device = gfx::DeviceManagerDx::Get()->GetCompositorDevice();
+  }
+
+  LayersBackend backend = aAllocator->GetCompositorBackendType();
+  if (!device || backend != LayersBackend::LAYERS_D3D11) {
+    return nullptr;
+  }
+
+  RefPtr<ID3D10Multithread> multi;
+  HRESULT hr =
+    device->QueryInterface((ID3D10Multithread**)getter_AddRefs(multi));
+  if (FAILED(hr) || !multi) {
+    gfxWarning() << "Multithread safety interface not supported. " << hr;
+    return nullptr;
+  }
+  multi->SetMultithreadProtected(TRUE);
+
+  mD3D11YCbCrRecycleAllocator =
+    new D3D11YCbCrRecycleAllocator(aAllocator, device);
+  return mD3D11YCbCrRecycleAllocator;
+}
+#endif
 
 PlanarYCbCrImage::PlanarYCbCrImage()
   : Image(nullptr, ImageFormat::PLANAR_YCBCR)
@@ -782,33 +827,32 @@ SourceSurfaceImage::GetTextureClient(KnowsCompositor* aForwarder)
     return nullptr;
   }
 
-  RefPtr<TextureClient> textureClient = mTextureClients.Get(aForwarder->GetSerial());
+  auto entry = mTextureClients.LookupForAdd(aForwarder->GetSerial());
+  if (entry) {
+    return entry.Data();
+  }
+
+  RefPtr<TextureClient> textureClient;
+  RefPtr<SourceSurface> surface = GetAsSourceSurface();
+  MOZ_ASSERT(surface);
+  if (surface) {
+    // gfx::BackendType::NONE means default to content backend
+    textureClient =
+      TextureClient::CreateFromSurface(aForwarder,
+                                       surface,
+                                       BackendSelector::Content,
+                                       mTextureFlags,
+                                       ALLOC_DEFAULT);
+  }
   if (textureClient) {
+    textureClient->SyncWithObject(aForwarder->GetSyncObject());
+    entry.OrInsert([&textureClient](){ return textureClient; });
     return textureClient;
   }
 
-  RefPtr<SourceSurface> surface = GetAsSourceSurface();
-  MOZ_ASSERT(surface);
-  if (!surface) {
-    return nullptr;
-  }
-
-  if (!textureClient) {
-    // gfx::BackendType::NONE means default to content backend
-    textureClient = TextureClient::CreateFromSurface(aForwarder,
-                                                     surface,
-                                                     BackendSelector::Content,
-                                                     mTextureFlags,
-                                                     ALLOC_DEFAULT);
-  }
-  if (!textureClient) {
-    return nullptr;
-  }
-
-  textureClient->SyncWithObject(aForwarder->GetSyncObject());
-
-  mTextureClients.Put(aForwarder->GetSerial(), textureClient);
-  return textureClient;
+  // Remove the speculatively added entry.
+  mTextureClients.Remove(aForwarder->GetSerial());
+  return nullptr;
 }
 
 ImageContainer::ProducerID

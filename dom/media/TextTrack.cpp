@@ -205,7 +205,7 @@ TextTrack::UpdateActiveCueList()
   // Remove all the cues from the active cue list whose end times now occur
   // earlier then the current playback time.
   for (uint32_t i = mActiveCueList->Length(); i > 0; i--) {
-    if ((*mActiveCueList)[i - 1]->EndTime() < playbackTime) {
+    if ((*mActiveCueList)[i - 1]->EndTime() <= playbackTime) {
       mActiveCueList->RemoveCueAt(i - 1);
     }
   }
@@ -215,7 +215,7 @@ TextTrack::UpdateActiveCueList()
   // a valid start time as the cue list is sorted.
   for (; mCuePos < mCueList->Length() &&
          (*mCueList)[mCuePos]->StartTime() <= playbackTime; mCuePos++) {
-    if ((*mCueList)[mCuePos]->EndTime() >= playbackTime) {
+    if ((*mCueList)[mCuePos]->EndTime() > playbackTime) {
       mActiveCueList->AddCue(*(*mCueList)[mCuePos]);
     }
   }
@@ -337,11 +337,10 @@ TextTrack::DispatchAsyncTrustedEvent(const nsString& aEventName)
   }
   RefPtr<TextTrack> self = this;
   nsGlobalWindow::Cast(win)->Dispatch(
-    "TextTrack::DispatchAsyncTrustedEvent", TaskCategory::Other,
-    NS_NewRunnableFunction([self, aEventName]() {
-      self->DispatchTrustedEvent(aEventName);
-    })
-  );
+    TaskCategory::Other,
+    NS_NewRunnableFunction(
+      "dom::TextTrack::DispatchAsyncTrustedEvent",
+      [self, aEventName]() { self->DispatchTrustedEvent(aEventName); }));
 }
 
 bool

@@ -85,11 +85,11 @@ public:
     return false;
   }
 
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
 
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext*         aRenderingContext,
+  ComputeAutoSize(gfxContext*                 aRenderingContext,
                   mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
                   nscoord                     aAvailableISize,
@@ -200,6 +200,7 @@ protected:
   virtual ~nsTableWrapperFrame();
 
   void InitChildReflowInput(nsPresContext&     aPresContext,
+                            const ReflowInput& aOuterRS,
                             ReflowInput& aReflowInput);
 
   // Get a NS_STYLE_CAPTION_SIDE_* value, or NO_SIDE if no caption is present.
@@ -212,7 +213,7 @@ protected:
     return captionSide == NS_STYLE_CAPTION_SIDE_LEFT ||
            captionSide == NS_STYLE_CAPTION_SIDE_RIGHT;
   }
-  
+
   uint8_t GetCaptionVerticalAlign();
 
   void SetDesiredSize(uint8_t                       aCaptionSide,
@@ -226,7 +227,7 @@ protected:
 
   nsresult   GetCaptionOrigin(uint32_t         aCaptionSide,
                               const mozilla::LogicalSize&    aContainBlockSize,
-                              const mozilla::LogicalSize&    aInnerSize, 
+                              const mozilla::LogicalSize&    aInnerSize,
                               const mozilla::LogicalMargin&  aInnerMargin,
                               const mozilla::LogicalSize&    aCaptionSize,
                               mozilla::LogicalMargin&        aCaptionMargin,
@@ -235,13 +236,13 @@ protected:
 
   nsresult   GetInnerOrigin(uint32_t         aCaptionSide,
                             const mozilla::LogicalSize&    aContainBlockSize,
-                            const mozilla::LogicalSize&    aCaptionSize, 
+                            const mozilla::LogicalSize&    aCaptionSize,
                             const mozilla::LogicalMargin&  aCaptionMargin,
                             const mozilla::LogicalSize&    aInnerSize,
                             mozilla::LogicalMargin&        aInnerMargin,
                             mozilla::LogicalPoint&         aOrigin,
                             mozilla::WritingMode           aWM);
-  
+
   // reflow the child (caption or innertable frame)
   void OuterBeginReflowChild(nsPresContext*                     aPresContext,
                              nsIFrame*                          aChildFrame,
@@ -282,7 +283,7 @@ protected:
    * If aMarginResult is non-null, fill it with the part of the
    * margin-isize that was contributed by the margin.
    */
-  nscoord ChildShrinkWrapISize(nsRenderingContext*  aRenderingContext,
+  nscoord ChildShrinkWrapISize(gfxContext*          aRenderingContext,
                                nsIFrame*            aChildFrame,
                                mozilla::WritingMode aWM,
                                mozilla::LogicalSize aCBSize,

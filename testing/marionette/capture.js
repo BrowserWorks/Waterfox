@@ -14,7 +14,11 @@ const BG_COLOUR = "rgb(255,255,255)";
 const PNG_MIME = "image/png";
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
-/** Provides primitives to capture screenshots. */
+/**
+ * Provides primitives to capture screenshots.
+ *
+ * @namespace
+ */
 this.capture = {};
 
 capture.Format = {
@@ -34,7 +38,7 @@ capture.Format = {
  * @return {HTMLCanvasElement}
  *     The canvas element where the element has been painted on.
  */
-capture.element = function (node, highlights = []) {
+capture.element = function(node, highlights = []) {
   let win = node.ownerGlobal;
   let rect = node.getBoundingClientRect();
 
@@ -44,7 +48,7 @@ capture.element = function (node, highlights = []) {
       rect.top,
       rect.width,
       rect.height,
-      highlights);
+      {highlights});
 };
 
 /**
@@ -61,7 +65,7 @@ capture.element = function (node, highlights = []) {
  * @return {HTMLCanvasElement}
  *     The canvas element where the viewport has been painted on.
  */
-capture.viewport = function (win, highlights = []) {
+capture.viewport = function(win, highlights = []) {
   let rootNode = win.document.documentElement;
 
   return capture.canvas(
@@ -70,7 +74,7 @@ capture.viewport = function (win, highlights = []) {
       win.pageYOffset,
       rootNode.clientWidth,
       rootNode.clientHeight,
-      highlights);
+      {highlights});
 };
 
 /**
@@ -90,36 +94,55 @@ capture.viewport = function (win, highlights = []) {
  * @param {Array.<Node>=} highlights
  *     Optional array of nodes, around which a border will be marked to
  *     highlight them in the screenshot.
+ * @param {HTMLCanvasElement=} canvas
+ *     Optional canvas to reuse for the screenshot.
+ * @param {number=} flags
+ *     Optional integer representing flags to pass to drawWindow; these
+ *     are defined on CanvasRenderingContext2D.
  *
  * @return {HTMLCanvasElement}
  *     The canvas on which the selection from the window's framebuffer
  *     has been painted on.
  */
-capture.canvas = function (win, left, top, width, height, highlights = []) {
-  let scale = win.devicePixelRatio;
+capture.canvas = function(win, left, top, width, height,
+    {highlights = [], canvas = null, flags = null} = {}) {
+  const scale = win.devicePixelRatio;
 
-  let canvas = win.document.createElementNS(XHTML_NS, "canvas");
-  canvas.width = width * scale;
-  canvas.height = height * scale;
+  if (canvas === null) {
+    canvas = win.document.createElementNS(XHTML_NS, "canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+  }
 
   let ctx = canvas.getContext(CONTEXT_2D);
-  let flags = ctx.DRAWWINDOW_DRAW_CARET;
-      // Disabled in bug 1243415 for webplatform-test failures due to out of view elements.
-      // Needs https://github.com/w3c/web-platform-tests/issues/4383 fixed.
-      // ctx.DRAWWINDOW_DRAW_VIEW;
-      // Bug 1009762 - Crash in [@ mozilla::gl::ReadPixelsIntoDataSurface]
-      // ctx.DRAWWINDOW_USE_WIDGET_LAYERS;
+  if (flags === null) {
+    flags = ctx.DRAWWINDOW_DRAW_CARET;
+    // TODO(ato): https://bugzil.la/1377335
+    //
+    // Disabled in bug 1243415 for webplatform-test
+    // failures due to out of view elements.  Needs
+    // https://github.com/w3c/web-platform-tests/issues/4383 fixed.
+    /*
+    ctx.DRAWWINDOW_DRAW_VIEW;
+    */
+    // Bug 1009762 - Crash in [@ mozilla::gl::ReadPixelsIntoDataSurface]
+    /*
+    ctx.DRAWWINDOW_USE_WIDGET_LAYERS;
+    */
+  }
 
   ctx.scale(scale, scale);
   ctx.drawWindow(win, left, top, width, height, BG_COLOUR, flags);
-  ctx = capture.highlight_(ctx, highlights, top, left);
+  if (highlights.length) {
+    ctx = capture.highlight_(ctx, highlights, top, left);
+  }
 
   return canvas;
 };
 
-capture.highlight_ = function (context, highlights, top = 0, left = 0) {
+capture.highlight_ = function(context, highlights, top = 0, left = 0) {
   if (!highlights) {
-    return;
+    throw new TypeError("Missing highlights");
   }
 
   context.lineWidth = "2";
@@ -150,7 +173,7 @@ capture.highlight_ = function (context, highlights, top = 0, left = 0) {
  * @return {string}
  *     A Base64 encoded string.
  */
-capture.toBase64 = function (canvas) {
+capture.toBase64 = function(canvas) {
   let u = canvas.toDataURL(PNG_MIME);
   return u.substring(u.indexOf(",") + 1);
 };
@@ -164,7 +187,7 @@ capture.toBase64 = function (canvas) {
 * @return {string}
 *     A hex digest of the SHA-256 hash of the base64 encoded string.
 */
-capture.toHash = function (canvas) {
+capture.toHash = function(canvas) {
   let u = capture.toBase64(canvas);
   let buffer = new TextEncoder("utf-8").encode(u);
   return crypto.subtle.digest("SHA-256", buffer).then(hash => hex(hash));
@@ -185,9 +208,9 @@ function hex(buffer) {
   for (let i = 0; i < view.byteLength; i += 4) {
     let value = view.getUint32(i);
     let stringValue = value.toString(16);
-    let padding = '00000000';
+    let padding = "00000000";
     let paddedValue = (padding + stringValue).slice(-padding.length);
     hexCodes.push(paddedValue);
   }
   return hexCodes.join("");
-};
+}

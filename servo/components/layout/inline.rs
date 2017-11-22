@@ -4,14 +4,14 @@
 
 #![deny(unsafe_code)]
 
-use StyleArc;
+use ServoArc;
 use app_units::{Au, MIN_AU};
 use block::AbsoluteAssignBSizesTraversal;
 use context::LayoutContext;
 use display_list_builder::{DisplayListBuildState, InlineFlowDisplayListBuilding};
 use euclid::{Point2D, Size2D};
 use floats::{FloatKind, Floats, PlacementInfo};
-use flow::{self, BaseFlow, Flow, FlowClass, ForceNonfloatedFlag, IS_ABSOLUTELY_POSITIONED};
+use flow::{self, BaseFlow, Flow, FlowClass, ForceNonfloatedFlag};
 use flow::{CONTAINS_TEXT_OR_REPLACED_FRAGMENTS, EarlyAbsolutePositionInfo, MutableFlowUtils};
 use flow::OpaqueFlow;
 use flow_ref::FlowRef;
@@ -33,7 +33,7 @@ use std::sync::Arc;
 use style::computed_values::{display, overflow_x, position, text_align, text_justify};
 use style::computed_values::{vertical_align, white_space};
 use style::logical_geometry::{LogicalRect, LogicalSize, WritingMode};
-use style::properties::{longhands, ServoComputedValues};
+use style::properties::{longhands, ComputedValues};
 use style::servo::restyle_damage::{BUBBLE_ISIZES, REFLOW, REFLOW_OUT_OF_FLOW, REPOSITION, RESOLVE_GENERATED_CONTENT};
 use text;
 use unicode_bidi as bidi;
@@ -401,7 +401,7 @@ impl LineBreaker {
                     result.border_padding.inline_end == Au(0) &&
                     candidate.border_padding.inline_start == Au(0) &&
                     result_info.selected() == candidate_info.selected() &&
-                    ::arc_ptr_eq(&result_info.run, &candidate_info.run) &&
+                    Arc::ptr_eq(&result_info.run, &candidate_info.run) &&
                         inline_contexts_are_equal(&result.inline_context,
                                                   &candidate.inline_context)
                 }
@@ -962,13 +962,29 @@ impl InlineFlow {
                 Some(ref runs) => runs[run_count - run_idx - 1], // reverse order for RTL runs
                 None => (line.range, bidi::Level::ltr())
             };
+
+            struct MaybeReverse<I> {
+                iter: I,
+                reverse: bool,
+            }
+
+            impl<I: DoubleEndedIterator> Iterator for MaybeReverse<I> {
+                type Item = I::Item;
+
+                fn next(&mut self) -> Option<I::Item> {
+                    if self.reverse {
+                        self.iter.next_back()
+                    } else {
+                        self.iter.next()
+                    }
+                }
+            }
+
             // If the bidi embedding direction is opposite the layout direction, lay out this
             // run in reverse order.
-            let reverse = level.is_ltr() != is_ltr;
-            let fragment_indices = if reverse {
-                (range.end().get() - 1..range.begin().get() - 1).step_by(-1)
-            } else {
-                (range.begin().get()..range.end().get()).step_by(1)
+            let fragment_indices = MaybeReverse {
+                iter: range.begin().get()..range.end().get(),
+                reverse: level.is_ltr() != is_ltr,
             };
 
             for fragment_index in fragment_indices {
@@ -1090,7 +1106,7 @@ impl InlineFlow {
     /// Computes the minimum metrics for each line. This is done during flow construction.
     ///
     /// `style` is the style of the block.
-    pub fn minimum_line_metrics(&self, font_context: &mut FontContext, style: &ServoComputedValues)
+    pub fn minimum_line_metrics(&self, font_context: &mut FontContext, style: &ComputedValues)
                                 -> LineMetrics {
         InlineFlow::minimum_line_metrics_for_fragments(&self.fragments.fragments,
                                                        font_context,
@@ -1103,7 +1119,7 @@ impl InlineFlow {
     /// `style` is the style of the block that these fragments belong to.
     pub fn minimum_line_metrics_for_fragments(fragments: &[Fragment],
                                               font_context: &mut FontContext,
-                                              style: &ServoComputedValues)
+                                              style: &ComputedValues)
                                               -> LineMetrics {
         // As a special case, if this flow contains only hypothetical fragments, then the entire
         // flow is hypothetical and takes up no space. See CSS 2.1 § 10.3.7.
@@ -1404,6 +1420,8 @@ impl Flow for InlineFlow {
     }
 
     /// Calculate and set the block-size of this flow. See CSS 2.1 § 10.6.1.
+    /// Note that we do not need to do in-order traversal becase the children
+    /// are always block formatting context.
     fn assign_block_size(&mut self, layout_context: &LayoutContext) {
         let _scope = layout_debug_scope!("inline::assign_block_size {:x}",
                                          self.base.debug_id());
@@ -1466,19 +1484,6 @@ impl Flow for InlineFlow {
             // the next iteration of the loop. We're no longer on the first
             // line, so set indentation to zero.
             indentation = Au(0)
-        }
-
-        // Assign block sizes for any inline-block descendants.
-        let thread_id = self.base.thread_id;
-        for kid in self.base.child_iter_mut() {
-            if flow::base(kid).flags.contains(IS_ABSOLUTELY_POSITIONED) ||
-                    flow::base(kid).flags.is_float() {
-                continue
-            }
-            let content_box = flow::base(kid).position;
-            kid.assign_block_size_for_inorder_child_if_necessary(layout_context,
-                                                                 thread_id,
-                                                                 content_box);
         }
 
         if self.contains_positioned_fragments() {
@@ -1600,11 +1605,11 @@ impl Flow for InlineFlow {
                         block_flow.base
                                   .late_absolute_position_info
                                   .stacking_relative_position_of_absolute_containing_block =
-                            stacking_relative_position + *padding_box_origin;
+                            *padding_box_origin + stacking_relative_position;
                     }
 
                     block_flow.base.stacking_relative_position =
-                        stacking_relative_content_box.origin;
+                        stacking_relative_content_box.origin.to_vector();
 
                     // Write the clip in our coordinate system into the child flow. (The kid will
                     // fix it up to be in its own coordinate system if necessary.)
@@ -1617,7 +1622,7 @@ impl Flow for InlineFlow {
                         self.base.late_absolute_position_info;
 
                     block_flow.base.stacking_relative_position =
-                        stacking_relative_border_box.origin;
+                        stacking_relative_border_box.origin.to_vector();
 
                     // As above, this is in our coordinate system for now.
                     block_flow.base.clip = self.base.clip.clone()
@@ -1633,10 +1638,10 @@ impl Flow for InlineFlow {
                     block_flow.base
                               .late_absolute_position_info
                               .stacking_relative_position_of_absolute_containing_block =
-                        stacking_relative_position + *padding_box_origin;
+                        *padding_box_origin + stacking_relative_position;
 
                     block_flow.base.stacking_relative_position =
-                        stacking_relative_border_box.origin;
+                        stacking_relative_border_box.origin.to_vector();
 
                     // As above, this is in our coordinate system for now.
                     block_flow.base.clip = self.base.clip.clone()
@@ -1660,7 +1665,7 @@ impl Flow for InlineFlow {
         self.build_display_list_for_inline(state);
     }
 
-    fn repair_style(&mut self, _: &StyleArc<ServoComputedValues>) {}
+    fn repair_style(&mut self, _: &ServoArc<ComputedValues>) {}
 
     fn compute_overflow(&self) -> Overflow {
         let mut overflow = Overflow::new();
@@ -1694,7 +1699,7 @@ impl Flow for InlineFlow {
                                                                     relative_containing_block_size,
                                                                     relative_containing_block_mode,
                                                                     CoordinateSystem::Own)
-                                      .translate(stacking_context_position))
+                                      .translate(&stacking_context_position.to_vector()))
         }
     }
 
@@ -1749,8 +1754,8 @@ impl fmt::Debug for InlineFlow {
 #[derive(Clone)]
 pub struct InlineFragmentNodeInfo {
     pub address: OpaqueNode,
-    pub style: StyleArc<ServoComputedValues>,
-    pub selected_style: StyleArc<ServoComputedValues>,
+    pub style: ServoArc<ComputedValues>,
+    pub selected_style: ServoArc<ComputedValues>,
     pub pseudo: PseudoElementType<()>,
     pub flags: InlineFragmentNodeFlags,
 }

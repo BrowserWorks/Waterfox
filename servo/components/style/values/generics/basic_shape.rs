@@ -43,7 +43,7 @@ add_impls_for_keyword_enum!(ShapeBox);
 /// A shape source, for some reference box.
 #[allow(missing_docs)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-#[derive(Clone, Debug, PartialEq, ToComputedValue)]
+#[derive(Clone, Debug, PartialEq, ToComputedValue, ToCss)]
 pub enum ShapeSource<BasicShape, ReferenceBox> {
     Url(SpecifiedUrl),
     Shape(BasicShape, Option<ReferenceBox>),
@@ -92,7 +92,7 @@ pub struct Ellipse<H, V, LengthOrPercentage> {
 /// https://drafts.csswg.org/css-shapes/#typedef-shape-radius
 #[allow(missing_docs)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-#[derive(Clone, Copy, Debug, PartialEq, ToComputedValue)]
+#[derive(Clone, Copy, Debug, PartialEq, ToComputedValue, ToCss)]
 pub enum ShapeRadius<LengthOrPercentage> {
     Length(LengthOrPercentage),
     ClosestSide,
@@ -126,22 +126,6 @@ impl<B, T> HasViewportPercentage for ShapeSource<B, T> {
     fn has_viewport_percentage(&self) -> bool { false }
 }
 
-impl<B: ToCss, T: ToCss> ToCss for ShapeSource<B, T> {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        match *self {
-            ShapeSource::Url(ref url) => url.to_css(dest),
-            ShapeSource::Shape(ref shape, Some(ref ref_box)) => {
-                shape.to_css(dest)?;
-                dest.write_str(" ")?;
-                ref_box.to_css(dest)
-            },
-            ShapeSource::Shape(ref shape, None) => shape.to_css(dest),
-            ShapeSource::Box(ref val) => val.to_css(dest),
-            ShapeSource::None => dest.write_str("none"),
-        }
-    }
-}
-
 impl<L> ToCss for InsetRect<L>
     where L: ToCss + PartialEq
 {
@@ -159,17 +143,6 @@ impl<L> ToCss for InsetRect<L>
 impl<L> Default for ShapeRadius<L> {
     #[inline]
     fn default() -> Self { ShapeRadius::ClosestSide }
-}
-
-impl<L: ToCss> ToCss for ShapeRadius<L> {
-    #[inline]
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        match *self {
-            ShapeRadius::Length(ref lop) => lop.to_css(dest),
-            ShapeRadius::ClosestSide => dest.write_str("closest-side"),
-            ShapeRadius::FarthestSide => dest.write_str("farthest-side"),
-        }
-    }
 }
 
 impl<L: ToCss> ToCss for Polygon<L> {

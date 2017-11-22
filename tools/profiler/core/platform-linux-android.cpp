@@ -14,7 +14,7 @@
 //  * Neither the name of Google, Inc. nor the names of its contributors
 //    may be used to endorse or promote products derived from this
 //    software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -76,30 +76,32 @@ Thread::GetCurrentId()
 }
 
 static void
-FillInSample(TickSample& aSample, ucontext_t* aContext)
+PopulateRegsFromContext(Registers& aRegs, ucontext_t* aContext)
 {
-  aSample.mContext = aContext;
+  aRegs.mContext = aContext;
   mcontext_t& mcontext = aContext->uc_mcontext;
 
   // Extracting the sample from the context is extremely machine dependent.
 #if defined(GP_ARCH_x86)
-  aSample.mPC = reinterpret_cast<Address>(mcontext.gregs[REG_EIP]);
-  aSample.mSP = reinterpret_cast<Address>(mcontext.gregs[REG_ESP]);
-  aSample.mFP = reinterpret_cast<Address>(mcontext.gregs[REG_EBP]);
+  aRegs.mPC = reinterpret_cast<Address>(mcontext.gregs[REG_EIP]);
+  aRegs.mSP = reinterpret_cast<Address>(mcontext.gregs[REG_ESP]);
+  aRegs.mFP = reinterpret_cast<Address>(mcontext.gregs[REG_EBP]);
+  aRegs.mLR = 0;
 #elif defined(GP_ARCH_amd64)
-  aSample.mPC = reinterpret_cast<Address>(mcontext.gregs[REG_RIP]);
-  aSample.mSP = reinterpret_cast<Address>(mcontext.gregs[REG_RSP]);
-  aSample.mFP = reinterpret_cast<Address>(mcontext.gregs[REG_RBP]);
+  aRegs.mPC = reinterpret_cast<Address>(mcontext.gregs[REG_RIP]);
+  aRegs.mSP = reinterpret_cast<Address>(mcontext.gregs[REG_RSP]);
+  aRegs.mFP = reinterpret_cast<Address>(mcontext.gregs[REG_RBP]);
+  aRegs.mLR = 0;
 #elif defined(GP_ARCH_arm)
-  aSample.mPC = reinterpret_cast<Address>(mcontext.arm_pc);
-  aSample.mSP = reinterpret_cast<Address>(mcontext.arm_sp);
-  aSample.mFP = reinterpret_cast<Address>(mcontext.arm_fp);
-  aSample.mLR = reinterpret_cast<Address>(mcontext.arm_lr);
+  aRegs.mPC = reinterpret_cast<Address>(mcontext.arm_pc);
+  aRegs.mSP = reinterpret_cast<Address>(mcontext.arm_sp);
+  aRegs.mFP = reinterpret_cast<Address>(mcontext.arm_fp);
+  aRegs.mLR = reinterpret_cast<Address>(mcontext.arm_lr);
 #elif defined(GP_ARCH_aarch64)
-  aSample.mPC = reinterpret_cast<Address>(mcontext.pc);
-  aSample.mSP = reinterpret_cast<Address>(mcontext.sp);
-  aSample.mFP = reinterpret_cast<Address>(mcontext.regs[29]);
-  aSample.mLR = reinterpret_cast<Address>(mcontext.regs[30]);
+  aRegs.mPC = reinterpret_cast<Address>(mcontext.pc);
+  aRegs.mSP = reinterpret_cast<Address>(mcontext.sp);
+  aRegs.mFP = reinterpret_cast<Address>(mcontext.regs[29]);
+  aRegs.mLR = reinterpret_cast<Address>(mcontext.regs[30]);
 #else
 # error "bad platform"
 #endif
@@ -130,7 +132,7 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////
-// BEGIN SamplerThread target specifics
+// BEGIN Sampler target specifics
 
 // The only way to reliably interrupt a Linux thread and inspect its register
 // and stack state is by sending a signal to it, and doing the work inside the
@@ -199,7 +201,7 @@ struct SigHandlerCoordinator
   ucontext_t mUContext; // Context at signal
 };
 
-struct SigHandlerCoordinator* SamplerThread::sSigHandlerCoordinator = nullptr;
+struct SigHandlerCoordinator* Sampler::sSigHandlerCoordinator = nullptr;
 
 static void
 SigprofHandler(int aSignal, siginfo_t* aInfo, void* aContext)
@@ -208,18 +210,18 @@ SigprofHandler(int aSignal, siginfo_t* aInfo, void* aContext)
   int savedErrno = errno;
 
   MOZ_ASSERT(aSignal == SIGPROF);
-  MOZ_ASSERT(SamplerThread::sSigHandlerCoordinator);
+  MOZ_ASSERT(Sampler::sSigHandlerCoordinator);
 
   // By sending us this signal, the sampler thread has sent us message 1 in
   // the comment above, with the meaning "|sSigHandlerCoordinator| is ready
   // for use, please copy your register context into it."
-  SamplerThread::sSigHandlerCoordinator->mUContext =
+  Sampler::sSigHandlerCoordinator->mUContext =
     *static_cast<ucontext_t*>(aContext);
 
   // Send message 2: tell the sampler thread that the context has been copied
   // into |sSigHandlerCoordinator->mUContext|.  sem_post can never fail by
   // being interrupted by a signal, so there's no loop around this call.
-  int r = sem_post(&SamplerThread::sSigHandlerCoordinator->mMessage2);
+  int r = sem_post(&Sampler::sSigHandlerCoordinator->mMessage2);
   MOZ_ASSERT(r == 0);
 
   // At this point, the sampler thread assumes we are suspended, so we must
@@ -227,7 +229,7 @@ SigprofHandler(int aSignal, siginfo_t* aInfo, void* aContext)
 
   // Wait for message 3: the sampler thread tells us to resume.
   while (true) {
-    r = sem_wait(&SamplerThread::sSigHandlerCoordinator->mMessage3);
+    r = sem_wait(&Sampler::sSigHandlerCoordinator->mMessage3);
     if (r == -1 && errno == EINTR) {
       // Interrupted by a signal.  Try again.
       continue;
@@ -240,29 +242,17 @@ SigprofHandler(int aSignal, siginfo_t* aInfo, void* aContext)
   // Send message 4: tell the sampler thread that we are finished accessing
   // |sSigHandlerCoordinator|.  After this point it is not safe to touch
   // |sSigHandlerCoordinator|.
-  r = sem_post(&SamplerThread::sSigHandlerCoordinator->mMessage4);
+  r = sem_post(&Sampler::sSigHandlerCoordinator->mMessage4);
   MOZ_ASSERT(r == 0);
 
   errno = savedErrno;
 }
 
-static void*
-ThreadEntry(void* aArg)
-{
-  auto thread = static_cast<SamplerThread*>(aArg);
-  thread->mSamplerTid = gettid();
-  thread->Run();
-  return nullptr;
-}
-
-SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
-                             double aIntervalMilliseconds)
-  : mActivityGeneration(aActivityGeneration)
-  , mIntervalMicroseconds(
-      std::max(1, int(floor(aIntervalMilliseconds * 1000 + 0.5))))
-  , mMyPid(getpid())
+Sampler::Sampler(PSLockRef aLock)
+  : mMyPid(getpid())
   // We don't know what the sampler thread's ID will be until it runs, so set
-  // mSamplerTid to a dummy value and fill it in for real in ThreadEntry().
+  // mSamplerTid to a dummy value and fill it in for real in
+  // SuspendAndSampleAndResumeThread().
   , mSamplerTid(-1)
 {
 #if defined(USE_EHABI_STACKWALK)
@@ -271,9 +261,9 @@ SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
   bool createdLUL = false;
   lul::LUL* lul = CorePS::Lul(aLock);
   if (!lul) {
-    lul = new lul::LUL(logging_sink_for_LUL);
-    CorePS::SetLul(aLock, lul);
+    CorePS::SetLul(aLock, MakeUnique<lul::LUL>(logging_sink_for_LUL));
     // Read all the unwind info currently available.
+    lul = CorePS::Lul(aLock);
     read_procmaps(lul);
     createdLUL = true;
   }
@@ -302,65 +292,30 @@ SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
     }
   }
 #endif
-
-  // Start the sampling thread. It repeatedly sends a SIGPROF signal. Sending
-  // the signal ourselves instead of relying on itimer provides much better
-  // accuracy.
-  if (pthread_create(&mThread, nullptr, ThreadEntry, this) != 0) {
-    MOZ_CRASH("pthread_create failed");
-  }
-}
-
-SamplerThread::~SamplerThread()
-{
-  pthread_join(mThread, nullptr);
 }
 
 void
-SamplerThread::Stop(PSLockRef aLock)
+Sampler::Disable(PSLockRef aLock)
 {
   // Restore old signal handler. This is global state so it's important that
-  // we do it now, while gPSMutex is locked. It's safe to do this now even
-  // though this SamplerThread is still alive, because the next time the main
-  // loop of Run() iterates it won't get past the mActivityGeneration check,
-  // and so won't send any signals.
+  // we do it now, while gPSMutex is locked.
   sigaction(SIGPROF, &mOldSigprofHandler, 0);
 }
 
+template<typename Func>
 void
-SamplerThread::SleepMicro(uint32_t aMicroseconds)
-{
-  if (aMicroseconds >= 1000000) {
-    // Use usleep for larger intervals, because the nanosleep
-    // code below only supports intervals < 1 second.
-    MOZ_ALWAYS_TRUE(!::usleep(aMicroseconds));
-    return;
-  }
-
-  struct timespec ts;
-  ts.tv_sec  = 0;
-  ts.tv_nsec = aMicroseconds * 1000UL;
-
-  int rv = ::nanosleep(&ts, &ts);
-
-  while (rv != 0 && errno == EINTR) {
-    // Keep waiting in case of interrupt.
-    // nanosleep puts the remaining time back into ts.
-    rv = ::nanosleep(&ts, &ts);
-  }
-
-  MOZ_ASSERT(!rv, "nanosleep call failed");
-}
-
-void
-SamplerThread::SuspendAndSampleAndResumeThread(PSLockRef aLock,
-                                               TickSample& aSample)
+Sampler::SuspendAndSampleAndResumeThread(PSLockRef aLock,
+                                         const ThreadInfo& aThreadInfo,
+                                         const Func& aProcessRegs)
 {
   // Only one sampler thread can be sampling at once.  So we expect to have
   // complete control over |sSigHandlerCoordinator|.
   MOZ_ASSERT(!sSigHandlerCoordinator);
 
-  int sampleeTid = aSample.mThreadId;
+  if (mSamplerTid == -1) {
+    mSamplerTid = gettid();
+  }
+  int sampleeTid = aThreadInfo.ThreadId();
   MOZ_RELEASE_ASSERT(sampleeTid != mSamplerTid);
 
   //----------------------------------------------------------------//
@@ -398,15 +353,16 @@ SamplerThread::SuspendAndSampleAndResumeThread(PSLockRef aLock,
   // sampled has been suspended at some entirely arbitrary point, and we have
   // no idea which unsharable resources (locks, essentially) it holds.  So any
   // attempt to acquire any lock, including the implied locks used by the
-  // malloc implementation, risks deadlock.
+  // malloc implementation, risks deadlock.  This includes TimeStamp::Now(),
+  // which gets a lock on Windows.
 
   // The samplee thread is now frozen and sSigHandlerCoordinator->mUContext is
   // valid.  We can poke around in it and unwind its stack as we like.
 
-  // Extract the current PC and sp.
-  FillInSample(aSample, &sSigHandlerCoordinator->mUContext);
-
-  Tick(aLock, ActivePS::Buffer(aLock), aSample);
+  // Extract the current register values.
+  Registers regs;
+  PopulateRegsFromContext(regs, &sSigHandlerCoordinator->mUContext);
+  aProcessRegs(regs);
 
   //----------------------------------------------------------------//
   // Resume the target thread.
@@ -434,6 +390,76 @@ SamplerThread::SuspendAndSampleAndResumeThread(PSLockRef aLock,
   // This isn't strictly necessary, but doing so does help pick up anomalies
   // in which the signal handler is running when it shouldn't be.
   sSigHandlerCoordinator = nullptr;
+}
+
+// END Sampler target specifics
+////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////
+// BEGIN SamplerThread target specifics
+
+static void*
+ThreadEntry(void* aArg)
+{
+  auto thread = static_cast<SamplerThread*>(aArg);
+  thread->Run();
+  return nullptr;
+}
+
+SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
+                             double aIntervalMilliseconds)
+  : Sampler(aLock)
+  , mActivityGeneration(aActivityGeneration)
+  , mIntervalMicroseconds(
+      std::max(1, int(floor(aIntervalMilliseconds * 1000 + 0.5))))
+{
+  // Start the sampling thread. It repeatedly sends a SIGPROF signal. Sending
+  // the signal ourselves instead of relying on itimer provides much better
+  // accuracy.
+  if (pthread_create(&mThread, nullptr, ThreadEntry, this) != 0) {
+    MOZ_CRASH("pthread_create failed");
+  }
+}
+
+SamplerThread::~SamplerThread()
+{
+  pthread_join(mThread, nullptr);
+}
+
+void
+SamplerThread::SleepMicro(uint32_t aMicroseconds)
+{
+  if (aMicroseconds >= 1000000) {
+    // Use usleep for larger intervals, because the nanosleep
+    // code below only supports intervals < 1 second.
+    MOZ_ALWAYS_TRUE(!::usleep(aMicroseconds));
+    return;
+  }
+
+  struct timespec ts;
+  ts.tv_sec  = 0;
+  ts.tv_nsec = aMicroseconds * 1000UL;
+
+  int rv = ::nanosleep(&ts, &ts);
+
+  while (rv != 0 && errno == EINTR) {
+    // Keep waiting in case of interrupt.
+    // nanosleep puts the remaining time back into ts.
+    rv = ::nanosleep(&ts, &ts);
+  }
+
+  MOZ_ASSERT(!rv, "nanosleep call failed");
+}
+
+void
+SamplerThread::Stop(PSLockRef aLock)
+{
+  // Restore old signal handler. This is global state so it's important that
+  // we do it now, while gPSMutex is locked. It's safe to do this now even
+  // though this SamplerThread is still alive, because the next time the main
+  // loop of Run() iterates it won't get past the mActivityGeneration check,
+  // and so won't send any signals.
+  Sampler::Disable(aLock);
 }
 
 // END SamplerThread target specifics
@@ -499,14 +525,18 @@ PlatformInit(PSLockRef aLock)
 
 #endif
 
-void
-TickSample::PopulateContext(ucontext_t* aContext)
-{
-  MOZ_ASSERT(mIsSynchronous);
-  MOZ_ASSERT(aContext);
+#if defined(HAVE_NATIVE_UNWIND)
+// Context used by synchronous samples. It's safe to have a single one because
+// only one synchronous sample can be taken at a time (due to
+// profiler_get_backtrace()'s PSAutoLock).
+ucontext_t sSyncUContext;
 
-  if (!getcontext(aContext)) {
-    FillInSample(*this, aContext);
+void
+Registers::SyncPopulate()
+{
+  if (!getcontext(&sSyncUContext)) {
+    PopulateRegsFromContext(*this, &sSyncUContext);
   }
 }
+#endif
 

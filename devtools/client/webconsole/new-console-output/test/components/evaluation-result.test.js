@@ -49,6 +49,13 @@ describe("EvaluationResult component:", () => {
     expect(wrapper.find(".message.error").length).toBe(1);
   });
 
+  it("renders an inspect command result", () => {
+    const message = stubPreparedMessages.get("inspect({a: 1})");
+    const wrapper = render(EvaluationResult({ message }));
+
+    expect(wrapper.find(".message-body").text()).toBe("Object { a: 1 }");
+  });
+
   it("displays a [Learn more] link", () => {
     const store = setupStore([]);
 
@@ -74,12 +81,17 @@ describe("EvaluationResult component:", () => {
     const message = stubPreparedMessages.get("new Date(0)");
 
     const indent = 10;
-    let wrapper = render(EvaluationResult({ message, indent}));
-    expect(wrapper.find(".indent").prop("style").width)
-        .toBe(`${indent * INDENT_WIDTH}px`);
+    let wrapper = render(EvaluationResult({
+      message: Object.assign({}, message, {indent}),
+    }));
+    let indentEl = wrapper.find(".indent");
+    expect(indentEl.prop("style").width).toBe(`${indent * INDENT_WIDTH}px`);
+    expect(indentEl.prop("data-indent")).toBe(`${indent}`);
 
     wrapper = render(EvaluationResult({ message}));
-    expect(wrapper.find(".indent").prop("style").width).toBe(`0`);
+    indentEl = wrapper.find(".indent");
+    expect(indentEl.prop("style").width).toBe(`0`);
+    expect(indentEl.prop("data-indent")).toBe(`0`);
   });
 
   it("has location information", () => {

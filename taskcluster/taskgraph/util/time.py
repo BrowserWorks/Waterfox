@@ -40,6 +40,7 @@ def years(value):
     # future which is not the same thing as "precisely on this date next year"
     return datetime.timedelta(days=int(value) * 365)
 
+
 ALIASES = {}
 ALIASES['seconds'] = ALIASES['second'] = ALIASES['s'] = seconds
 ALIASES['minutes'] = ALIASES['minute'] = ALIASES['min'] = minutes
@@ -100,7 +101,9 @@ def json_time_from_now(input_str, now=None, datetime_format=False):
     else:
         # Sorta a big hack but the json schema validator for date does not like the
         # ISO dates until 'Z' (for timezone) is added...
-        return time.isoformat() + 'Z'
+        # the [:23] ensures only whole seconds or milliseconds are included,
+        # not microseconds (see bug 1381801)
+        return time.isoformat()[:23] + 'Z'
 
 
 def current_json_time(datetime_format=False):
@@ -111,4 +114,6 @@ def current_json_time(datetime_format=False):
     if datetime_format is True:
         return datetime.datetime.utcnow()
     else:
-        return datetime.datetime.utcnow().isoformat() + 'Z'
+        # the [:23] ensures only whole seconds or milliseconds are included,
+        # not microseconds (see bug 1381801)
+        return datetime.datetime.utcnow().isoformat()[:23] + 'Z'

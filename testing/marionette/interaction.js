@@ -8,7 +8,15 @@ const {utils: Cu} = Components;
 
 Cu.import("chrome://marionette/content/accessibility.js");
 Cu.import("chrome://marionette/content/atom.js");
-Cu.import("chrome://marionette/content/error.js");
+const {
+  ElementClickInterceptedError,
+  ElementNotInteractableError,
+  error,
+  InvalidArgument,
+  InvalidArgumentError,
+  InvalidElementStateError,
+  pprint,
+} = Cu.import("chrome://marionette/content/error.js", {});
 Cu.import("chrome://marionette/content/element.js");
 Cu.import("chrome://marionette/content/event.js");
 
@@ -16,9 +24,7 @@ Cu.importGlobalProperties(["File"]);
 
 this.EXPORTED_SYMBOLS = ["interaction"];
 
-/**
- * XUL elements that support disabled attribute.
- */
+/** XUL elements that support disabled attribute. */
 const DISABLED_ATTRIBUTE_SUPPORTED_XUL = new Set([
   "ARROWSCROLLBOX",
   "BUTTON",
@@ -53,9 +59,7 @@ const DISABLED_ATTRIBUTE_SUPPORTED_XUL = new Set([
   "TREE",
 ]);
 
-/**
- * XUL elements that support checked property.
- */
+/** XUL elements that support checked property. */
 const CHECKED_PROPERTY_SUPPORTED_XUL = new Set([
   "BUTTON",
   "CHECKBOX",
@@ -63,9 +67,7 @@ const CHECKED_PROPERTY_SUPPORTED_XUL = new Set([
   "TOOLBARBUTTON",
 ]);
 
-/**
- * XUL elements that support selected property.
- */
+/** XUL elements that support selected property. */
 const SELECTED_PROPERTY_SUPPORTED_XUL = new Set([
   "LISTITEM",
   "MENU",
@@ -77,7 +79,8 @@ const SELECTED_PROPERTY_SUPPORTED_XUL = new Set([
 ]);
 
 /**
- * Common form controls that user can change the value property interactively.
+ * Common form controls that user can change the value property
+ * interactively.
  */
 const COMMON_FORM_CONTROLS = new Set([
   "input",
@@ -86,8 +89,8 @@ const COMMON_FORM_CONTROLS = new Set([
 ]);
 
 /**
- * Input elements that do not fire "input" and "change" events when value
- * property changes.
+ * Input elements that do not fire <tt>input</tt> and <tt>change</tt>
+ * events when value property changes.
  */
 const INPUT_TYPES_NO_EVENT = new Set([
   "checkbox",
@@ -100,6 +103,7 @@ const INPUT_TYPES_NO_EVENT = new Set([
   "submit",
 ]);
 
+/** @namespace */
 this.interaction = {};
 
 /**
@@ -108,37 +112,38 @@ this.interaction = {};
  * The element is scrolled into view before visibility- or interactability
  * checks are performed.
  *
- * Selenium-style visibility checks will be performed if |specCompat|
- * is false (default).  Otherwise pointer-interactability checks will be
- * performed.  If either of these fail an
- * {@code ElementNotInteractableError} is thrown.
+ * Selenium-style visibility checks will be performed
+ * if <var>specCompat</var> is false (default).  Otherwise
+ * pointer-interactability checks will be performed.  If either of these
+ * fail an {@link ElementNotInteractableError} is thrown.
  *
- * If |strict| is enabled (defaults to disabled), further accessibility
- * checks will be performed, and these may result in an
- * {@code ElementNotAccessibleError} being returned.
+ * If <var>strict</var> is enabled (defaults to disabled), further
+ * accessibility checks will be performed, and these may result in an
+ * {@link ElementNotAccessibleError} being returned.
  *
- * When |el| is not enabled, an {@code InvalidElementStateError}
+ * When <var>el</var> is not enabled, an {@link InvalidElementStateError}
  * is returned.
  *
- * @param {DOMElement|XULElement} el
+ * @param {(DOMElement|XULElement)} el
  *     Element to click.
- * @param {boolean=} strict
+ * @param {boolean=} [strict=false] strict
  *     Enforce strict accessibility tests.
- * @param {boolean=} specCompat
+ * @param {boolean=} [specCompat=false] specCompat
  *     Use WebDriver specification compatible interactability definition.
  *
  * @throws {ElementNotInteractableError}
  *     If either Selenium-style visibility check or
  *     pointer-interactability check fails.
  * @throws {ElementClickInterceptedError}
- *     If |el| is obscured by another element and a click would not hit,
- *     in |specCompat| mode.
+ *     If <var>el</var> is obscured by another element and a click would
+ *     not hit, in <var>specCompat</var> mode.
  * @throws {ElementNotAccessibleError}
- *     If |strict| is true and element is not accessible.
+ *     If <var>strict</var> is true and element is not accessible.
  * @throws {InvalidElementStateError}
- *     If |el| is not enabled.
+ *     If <var>el</var> is not enabled.
  */
-interaction.clickElement = function* (el, strict = false, specCompat = false) {
+interaction.clickElement = function* (
+    el, strict = false, specCompat = false) {
   const a11y = accessibility.get(strict);
   if (element.isXULElement(el)) {
     yield chromeClick(el, a11y);
@@ -149,9 +154,8 @@ interaction.clickElement = function* (el, strict = false, specCompat = false) {
   }
 };
 
-function* webdriverClickElement (el, a11y) {
+function* webdriverClickElement(el, a11y) {
   const win = getWindow(el);
-  const doc = win.document;
 
   // step 3
   if (el.localName == "input" && el.type == "file") {
@@ -206,7 +210,7 @@ function* webdriverClickElement (el, a11y) {
   // handled by the load listener in listener.js
 }
 
-function* chromeClick (el, a11y) {
+function* chromeClick(el, a11y) {
   if (!atom.isElementEnabled(el)) {
     throw new InvalidElementStateError("Element is not enabled");
   }
@@ -224,7 +228,7 @@ function* chromeClick (el, a11y) {
   }
 }
 
-function* seleniumClickElement (el, a11y) {
+function* seleniumClickElement(el, a11y) {
   let win = getWindow(el);
 
   let visibilityCheckEl  = el;
@@ -254,10 +258,11 @@ function* seleniumClickElement (el, a11y) {
     let opts = {};
     event.synthesizeMouseAtPoint(centre.x, centre.y, opts, win);
   }
-};
+}
 
 /**
- * Select <option> element in a <select> list.
+ * Select <tt>&lt;option&gt;</tt> element in a <tt>&lt;select&gt;</tt>
+ * list.
  *
  * Because the dropdown list of select elements are implemented using
  * native widget technology, our trusted synthesised events are not able
@@ -268,20 +273,21 @@ function* seleniumClickElement (el, a11y) {
  * @param {HTMLOptionElement} option
  *     Option element to select.
  *
- * @throws TypeError
- *     If |el| is a XUL element or not an <option> element.
- * @throws Error
- *     If unable to find |el|'s parent <select> element.
+ * @throws {TypeError}
+ *     If <var>el</var> is a XUL element or not an <tt>&lt;option&gt;</tt>
+ *     element.
+ * @throws {Error}
+ *     If unable to find <var>el</var>'s parent <tt>&lt;select&gt;</tt>
+ *     element.
  */
-interaction.selectOption = function (el) {
+interaction.selectOption = function(el) {
   if (element.isXULElement(el)) {
-    throw new Error("XUL dropdowns not supported");
+    throw new TypeError("XUL dropdowns not supported");
   }
   if (el.localName != "option") {
-    throw new TypeError("Invalid elements");
+    throw new TypeError(pprint`Expected <option> element, got ${el}`);
   }
 
-  let win = getWindow(el);
   let containerEl = element.getContainer(el);
 
   event.mouseover(containerEl);
@@ -290,8 +296,14 @@ interaction.selectOption = function (el) {
   event.focus(containerEl);
   event.input(containerEl);
 
-  // toggle selectedness the way holding down control works
-  el.selected = !el.selected;
+  // Clicking <option> in <select> should not be deselected if selected.
+  // However, clicking one in a <select multiple> should toggle
+  // selectedness the way holding down Control works.
+  if (containerEl.multiple) {
+    el.selected = !el.selected;
+  } else if (!el.selected) {
+    el.selected = true;
+  }
 
   event.change(containerEl);
   event.mouseup(containerEl);
@@ -312,7 +324,8 @@ interaction.selectOption = function (el) {
  *
  * @return {Promise}
  *     Promise is accepted once event queue is flushed, or rejected if
- *     |win| has closed or been unloaded before the queue can be flushed.
+ *     <var>win</var> has closed or been unloaded before the queue can
+ *     be flushed.
  */
 interaction.flushEventLoop = function* (win) {
   return new Promise(resolve => {
@@ -326,16 +339,17 @@ interaction.flushEventLoop = function* (win) {
       return;
     }
 
-    win.addEventListener("beforeunload", handleEvent, false);
+    win.addEventListener("beforeunload", handleEvent);
     win.requestAnimationFrame(handleEvent);
   });
 };
 
 /**
- * Appends |path| to an <input type=file>'s file list.
+ * Appends <var>path</var> to an <tt>&lt;input type=file&gt;</tt>'s
+ * file list.
  *
  * @param {HTMLInputElement} el
- *     An <input type=file> element.
+ *     An <tt>&lt;input type=file&gt;</tt> element.
  * @param {string} path
  *     Full path to file.
  */
@@ -376,8 +390,8 @@ interaction.uploadFile = function* (el, path) {
  * @param {string} value
  *     The value to be set.
  *
- * @throws TypeError
- *     If |el| is not an supported form element.
+ * @throws {TypeError}
+ *     If <var>el</var> is not an supported form element.
  */
 interaction.setFormControlValue = function* (el, value) {
   if (!COMMON_FORM_CONTROLS.has(el.localName)) {
@@ -403,10 +417,11 @@ interaction.setFormControlValue = function* (el, value) {
  *     Sequence of keystrokes to send to the element.
  * @param {boolean} ignoreVisibility
  *     Flag to enable or disable element visibility tests.
- * @param {boolean=} strict
+ * @param {boolean=} [strict=false] strict
  *     Enforce strict accessibility tests.
  */
-interaction.sendKeysToElement = function (el, value, ignoreVisibility, strict = false) {
+interaction.sendKeysToElement = function(
+    el, value, ignoreVisibility, strict = false) {
   let win = getWindow(el);
   let a11y = accessibility.get(strict);
   return a11y.getAccessible(el, true).then(acc => {
@@ -420,13 +435,13 @@ interaction.sendKeysToElement = function (el, value, ignoreVisibility, strict = 
  *
  * @param {DOMElement|XULElement} el
  *     Element to determine displayedness of.
- * @param {boolean=} strict
+ * @param {boolean=} [strict=false] strict
  *     Enforce strict accessibility tests.
  *
  * @return {boolean}
  *     True if element is displayed, false otherwise.
  */
-interaction.isElementDisplayed = function (el, strict = false) {
+interaction.isElementDisplayed = function(el, strict = false) {
   let win = getWindow(el);
   let displayed = atom.isElementDisplayed(el, win);
 
@@ -446,7 +461,7 @@ interaction.isElementDisplayed = function (el, strict = false) {
  * @return {boolean}
  *     True if enabled, false otherwise.
  */
-interaction.isElementEnabled = function (el, strict = false) {
+interaction.isElementEnabled = function(el, strict = false) {
   let enabled = true;
   let win = getWindow(el);
 
@@ -477,13 +492,13 @@ interaction.isElementEnabled = function (el, strict = false) {
  *
  * @param {DOMElement|XULElement} el
  *     Element to test if is selected.
- * @param {boolean=} strict
+ * @param {boolean=} [strict=false] strict
  *     Enforce strict accessibility tests.
  *
  * @return {boolean}
  *     True if element is selected, false otherwise.
  */
-interaction.isElementSelected = function (el, strict = false) {
+interaction.isElementSelected = function(el, strict = false) {
   let selected = true;
   let win = getWindow(el);
 

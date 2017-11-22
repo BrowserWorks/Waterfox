@@ -10,7 +10,7 @@
 #include "nsISerializable.h"
 #include "nsIFileURL.h"
 #include "nsIStandardURL.h"
-#include "nsNCRFallbackEncoderWrapper.h"
+#include "mozilla/Encoding.h"
 #include "nsIObserver.h"
 #include "nsCOMPtr.h"
 #include "nsURLHelper.h"
@@ -93,7 +93,7 @@ public: /* internal -- HPUX compiler can't handle this being private */
         // Assumes we have something like "foo;bar" where this object is 'foo' and right
         // is 'bar'.
         void Merge(const nsCString &spec, const char separator, const URLSegment &right) {
-            if (mLen >= 0 && 
+            if (mLen >= 0 &&
                 *(spec.get() + mPos + mLen) == separator &&
                 mPos + mLen + 1 == right.mPos) {
                 mLen += 1 + right.mLen;
@@ -130,26 +130,22 @@ public: /* internal -- HPUX compiler can't handle this being private */
         int32_t EncodeSegmentCount(const char *str,
                                    const URLSegment &segment,
                                    int16_t mask,
-                                   nsAFlatCString &buf,
+                                   nsCString& buf,
                                    bool& appended,
                                    uint32_t extraLen = 0);
-         
+
         // Encode the given string if necessary, and return a reference to
         // the encoded string.  Returns a reference to |buf| if encoding
         // is required.  Otherwise, a reference to |str| is returned.
-        const nsACString &EncodeSegment(const nsASingleFragmentCString &str,
+        const nsACString& EncodeSegment(const nsACString& str,
                                         int16_t mask,
-                                        nsAFlatCString &buf);
+                                        nsCString& buf);
     private:
-        bool InitUnicodeEncoder();
-
-        const char* mCharset;  // Caller should keep this alive for
-                               // the life of the segment encoder
-        mozilla::UniquePtr<nsNCRFallbackEncoderWrapper> mEncoder;
+      const Encoding* mEncoding;
     };
     friend class nsSegmentEncoder;
 
-    static nsresult NormalizeIPv4(const nsCSubstring &host, nsCString &result);
+    static nsresult NormalizeIPv4(const nsACString& host, nsCString& result);
 
 protected:
     // enum used in a few places to specify how .ref attribute should be handled
@@ -172,7 +168,7 @@ protected:
                            const nsACString& newRef,
                            nsIURI** aClone);
     // Helper method that copies member variables from the source StandardURL
-    // if copyCached = true, it will also copy mFile and mHostA
+    // if copyCached = true, it will also copy mFile and mDisplayHost
     nsresult CopyMembers(nsStandardURL * source, RefHandlingEnum mode,
                          const nsACString& newRef,
                          bool copyCached = false);
@@ -192,7 +188,8 @@ private:
 
     bool     ValidIPv6orHostname(const char *host, uint32_t aLen);
     static bool     IsValidOfBase(unsigned char c, const uint32_t base);
-    nsresult NormalizeIDN(const nsCSubstring &host, nsCString &result);
+    nsresult NormalizeIDN(const nsACString& host, nsCString& result);
+    nsresult CheckIfHostIsAscii();
     void     CoalescePath(netCoalesceFlags coalesceFlag, char *path);
 
     uint32_t AppendSegmentToBuf(char *, uint32_t, const char *,
@@ -283,9 +280,10 @@ private:
     // mFile is protected so subclasses can access it directly
 protected:
     nsCOMPtr<nsIFile>      mFile;  // cached result for nsIFileURL::GetFile
-    
+
 private:
-    char                  *mHostA; // cached result for nsIURI::GetHostA
+    // cached result for nsIURI::GetDisplayHost
+    nsCString              mDisplayHost;
 
     enum {
         eEncoding_Unknown,
@@ -293,17 +291,20 @@ private:
         eEncoding_UTF8
     };
 
-    uint32_t mHostEncoding    : 2; // eEncoding_xxx
     uint32_t mSpecEncoding    : 2; // eEncoding_xxx
     uint32_t mURLType         : 2; // nsIStandardURL::URLTYPE_xxx
     uint32_t mMutable         : 1; // nsIStandardURL::mutable
     uint32_t mSupportsFileURL : 1; // QI to nsIFileURL?
+    uint32_t mCheckedIfHostA  : 1; // If set to true, it means either that
+                                   // mDisplayHost has a been initialized, or
+                                   // that the hostname is not punycode
 
     // global objects.  don't use COMPtr as its destructor will cause a
     // coredump if we leak it.
     static nsIIDNService               *gIDN;
-    static char                         gHostLimitDigits[];
+    static const char                   gHostLimitDigits[];
     static bool                         gInitialized;
+    static bool                         gPunycodeHost;
 
 public:
 #ifdef DEBUG_DUMP_URLS_AT_SHUTDOWN
@@ -311,7 +312,7 @@ public:
 #endif
 
 #ifdef MOZ_RUST_URLPARSE
-    static bool                        gRustEnabled;
+    static Atomic<bool>                gRustEnabled;
     RefPtr<RustURL>                    mRustURL;
 #endif
 };

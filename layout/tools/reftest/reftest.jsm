@@ -118,7 +118,7 @@ var gExpectingProcessCrash = false;
 var gExpectedCrashDumpFiles = [];
 var gUnexpectedCrashDumpFiles = { };
 var gCrashDumpDir;
-var gPendinCrashDumpDir;
+var gPendingCrashDumpDir;
 var gFailedNoPaint = false;
 var gFailedOpaqueLayer = false;
 var gFailedOpaqueLayerMessages = [];
@@ -477,6 +477,11 @@ function StartTests()
 
     gCleanupPendingCrashes = prefs.getBoolPref("reftest.cleanupPendingCrashes", false);
 
+    // Check if there are any crash dump files from the startup procedure, before
+    // we start running the first test. Otherwise the first test might get
+    // blamed for producing a crash dump file when that was not the case.
+    CleanUpCrashDumpFiles();
+
     // When we repeat this function is called again, so really only want to set
     // gRepeat once.
     if (gRepeat == null) {
@@ -532,7 +537,9 @@ function StartTests()
             tIDs.push(gURLs[i].identifier);
         }
 
-        logger.suiteStart(tIDs, {"skipped": gURLs.length - tURLs.length});
+        if (gStartAfter === undefined) {
+            logger.suiteStart(tIDs, {"skipped": gURLs.length - tURLs.length});
+        }
 
         if (gTotalChunks > 0 && gThisChunk > 0) {
             // Calculate start and end indices of this chunk if tURLs array were
@@ -624,6 +631,8 @@ function BuildConditionSandbox(aURL) {
     sandbox.isDebugBuild = gDebug.isDebugBuild;
     var prefs = CC["@mozilla.org/preferences-service;1"].
                 getService(CI.nsIPrefBranch);
+    var env = CC["@mozilla.org/process/environment;1"].
+                getService(CI.nsIEnvironment);
 
     // xr.XPCOMABI throws exception for configurations without full ABI
     // support (mobile builds on ARM)
@@ -682,6 +691,8 @@ function BuildConditionSandbox(aURL) {
       gWindowUtils.layerManagerType == "WebRender";
     sandbox.layersOMTC =
       gWindowUtils.layerManagerRemote == true;
+    sandbox.advancedLayers =
+      gWindowUtils.usingAdvancedLayers == true;
 
     // Shortcuts for widget toolkits.
     sandbox.Android = xr.OS == "Android";
@@ -715,7 +726,9 @@ function BuildConditionSandbox(aURL) {
 #endif
 
 #ifdef MOZ_STYLO
-    sandbox.stylo = prefs.getBoolPref("layout.css.servo.enabled", false) && !gCompareStyloToGecko;
+    sandbox.stylo =
+       (!!env.get("STYLO_FORCE_ENABLED") || prefs.getBoolPref("layout.css.servo.enabled", false)) &&
+        !gCompareStyloToGecko;
     sandbox.styloVsGecko = gCompareStyloToGecko;
 #else
     sandbox.stylo = false;
@@ -1916,7 +1929,11 @@ function FindUnexpectedCrashDumpFiles()
             if (!foundCrashDumpFile) {
                 ++gTestResults.UnexpectedFail;
                 foundCrashDumpFile = true;
-                logger.testEnd(gCurrentURL, "FAIL", "PASS", "This test left crash dumps behind, but we weren't expecting it to!");
+                if (gCurrentURL) {
+                    logger.testEnd(gCurrentURL, "FAIL", "PASS", "This test left crash dumps behind, but we weren't expecting it to!");
+                } else {
+                    logger.error("Harness startup left crash dumps behind, but we weren't expecting it to!");
+                }
             }
             logger.info("Found unexpected crash dump file " + path);
             gUnexpectedCrashDumpFiles[path] = true;

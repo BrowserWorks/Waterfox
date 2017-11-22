@@ -28,13 +28,13 @@ class MockClientsEngine {
     return this._clientList[id];
   }
 
-  sendCommand(command, args, clientID) {
+  async sendCommand(command, args, clientID) {
     let cc = this._sentCommands[clientID] || [];
     cc.push({ command, args });
     this._sentCommands[clientID] = cc;
   }
 
-  getClientCommands(clientID) {
+  async getClientCommands(clientID) {
     return this._sentCommands[clientID] || [];
   }
 }
@@ -98,19 +98,19 @@ add_task(async function test_requestor_no_clients() {
   }
   let flowID = Utils.makeGUID();
 
-  requestor.startRepairs(validationInfo, flowID);
+  await requestor.startRepairs(validationInfo, flowID);
   // there are no clients, so we should end up in "finished" (which we need to
   // check via telemetry)
   deepEqual(mockService._recordedEvents, [
     { object: "repair",
       method: "started",
       value: undefined,
-      extra: { flowID, numIDs: 3 },
+      extra: { flowID, numIDs: 4 },
     },
     { object: "repair",
       method: "finished",
       value: undefined,
-      extra: { flowID, numIDs: 3 },
+      extra: { flowID, numIDs: 4 },
     }
   ]);
 });
@@ -129,26 +129,26 @@ add_task(async function test_requestor_one_client_no_response() {
     }
   }
   let flowID = Utils.makeGUID();
-  requestor.startRepairs(validationInfo, flowID);
+  await requestor.startRepairs(validationInfo, flowID);
   // the command should now be outgoing.
   checkOutgoingCommand(mockService, "client-a");
 
   checkState(BookmarkRepairRequestor.STATE.SENT_REQUEST);
   // asking it to continue stays in that state until we timeout or the command
   // is removed.
-  requestor.continueRepairs();
+  await requestor.continueRepairs();
   checkState(BookmarkRepairRequestor.STATE.SENT_REQUEST);
 
   // now pretend that client synced.
   mockService.clientsEngine._sentCommands = {};
-  requestor.continueRepairs();
+  await requestor.continueRepairs();
   checkState(BookmarkRepairRequestor.STATE.SENT_SECOND_REQUEST);
   // the command should be outgoing again.
   checkOutgoingCommand(mockService, "client-a");
 
   // pretend that client synced again without writing a command.
   mockService.clientsEngine._sentCommands = {};
-  requestor.continueRepairs();
+  await requestor.continueRepairs();
   // There are no more clients, so we've given up.
 
   checkRepairFinished();
@@ -156,22 +156,22 @@ add_task(async function test_requestor_one_client_no_response() {
     { object: "repair",
       method: "started",
       value: undefined,
-      extra: { flowID, numIDs: 3 },
+      extra: { flowID, numIDs: 4 },
     },
     { object: "repair",
       method: "request",
       value: "upload",
-      extra: { flowID, numIDs: 3, deviceID: "client-a" },
+      extra: { flowID, numIDs: 4, deviceID: "client-a" },
     },
     { object: "repair",
       method: "request",
       value: "upload",
-      extra: { flowID, numIDs: 3, deviceID: "client-a" },
+      extra: { flowID, numIDs: 4, deviceID: "client-a" },
     },
     { object: "repair",
       method: "finished",
       value: undefined,
-      extra: { flowID, numIDs: 3 },
+      extra: { flowID, numIDs: 4 },
     }
   ]);
 });
@@ -190,7 +190,7 @@ add_task(async function test_requestor_one_client_no_sync() {
     }
   }
   let flowID = Utils.makeGUID();
-  requestor.startRepairs(validationInfo, flowID);
+  await requestor.startRepairs(validationInfo, flowID);
   // the command should now be outgoing.
   checkOutgoingCommand(mockService, "client-a");
 
@@ -200,7 +200,7 @@ add_task(async function test_requestor_one_client_no_sync() {
   let theFuture = Date.now() + 300000000;
   requestor._now = () => theFuture;
 
-  requestor.continueRepairs();
+  await requestor.continueRepairs();
 
   // We should be finished as we gave up in disgust.
   checkRepairFinished();
@@ -208,12 +208,12 @@ add_task(async function test_requestor_one_client_no_sync() {
     { object: "repair",
       method: "started",
       value: undefined,
-      extra: { flowID, numIDs: 3 },
+      extra: { flowID, numIDs: 4 },
     },
     { object: "repair",
       method: "request",
       value: "upload",
-      extra: { flowID, numIDs: 3, deviceID: "client-a" },
+      extra: { flowID, numIDs: 4, deviceID: "client-a" },
     },
     { object: "repair",
       method: "abandon",
@@ -223,7 +223,7 @@ add_task(async function test_requestor_one_client_no_sync() {
     { object: "repair",
       method: "finished",
       value: undefined,
-      extra: { flowID, numIDs: 3 },
+      extra: { flowID, numIDs: 4 },
     }
   ]);
 });
@@ -242,7 +242,7 @@ add_task(async function test_requestor_latest_client_used() {
       orphans: [],
     }
   }
-  requestor.startRepairs(validationInfo, Utils.makeGUID());
+  await requestor.startRepairs(validationInfo, Utils.makeGUID());
   // the repair command should be outgoing to the most-recent client.
   checkOutgoingCommand(mockService, "client-late");
   checkState(BookmarkRepairRequestor.STATE.SENT_REQUEST);
@@ -267,7 +267,7 @@ add_task(async function test_requestor_client_vanishes() {
     }
   }
   let flowID = Utils.makeGUID();
-  requestor.startRepairs(validationInfo, flowID);
+  await requestor.startRepairs(validationInfo, flowID);
   // the command should now be outgoing.
   checkOutgoingCommand(mockService, "client-a");
 
@@ -277,7 +277,7 @@ add_task(async function test_requestor_client_vanishes() {
   // Now let's pretend the client vanished.
   delete mockService.clientsEngine._clientList["client-a"];
 
-  requestor.continueRepairs();
+  await requestor.continueRepairs();
   // We should have moved on to client-b.
   checkState(BookmarkRepairRequestor.STATE.SENT_REQUEST);
   checkOutgoingCommand(mockService, "client-b");
@@ -288,9 +288,9 @@ add_task(async function test_requestor_client_vanishes() {
     request: "upload",
     flowID: requestor._flowID,
     clientID: "client-b",
-    ids: ["a", "b", "c"],
+    ids: ["a", "b", "c", "x"],
   }
-  requestor.continueRepairs(response);
+  await requestor.continueRepairs(response);
 
   // We should be finished as we got all our IDs.
   checkRepairFinished();
@@ -298,12 +298,12 @@ add_task(async function test_requestor_client_vanishes() {
     { object: "repair",
       method: "started",
       value: undefined,
-      extra: { flowID, numIDs: 3 },
+      extra: { flowID, numIDs: 4 },
     },
     { object: "repair",
       method: "request",
       value: "upload",
-      extra: { flowID, numIDs: 3, deviceID: "client-a" },
+      extra: { flowID, numIDs: 4, deviceID: "client-a" },
     },
     { object: "repair",
       method: "abandon",
@@ -313,12 +313,12 @@ add_task(async function test_requestor_client_vanishes() {
     { object: "repair",
       method: "request",
       value: "upload",
-      extra: { flowID, numIDs: 3, deviceID: "client-b" },
+      extra: { flowID, numIDs: 4, deviceID: "client-b" },
     },
     { object: "repair",
       method: "response",
       value: "upload",
-      extra: { flowID, deviceID: "client-b", numIDs: 3 },
+      extra: { flowID, deviceID: "client-b", numIDs: 4 },
     },
     { object: "repair",
       method: "finished",
@@ -345,7 +345,7 @@ add_task(async function test_requestor_success_responses() {
     }
   }
   let flowID = Utils.makeGUID();
-  requestor.startRepairs(validationInfo, flowID);
+  await requestor.startRepairs(validationInfo, flowID);
   // the command should now be outgoing.
   checkOutgoingCommand(mockService, "client-a");
 
@@ -360,7 +360,7 @@ add_task(async function test_requestor_success_responses() {
     flowID: requestor._flowID,
     ids: ["a", "b"],
   }
-  requestor.continueRepairs(response);
+  await requestor.continueRepairs(response);
   // We should have moved on to client 2.
   checkState(BookmarkRepairRequestor.STATE.SENT_REQUEST);
   checkOutgoingCommand(mockService, "client-b");
@@ -371,9 +371,9 @@ add_task(async function test_requestor_success_responses() {
     request: "upload",
     clientID: "client-b",
     flowID: requestor._flowID,
-    ids: ["c"],
+    ids: ["c", "x"],
   }
-  requestor.continueRepairs(response);
+  await requestor.continueRepairs(response);
 
   // We should be finished as we got all our IDs.
   checkRepairFinished();
@@ -381,12 +381,12 @@ add_task(async function test_requestor_success_responses() {
     { object: "repair",
       method: "started",
       value: undefined,
-      extra: { flowID, numIDs: 3 },
+      extra: { flowID, numIDs: 4 },
     },
     { object: "repair",
       method: "request",
       value: "upload",
-      extra: { flowID, numIDs: 3, deviceID: "client-a" },
+      extra: { flowID, numIDs: 4, deviceID: "client-a" },
     },
     { object: "repair",
       method: "response",
@@ -396,12 +396,12 @@ add_task(async function test_requestor_success_responses() {
     { object: "repair",
       method: "request",
       value: "upload",
-      extra: { flowID, numIDs: 1, deviceID: "client-b" },
+      extra: { flowID, numIDs: 2, deviceID: "client-b" },
     },
     { object: "repair",
       method: "response",
       value: "upload",
-      extra: { flowID, deviceID: "client-b", numIDs: 1 },
+      extra: { flowID, deviceID: "client-b", numIDs: 2 },
     },
     { object: "repair",
       method: "finished",
@@ -441,7 +441,7 @@ add_task(async function test_requestor_already_repairing_at_start() {
   }
   let flowID = Utils.makeGUID();
 
-  ok(!requestor.startRepairs(validationInfo, flowID),
+  ok(!(await requestor.startRepairs(validationInfo, flowID)),
      "Shouldn't start repairs");
   equal(mockService._recordedEvents.length, 1);
   equal(mockService._recordedEvents[0].method, "aborted");
@@ -465,7 +465,7 @@ add_task(async function test_requestor_already_repairing_continue() {
     }
   }
   let flowID = Utils.makeGUID();
-  requestor.startRepairs(validationInfo, flowID);
+  await requestor.startRepairs(validationInfo, flowID);
   // the command should now be outgoing.
   checkOutgoingCommand(mockService, "client-a");
 
@@ -488,7 +488,7 @@ add_task(async function test_requestor_already_repairing_continue() {
   }];
 
 
-  requestor.continueRepairs(response);
+  await requestor.continueRepairs(response);
 
   // We should have aborted now
   checkRepairFinished();
@@ -496,17 +496,17 @@ add_task(async function test_requestor_already_repairing_continue() {
     { method: "started",
       object: "repair",
       value: undefined,
-      extra: { flowID, numIDs: "3" },
+      extra: { flowID, numIDs: "4" },
     },
     { method: "request",
       object: "repair",
       value: "upload",
-      extra: { flowID, numIDs: "3", deviceID: "client-a" },
+      extra: { flowID, numIDs: "4", deviceID: "client-a" },
     },
     { method: "aborted",
       object: "repair",
       value: undefined,
-      extra: { flowID, numIDs: "3", reason: "other clients repairing" },
+      extra: { flowID, numIDs: "4", reason: "other clients repairing" },
     }
   ];
 

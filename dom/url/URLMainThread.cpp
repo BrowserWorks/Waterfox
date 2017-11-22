@@ -125,8 +125,8 @@ URLMainThread::CreateObjectURL(const GlobalObject& aGlobal,
     return;
   }
 
-  nsCOMPtr<nsIRunnable> revocation = NS_NewRunnableFunction(
-    [url] {
+  nsCOMPtr<nsIRunnable> revocation =
+    NS_NewRunnableFunction("dom::URLMainThread::CreateObjectURL", [url] {
       nsHostObjectProtocolHandler::RemoveDataEntry(url);
     });
 
@@ -325,12 +325,9 @@ URLMainThread::UpdateURLSearchParams()
   }
 
   nsAutoCString search;
-  nsCOMPtr<nsIURL> url(do_QueryInterface(mURI));
-  if (url) {
-    nsresult rv = url->GetQuery(search);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      search.Truncate();
-    }
+  nsresult rv = mURI->GetQuery(search);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    search.Truncate();
   }
 
   mSearchParams->ParseInput(search);

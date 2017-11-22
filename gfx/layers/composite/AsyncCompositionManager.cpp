@@ -572,8 +572,6 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aTransformedSubtreeRoo
           aPreviousTransformForRoot, newTransform, aFixedLayerMargins, aClipPartsCache);
     }
   }
-
-  return;
 }
 
 static void
@@ -917,14 +915,14 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
           hasAsyncTransform = true;
 
           AsyncTransform asyncTransformWithoutOverscroll =
-              controller->GetCurrentAsyncTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+              controller->GetCurrentAsyncTransform(AsyncPanZoomController::eForCompositing);
           AsyncTransformComponentMatrix overscrollTransform =
-              controller->GetOverscrollTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+              controller->GetOverscrollTransform(AsyncPanZoomController::eForCompositing);
           AsyncTransformComponentMatrix asyncTransform =
               AsyncTransformComponentMatrix(asyncTransformWithoutOverscroll)
             * overscrollTransform;
 
-          if (!layer->IsScrollInfoLayer()) {
+          if (!layer->IsScrollableWithoutContent()) {
             controller->MarkAsyncTransformAppliedToContent();
           }
 
@@ -1100,7 +1098,7 @@ LayerIsScrollbarTarget(const LayerMetricsWrapper& aTarget, Layer* aScrollbar)
   if (metrics.GetScrollId() != aScrollbar->GetScrollbarTargetContainerId()) {
     return false;
   }
-  return !aTarget.IsScrollInfoLayer();
+  return !metrics.IsScrollInfoLayer();
 }
 
 static void
@@ -1155,7 +1153,7 @@ AsyncCompositionManager::ComputeTransformForScrollThumb(
   MOZ_RELEASE_ASSERT(aApzc);
 
   AsyncTransformComponentMatrix asyncTransform =
-    aApzc->GetCurrentAsyncTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+    aApzc->GetCurrentAsyncTransform(AsyncPanZoomController::eForCompositing);
 
   // |asyncTransform| represents the amount by which we have scrolled and
   // zoomed since the last paint. Because the scrollbar was sized and positioned based
@@ -1271,7 +1269,7 @@ AsyncCompositionManager::ComputeTransformForScrollThumb(
   // and then unapplying it after unapplying the async transform.
   if (aScrollbarIsDescendant) {
     AsyncTransformComponentMatrix overscroll =
-        aApzc->GetOverscrollTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+        aApzc->GetOverscrollTransform(AsyncPanZoomController::eForCompositing);
     Matrix4x4 asyncUntransform = (asyncTransform * overscroll).Inverse().ToUnknownMatrix();
     Matrix4x4 contentTransform = aScrollableContentTransform;
     Matrix4x4 contentUntransform = contentTransform.Inverse();
@@ -1367,17 +1365,15 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
                                              TimeDuration aVsyncRate,
                                              TransformsToSkip aSkip)
 {
-  PROFILER_LABEL("AsyncCompositionManager", "TransformShadowTree",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("AsyncCompositionManager::TransformShadowTree", GRAPHICS);
 
   Layer* root = mLayerManager->GetRoot();
   if (!root) {
     return false;
   }
 
-  // GetAnimationStorage in CompositorBridgeParent expects id as 0
   CompositorAnimationStorage* storage =
-    mCompositorBridge->GetAnimationStorage(0);
+    mCompositorBridge->GetAnimationStorage();
   // First, compute and set the shadow transforms from OMT animations.
   // NB: we must sample animations *before* sampling pan/zoom
   // transforms.

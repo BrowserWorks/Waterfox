@@ -31,7 +31,8 @@ public:
                            MutableBlobStorageCallback* aCallback,
                            Blob* aBlob,
                            nsresult aRv)
-    : mBlobStorage(aBlobStorage)
+    : Runnable("dom::BlobCreationDoneRunnable")
+    , mBlobStorage(aBlobStorage)
     , mCallback(aCallback)
     , mBlob(aBlob)
     , mRv(aRv)
@@ -59,8 +60,12 @@ private:
     MOZ_ASSERT(mBlobStorage);
     // If something when wrong, we still have to release these objects in the
     // correct thread.
-    NS_ProxyRelease(mBlobStorage->EventTarget(), mCallback.forget());
-    NS_ProxyRelease(mBlobStorage->EventTarget(), mBlob.forget());
+    NS_ProxyRelease(
+      "BlobCreationDoneRunnable::mCallback",
+      mBlobStorage->EventTarget(), mCallback.forget());
+    NS_ProxyRelease(
+      "BlobCreationDoneRunnable::mBlob",
+      mBlobStorage->EventTarget(), mBlob.forget());
   }
 
   RefPtr<MutableBlobStorage> mBlobStorage;
@@ -75,7 +80,8 @@ class FileCreatedRunnable final : public Runnable
 {
 public:
   FileCreatedRunnable(MutableBlobStorage* aBlobStorage, PRFileDesc* aFD)
-    : mBlobStorage(aBlobStorage)
+    : Runnable("dom::FileCreatedRunnable")
+    , mBlobStorage(aBlobStorage)
     , mFD(aFD)
   {
     MOZ_ASSERT(aBlobStorage);
@@ -110,7 +116,8 @@ class CreateTemporaryFileRunnable final : public Runnable
 {
 public:
   explicit CreateTemporaryFileRunnable(MutableBlobStorage* aBlobStorage)
-    : mBlobStorage(aBlobStorage)
+    : Runnable("dom::CreateTemporaryFileRunnable")
+    , mBlobStorage(aBlobStorage)
   {
     MOZ_ASSERT(NS_IsMainThread());
     MOZ_ASSERT(XRE_IsParentProcess());
@@ -144,7 +151,8 @@ class ErrorPropagationRunnable final : public Runnable
 {
 public:
   ErrorPropagationRunnable(MutableBlobStorage* aBlobStorage, nsresult aRv)
-    : mBlobStorage(aBlobStorage)
+    : Runnable("dom::ErrorPropagationRunnable")
+    , mBlobStorage(aBlobStorage)
     , mRv(aRv)
   {}
 
@@ -213,9 +221,12 @@ public:
   }
 
 private:
-  WriteRunnable(MutableBlobStorage* aBlobStorage, PRFileDesc* aFD,
-                void* aData, uint32_t aLength)
-    : mBlobStorage(aBlobStorage)
+  WriteRunnable(MutableBlobStorage* aBlobStorage,
+                PRFileDesc* aFD,
+                void* aData,
+                uint32_t aLength)
+    : Runnable("dom::WriteRunnable")
+    , mBlobStorage(aBlobStorage)
     , mFD(aFD)
     , mData(aData)
     , mLength(aLength)
@@ -243,7 +254,8 @@ class CloseFileRunnable final : public Runnable
 {
 public:
   explicit CloseFileRunnable(PRFileDesc* aFD)
-    : mFD(aFD)
+    : Runnable("dom::CloseFileRunnable")
+    , mFD(aFD)
   {}
 
   NS_IMETHOD
@@ -275,7 +287,8 @@ public:
                      already_AddRefed<nsISupports> aParent,
                      const nsACString& aContentType,
                      already_AddRefed<MutableBlobStorageCallback> aCallback)
-    : mBlobStorage(aBlobStorage)
+    : Runnable("dom::CreateBlobRunnable")
+    , mBlobStorage(aBlobStorage)
     , mParent(aParent)
     , mContentType(aContentType)
     , mCallback(aCallback)
@@ -300,8 +313,12 @@ private:
     MOZ_ASSERT(mBlobStorage);
     // If something when wrong, we still have to release data in the correct
     // thread.
-    NS_ProxyRelease(mBlobStorage->EventTarget(), mParent.forget());
-    NS_ProxyRelease(mBlobStorage->EventTarget(), mCallback.forget());
+    NS_ProxyRelease(
+      "CreateBlobRunnable::mParent",
+      mBlobStorage->EventTarget(), mParent.forget());
+    NS_ProxyRelease(
+      "CreateBlobRunnable::mCallback",
+      mBlobStorage->EventTarget(), mCallback.forget());
   }
 
   RefPtr<MutableBlobStorage> mBlobStorage;
@@ -319,7 +336,8 @@ public:
                nsISupports* aParent,
                const nsACString& aContentType,
                MutableBlobStorageCallback* aCallback)
-    : mBlobStorage(aBlobStorage)
+    : Runnable("dom::LastRunnable")
+    , mBlobStorage(aBlobStorage)
     , mParent(aParent)
     , mContentType(aContentType)
     , mCallback(aCallback)
@@ -346,8 +364,12 @@ private:
     MOZ_ASSERT(mBlobStorage);
     // If something when wrong, we still have to release data in the correct
     // thread.
-    NS_ProxyRelease(mBlobStorage->EventTarget(), mParent.forget());
-    NS_ProxyRelease(mBlobStorage->EventTarget(), mCallback.forget());
+    NS_ProxyRelease(
+      "LastRunnable::mParent",
+      mBlobStorage->EventTarget(), mParent.forget());
+    NS_ProxyRelease(
+      "LastRunnable::mCallback",
+      mBlobStorage->EventTarget(), mCallback.forget());
   }
 
   RefPtr<MutableBlobStorage> mBlobStorage;
@@ -371,7 +393,7 @@ MutableBlobStorage::MutableBlobStorage(MutableBlobStorageType aType,
   MOZ_ASSERT(NS_IsMainThread());
 
   if (!mEventTarget) {
-    mEventTarget = do_GetMainThread();
+    mEventTarget = GetMainThreadEventTarget();
   }
 
   MOZ_ASSERT(mEventTarget);

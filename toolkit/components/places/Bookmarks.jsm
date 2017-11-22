@@ -35,8 +35,7 @@
  *
  *  - title (string)
  *      The item's title, if any.  Empty titles and null titles are considered
- *      the same, and the property is unset on retrieval in such a case.
- *      Titles longer than DB_TITLE_LENGTH_MAX will be truncated.
+ *      the same. Titles longer than DB_TITLE_LENGTH_MAX will be truncated.
  *
  *  The following properties are only valid for URLs:
  *
@@ -69,8 +68,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Sqlite",
                                   "resource://gre/modules/Sqlite.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
@@ -150,6 +147,12 @@ var Bookmarks = Object.freeze({
    // be removed.  Do not rely on this, rather use the tagging service API.
    tagsGuid:    "tags________",
 
+   /**
+    * The GUIDs of the user content root folders that we support, for easy access
+    * as a set.
+    */
+   userContentRoots: ["toolbar_____", "menu________", "unfiled_____", "mobile______"],
+
   /**
    * Inserts a bookmark-item into the bookmarks tree.
    *
@@ -181,18 +184,20 @@ var Bookmarks = Object.freeze({
     if (addedTime > now) {
       modTime = now;
     }
-    let insertInfo = validateBookmarkObject(info,
-      { type: { defaultValue: this.TYPE_BOOKMARK }
-      , index: { defaultValue: this.DEFAULT_INDEX }
-      , url: { requiredIf: b => b.type == this.TYPE_BOOKMARK
-             , validIf: b => b.type == this.TYPE_BOOKMARK }
-      , parentGuid: { required: true }
-      , title: { validIf: b => [ this.TYPE_BOOKMARK
-                               , this.TYPE_FOLDER ].includes(b.type) }
-      , dateAdded: { defaultValue: addedTime }
-      , lastModified: { defaultValue: modTime,
-                        validIf: b => b.lastModified >= now || (b.dateAdded && b.lastModified >= b.dateAdded) }
-      , source: { defaultValue: this.SOURCES.DEFAULT }
+    let insertInfo = validateBookmarkObject("Bookmarks.jsm: insert", info,
+      { type: { defaultValue: this.TYPE_BOOKMARK },
+        index: { defaultValue: this.DEFAULT_INDEX },
+        url: { requiredIf: b => b.type == this.TYPE_BOOKMARK,
+               validIf: b => b.type == this.TYPE_BOOKMARK },
+        parentGuid: { required: true },
+        title: { defaultValue: "",
+                 validIf: b => b.type == this.TYPE_BOOKMARK ||
+                               b.type == this.TYPE_FOLDER ||
+                               b.title === "" },
+        dateAdded: { defaultValue: addedTime },
+        lastModified: { defaultValue: modTime,
+                        validIf: b => b.lastModified >= now || (b.dateAdded && b.lastModified >= b.dateAdded) },
+        source: { defaultValue: this.SOURCES.DEFAULT }
       });
 
     return (async () => {
@@ -220,14 +225,14 @@ var Bookmarks = Object.freeze({
       let isTagging = parent._parentId == PlacesUtils.tagsFolderId;
       let isTagsFolder = parent._id == PlacesUtils.tagsFolderId;
       notify(observers, "onItemAdded", [ itemId, parent._id, item.index,
-                                         item.type, uri, item.title || null,
+                                         item.type, uri, item.title,
                                          PlacesUtils.toPRTime(item.dateAdded), item.guid,
                                          item.parentGuid, item.source ],
                                        { isTagging: isTagging || isTagsFolder });
 
       // If it's a tag, notify OnItemChanged to all bookmarks for this URL.
       if (isTagging) {
-        for (let entry of (await fetchBookmarksByURL(item))) {
+        for (let entry of (await fetchBookmarksByURL(item, true))) {
           notify(observers, "onItemChanged", [ entry._id, "tags", false, "",
                                                PlacesUtils.toPRTime(entry.lastModified),
                                                entry.type, entry._parentId,
@@ -263,7 +268,7 @@ var Bookmarks = Object.freeze({
    * will be used for all the items inserted. Any indices or custom parentGuids
    * set on children will be ignored and overwritten.
    *
-   * @param tree
+   * @param {Object} tree
    *        object representing a tree of bookmark items to insert.
    *
    * @return {Promise} resolved when the creation is complete.
@@ -281,7 +286,7 @@ var Bookmarks = Object.freeze({
     }
 
     if (!PlacesUtils.isValidGuid(tree.guid)) {
-      throw new Error("The parent guid is not valid.");
+      throw new Error(`The parent guid is not valid (${tree.guid} ${tree.title}).`);
     }
 
     if (tree.guid == this.rootGuid) {
@@ -299,6 +304,7 @@ var Bookmarks = Object.freeze({
 
     // Serialize the tree into an array of items to insert into the db.
     let insertInfos = [];
+    let insertLivemarkInfos = [];
     let urlsThatMightNeedPlaces = [];
 
     // We want to use the same 'last added' time for all the entries
@@ -341,23 +347,32 @@ var Bookmarks = Object.freeze({
         // Ensure to use the same date for dateAdded and lastModified, even if
         // dateAdded may be imposed by the caller.
         let time = (info && info.dateAdded) || fallbackLastAdded;
-        let insertInfo = validateBookmarkObject(info, {
-          type: { defaultValue: TYPE_BOOKMARK }
-          , url: { requiredIf: b => b.type == TYPE_BOOKMARK
-                 , validIf: b => b.type == TYPE_BOOKMARK }
-          , parentGuid: { required: true }
-          , title: { validIf: b => [ TYPE_BOOKMARK
-                                   , TYPE_FOLDER ].includes(b.type) }
-          , dateAdded: { defaultValue: time
-                       , validIf: b => !b.lastModified ||
-                                        b.dateAdded <= b.lastModified }
-          , lastModified: { defaultValue: time,
-                            validIf: b => (!b.dateAdded && b.lastModified >= time) ||
-                                          (b.dateAdded && b.lastModified >= b.dateAdded) }
-          , index: { replaceWith: indexToUse++ }
-          , source: { replaceWith: source }
-          , children: { validIf: b => b.type == TYPE_FOLDER && Array.isArray(b.children) }
+        let insertInfo = validateBookmarkObject("Bookmarks.jsm: insertTree",
+                                                info, {
+          type: { defaultValue: TYPE_BOOKMARK },
+          url: { requiredIf: b => b.type == TYPE_BOOKMARK,
+                 validIf: b => b.type == TYPE_BOOKMARK },
+          parentGuid: { required: true },
+          title: { defaultValue: "",
+                   validIf: b => b.type == TYPE_BOOKMARK ||
+                                 b.type == TYPE_FOLDER ||
+                                 b.title === "" },
+          dateAdded: { defaultValue: time,
+                       validIf: b => !b.lastModified ||
+                                      b.dateAdded <= b.lastModified },
+          lastModified: { defaultValue: time,
+                          validIf: b => (!b.dateAdded && b.lastModified >= time) ||
+                                        (b.dateAdded && b.lastModified >= b.dateAdded) },
+          index: { replaceWith: indexToUse++ },
+          source: { replaceWith: source },
+          annos: {},
+          keyword: { validIf: b => b.type == TYPE_BOOKMARK },
+          charset: { validIf: b => b.type == TYPE_BOOKMARK },
+          postData: { validIf: b => b.type == TYPE_BOOKMARK },
+          tags: { validIf: b => b.type == TYPE_BOOKMARK },
+          children: { validIf: b => b.type == TYPE_FOLDER && Array.isArray(b.children) }
         });
+
         if (shouldUseNullIndices) {
           insertInfo.index = null;
         }
@@ -366,6 +381,21 @@ var Bookmarks = Object.freeze({
         if (insertInfo.type == Bookmarks.TYPE_BOOKMARK) {
           urlsThatMightNeedPlaces.push(insertInfo.url);
         }
+
+        // As we don't track indexes for children of root folders, and we
+        // insert livemarks separately, we create a temporary placeholder in
+        // the bookmarks, and later we'll replace it by the real livemark.
+        if (isLivemark(insertInfo)) {
+          // Make the current insertInfo item a placeholder.
+          let livemarkInfo = Object.assign({}, insertInfo);
+
+          // Delete the annotations that make it a livemark.
+          delete insertInfo.annos;
+
+          // Now save the livemark info for later.
+          insertLivemarkInfos.push(livemarkInfo);
+        }
+
         insertInfos.push(insertInfo);
         // Process any children. We have to use info.children here rather than
         // insertInfo.children because validateBookmarkObject doesn't copy over
@@ -389,29 +419,33 @@ var Bookmarks = Object.freeze({
       }
       return lastAddedForParent;
     }
+
     // We want to validate synchronously, but we can't know the index at which
     // we're inserting into the parent. We just use NULL instead,
     // and the SQL query with which we insert will update it as necessary.
     let lastAddedForParent = appendInsertionInfoForInfoArray(tree.children, null, tree.guid);
 
     return (async function() {
-      let parent = await fetchBookmark({ guid: tree.guid });
-      if (!parent) {
+      let treeParent = await fetchBookmark({ guid: tree.guid });
+      if (!treeParent) {
         throw new Error("The parent you specified doesn't exist.");
       }
 
-      if (parent._parentId == PlacesUtils.tagsFolderId) {
+      if (treeParent._parentId == PlacesUtils.tagsFolderId) {
         throw new Error("Can't use insertTree to insert tags.");
       }
 
-      await insertBookmarkTree(insertInfos, source, parent,
+      await insertBookmarkTree(insertInfos, source, treeParent,
                                urlsThatMightNeedPlaces, lastAddedForParent);
+
+      await insertLivemarkData(insertLivemarkInfos);
+
       // Now update the indices of root items in the objects we return.
       // These may be wrong if someone else modified the table between
       // when we fetched the parent and inserted our items, but the actual
       // inserts will have been correct, and we don't want to query the DB
       // again if we don't have to. bug 1347230 covers improving this.
-      let rootIndex = parent._childCount;
+      let rootIndex = treeParent._childCount;
       for (let insertInfo of insertInfos) {
         if (insertInfo.parentGuid == tree.guid) {
           insertInfo.index += rootIndex++;
@@ -426,13 +460,31 @@ var Bookmarks = Object.freeze({
         let item = insertInfos[i];
         let itemId = itemIdMap.get(item.guid);
         let uri = item.hasOwnProperty("url") ? PlacesUtils.toURI(item.url) : null;
-        notify(observers, "onItemAdded", [ itemId, parent._id, item.index,
-                                           item.type, uri, item.title || null,
+        // For sub-folders, we need to make sure their children have the correct parent ids.
+        let parentId;
+        if (item.parentGuid === treeParent.guid) {
+          // This is a direct child of the tree parent, so we can use the
+          // existing parent's id.
+          parentId = treeParent._id;
+        } else {
+          // This is a parent folder that's been updated, so we need to
+          // use the new item id.
+          parentId = itemIdMap.get(item.parentGuid);
+        }
+
+        notify(observers, "onItemAdded", [ itemId, parentId, item.index,
+                                           item.type, uri, item.title,
                                            PlacesUtils.toPRTime(item.dateAdded), item.guid,
                                            item.parentGuid, item.source ],
                                          { isTagging: false });
         // Remove non-enumerable properties.
         delete item.source;
+
+        // Note, annotations for livemark data are deleted from insertInfo
+        // within appendInsertionInfoForInfoArray, so we won't be duplicating
+        // the insertions here.
+        await handleBookmarkItemSpecialData(itemId, item);
+
         insertInfos[i] = Object.assign({}, item);
       }
       return insertInfos;
@@ -462,11 +514,11 @@ var Bookmarks = Object.freeze({
     // The info object is first validated here to ensure it's consistent, then
     // it's compared to the existing item to remove any properties that don't
     // need to be updated.
-    let updateInfo = validateBookmarkObject(info,
-      { guid: { required: true }
-      , index: { requiredIf: b => b.hasOwnProperty("parentGuid")
-               , validIf: b => b.index >= 0 || b.index == this.DEFAULT_INDEX }
-      , source: { defaultValue: this.SOURCES.DEFAULT }
+    let updateInfo = validateBookmarkObject("Bookmarks.jsm: update", info,
+      { guid: { required: true },
+        index: { requiredIf: b => b.hasOwnProperty("parentGuid"),
+                 validIf: b => b.index >= 0 || b.index == this.DEFAULT_INDEX },
+        source: { defaultValue: this.SOURCES.DEFAULT }
       });
 
     // There should be at last one more property in addition to guid and source.
@@ -489,14 +541,21 @@ var Bookmarks = Object.freeze({
         return Object.assign({}, item);
       }
       const now = new Date();
-      updateInfo = validateBookmarkObject(updateInfo,
-        { url: { validIf: () => item.type == this.TYPE_BOOKMARK }
-        , title: { validIf: () => [ this.TYPE_BOOKMARK
-                                  , this.TYPE_FOLDER ].includes(item.type) }
-        , lastModified: { defaultValue: now
-                        , validIf: b => b.lastModified >= now ||
-                                        b.lastModified >= (b.dateAdded || item.dateAdded) }
-        , dateAdded: { defaultValue: item.dateAdded }
+      let lastModifiedDefault = now;
+      // In the case where `dateAdded` is specified, but `lastModified` is not,
+      // we only update `lastModified` if it is older than the new `dateAdded`.
+      if (!("lastModified" in updateInfo) &&
+          "dateAdded" in updateInfo) {
+        lastModifiedDefault = new Date(Math.max(item.lastModified, updateInfo.dateAdded));
+      }
+      updateInfo = validateBookmarkObject("Bookmarks.jsm: update", updateInfo,
+        { url: { validIf: () => item.type == this.TYPE_BOOKMARK },
+          title: { validIf: () => [ this.TYPE_BOOKMARK,
+                                    this.TYPE_FOLDER ].includes(item.type) },
+          lastModified: { defaultValue: lastModifiedDefault,
+                          validIf: b => b.lastModified >= now ||
+                                        b.lastModified >= (b.dateAdded || item.dateAdded) },
+          dateAdded: { defaultValue: item.dateAdded }
         });
 
       return PlacesUtils.withConnectionWrapper("Bookmarks.jsm: update",
@@ -569,7 +628,21 @@ var Bookmarks = Object.freeze({
                                                updatedItem.parentGuid, "",
                                                updatedItem.source ]);
         }
+        if (info.hasOwnProperty("dateAdded") &&
+            updateInfo.hasOwnProperty("dateAdded") &&
+            item.dateAdded != updatedItem.dateAdded) {
+          notify(observers, "onItemChanged", [ updatedItem._id, "dateAdded",
+                                               false, `${PlacesUtils.toPRTime(updatedItem.dateAdded)}`,
+                                               PlacesUtils.toPRTime(updatedItem.lastModified),
+                                               updatedItem.type,
+                                               updatedItem._parentId,
+                                               updatedItem.guid,
+                                               updatedItem.parentGuid,
+                                               "",
+                                               updatedItem.source ]);
+        }
         if (updateInfo.hasOwnProperty("title")) {
+          let isTagging = updatedItem.parentGuid == Bookmarks.tagsGuid;
           notify(observers, "onItemChanged", [ updatedItem._id, "title",
                                                false, updatedItem.title,
                                                PlacesUtils.toPRTime(updatedItem.lastModified),
@@ -577,7 +650,22 @@ var Bookmarks = Object.freeze({
                                                updatedItem._parentId,
                                                updatedItem.guid,
                                                updatedItem.parentGuid, "",
-                                               updatedItem.source ]);
+                                               updatedItem.source ],
+                                               { isTagging });
+          // If we're updating a tag, we must notify all the tagged bookmarks
+          // about the change.
+          if (isTagging) {
+            let URIs = PlacesUtils.tagging.getURIsForTag(updatedItem.title);
+            for (let uri of URIs) {
+              for (let entry of (await fetchBookmarksByURL({ url: new URL(uri.spec) }, true))) {
+                notify(observers, "onItemChanged", [ entry._id, "tags", false, "",
+                                                     PlacesUtils.toPRTime(entry.lastModified),
+                                                     entry.type, entry._parentId,
+                                                     entry.guid, entry.parentGuid,
+                                                     "", updatedItem.source ]);
+              }
+            }
+          }
         }
         if (updateInfo.hasOwnProperty("url")) {
           notify(observers, "onItemChanged", [ updatedItem._id, "uri",
@@ -646,7 +734,7 @@ var Bookmarks = Object.freeze({
 
     // Even if we ignore any other unneeded property, we still validate any
     // known property to reduce likelihood of hidden bugs.
-    let removeInfo = validateBookmarkObject(info);
+    let removeInfo = validateBookmarkObject("Bookmarks.jsm: remove", info);
 
     return (async function() {
       let item = await fetchBookmark(removeInfo);
@@ -666,7 +754,7 @@ var Bookmarks = Object.freeze({
                                          { isTagging: isUntagging });
 
       if (isUntagging) {
-        for (let entry of (await fetchBookmarksByURL(item))) {
+        for (let entry of (await fetchBookmarksByURL(item, true))) {
           notify(observers, "onItemChanged", [ entry._id, "tags", false, "",
                                                PlacesUtils.toPRTime(entry.lastModified),
                                                entry.type, entry._parentId,
@@ -698,22 +786,29 @@ var Bookmarks = Object.freeze({
       options.source = Bookmarks.SOURCES.DEFAULT;
     }
 
-    const folderGuids = [this.toolbarGuid, this.menuGuid, this.unfiledGuid,
-                          this.mobileGuid];
     return PlacesUtils.withConnectionWrapper("Bookmarks.jsm: eraseEverything",
-      db => db.executeTransaction(async function() {
-        await removeFoldersContents(db, folderGuids, options);
-        const time = PlacesUtils.toPRTime(new Date());
-        const syncChangeDelta =
-          PlacesSyncUtils.bookmarks.determineSyncChangeDelta(options.source);
-        for (let folderGuid of folderGuids) {
-          await db.executeCached(
-            `UPDATE moz_bookmarks SET lastModified = :time,
-                                      syncChangeCounter = syncChangeCounter + :syncChangeDelta
-             WHERE id IN (SELECT id FROM moz_bookmarks WHERE guid = :folderGuid )
-            `, { folderGuid, time, syncChangeDelta });
+      async function(db) {
+        let urls;
+
+        await db.executeTransaction(async function() {
+          urls = await removeFoldersContents(db, Bookmarks.userContentRoots, options);
+          const time = PlacesUtils.toPRTime(new Date());
+          const syncChangeDelta =
+            PlacesSyncUtils.bookmarks.determineSyncChangeDelta(options.source);
+          for (let folderGuid of Bookmarks.userContentRoots) {
+            await db.executeCached(
+              `UPDATE moz_bookmarks SET lastModified = :time,
+                                        syncChangeCounter = syncChangeCounter + :syncChangeDelta
+               WHERE id IN (SELECT id FROM moz_bookmarks WHERE guid = :folderGuid )
+              `, { folderGuid, time, syncChangeDelta });
+          }
+        });
+
+        // We don't wait for the frecency calculation.
+        if (urls && urls.length) {
+          updateFrecency(db, urls, true).catch(Cu.reportError);
         }
-      })
+      }
     );
   },
 
@@ -739,9 +834,7 @@ var Bookmarks = Object.freeze({
       throw new Error("numberOfItems argument must be greater than zero");
     }
 
-    return (async function() {
-      return await fetchRecentBookmarks(numberOfItems);
-    })();
+    return fetchRecentBookmarks(numberOfItems);
   },
 
   /**
@@ -822,7 +915,8 @@ var Bookmarks = Object.freeze({
 
     // Even if we ignore any other unneeded property, we still validate any
     // known property to reduce likelihood of hidden bugs.
-    let fetchInfo = validateBookmarkObject(info, behavior);
+    let fetchInfo = validateBookmarkObject("Bookmarks.jsm: fetch", info,
+                                           behavior);
 
     return (async function() {
       let results;
@@ -947,7 +1041,8 @@ var Bookmarks = Object.freeze({
    */
   reorder(parentGuid, orderedChildrenGuids, options = {}) {
     let info = { guid: parentGuid };
-    info = validateBookmarkObject(info, { guid: { required: true } });
+    info = validateBookmarkObject("Bookmarks.jsm: reorder", info,
+                                  { guid: { required: true } });
 
     if (!Array.isArray(orderedChildrenGuids) || !orderedChildrenGuids.length)
       throw new Error("Must provide a sorted array of children GUIDs.");
@@ -1043,17 +1138,17 @@ var Bookmarks = Object.freeze({
 /**
  * Sends a bookmarks notification through the given observers.
  *
- * @param observers
+ * @param {Array} observers
  *        array of nsINavBookmarkObserver objects.
- * @param notification
+ * @param {String} notification
  *        the notification name.
- * @param args
+ * @param {Array} [args]
  *        array of arguments to pass to the notification.
- * @param information
+ * @param {Object} [information]
  *        Information about the notification, so we can filter based
  *        based on the observer's preferences.
  */
-function notify(observers, notification, args, information = {}) {
+function notify(observers, notification, args = [], information = {}) {
   for (let observer of observers) {
     if (information.isTagging && observer.skipTags) {
       continue;
@@ -1078,7 +1173,8 @@ function updateBookmark(info, item, newParent) {
     let tuples = new Map();
     tuples.set("lastModified", { value: PlacesUtils.toPRTime(info.lastModified) });
     if (info.hasOwnProperty("title"))
-      tuples.set("title", { value: info.title });
+      tuples.set("title", { value: info.title,
+                            fragment: `title = NULLIF(:title, "")` });
     if (info.hasOwnProperty("dateAdded"))
       tuples.set("dateAdded", { value: PlacesUtils.toPRTime(info.dateAdded) });
 
@@ -1091,8 +1187,8 @@ function updateBookmark(info, item, newParent) {
         // Ensure a page exists in moz_places for this URL.
         await maybeInsertPlace(db, info.url);
         // Update tuples for the update query.
-        tuples.set("url", { value: info.url.href
-                          , fragment: "fk = (SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url)" });
+        tuples.set("url", { value: info.url.href,
+                            fragment: "fk = (SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url)" });
       }
 
       let newIndex = info.hasOwnProperty("index") ? info.index : item.index;
@@ -1150,8 +1246,8 @@ function updateBookmark(info, item, newParent) {
         }
         let needsSyncChange = tuples.size > sizeThreshold;
         if (needsSyncChange) {
-          tuples.set("syncChangeDelta", { value: syncChangeDelta
-                                        , fragment: "syncChangeCounter = syncChangeCounter + :syncChangeDelta" });
+          tuples.set("syncChangeDelta", { value: syncChangeDelta,
+                                          fragment: "syncChangeCounter = syncChangeCounter + :syncChangeDelta" });
         }
       }
 
@@ -1218,10 +1314,6 @@ function updateBookmark(info, item, newParent) {
 
     let updatedItem = mergeIntoNewObject(item, info, additionalParentInfo);
 
-    // Don't return an empty title to the caller.
-    if (updatedItem.hasOwnProperty("title") && updatedItem.title === null)
-      delete updatedItem.title;
-
     return updatedItem;
   });
 }
@@ -1265,8 +1357,8 @@ function insertBookmark(item, parent) {
                                     dateAdded, lastModified, guid,
                                     syncChangeCounter, syncStatus)
          VALUES (CASE WHEN :url ISNULL THEN NULL ELSE (SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url) END,
-                 :type, :parent, :index, :title, :date_added, :last_modified,
-                 :guid, :syncChangeCounter, :syncStatus)
+                 :type, :parent, :index, NULLIF(:title, ""), :date_added,
+                 :last_modified, :guid, :syncChangeCounter, :syncStatus)
         `, { url: item.hasOwnProperty("url") ? item.url.href : null,
              type: item.type, parent: parent._id, index: item.index,
              title: item.title, date_added: PlacesUtils.toPRTime(item.dateAdded),
@@ -1300,12 +1392,18 @@ function insertBookmark(item, parent) {
       updateFrecency(db, [item.url]).catch(Cu.reportError);
     }
 
-    // Don't return an empty title to the caller.
-    if (item.hasOwnProperty("title") && item.title === null)
-      delete item.title;
-
     return item;
   });
+}
+
+/**
+ * Determines if a bookmark is a Livemark depending on how it is annotated.
+ *
+ * @param {Object} node The bookmark node to check.
+ * @returns {Boolean} True if the node is a Livemark, false otherwise.
+ */
+function isLivemark(node) {
+  return node.annos && node.annos.some(anno => anno.name == PlacesUtils.LMANNO_FEEDURI);
 }
 
 function insertBookmarkTree(items, source, parent, urls, lastAddedForParent) {
@@ -1334,7 +1432,7 @@ function insertBookmarkTree(items, source, parent, urls, lastAddedForParent) {
          VALUES (CASE WHEN :url ISNULL THEN NULL ELSE (SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url) END, :type,
          (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid),
          IFNULL(:index, (SELECT count(*) FROM moz_bookmarks WHERE parent = :rootId)),
-         :title, :date_added, :last_modified, :guid,
+         NULLIF(:title, ""), :date_added, :last_modified, :guid,
          :syncChangeCounter, :syncStatus)`, items);
 
       await setAncestorsLastModified(db, parent.guid, lastAddedForParent,
@@ -1346,6 +1444,102 @@ function insertBookmarkTree(items, source, parent, urls, lastAddedForParent) {
 
     return items;
   });
+}
+
+/**
+ * Handles any Livemarks within the passed items.
+ *
+ * @param {Array} items Livemark items that need to be added.
+ */
+async function insertLivemarkData(items) {
+  for (let item of items) {
+    let feedURI = null;
+    let siteURI = null;
+    item.annos = item.annos.filter(function(aAnno) {
+      switch (aAnno.name) {
+        case PlacesUtils.LMANNO_FEEDURI:
+          feedURI = NetUtil.newURI(aAnno.value);
+          return false;
+        case PlacesUtils.LMANNO_SITEURI:
+          siteURI = NetUtil.newURI(aAnno.value);
+          return false;
+        default:
+          return true;
+      }
+    });
+
+    let index = null;
+
+    // Delete the placeholder but note the index of it, so that we
+    // can insert the livemark item at the right place.
+    let placeholder = await Bookmarks.fetch(item.guid);
+    index = placeholder.index;
+
+    await Bookmarks.remove(item.guid, {source: item.source});
+
+    if (feedURI) {
+      item.feedURI = feedURI;
+      item.siteURI = siteURI;
+      item.index = index;
+
+      if (item.dateAdded) {
+        item.dateAdded = PlacesUtils.toPRTime(item.dateAdded);
+      }
+      if (item.lastModified) {
+        item.lastModified = PlacesUtils.toPRTime(item.lastModified);
+      }
+
+      let livemark = await PlacesUtils.livemarks.addLivemark(item);
+
+      let id = livemark.id;
+      if (item.annos && item.annos.length) {
+        PlacesUtils.setAnnotationsForItem(id, item.annos,
+                                          item.source);
+      }
+    }
+  }
+}
+
+/**
+ * Handles special data on a bookmark, e.g. annotations, keywords, tags, charsets,
+ * inserting the data into the appropriate place.
+ *
+ * @param {Integer} itemId The ID of the item within the bookmarks database.
+ * @param {Object} item The bookmark item with possible special data to be inserted.
+ */
+async function handleBookmarkItemSpecialData(itemId, item) {
+  if (item.annos && item.annos.length) {
+    PlacesUtils.setAnnotationsForItem(itemId, item.annos, item.source)
+  }
+  if ("keyword" in item && item.keyword) {
+    // POST data could be set in 2 ways:
+    // 1. new backups have a postData property
+    // 2. old backups have an item annotation
+    let postDataAnno = item.annos &&
+                       item.annos.find(anno => anno.name == PlacesUtils.POST_DATA_ANNO);
+    let postData = item.postData || (postDataAnno && postDataAnno.value);
+    try {
+      await PlacesUtils.keywords.insert({
+        keyword: item.keyword,
+        url: item.url,
+        postData,
+        source: item.source
+      });
+    } catch (ex) {
+      Cu.reportError(`Failed to insert keywords: ${ex}`);
+    }
+  }
+  if ("tags" in item) {
+    try {
+      PlacesUtils.tagging.tagURI(NetUtil.newURI(item.url), item.tags, item._source);
+    } catch (ex) {
+      // Invalid tag child, skip it.
+      Cu.reportError(`Unable to set tags "${item.tags.join(", ")}" for ${item.url}: ${ex}`);
+    }
+  }
+  if ("charset" in item && item.charset) {
+    await PlacesUtils.setCharsetForURI(NetUtil.newURI(item.url), item.charset);
+  }
 }
 
 // Query implementation.
@@ -1384,8 +1578,8 @@ async function queryBookmarks(info) {
       // hence setting them to NULL
       let rows = await db.executeCached(
         `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-                b.dateAdded, b.lastModified, b.type, b.title,
-                h.url AS url, b.parent, p.parent,
+                b.dateAdded, b.lastModified, b.type,
+                IFNULL(b.title, "") AS title, h.url AS url, b.parent, p.parent,
                 NULL AS _id,
                 NULL AS _childCount,
                 NULL AS _grandParentId,
@@ -1409,8 +1603,8 @@ async function fetchBookmark(info, concurrent) {
   let query = async function(db) {
     let rows = await db.executeCached(
       `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, b.title, h.url AS url,
-              b.id AS _id, b.parent AS _parentId,
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+              h.url AS url, b.id AS _id, b.parent AS _parentId,
               (SELECT count(*) FROM moz_bookmarks WHERE parent = b.id) AS _childCount,
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
        FROM moz_bookmarks b
@@ -1434,8 +1628,8 @@ async function fetchBookmarkByPosition(info, concurrent) {
     let index = info.index == Bookmarks.DEFAULT_INDEX ? null : info.index;
     let rows = await db.executeCached(
       `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, b.title, h.url AS url,
-              b.id AS _id, b.parent AS _parentId,
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+              h.url AS url, b.id AS _id, b.parent AS _parentId,
               (SELECT count(*) FROM moz_bookmarks WHERE parent = b.id) AS _childCount,
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
        FROM moz_bookmarks b
@@ -1463,8 +1657,8 @@ async function fetchBookmarksByURL(info, concurrent) {
     let rows = await db.executeCached(
       `/* do not warn (bug no): not worth to add an index */
       SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, b.title, h.url AS url,
-              b.id AS _id, b.parent AS _parentId,
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+              h.url AS url, b.id AS _id, b.parent AS _parentId,
               NULL AS _childCount, /* Unused for now */
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
       FROM moz_bookmarks b
@@ -1492,8 +1686,9 @@ function fetchRecentBookmarks(numberOfItems) {
       let tagsFolderId = await promiseTagsFolderId();
       let rows = await db.executeCached(
         `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-                b.dateAdded, b.lastModified, b.type, b.title, h.url AS url,
-                NULL AS _id, NULL AS _parentId, NULL AS _childCount, NULL AS _grandParentId,
+                b.dateAdded, b.lastModified, b.type,
+                IFNULL(b.title, "") AS title, h.url AS url, NULL AS _id,
+                NULL AS _parentId, NULL AS _childCount, NULL AS _grandParentId,
                 NULL AS _syncStatus
         FROM moz_bookmarks b
         JOIN moz_bookmarks p ON p.id = b.parent
@@ -1521,8 +1716,8 @@ function fetchBookmarksByParent(info) {
 
     let rows = await db.executeCached(
       `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, b.title, h.url AS url,
-              b.id AS _id, b.parent AS _parentId,
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+              h.url AS url, b.id AS _id, b.parent AS _parentId,
               (SELECT count(*) FROM moz_bookmarks WHERE parent = b.id) AS _childCount,
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
        FROM moz_bookmarks b
@@ -1541,6 +1736,7 @@ function fetchBookmarksByParent(info) {
 function removeBookmark(item, options) {
   return PlacesUtils.withConnectionWrapper("Bookmarks.jsm: removeBookmark",
     async function(db) {
+    let urls;
     let isUntagging = item._grandParentId == PlacesUtils.tagsFolderId;
 
     await db.executeTransaction(async function transaction() {
@@ -1549,7 +1745,7 @@ function removeBookmark(item, options) {
         if (options.preventRemovalOfNonEmptyFolders && item._childCount > 0) {
           throw new Error("Cannot remove a non-empty folder.");
         }
-        await removeFoldersContents(db, [item.guid], options);
+        urls = await removeFoldersContents(db, [item.guid], options);
       }
 
       // Remove annotations first.  If it's a tag, we can avoid paying that cost.
@@ -1594,6 +1790,10 @@ function removeBookmark(item, options) {
     if (item.type == Bookmarks.TYPE_BOOKMARK && !isUntagging) {
       // ...though we don't wait for the calculation.
       updateFrecency(db, [item.url]).catch(Cu.reportError);
+    }
+
+    if (urls && urls.length && item.type == Bookmarks.TYPE_FOLDER) {
+      updateFrecency(db, urls, true).catch(Cu.reportError);
     }
 
     return item;
@@ -1801,17 +2001,23 @@ function removeSameValueProperties(dest, src) {
 function rowsToItemsArray(rows) {
   return rows.map(row => {
     let item = {};
-    for (let prop of ["guid", "index", "type"]) {
+    for (let prop of ["guid", "index", "type", "title"]) {
       item[prop] = row.getResultByName(prop);
     }
     for (let prop of ["dateAdded", "lastModified"]) {
-      item[prop] = PlacesUtils.toDate(row.getResultByName(prop));
+      let value = row.getResultByName(prop);
+      if (value)
+        item[prop] = PlacesUtils.toDate(value);
     }
-    for (let prop of ["title", "parentGuid", "url" ]) {
-      let val = row.getResultByName(prop);
-      if (val)
-        item[prop] = prop === "url" ? new URL(val) : val;
+    let parentGuid = row.getResultByName("parentGuid");
+    if (parentGuid) {
+      item.parentGuid = parentGuid;
     }
+    let url = row.getResultByName("url");
+    if (url) {
+      item.url = new URL(url);
+    }
+
     for (let prop of ["_id", "_parentId", "_childCount", "_grandParentId",
                       "_syncStatus"]) {
       let val = row.getResultByName(prop);
@@ -1829,8 +2035,8 @@ function rowsToItemsArray(rows) {
   });
 }
 
-function validateBookmarkObject(input, behavior) {
-  return PlacesUtils.validateItemProperties(
+function validateBookmarkObject(name, input, behavior) {
+  return PlacesUtils.validateItemProperties(name,
     PlacesUtils.BOOKMARK_VALIDATORS, input, behavior);
 }
 
@@ -1950,10 +2156,15 @@ var setAncestorsLastModified = async function(db, folderGuid, time, syncChangeDe
 /**
  * Remove all descendants of one or more bookmark folders.
  *
- * @param db
+ * @param {Object} db
  *        the Sqlite.jsm connection handle.
- * @param folderGuids
+ * @param {Array} folderGuids
  *        array of folder guids.
+ * @return {Array}
+ *         An array of urls that will need to be updated for frecency. These
+ *         are returned rather than updated immediately so that the caller
+ *         can decide when they need to be updated - they do not need to
+ *         stop this function from completing.
  */
 var removeFoldersContents =
 async function(db, folderGuids, options) {
@@ -1974,10 +2185,13 @@ async function(db, folderGuids, options) {
        )
        SELECT b.id AS _id, b.parent AS _parentId, b.position AS 'index',
               b.type, url, b.guid, p.guid AS parentGuid, b.dateAdded,
-              b.lastModified, b.title, p.parent AS _grandParentId,
-              NULL AS _childCount, b.syncStatus AS _syncStatus
+              b.lastModified, IFNULL(b.title, "") AS title,
+              p.parent AS _grandParentId, NULL AS _childCount,
+              b.syncStatus AS _syncStatus
        FROM descendants
-       JOIN moz_bookmarks b ON did = b.id
+       /* The usage of CROSS JOIN is not random, it tells the optimizer
+          to retain the original rows order, so the hierarchy is respected */
+       CROSS JOIN moz_bookmarks b ON did = b.id
        JOIN moz_bookmarks p ON p.id = b.parent
        LEFT JOIN moz_places h ON b.fk = h.id`, { folderGuid });
 
@@ -2008,9 +2222,6 @@ async function(db, folderGuids, options) {
 
   // TODO (Bug 1087576): this may leave orphan tags behind.
 
-  let urls = itemsRemoved.filter(item => "url" in item).map(item => item.url);
-  updateFrecency(db, urls, true).then(null, Cu.reportError);
-
   // Send onItemRemoved notifications to listeners.
   // TODO (Bug 1087580): for the case of eraseEverything, this should send a
   // single clear bookmarks notification rather than notifying for each
@@ -2031,7 +2242,7 @@ async function(db, folderGuids, options) {
 
     let isUntagging = item._grandParentId == PlacesUtils.tagsFolderId;
     if (isUntagging) {
-      for (let entry of (await fetchBookmarksByURL(item))) {
+      for (let entry of (await fetchBookmarksByURL(item, true))) {
         notify(observers, "onItemChanged", [ entry._id, "tags", false, "",
                                              PlacesUtils.toPRTime(entry.lastModified),
                                              entry.type, entry._parentId,
@@ -2040,6 +2251,7 @@ async function(db, folderGuids, options) {
       }
     }
   }
+  return itemsRemoved.filter(item => "url" in item).map(item => item.url);
 };
 
 /**

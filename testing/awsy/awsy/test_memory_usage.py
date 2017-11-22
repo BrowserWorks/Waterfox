@@ -108,23 +108,41 @@ class TestMemoryUsage(MarionetteTestCase):
         self._pages_loaded = 0
 
         # Close all tabs except one
-        for x in range(len(self.marionette.window_handles) - 1):
-            self.logger.info("closing window")
-            try:
-                result = self.marionette.execute_script("gBrowser.removeCurrentTab();",
-                                                        script_timeout=180000)
-            except JavascriptException, e:
-                self.logger.error("gBrowser.removeCurrentTab() JavaScript error: %s" % e)
-            except ScriptTimeoutException:
-                self.logger.error("gBrowser.removeCurrentTab() timed out")
-            except:
-                self.logger.error("gBrowser.removeCurrentTab() Unexpected error: %s" % sys.exc_info()[0])
-            else:
-                self.logger.info(result)
-            time.sleep(0.25)
+        for x in self.marionette.window_handles[1:]:
+            self.logger.info("closing window: %s" % x)
+            self.marionette.switch_to_window(x)
+            self.marionette.close()
 
         self._tabs = self.marionette.window_handles
         self.marionette.switch_to_window(self._tabs[0])
+
+    def clear_preloaded_browser(self):
+        """
+        Clears out the preloaded browser.
+
+        Note: Does nothing on older builds that don't have a
+              `gBrowser.removePreloadedBrowser` method.
+        """
+        self.logger.info("closing preloaded browser")
+        script = """
+            if ("removePreloadedBrowser" in gBrowser) {
+                return gBrowser.removePreloadedBrowser();
+            } else {
+                return "gBrowser.removePreloadedBrowser not available";
+            }
+            """
+        try:
+            result = self.marionette.execute_script(script,
+                                                    script_timeout=180000)
+        except JavascriptException, e:
+            self.logger.error("gBrowser.removePreloadedBrowser() JavaScript error: %s" % e)
+        except ScriptTimeoutException:
+            self.logger.error("gBrowser.removePreloadedBrowser() timed out")
+        except:
+            self.logger.error("gBrowser.removePreloadedBrowser() Unexpected error: %s" % sys.exc_info()[0])
+        else:
+            if result:
+              self.logger.info(result)
 
     def do_full_gc(self):
         """Performs a full garbage collection cycle and returns when it is finished.
@@ -341,6 +359,13 @@ class TestMemoryUsage(MarionetteTestCase):
                 self.marionette.navigate("about:blank")
                 self.logger.info("navigated to about:blank")
             self.signal_user_active()
+
+            # Create checkpoint that may contain retained processes that will
+            # be reused.
+            create_checkpoint("TabsClosedExtraProcesses", itr)
+
+            # Clear out the retained processes and measure again.
+            self.clear_preloaded_browser()
 
             create_checkpoint("TabsClosed", itr)
             time.sleep(self._settleWaitTime)

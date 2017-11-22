@@ -169,7 +169,7 @@ CheckDecoderMultiChunk(const ImageTestCase& aTestCase)
 
   sourceBuffer->Complete(NS_OK);
   task->Run();
-  
+
   CheckDecoderResults(aTestCase, decoder);
 }
 
@@ -714,6 +714,26 @@ TEST_F(ImageDecoders, AnimatedWebPWithFRAME_CURRENT)
 TEST_F(ImageDecoders, TruncatedSmallGIFSingleChunk)
 {
   CheckDecoderSingleChunk(TruncatedSmallGIFTestCase());
+}
+
+TEST_F(ImageDecoders, LargeICOWithBMPSingleChunk)
+{
+  CheckDecoderSingleChunk(LargeICOWithBMPTestCase());
+}
+
+TEST_F(ImageDecoders, LargeICOWithBMPMultiChunk)
+{
+  CheckDecoderMultiChunk(LargeICOWithBMPTestCase());
+}
+
+TEST_F(ImageDecoders, LargeICOWithPNGSingleChunk)
+{
+  CheckDecoderSingleChunk(LargeICOWithPNGTestCase());
+}
+
+TEST_F(ImageDecoders, LargeICOWithPNGMultiChunk)
+{
+  CheckDecoderMultiChunk(LargeICOWithPNGTestCase());
 }
 
 TEST_F(ImageDecoders, MultipleSizesICOSingleChunk)

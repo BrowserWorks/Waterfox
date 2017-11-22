@@ -5,13 +5,10 @@
 
 #include "gfxDWriteFonts.h"
 
-#include "mozilla/MemoryReporting.h"
-
 #include <algorithm>
 #include "gfxDWriteFontList.h"
 #include "gfxContext.h"
 #include "gfxTextRun.h"
-#include <dwrite.h>
 
 #include "harfbuzz/hb.h"
 
@@ -94,6 +91,11 @@ gfxDWriteFont::gfxDWriteFont(const RefPtr<UnscaledFontDWrite>& aUnscaledFont,
     }
 
     mFontFace = aUnscaledFont->GetFontFace();
+
+    // If the IDWriteFontFace1 interface is available, we can use that for
+    // faster glyph width retrieval.
+    mFontFace->QueryInterface(__uuidof(IDWriteFontFace1),
+                              (void**)getter_AddRefs(mFontFace1));
 
     ComputeMetrics(anAAOption);
 }
@@ -597,19 +599,6 @@ gfxDWriteFont::GetGlyphWidth(DrawTarget& aDrawTarget, uint16_t aGID)
     return width;
 }
 
-already_AddRefed<GlyphRenderingOptions>
-gfxDWriteFont::GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams)
-{
-  if (mUseClearType) {
-    return Factory::CreateDWriteGlyphRenderingOptions(
-      gfxWindowsPlatform::GetPlatform()->GetRenderingParams(GetForceGDIClassic() ?
-        gfxWindowsPlatform::TEXT_RENDERING_GDI_CLASSIC : gfxWindowsPlatform::TEXT_RENDERING_NORMAL));
-  } else {
-    return Factory::CreateDWriteGlyphRenderingOptions(gfxWindowsPlatform::GetPlatform()->
-      GetRenderingParams(gfxWindowsPlatform::TEXT_RENDERING_NO_CLEARTYPE));
-  }
-}
-
 bool
 gfxDWriteFont::GetForceGDIClassic()
 {
@@ -630,20 +619,38 @@ gfxDWriteFont::GetMeasuringMode()
 gfxFloat
 gfxDWriteFont::MeasureGlyphWidth(uint16_t aGlyph)
 {
-    DWRITE_GLYPH_METRICS metrics;
     HRESULT hr;
-    if (mUseSubpixelPositions) {
-        hr = mFontFace->GetDesignGlyphMetrics(&aGlyph, 1, &metrics, FALSE);
-        if (SUCCEEDED(hr)) {
-            return metrics.advanceWidth * mFUnitsConvFactor;
+    if (mFontFace1) {
+        int32_t advance;
+        if (mUseSubpixelPositions) {
+            hr = mFontFace1->GetDesignGlyphAdvances(1, &aGlyph, &advance, FALSE);
+            if (SUCCEEDED(hr)) {
+                return advance * mFUnitsConvFactor;
+            }
+        } else {
+            hr = mFontFace1->GetGdiCompatibleGlyphAdvances(
+                      FLOAT(mAdjustedSize), 1.0f, nullptr,
+                      GetMeasuringMode() == DWRITE_MEASURING_MODE_GDI_NATURAL,
+                      FALSE, 1, &aGlyph, &advance);
+            if (SUCCEEDED(hr)) {
+                return NS_lround(advance * mFUnitsConvFactor);
+            }
         }
     } else {
-        hr = mFontFace->GetGdiCompatibleGlyphMetrics(
-                  FLOAT(mAdjustedSize), 1.0f, nullptr,
-                  GetMeasuringMode() == DWRITE_MEASURING_MODE_GDI_NATURAL,
-                  &aGlyph, 1, &metrics, FALSE);
-        if (SUCCEEDED(hr)) {
-            return NS_lround(metrics.advanceWidth * mFUnitsConvFactor);
+        DWRITE_GLYPH_METRICS metrics;
+        if (mUseSubpixelPositions) {
+            hr = mFontFace->GetDesignGlyphMetrics(&aGlyph, 1, &metrics, FALSE);
+            if (SUCCEEDED(hr)) {
+                return metrics.advanceWidth * mFUnitsConvFactor;
+            }
+        } else {
+            hr = mFontFace->GetGdiCompatibleGlyphMetrics(
+                      FLOAT(mAdjustedSize), 1.0f, nullptr,
+                      GetMeasuringMode() == DWRITE_MEASURING_MODE_GDI_NATURAL,
+                      &aGlyph, 1, &metrics, FALSE);
+            if (SUCCEEDED(hr)) {
+                return NS_lround(metrics.advanceWidth * mFUnitsConvFactor);
+            }
         }
     }
     return 0;
@@ -687,10 +694,17 @@ gfxDWriteFont::GetScaledFont(mozilla::gfx::DrawTarget *aTarget)
                                                         GetUnscaledFont(),
                                                         GetAdjustedSize(),
                                                         GetCairoScaledFont());
-  } else if (aTarget->GetBackendType() == BackendType::SKIA) {
+  } else {
     gfxDWriteFontEntry *fe =
         static_cast<gfxDWriteFontEntry*>(mFontEntry.get());
     bool useEmbeddedBitmap = (fe->IsCJKFont() && HasBitmapStrikeForSize(NS_lround(mAdjustedSize)));
+    bool forceGDI = GetForceGDIClassic();
+
+    IDWriteRenderingParams* params = gfxWindowsPlatform::GetPlatform()->GetRenderingParams(
+      mUseClearType ?
+        (forceGDI ?
+          gfxWindowsPlatform::TEXT_RENDERING_GDI_CLASSIC : gfxWindowsPlatform::TEXT_RENDERING_NORMAL) :
+        gfxWindowsPlatform::TEXT_RENDERING_NO_CLEARTYPE);
 
     const gfxFontStyle* fontStyle = GetStyle();
     mAzureScaledFont =
@@ -698,11 +712,10 @@ gfxDWriteFont::GetScaledFont(mozilla::gfx::DrawTarget *aTarget)
                                                    GetUnscaledFont(),
                                                    GetAdjustedSize(),
                                                    useEmbeddedBitmap,
-                                                   GetForceGDIClassic());
-  } else {
-    mAzureScaledFont = Factory::CreateScaledFontForNativeFont(nativeFont,
-                                                            GetUnscaledFont(),
-                                                            GetAdjustedSize());
+                                                   forceGDI,
+                                                   params,
+                                                   params->GetGamma(),
+                                                   params->GetEnhancedContrast());
   }
 
   mAzureScaledFontIsCairo = wantCairo;

@@ -10,7 +10,6 @@ use Namespace;
 use context::QuirksMode;
 use cssparser::{Parser, Token, serialize_identifier, BasicParseError};
 use parser::{ParserContext, Parse};
-use self::grid::TrackSizeOrRepeat;
 use self::url::SpecifiedUrl;
 use std::ascii::AsciiExt;
 use std::f32;
@@ -18,8 +17,7 @@ use std::fmt;
 use style_traits::{ToCss, ParseError, StyleParseError};
 use style_traits::values::specified::AllowedNumericType;
 use super::{Auto, CSSFloat, CSSInteger, Either, None_};
-use super::computed::{self, Context};
-use super::computed::{Shadow as ComputedShadow, ToComputedValue};
+use super::computed::{self, Context, ToComputedValue};
 use super::generics::grid::{TrackBreadth as GenericTrackBreadth, TrackSize as GenericTrackSize};
 use super::generics::grid::TrackList as GenericTrackList;
 use values::computed::ComputedValueAsSpecified;
@@ -32,20 +30,23 @@ pub use self::background::BackgroundSize;
 pub use self::border::{BorderCornerRadius, BorderImageSlice, BorderImageWidth};
 pub use self::border::{BorderImageSideWidth, BorderRadius, BorderSideWidth};
 pub use self::color::{Color, RGBAColor};
-pub use self::rect::LengthOrNumberRect;
+pub use self::effects::{BoxShadow, Filter, SimpleShadow};
+pub use self::flex::FlexBasis;
 #[cfg(feature = "gecko")]
 pub use self::gecko::ScrollSnapPoint;
 pub use self::image::{ColorStop, EndingShape as GradientEndingShape, Gradient};
-pub use self::image::{GradientItem, GradientKind, Image, ImageRect, ImageLayer};
-pub use self::length::AbsoluteLength;
-pub use self::length::{FontRelativeLength, ViewportPercentageLength, CharacterWidth, Length, CalcLengthOrPercentage};
-pub use self::length::{Percentage, LengthOrNone, LengthOrNumber, LengthOrPercentage, LengthOrPercentageOrAuto};
-pub use self::length::{LengthOrPercentageOrNone, LengthOrPercentageOrAutoOrContent, NoCalcLength};
-pub use self::length::{MaxLength, MozLength};
+pub use self::image::{GradientItem, GradientKind, Image, ImageLayer, MozImageRect};
+pub use self::length::{AbsoluteLength, CalcLengthOrPercentage, CharacterWidth};
+pub use self::length::{FontRelativeLength, Length, LengthOrNone, LengthOrNumber};
+pub use self::length::{LengthOrPercentage, LengthOrPercentageOrAuto};
+pub use self::length::{LengthOrPercentageOrNone, MaxLength, MozLength};
+pub use self::length::{NoCalcLength, Percentage, ViewportPercentageLength};
+pub use self::rect::LengthOrNumberRect;
 pub use self::position::{Position, PositionComponent};
 pub use self::text::{InitialLetter, LetterSpacing, LineHeight, WordSpacing};
 pub use self::transform::{TimingFunction, TransformOrigin};
 pub use super::generics::grid::GridLine;
+pub use super::generics::grid::GridTemplateComponent as GenericGridTemplateComponent;
 
 #[cfg(feature = "gecko")]
 pub mod align;
@@ -54,6 +55,8 @@ pub mod basic_shape;
 pub mod border;
 pub mod calc;
 pub mod color;
+pub mod effects;
+pub mod flex;
 #[cfg(feature = "gecko")]
 pub mod gecko;
 pub mod grid;
@@ -78,8 +81,8 @@ pub use ::gecko::url::*;
 
 impl Parse for SpecifiedUrl {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        let url = try!(input.expect_url());
-        Self::parse_from_string(url, context)
+        let url = input.expect_url()?;
+        Self::parse_from_string(url.as_ref().to_owned(), context)
     }
 }
 
@@ -94,17 +97,18 @@ no_viewport_percentage!(SpecifiedUrl);
 /// Parse an `<integer>` value, handling `calc()` correctly.
 pub fn parse_integer<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                              -> Result<Integer, ParseError<'i>> {
-    match try!(input.next()) {
-        Token::Number(ref value) => value.int_value.ok_or(StyleParseError::UnspecifiedError.into()).map(Integer::new),
-        Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {
-            let result = try!(input.parse_nested_block(|i| {
-                CalcNode::parse_integer(context, i)
-            }));
-
-            Ok(Integer::from_calc(result))
-        }
-        t => Err(BasicParseError::UnexpectedToken(t).into())
+    // FIXME: remove early returns when lifetimes are non-lexical
+    match *input.next()? {
+        Token::Number { int_value: Some(v), .. } => return Ok(Integer::new(v)),
+        Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {}
+        ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into())
     }
+
+    let result = input.parse_nested_block(|i| {
+        CalcNode::parse_integer(context, i)
+    })?;
+
+    Ok(Integer::from_calc(result))
 }
 
 /// Parse a `<number>` value, handling `calc()` correctly, and without length
@@ -119,25 +123,26 @@ pub fn parse_number_with_clamping_mode<'i, 't>(context: &ParserContext,
                                                input: &mut Parser<'i, 't>,
                                                clamping_mode: AllowedNumericType)
                                                -> Result<Number, ParseError<'i>> {
-    match try!(input.next()) {
-        Token::Number(ref value) if clamping_mode.is_ok(value.value) => {
-            Ok(Number {
-                value: value.value.min(f32::MAX).max(f32::MIN),
+    // FIXME: remove early returns when lifetimes are non-lexical
+    match *input.next()? {
+        Token::Number { value, .. } if clamping_mode.is_ok(context.parsing_mode, value) => {
+            return Ok(Number {
+                value: value.min(f32::MAX).max(f32::MIN),
                 calc_clamping_mode: None,
             })
-        },
-        Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {
-            let result = try!(input.parse_nested_block(|i| {
-                CalcNode::parse_number(context, i)
-            }));
-
-            Ok(Number {
-                value: result.min(f32::MAX).max(f32::MIN),
-                calc_clamping_mode: Some(clamping_mode),
-            })
         }
-        t => Err(BasicParseError::UnexpectedToken(t).into())
+        Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {}
+        ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into())
     }
+
+    let result = input.parse_nested_block(|i| {
+        CalcNode::parse_number(context, i)
+    })?;
+
+    Ok(Number {
+        value: result.min(f32::MAX).max(f32::MIN),
+        calc_clamping_mode: Some(clamping_mode),
+    })
 }
 
 #[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq)]
@@ -224,18 +229,17 @@ impl Angle {
 impl Parse for Angle {
     /// Parses an angle according to CSS-VALUES § 6.1.
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        let token = try!(input.next());
+        // FIXME: remove clone() when lifetimes are non-lexical
+        let token = input.next()?.clone();
         match token {
-            Token::Dimension(ref value, ref unit) => {
-                Angle::parse_dimension(value.value,
-                                       unit,
-                                       /* from_calc = */ false)
+            Token::Dimension { value, ref unit, .. } => {
+                Angle::parse_dimension(value, unit, /* from_calc = */ false)
             }
             Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {
                 return input.parse_nested_block(|i| CalcNode::parse_angle(context, i))
             }
             _ => Err(())
-        }.map_err(|()| BasicParseError::UnexpectedToken(token).into())
+        }.map_err(|()| BasicParseError::UnexpectedToken(token.clone()).into())
     }
 }
 
@@ -266,19 +270,18 @@ impl Angle {
     /// https://github.com/w3c/csswg-drafts/issues/1162 is resolved.
     pub fn parse_with_unitless<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                                        -> Result<Self, ParseError<'i>> {
-        let token = try!(input.next());
+        // FIXME: remove clone() when lifetimes are non-lexical
+        let token = input.next()?.clone();
         match token {
-            Token::Dimension(ref value, ref unit) => {
-                Angle::parse_dimension(value.value,
-                                       unit,
-                                       /* from_calc = */ false)
+            Token::Dimension { value, ref unit, .. } => {
+                Angle::parse_dimension(value, unit, /* from_calc = */ false)
             }
-            Token::Number(ref value) if value.value == 0. => Ok(Angle::zero()),
+            Token::Number { value, .. } if value == 0. => Ok(Angle::zero()),
             Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {
                 return input.parse_nested_block(|i| CalcNode::parse_angle(context, i))
             }
             _ => Err(())
-        }.map_err(|()| BasicParseError::UnexpectedToken(token).into())
+        }.map_err(|()| BasicParseError::UnexpectedToken(token.clone()).into())
     }
 }
 
@@ -364,19 +367,26 @@ impl Time {
                                         input: &mut Parser<'i, 't>,
                                         clamping_mode: AllowedNumericType)
                                         -> Result<Self, ParseError<'i>> {
+        use style_traits::PARSING_MODE_DEFAULT;
+
+        // FIXME: remove early returns when lifetimes are non-lexical
         match input.next() {
-            Ok(Token::Dimension(ref value, ref unit)) if clamping_mode.is_ok(value.value) => {
-                Time::parse_dimension(value.value, &unit, /* from_calc = */ false)
+            // Note that we generally pass ParserContext to is_ok() to check
+            // that the ParserMode of the ParserContext allows all numeric
+            // values for SMIL regardless of clamping_mode, but in this Time
+            // value case, the value does not animate for SMIL at all, so we use
+            // PARSING_MODE_DEFAULT directly.
+            Ok(&Token::Dimension { value, ref unit, .. }) if clamping_mode.is_ok(PARSING_MODE_DEFAULT, value) => {
+                return Time::parse_dimension(value, unit, /* from_calc = */ false)
                     .map_err(|()| StyleParseError::UnspecifiedError.into())
             }
-            Ok(Token::Function(ref name)) if name.eq_ignore_ascii_case("calc") => {
-                match input.parse_nested_block(|i| CalcNode::parse_time(context, i)) {
-                    Ok(time) if clamping_mode.is_ok(time.seconds) => Ok(time),
-                    _ => Err(StyleParseError::UnspecifiedError.into()),
-                }
-            }
-            Ok(t) => Err(BasicParseError::UnexpectedToken(t).into()),
-            Err(e) => Err(e.into())
+            Ok(&Token::Function(ref name)) if name.eq_ignore_ascii_case("calc") => {}
+            Ok(t) => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
+            Err(e) => return Err(e.into())
+        }
+        match input.parse_nested_block(|i| CalcNode::parse_time(context, i)) {
+            Ok(time) if clamping_mode.is_ok(PARSING_MODE_DEFAULT, time.seconds) => Ok(time),
+            _ => Err(StyleParseError::UnspecifiedError.into()),
         }
     }
 
@@ -457,21 +467,13 @@ impl Number {
     #[allow(missing_docs)]
     pub fn parse_non_negative<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                                       -> Result<Number, ParseError<'i>> {
-        if context.parsing_mode.allows_all_numeric_values() {
-            parse_number(context, input)
-        } else {
-            parse_number_with_clamping_mode(context, input, AllowedNumericType::NonNegative)
-        }
+        parse_number_with_clamping_mode(context, input, AllowedNumericType::NonNegative)
     }
 
     #[allow(missing_docs)]
     pub fn parse_at_least_one<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                                       -> Result<Number, ParseError<'i>> {
-        if context.parsing_mode.allows_all_numeric_values() {
-            parse_number(context, input)
-        } else {
-            parse_number_with_clamping_mode(context, input, AllowedNumericType::AtLeastOne)
-        }
+        parse_number_with_clamping_mode(context, input, AllowedNumericType::AtLeastOne)
     }
 }
 
@@ -505,8 +507,11 @@ impl ToCss for Number {
     }
 }
 
-/// <number-percentage>
+/// <number> | <percentage>
+///
 /// Accepts only non-negative numbers.
+///
+/// FIXME(emilio): Should probably use Either.
 #[allow(missing_docs)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 #[derive(Clone, Copy, Debug, PartialEq, ToCss)]
@@ -518,11 +523,12 @@ pub enum NumberOrPercentage {
 no_viewport_percentage!(NumberOrPercentage);
 
 impl NumberOrPercentage {
-    fn parse_with_clamping_mode<'i, 't>(context: &ParserContext,
-                                        input: &mut Parser<'i, 't>,
-                                        type_: AllowedNumericType)
-                                        -> Result<Self, ParseError<'i>> {
-        if let Ok(per) = input.try(|i| Percentage::parse_with_clamping_mode(i, type_)) {
+    fn parse_with_clamping_mode<'i, 't>(
+        context: &ParserContext,
+        input: &mut Parser<'i, 't>,
+        type_: AllowedNumericType
+    ) -> Result<Self, ParseError<'i>> {
+        if let Ok(per) = input.try(|i| Percentage::parse_with_clamping_mode(context, i, type_)) {
             return Ok(NumberOrPercentage::Percentage(per));
         }
 
@@ -560,7 +566,14 @@ impl ToComputedValue for Opacity {
 
     #[inline]
     fn to_computed_value(&self, context: &Context) -> CSSFloat {
-        self.0.to_computed_value(context).min(1.0).max(0.0)
+        let value = self.0.to_computed_value(context);
+        if context.for_smil_animation {
+            // SMIL expects to be able to interpolate between out-of-range
+            // opacity values.
+            value
+        } else {
+            value.min(1.0).max(0.0)
+        }
     }
 
     #[inline]
@@ -685,134 +698,10 @@ pub type TrackSize = GenericTrackSize<LengthOrPercentage>;
 
 /// The specified value of a grid `<track-list>`
 /// (could also be `<auto-track-list>` or `<explicit-track-list>`)
-pub type TrackList = GenericTrackList<TrackSizeOrRepeat>;
+pub type TrackList = GenericTrackList<LengthOrPercentage>;
 
-/// `<track-list> | none`
-pub type TrackListOrNone = Either<TrackList, None_>;
-
-#[derive(Clone, Debug, HasViewportPercentage, PartialEq)]
-#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-#[allow(missing_docs)]
-pub struct Shadow {
-    pub offset_x: Length,
-    pub offset_y: Length,
-    pub blur_radius: Length,
-    pub spread_radius: Length,
-    pub color: Option<Color>,
-    pub inset: bool,
-}
-
-impl ToComputedValue for Shadow {
-    type ComputedValue = ComputedShadow;
-
-    #[inline]
-    fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
-        ComputedShadow {
-            offset_x: self.offset_x.to_computed_value(context),
-            offset_y: self.offset_y.to_computed_value(context),
-            blur_radius: self.blur_radius.to_computed_value(context),
-            spread_radius: self.spread_radius.to_computed_value(context),
-            color: self.color.as_ref().unwrap_or(&Color::CurrentColor)
-                             .to_computed_value(context),
-            inset: self.inset,
-        }
-    }
-
-    #[inline]
-    fn from_computed_value(computed: &ComputedShadow) -> Self {
-        Shadow {
-            offset_x: ToComputedValue::from_computed_value(&computed.offset_x),
-            offset_y: ToComputedValue::from_computed_value(&computed.offset_y),
-            blur_radius: ToComputedValue::from_computed_value(&computed.blur_radius),
-            spread_radius: ToComputedValue::from_computed_value(&computed.spread_radius),
-            color: Some(ToComputedValue::from_computed_value(&computed.color)),
-            inset: computed.inset,
-        }
-    }
-}
-
-impl ToCss for Shadow {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        if self.inset {
-            dest.write_str("inset ")?;
-        }
-        self.offset_x.to_css(dest)?;
-        dest.write_str(" ")?;
-        self.offset_y.to_css(dest)?;
-        dest.write_str(" ")?;
-        self.blur_radius.to_css(dest)?;
-        if self.spread_radius != Length::zero() {
-            dest.write_str(" ")?;
-            self.spread_radius.to_css(dest)?;
-        }
-        if let Some(ref color) = self.color {
-            dest.write_str(" ")?;
-            color.to_css(dest)?;
-        }
-        Ok(())
-    }
-}
-
-impl Shadow {
-    // disable_spread_and_inset is for filter: drop-shadow(...)
-    #[allow(missing_docs)]
-    pub fn parse<'i, 't>(context: &ParserContext,
-                         input: &mut Parser<'i, 't>,
-                         disable_spread_and_inset: bool)
-                         -> Result<Shadow, ParseError<'i>> {
-        let mut lengths = [Length::zero(), Length::zero(), Length::zero(), Length::zero()];
-        let mut lengths_parsed = false;
-        let mut color = None;
-        let mut inset = false;
-
-        loop {
-            if !inset && !disable_spread_and_inset {
-                if input.try(|input| input.expect_ident_matching("inset")).is_ok() {
-                    inset = true;
-                    continue
-                }
-            }
-            if !lengths_parsed {
-                if let Ok(value) = input.try(|i| Length::parse(context, i)) {
-                    lengths[0] = value;
-                    lengths[1] = try!(Length::parse(context, input));
-                    if let Ok(value) = input.try(|i| Length::parse_non_negative(context, i)) {
-                        lengths[2] = value;
-                        if !disable_spread_and_inset {
-                            if let Ok(value) = input.try(|i| Length::parse(context, i)) {
-                                lengths[3] = value;
-                            }
-                        }
-                    }
-                    lengths_parsed = true;
-                    continue
-                }
-            }
-            if color.is_none() {
-                if let Ok(value) = input.try(|i| Color::parse(context, i)) {
-                    color = Some(value);
-                    continue
-                }
-            }
-            break
-        }
-
-        // Lengths must be specified.
-        if !lengths_parsed {
-            return Err(StyleParseError::UnspecifiedError.into())
-        }
-
-        debug_assert!(!disable_spread_and_inset || lengths[3] == Length::zero());
-        Ok(Shadow {
-            offset_x: lengths[0].take(),
-            offset_y: lengths[1].take(),
-            blur_radius: lengths[2].take(),
-            spread_radius: lengths[3].take(),
-            color: color,
-            inset: inset,
-        })
-    }
-}
+/// `<grid-template-rows> | <grid-template-columns>`
+pub type GridTemplateComponent = GenericGridTemplateComponent<LengthOrPercentage>;
 
 no_viewport_percentage!(SVGPaint);
 
@@ -821,40 +710,6 @@ pub type SVGPaint = ::values::generics::SVGPaint<RGBAColor>;
 
 /// Specified SVG Paint Kind value
 pub type SVGPaintKind = ::values::generics::SVGPaintKind<RGBAColor>;
-
-impl ToComputedValue for SVGPaint {
-    type ComputedValue = super::computed::SVGPaint;
-
-    #[inline]
-    fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
-        super::computed::SVGPaint {
-            kind: self.kind.to_computed_value(context),
-            fallback: self.fallback.as_ref().map(|f| f.to_computed_value(context))
-        }
-    }
-
-    #[inline]
-    fn from_computed_value(computed: &Self::ComputedValue) -> Self {
-        SVGPaint {
-            kind: ToComputedValue::from_computed_value(&computed.kind),
-            fallback: computed.fallback.as_ref().map(ToComputedValue::from_computed_value)
-        }
-    }
-}
-
-impl ToComputedValue for SVGPaintKind {
-    type ComputedValue = super::computed::SVGPaintKind;
-
-    #[inline]
-    fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
-        self.convert(|color| color.to_computed_value(context))
-    }
-
-    #[inline]
-    fn from_computed_value(computed: &Self::ComputedValue) -> Self {
-        computed.convert(ToComputedValue::from_computed_value)
-    }
-}
 
 /// <length> | <percentage> | <number>
 pub type LengthOrPercentageOrNumber = Either<Number, LengthOrPercentage>;
@@ -890,36 +745,36 @@ pub struct ClipRect {
 
 impl ToCss for ClipRect {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        try!(dest.write_str("rect("));
+        dest.write_str("rect(")?;
 
         if let Some(ref top) = self.top {
-            try!(top.to_css(dest));
-            try!(dest.write_str(", "));
+            top.to_css(dest)?;
+            dest.write_str(", ")?;
         } else {
-            try!(dest.write_str("auto, "));
+            dest.write_str("auto, ")?;
         }
 
         if let Some(ref right) = self.right {
-            try!(right.to_css(dest));
-            try!(dest.write_str(", "));
+            right.to_css(dest)?;
+            dest.write_str(", ")?;
         } else {
-            try!(dest.write_str("auto, "));
+            dest.write_str("auto, ")?;
         }
 
         if let Some(ref bottom) = self.bottom {
-            try!(bottom.to_css(dest));
-            try!(dest.write_str(", "));
+            bottom.to_css(dest)?;
+            dest.write_str(", ")?;
         } else {
-            try!(dest.write_str("auto, "));
+            dest.write_str("auto, ")?;
         }
 
         if let Some(ref left) = self.left {
-            try!(left.to_css(dest));
+            left.to_css(dest)?;
         } else {
-            try!(dest.write_str("auto"));
+            dest.write_str("auto")?;
         }
 
-        try!(dest.write_str(")"));
+        dest.write_str(")")?;
         Ok(())
     }
 }
@@ -969,27 +824,24 @@ impl ClipRect {
             }
         }
 
-        let func = try!(input.expect_function());
-        if !func.eq_ignore_ascii_case("rect") {
-            return Err(StyleParseError::UnexpectedFunction(func).into())
-        }
+        input.expect_function_matching("rect")?;
 
         input.parse_nested_block(|input| {
-            let top = try!(parse_argument(context, input, allow_quirks));
+            let top = parse_argument(context, input, allow_quirks)?;
             let right;
             let bottom;
             let left;
 
             if input.try(|input| input.expect_comma()).is_ok() {
-                right = try!(parse_argument(context, input, allow_quirks));
-                try!(input.expect_comma());
-                bottom = try!(parse_argument(context, input, allow_quirks));
-                try!(input.expect_comma());
-                left = try!(parse_argument(context, input, allow_quirks));
+                right = parse_argument(context, input, allow_quirks)?;
+                input.expect_comma()?;
+                bottom = parse_argument(context, input, allow_quirks)?;
+                input.expect_comma()?;
+                left = parse_argument(context, input, allow_quirks)?;
             } else {
-                right = try!(parse_argument(context, input, allow_quirks));
-                bottom = try!(parse_argument(context, input, allow_quirks));
-                left = try!(parse_argument(context, input, allow_quirks));
+                right = parse_argument(context, input, allow_quirks)?;
+                bottom = parse_argument(context, input, allow_quirks)?;
+                left = parse_argument(context, input, allow_quirks)?;
             }
             Ok(ClipRect {
                 top: top,
@@ -1094,20 +946,20 @@ impl Attr {
                                   -> Result<Attr, ParseError<'i>> {
         // Syntax is `[namespace? `|`]? ident`
         // no spaces allowed
-        let first = input.try(|i| i.expect_ident()).ok();
-        if let Ok(token) = input.try(|i| i.next_including_whitespace()) {
+        let first = input.try(|i| i.expect_ident_cloned()).ok();
+        if let Ok(token) = input.try(|i| i.next_including_whitespace().map(|t| t.clone())) {
             match token {
                 Token::Delim('|') => {}
-                t => return Err(BasicParseError::UnexpectedToken(t).into()),
+                ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
             }
             // must be followed by an ident
-            let second_token = match input.next_including_whitespace()? {
-                Token::Ident(second) => second,
-                t => return Err(BasicParseError::UnexpectedToken(t).into()),
+            let second_token = match *input.next_including_whitespace()? {
+                Token::Ident(ref second) => second,
+                ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
             };
 
             let ns_with_id = if let Some(ns) = first {
-                let ns: Namespace = ns.into();
+                let ns = Namespace::from(ns.as_ref());
                 let id: Result<_, ParseError> =
                     get_id_for_namespace(&ns, context)
                     .map_err(|()| StyleParseError::UnspecifiedError.into());
@@ -1117,14 +969,14 @@ impl Attr {
             };
             return Ok(Attr {
                 namespace: ns_with_id,
-                attribute: second_token.into_owned(),
+                attribute: second_token.as_ref().to_owned(),
             })
         }
 
         if let Some(first) = first {
             Ok(Attr {
                 namespace: None,
-                attribute: first.into_owned(),
+                attribute: first.as_ref().to_owned(),
             })
         } else {
             Err(StyleParseError::UnspecifiedError.into())

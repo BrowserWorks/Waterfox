@@ -25,12 +25,6 @@ XPCOMUtils.defineLazyGetter(this, "DynamicResizeWatcher", function() {
   return tmp.DynamicResizeWatcher;
 });
 
-XPCOMUtils.defineLazyGetter(this, "Utils", function() {
-  let tmp = {};
-  Cu.import("resource://gre/modules/sessionstore/Utils.jsm", tmp);
-  return tmp.Utils;
-});
-
 let messageManager = window.messageManager;
 let openUILinkIn = window.openUILinkIn;
 
@@ -368,7 +362,7 @@ SocialShare = {
     // web-panels (bookmark/sidebar) don't include customizableui, so
     // nsContextMenu fails when accessing shareButton, breaking
     // browser_bug409481.js.
-    if (!window.CustomizableUI)
+    if (document.documentElement.getAttribute("windowtype") !== "navigator:browser")
       return null;
     let widget = CustomizableUI.getWidget("social-share-button");
     if (!widget || !widget.areaType)

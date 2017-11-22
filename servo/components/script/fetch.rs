@@ -7,6 +7,7 @@ use dom::bindings::codegen::Bindings::RequestBinding::RequestInit;
 use dom::bindings::codegen::Bindings::ResponseBinding::ResponseBinding::ResponseMethods;
 use dom::bindings::codegen::Bindings::ResponseBinding::ResponseType as DOMResponseType;
 use dom::bindings::error::Error;
+use dom::bindings::inheritance::Castable;
 use dom::bindings::js::Root;
 use dom::bindings::refcounted::{Trusted, TrustedPromise};
 use dom::bindings::reflector::DomObject;
@@ -16,13 +17,14 @@ use dom::headers::Guard;
 use dom::promise::Promise;
 use dom::request::Request;
 use dom::response::Response;
+use dom::serviceworkerglobalscope::ServiceWorkerGlobalScope;
 use ipc_channel::ipc;
 use ipc_channel::router::ROUTER;
 use js::jsapi::JSAutoCompartment;
 use net_traits::{FetchResponseListener, NetworkError};
 use net_traits::{FilteredMetadata, FetchMetadata, Metadata};
 use net_traits::CoreResourceMsg::Fetch as NetTraitsFetch;
-use net_traits::request::Request as NetTraitsRequest;
+use net_traits::request::{Request as NetTraitsRequest, ServiceWorkersMode};
 use net_traits::request::RequestInit as NetTraitsRequestInit;
 use network_listener::{NetworkListener, PreInvoke};
 use servo_url::ServoUrl;
@@ -54,10 +56,7 @@ fn request_init_from_request(request: NetTraitsRequest) -> NetTraitsRequestInit 
         use_cors_preflight: request.use_cors_preflight,
         credentials_mode: request.credentials_mode,
         use_url_credentials: request.use_url_credentials,
-        // TODO: NetTraitsRequestInit and NetTraitsRequest have different "origin"
-        // ... NetTraitsRequestInit.origin: Url
-        // ... NetTraitsRequest.origin: RefCell<Origin>
-        origin: request.url(),
+        origin: GlobalScope::current().expect("No current global object").origin().immutable().clone(),
         referrer_url: from_referrer_to_referrer_url(&request),
         referrer_policy: request.referrer_policy,
         pipeline_id: request.pipeline_id,
@@ -83,12 +82,17 @@ pub fn Fetch(global: &GlobalScope, input: RequestInfo, init: RootedTraceableBox<
         },
         Ok(r) => r.get_request(),
     };
-    let request_init = request_init_from_request(request);
+    let mut request_init = request_init_from_request(request);
 
     // Step 3
-    response.Headers().set_guard(Guard::Immutable);
+    if global.downcast::<ServiceWorkerGlobalScope>().is_some() {
+        request_init.service_workers_mode = ServiceWorkersMode::Foreign;
+    }
 
     // Step 4
+    response.Headers().set_guard(Guard::Immutable);
+
+    // Step 5
     let (action_sender, action_receiver) = ipc::channel().unwrap();
     let fetch_context = Arc::new(Mutex::new(FetchContext {
         fetch_promise: Some(TrustedPromise::new(promise.clone())),

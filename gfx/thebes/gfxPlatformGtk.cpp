@@ -310,34 +310,10 @@ gfxPlatformGtk::GetFTLibrary()
     return gfxFcPlatformFontList::GetFTLibrary();
 }
 
-bool
-gfxPlatformGtk::IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlags)
-{
-    // check for strange format flags
-    NS_ASSERTION(!(aFormatFlags & gfxUserFontSet::FLAG_FORMAT_NOT_USED),
-                 "strange font format hint set");
-
-    // accept supported formats
-    // Pango doesn't apply features from AAT TrueType extensions.
-    // Assume that if this is the only SFNT format specified,
-    // then AAT extensions are required for complex script support.
-    if (aFormatFlags & gfxUserFontSet::FLAG_FORMATS_COMMON) {
-        return true;
-    }
-
-    // reject all other formats, known and unknown
-    if (aFormatFlags != 0) {
-        return false;
-    }
-
-    // no format hint set, need to look at data
-    return true;
-}
-
 static int32_t sDPI = 0;
 
 int32_t
-gfxPlatformGtk::GetDPI()
+gfxPlatformGtk::GetFontScaleDPI()
 {
     if (!sDPI) {
         // Make sure init is run so we have a resolution
@@ -353,14 +329,14 @@ gfxPlatformGtk::GetDPI()
 }
 
 double
-gfxPlatformGtk::GetDPIScale()
+gfxPlatformGtk::GetFontScaleFactor()
 {
     // Integer scale factors work well with GTK window scaling, image scaling,
     // and pixel alignment, but there is a range where 1 is too small and 2 is
     // too big.  An additional step of 1.5 is added because this is common
     // scale on WINNT and at this ratio the advantages of larger rendering
     // outweigh the disadvantages from scaling and pixel mis-alignment.
-    int32_t dpi = GetDPI();
+    int32_t dpi = GetFontScaleDPI();
     if (dpi < 132) {
         return 1.0;
     }
@@ -652,7 +628,10 @@ public:
       if (!mVsyncThread.Start())
         return false;
 
-      RefPtr<Runnable> vsyncSetup = NewRunnableMethod(this, &GLXDisplay::SetupGLContext);
+      RefPtr<Runnable> vsyncSetup =
+        NewRunnableMethod("GLXVsyncSource::GLXDisplay::SetupGLContext",
+                          this,
+                          &GLXDisplay::SetupGLContext);
       mVsyncThread.message_loop()->PostTask(vsyncSetup.forget());
       // Wait until the setup has completed.
       lock.Wait();
@@ -724,7 +703,8 @@ public:
       // If the task has not nulled itself out, it hasn't yet realized
       // that vsync was disabled earlier, so continue its execution.
       if (!mVsyncTask) {
-        mVsyncTask = NewRunnableMethod(this, &GLXDisplay::RunVsync);
+        mVsyncTask = NewRunnableMethod(
+          "GLXVsyncSource::GLXDisplay::RunVsync", this, &GLXDisplay::RunVsync);
         RefPtr<Runnable> addrefedTask = mVsyncTask;
         mVsyncThread.message_loop()->PostTask(addrefedTask.forget());
       }
@@ -748,7 +728,8 @@ public:
       DisableVsync();
 
       // Cleanup thread-specific resources before shutting down.
-      RefPtr<Runnable> shutdownTask = NewRunnableMethod(this, &GLXDisplay::Cleanup);
+      RefPtr<Runnable> shutdownTask = NewRunnableMethod(
+        "GLXVsyncSource::GLXDisplay::Cleanup", this, &GLXDisplay::Cleanup);
       mVsyncThread.message_loop()->PostTask(shutdownTask.forget());
 
       // Stop, waiting for the cleanup task to finish execution.

@@ -9,16 +9,15 @@ use Atom;
 use bezier::Bezier;
 use context::SharedStyleContext;
 use dom::OpaqueNode;
-use euclid::point::Point2D;
 use font_metrics::FontMetricsProvider;
 use properties::{self, CascadeFlags, ComputedValues, Importance};
-use properties::animated_properties::{AnimatedProperty, TransitionProperty};
+use properties::animated_properties::{AnimatableLonghand, AnimatedProperty, TransitionProperty};
 use properties::longhands::animation_direction::computed_value::single_value::T as AnimationDirection;
 use properties::longhands::animation_iteration_count::single_value::computed_value::T as AnimationIterationCount;
 use properties::longhands::animation_play_state::computed_value::single_value::T as AnimationPlayState;
 use rule_tree::CascadeLevel;
+use servo_arc::Arc;
 use std::sync::mpsc::Sender;
-use stylearc::Arc;
 use stylesheets::keyframes_rule::{KeyframesStep, KeyframesStepValue};
 use timer::Timer;
 use values::computed::Time;
@@ -330,7 +329,27 @@ impl PropertyAnimation {
                                 -> Option<PropertyAnimation> {
         debug_assert!(!transition_property.is_shorthand() &&
                       transition_property != &TransitionProperty::All);
-        let animated_property = AnimatedProperty::from_transition_property(transition_property,
+
+        // We're not expecting |transition_property| to be a shorthand (including 'all') and
+        // all other transitionable properties should be animatable longhands (since transitionable
+        // is a subset of animatable).
+        let animatable_longhand =
+            AnimatableLonghand::from_transition_property(transition_property).unwrap();
+
+        PropertyAnimation::from_animatable_longhand(&animatable_longhand,
+                                                    timing_function,
+                                                    duration,
+                                                    old_style,
+                                                    new_style)
+    }
+
+    fn from_animatable_longhand(animatable_longhand: &AnimatableLonghand,
+                                timing_function: TimingFunction,
+                                duration: Time,
+                                old_style: &ComputedValues,
+                                new_style: &ComputedValues)
+                                -> Option<PropertyAnimation> {
+        let animated_property = AnimatedProperty::from_animatable_longhand(animatable_longhand,
                                                                            old_style,
                                                                            new_style);
 
@@ -349,18 +368,10 @@ impl PropertyAnimation {
 
     /// Update the given animation at a given point of progress.
     pub fn update(&self, style: &mut ComputedValues, time: f64) {
-        let solve_bezier = |(p1, p2): (Point2D<_>, Point2D<_>)| {
-            let epsilon = 1. / (200. * (self.duration.seconds() as f64));
-            let bezier = Bezier::new(
-                Point2D::new(p1.x as f64, p1.y as f64),
-                Point2D::new(p2.x as f64, p2.y as f64),
-            );
-            bezier.solve(time, epsilon)
-        };
-
+        let epsilon = 1. / (200. * (self.duration.seconds() as f64));
         let progress = match self.timing_function {
-            GenericTimingFunction::CubicBezier(p1, p2) => {
-                solve_bezier((p1, p2))
+            GenericTimingFunction::CubicBezier { x1, y1, x2, y2 } => {
+                Bezier::new(x1, y1, x2, y2).solve(time, epsilon)
             },
             GenericTimingFunction::Steps(steps, StepPosition::Start) => {
                 (time * (steps as f64)).ceil() / (steps as f64)
@@ -385,7 +396,8 @@ impl PropertyAnimation {
                 out
             },
             GenericTimingFunction::Keyword(keyword) => {
-                solve_bezier(keyword.to_bezier_points())
+                let (x1, x2, y1, y2) = keyword.to_bezier();
+                Bezier::new(x1, x2, y1, y2).solve(time, epsilon)
             },
         };
 
@@ -461,9 +473,9 @@ pub fn start_transitions_if_applicable(new_animations_sender: &Sender<Animation>
 fn compute_style_for_animation_step(context: &SharedStyleContext,
                                     step: &KeyframesStep,
                                     previous_style: &ComputedValues,
-                                    style_from_cascade: &ComputedValues,
+                                    style_from_cascade: &Arc<ComputedValues>,
                                     font_metrics_provider: &FontMetricsProvider)
-                                    -> ComputedValues {
+                                    -> Arc<ComputedValues> {
     match step.value {
         KeyframesStepValue::ComputedValues => style_from_cascade.clone(),
         KeyframesStepValue::Declarations { block: ref declarations } => {
@@ -482,13 +494,14 @@ fn compute_style_for_animation_step(context: &SharedStyleContext,
             // as existing browsers don't appear to animate visited styles.
             let computed =
                 properties::apply_declarations(context.stylist.device(),
-                                               /* is_root = */ false,
+                                               /* pseudo = */ None,
+                                               previous_style.rules(),
                                                iter,
-                                               previous_style,
-                                               previous_style,
+                                               Some(previous_style),
+                                               Some(previous_style),
+                                               Some(previous_style),
                                                /* cascade_info = */ None,
                                                /* visited_style = */ None,
-                                               &*context.error_reporter,
                                                font_metrics_provider,
                                                CascadeFlags::empty(),
                                                context.quirks_mode);
@@ -743,22 +756,22 @@ pub fn update_style_for_animation(context: &SharedStyleContext,
 
             let mut new_style = (*style).clone();
 
-            for transition_property in &animation.properties_changed {
+            for property in &animation.properties_changed {
                 debug!("update_style_for_animation: scanning prop {:?} for animation \"{}\"",
-                       transition_property, name);
-                match PropertyAnimation::from_transition_property(transition_property,
+                       property, name);
+                match PropertyAnimation::from_animatable_longhand(property,
                                                                   timing_function,
                                                                   Time::from_seconds(relative_duration as f32),
                                                                   &from_style,
                                                                   &target_style) {
                     Some(property_animation) => {
-                        debug!("update_style_for_animation: got property animation for prop {:?}", transition_property);
+                        debug!("update_style_for_animation: got property animation for prop {:?}", property);
                         debug!("update_style_for_animation: {:?}", property_animation);
                         property_animation.update(Arc::make_mut(&mut new_style), relative_progress);
                     }
                     None => {
                         debug!("update_style_for_animation: property animation {:?} not animating",
-                               transition_property);
+                               property);
                     }
                 }
             }

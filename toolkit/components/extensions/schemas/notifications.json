@@ -316,6 +316,7 @@
               {
                 "name": "notifications",
                 "type": "object",
+                "additionalProperties": {"$ref": "CreateNotificationOptions"},
                 "description": "The set of notifications currently in the system."
               }
             ]
@@ -409,6 +410,18 @@
         "type": "function",
         "description": "Fired when the user clicked on a link for the app's notification settings.",
         "parameters": [
+        ]
+      },
+      {
+        "name": "onShown",
+        "type": "function",
+        "description": "Fired when the notification is shown.",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "notificationId",
+            "description": "The notificationId of the shown notification."
+          }
         ]
       }
     ]

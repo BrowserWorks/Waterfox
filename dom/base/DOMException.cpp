@@ -16,7 +16,6 @@
 #include "nsIDocument.h"
 #include "nsIDOMDOMException.h"
 #include "nsIException.h"
-#include "nsIProgrammingLanguage.h"
 #include "nsMemory.h"
 #include "xpcprivate.h"
 
@@ -115,8 +114,6 @@ NSResultToNameAndMessage(nsresult aNSResult,
   }
 
   NS_WARNING("Huh, someone is throwing non-DOM errors using the DOM module!");
-
-  return;
 }
 
 nsresult

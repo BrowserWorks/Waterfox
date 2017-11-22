@@ -437,15 +437,13 @@ ContextToFP(CONTEXT* context)
 #endif
 }
 
+#ifndef JS_CODEGEN_NONE
 static uint8_t*
 ContextToSP(CONTEXT* context)
 {
-#ifdef JS_CODEGEN_NONE
-    MOZ_CRASH();
-#else
     return reinterpret_cast<uint8_t*>(SP_sig(context));
-#endif
 }
+#endif
 
 #if defined(__arm__) || defined(__aarch64__)
 static uint8_t*
@@ -1426,6 +1424,19 @@ RedirectIonBackedgesToInterruptCheck(JSContext* cx)
     }
 }
 
+bool
+wasm::InInterruptibleCode(JSContext* cx, uint8_t* pc, const CodeSegment** cs)
+{
+    // Only interrupt in function code so that the frame iterators have the
+    // invariant that resumePC always has a function CodeRange and we can't
+    // get into any weird interrupt-during-interrupt-stub cases.
+    if (!cx->compartment())
+        return false;
+
+    const Code* code = cx->compartment()->wasm.lookupCode(pc, cs);
+    return code && (*cs)->containsFunctionPC(pc);
+}
+
 // The return value indicates whether the PC was changed, not whether there was
 // a failure.
 static bool
@@ -1447,14 +1458,8 @@ RedirectJitCodeToInterruptCheck(JSContext* cx, CONTEXT* context)
     uint8_t* pc = *ContextToPC(context);
 #endif
 
-    // Only interrupt in function code so that the frame iterators have the
-    // invariant that resumePC always has a function CodeRange and we can't
-    // get into any weird interrupt-during-interrupt-stub cases.
-    if (!cx->compartment())
-        return false;
-    const CodeSegment* codeSegment;
-    const Code* code = cx->compartment()->wasm.lookupCode(pc, &codeSegment);
-    if (!code || !codeSegment->containsFunctionPC(pc))
+    const CodeSegment* codeSegment = nullptr;
+    if (!InInterruptibleCode(cx, pc, &codeSegment))
         return false;
 
     // Only probe cx->activation() via ActivationIfInnermost after we know the
@@ -1679,7 +1684,7 @@ js::InterruptRunningJitCode(JSContext* cx)
     // thread is in the middle of a syscall. Rather than retrying in a loop,
     // just wait for the next request for interrupt.
     HANDLE thread = (HANDLE)cx->threadNative();
-    if (SuspendThread(thread) != -1) {
+    if (SuspendThread(thread) != (DWORD)-1) {
         CONTEXT context;
         context.ContextFlags = CONTEXT_FULL;
         if (GetThreadContext(thread, &context)) {

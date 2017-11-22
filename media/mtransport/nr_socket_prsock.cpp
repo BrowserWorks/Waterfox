@@ -110,6 +110,7 @@ nrappkit copyright:
 #include "mozilla/SyncRunnable.h"
 #include "nsTArray.h"
 #include "mozilla/dom/TCPSocketBinding.h"
+#include "mozilla/SystemGroup.h"
 #include "nsITCPSocketCallback.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
@@ -193,7 +194,7 @@ public:
   // Must be threadsafe for StaticRefPtr/ClearOnShutdown
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(SingletonThreadHolder)
 
-  explicit SingletonThreadHolder(const nsCSubstring& aName)
+  explicit SingletonThreadHolder(const nsACString& aName)
     : mName(aName)
   {
     mParentThread = NS_GetCurrentThread();
@@ -1579,7 +1580,8 @@ void NrUdpSocketIpc::create_i(const nsACString &host, const uint16_t port) {
                                     /* reuse = */ false,
                                     /* loopback = */ false,
                                     /* recv buffer size */ minBuffSize,
-                                    /* send buffer size */ minBuffSize))) {
+                                    /* send buffer size */ minBuffSize,
+                                    /* mainThreadEventTarget */ nullptr))) {
     err_ = true;
     MOZ_ASSERT(false, "Failed to create UDP socket");
     mon.NotifyAll();
@@ -1671,7 +1673,7 @@ class NrTcpSocketIpc::TcpSocketReadyRunner: public Runnable
 {
 public:
   explicit TcpSocketReadyRunner(NrTcpSocketIpc *sck)
-    : socket_(sck) {}
+    : Runnable("NrTcpSocketIpc::TcpSocketReadyRunner"), socket_(sck) {}
 
   NS_IMETHOD Run() override {
     socket_->maybe_post_socket_ready();
@@ -1969,9 +1971,16 @@ void NrTcpSocketIpc::connect_i(const nsACString &remote_addr,
                                uint16_t local_port,
                                const nsACString &tls_host) {
   ASSERT_ON_THREAD(io_thread_);
+  // io_thread_ was initialized as main thread at constructor,
+  // so the following assertion should be true.
+  MOZ_ASSERT(NS_IsMainThread());
+
   mirror_state_ = NR_CONNECTING;
 
-  dom::TCPSocketChild* child = new dom::TCPSocketChild(NS_ConvertUTF8toUTF16(remote_addr), remote_port);
+  dom::TCPSocketChild* child =
+    new dom::TCPSocketChild(NS_ConvertUTF8toUTF16(remote_addr),
+                            remote_port,
+                            SystemGroup::EventTargetFor(TaskCategory::Other));
   socket_child_ = child;
 
   // Bug 1285330: put filtering back in here
@@ -2094,8 +2103,10 @@ void NrTcpSocketIpc::maybe_post_socket_ready() {
     }
     if (poll_flags() & PR_POLL_READ) {
       if (msg_queue_.size()) {
-        r_log(LOG_GENERIC, LOG_INFO, "Firing read callback (%u)",
-              (uint32_t)msg_queue_.size());
+        if (msg_queue_.size() > 5) {
+          r_log(LOG_GENERIC, LOG_INFO, "Firing read callback (%u)",
+                (uint32_t)msg_queue_.size());
+        }
         fire_callback(NR_ASYNC_WAIT_READ);
         has_event = true;
       }
@@ -2222,7 +2233,7 @@ static int nr_socket_local_destroy(void **objp) {
     return 0;
 
   NrSocketBase *sock = static_cast<NrSocketBase *>(*objp);
-  *objp = 0;
+  *objp = nullptr;
 
   sock->close();  // Signal STS that we want not to listen
   sock->Release();  // Decrement the ref count

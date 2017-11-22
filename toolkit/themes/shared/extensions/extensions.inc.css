@@ -1053,8 +1053,20 @@ button.button-link:not([disabled="true"]):active:hover {
 }
 
 .addon-control.replacement {
-  background-color: #0095dd;
-  color: #FFF;
+  background-color: #0a84ff;
+  border-color: #0a84ff;
+  color: #fff;
+}
+
+.addon-control.replacement:active,
+.addon-control.replacement:hover {
+  background-color: #0060df;
+  border-color: #0060df;
+}
+
+.addon-control.replacement:active:hover {
+  background-color: #003eaa;
+  border-color: #003eaa;
 }
 
 /*** telemetry experiments ***/
@@ -1090,7 +1102,8 @@ button.button-link:not([disabled="true"]):active:hover {
   background-color: #fcf8ed;
 }
 
-#disabled-unsigned-addons-info {
+#disabled-unsigned-addons-info,
+#legacy-extensions-info {
   margin-bottom: 2em;
   margin-right: 48px;
   margin-left: 48px;

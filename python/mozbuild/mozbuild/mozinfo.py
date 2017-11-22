@@ -82,17 +82,20 @@ def build_dict(config, env=os.environ):
     d['datareporting'] = bool(substs.get('MOZ_DATA_REPORTING'))
     d['healthreport'] = substs.get('MOZ_SERVICES_HEALTHREPORT') == '1'
     d['sync'] = substs.get('MOZ_SERVICES_SYNC') == '1'
-    d['stylo'] = substs.get('MOZ_STYLO') == '1'
+    d['stylo'] = substs.get('MOZ_STYLO_ENABLE') == '1'
     d['asan'] = substs.get('MOZ_ASAN') == '1'
     d['tsan'] = substs.get('MOZ_TSAN') == '1'
+    d['ubsan'] = substs.get('MOZ_UBSAN') == '1'
     d['telemetry'] = substs.get('MOZ_TELEMETRY_REPORTING') == '1'
     d['tests_enabled'] = substs.get('ENABLE_TESTS') == "1"
     d['bin_suffix'] = substs.get('BIN_SUFFIX', '')
     d['addon_signing'] = substs.get('MOZ_ADDON_SIGNING') == '1'
     d['require_signing'] = substs.get('MOZ_REQUIRE_SIGNING') == '1'
+    d['no_legacy_extensions'] = substs.get('MOZ_ALLOW_LEGACY_EXTENSIONS') == '0'
     d['official'] = bool(substs.get('MOZILLA_OFFICIAL'))
     d['updater'] = substs.get('MOZ_UPDATER') == '1'
     d['artifact'] = substs.get('MOZ_ARTIFACT_BUILDS') == '1'
+    d['ccov'] = substs.get('MOZ_CODE_COVERAGE') == '1'
 
     def guess_platform():
         if d['buildapp'] in ('browser', 'mulet'):

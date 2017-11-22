@@ -5,12 +5,12 @@
 
 #include "nsGfxCheckboxControlFrame.h"
 
+#include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "nsIContent.h"
 #include "nsCOMPtr.h"
 #include "nsLayoutUtils.h"
-#include "nsRenderingContext.h"
 #include "nsIDOMHTMLInputElement.h"
 #include "nsDisplayList.h"
 #include <algorithm>
@@ -117,11 +117,11 @@ nsGfxCheckboxControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                             const nsDisplayListSet& aLists)
 {
   nsFormControlFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
-  
+
   // Get current checked state through content model.
   if ((!IsChecked() && !IsIndeterminate()) || !IsVisibleForPainting(aBuilder))
     return;   // we're not checked or not visible, nothing to paint.
-    
+
   if (IsThemed())
     return; // No need to paint the checkmark. The theme will do it.
 

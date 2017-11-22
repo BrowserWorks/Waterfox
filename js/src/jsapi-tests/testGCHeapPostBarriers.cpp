@@ -28,7 +28,9 @@ struct TestStruct<js::GCPtr<T>>
 {
     js::GCPtr<T> wrapper;
 
-    JS::Zone* zone() const { return wrapper->zone(); }
+    void trace(JSTracer* trc) {
+        TraceNullableEdge(trc, &wrapper, "TestStruct::wrapper");
+    }
 };
 
 // Give the GCPtr version GCManagedDeletePolicy as required.
@@ -150,6 +152,10 @@ TestHeapPostBarrierUpdate()
     CHECK(!js::gc::IsInsideNursery(wrapper.get()));
     CHECK(CanAccessObject(wrapper.get()));
 
+    JS::DeletePolicy<TestStruct<W>>()(ptr);
+
+    cx->minorGC(JS::gcreason::API);
+
     return true;
 }
 
@@ -172,6 +178,8 @@ TestHeapPostBarrierInitFailure()
         CHECK(wrapper.get() == nullptr);
         wrapper = initialObj;
         CHECK(wrapper == initialObj);
+
+        // testStruct deleted here, as if we left this block due to an error.
     }
 
     cx->minorGC(JS::gcreason::API);
@@ -204,10 +212,10 @@ BEGIN_TEST(testUnbarrieredEquality)
     using namespace js::gc;
     TenuredCell* cell = &obj->asTenured();
     TenuredCell* cell2 = &obj2->asTenured();
-    cell->markIfUnmarked(GRAY);
-    cell2->markIfUnmarked(GRAY);
-    MOZ_ASSERT(cell->isMarked(GRAY));
-    MOZ_ASSERT(cell2->isMarked(GRAY));
+    cell->markIfUnmarked(MarkColor::Gray);
+    cell2->markIfUnmarked(MarkColor::Gray);
+    MOZ_ASSERT(cell->isMarkedGray());
+    MOZ_ASSERT(cell2->isMarkedGray());
 
     {
         JS::Heap<JSObject*> heap(obj);
@@ -238,8 +246,8 @@ BEGIN_TEST(testUnbarrieredEquality)
         JS::Heap<JSObject*> heap2(obj2);
         heap.get();
         heap2.get();
-        CHECK(cell->isMarked(BLACK));
-        CHECK(cell2->isMarked(BLACK));
+        CHECK(cell->isMarkedBlack());
+        CHECK(cell2->isMarkedBlack());
     }
 
     return true;
@@ -256,35 +264,35 @@ TestWrapper(ObjectT obj, ObjectT obj2, WrapperT& wrapper, WrapperT& wrapper2)
 
     int x = 0;
 
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
     x += obj == obj2;
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
     x += obj == wrapper2;
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
     x += wrapper == obj2;
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
     x += wrapper == wrapper2;
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
 
     CHECK(x == 0);
 
     x += obj != obj2;
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
     x += obj != wrapper2;
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
     x += wrapper != obj2;
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
     x += wrapper != wrapper2;
-    CHECK(cell.isMarked(GRAY));
-    CHECK(cell2.isMarked(GRAY));
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
 
     CHECK(x == 4);
 

@@ -53,12 +53,7 @@ public:
   void ClearAllTimeouts();
   uint32_t GetTimeoutId(mozilla::dom::Timeout::Reason aReason);
 
-  // When timers are being throttled and we reduce the thottle delay we must
-  // reschedule.  The amount of the old throttle delay must be provided in
-  // order to bound how many timers must be examined.
-  nsresult ResetTimersForThrottleReduction();
-
-  int32_t DOMMinTimeoutValue(bool aIsTracking) const;
+  TimeDuration CalculateDelay(Timeout* aTimeout) const;
 
   // aTimeout is the timeout that we're about to start running.  This function
   // returns the current timeout.
@@ -75,6 +70,10 @@ public:
   void Freeze();
   void Thaw();
 
+  // This should be called by nsGlobalWindow when the window might have moved
+  // to the background or foreground.
+  void UpdateBackgroundState();
+
   // Initialize TimeoutManager before the first time it is accessed.
   static void Initialize();
 
@@ -83,7 +82,7 @@ public:
 
   // The document finished loading
   void OnDocumentLoaded();
-  void StartThrottlingTrackingTimeouts();
+  void StartThrottlingTimeouts();
 
   // Run some code for each Timeout in our list.  Note that this function
   // doesn't guarantee that Timeouts are iterated in any particular order.
@@ -114,8 +113,7 @@ public:
   static const uint32_t InvalidFiringId;
 
 private:
-  nsresult ResetTimersForThrottleReduction(int32_t aPreviousThrottleDelayMS);
-  void MaybeStartThrottleTrackingTimout();
+  void MaybeStartThrottleTimeout();
 
   // Return true if |aTimeout| needs to be reinserted into the timeout list.
   bool RescheduleTimeout(mozilla::dom::Timeout* aTimeout,
@@ -123,6 +121,8 @@ private:
                          const TimeStamp& aCurrentNow);
 
   bool IsBackground() const;
+
+  bool IsActive() const;
 
   uint32_t
   CreateFiringId();
@@ -135,6 +135,20 @@ private:
 
   bool
   IsInvalidFiringId(uint32_t aFiringId) const;
+
+  TimeDuration
+  MinSchedulingDelay() const;
+
+  nsresult MaybeSchedule(const TimeStamp& aWhen,
+                         const TimeStamp& aNow = TimeStamp::Now());
+
+  void RecordExecution(Timeout* aRunningTimeout,
+                       Timeout* aTimeout);
+
+  void UpdateBudget(const TimeStamp& aNow,
+                    const TimeDuration& aDuration = TimeDuration());
+
+  bool BudgetThrottlingEnabled(bool aIsBackground) const;
 
 private:
   struct Timeouts {
@@ -152,9 +166,6 @@ private:
       TimeWhen
     };
     void Insert(mozilla::dom::Timeout* aTimeout, SortBy aSortBy);
-    nsresult ResetTimersForThrottleReduction(int32_t aPreviousThrottleDelayMS,
-                                             const TimeoutManager& aTimeoutManager,
-                                             SortBy aSortBy);
 
     const Timeout* GetFirst() const { return mTimeoutList.getFirst(); }
     Timeout* GetFirst() { return mTimeoutList.getFirst(); }
@@ -223,8 +234,13 @@ private:
    // The current idle request callback timeout handle
   uint32_t                    mIdleCallbackTimeoutCounter;
 
-  nsCOMPtr<nsITimer>          mThrottleTrackingTimeoutsTimer;
+  nsCOMPtr<nsITimer>          mThrottleTimeoutsTimer;
+  mozilla::TimeStamp          mLastBudgetUpdate;
+  mozilla::TimeDuration       mExecutionBudget;
+
+  bool                        mThrottleTimeouts;
   bool                        mThrottleTrackingTimeouts;
+  bool                        mBudgetThrottleTimeouts;
 
   static uint32_t             sNestingLevel;
 };

@@ -141,6 +141,8 @@ RootActor.prototype = {
     // Whether the server supports full source actors (breakpoints on
     // eval scripts, etc)
     debuggerSourceActors: true,
+    // Whether the server can return wasm binary source
+    wasmBinarySource: true,
     bulk: true,
     // Whether the style rule actor implements the modifySelector method
     // that modifies the rule's selector
@@ -152,6 +154,8 @@ RootActor.prototype = {
     getUniqueSelector: true,
     // Whether the dom node actor implements the getCssPath method
     getCssPath: true,
+    // Whether the dom node actor implements the getXPath method
+    getXPath: true,
     // Whether the director scripts are supported
     directorScripts: true,
     // Whether the debugger server supports

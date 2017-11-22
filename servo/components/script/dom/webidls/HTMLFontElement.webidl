@@ -3,8 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlfontelement
+[HTMLConstructor]
 interface HTMLFontElement : HTMLElement {
-  [TreatNullAs=EmptyString] attribute DOMString color;
+  [CEReactions, TreatNullAs=EmptyString]
+  attribute DOMString color;
+  [CEReactions]
   attribute DOMString face;
+  [CEReactions]
   attribute DOMString size;
 };

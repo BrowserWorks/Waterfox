@@ -5,6 +5,7 @@
 
 /* rendering object for CSS display:inline objects */
 
+#include "gfxContext.h"
 #include "nsInlineFrame.h"
 #include "nsLineLayout.h"
 #include "nsBlockFrame.h"
@@ -12,7 +13,6 @@
 #include "nsGkAtoms.h"
 #include "nsStyleContext.h"
 #include "nsPresContext.h"
-#include "nsRenderingContext.h"
 #include "nsCSSAnonBoxes.h"
 #include "mozilla/RestyleManager.h"
 #include "mozilla/RestyleManagerInlines.h"
@@ -170,7 +170,7 @@ nsInlineFrame::IsEmpty()
 
 nsIFrame::FrameSearchResult
 nsInlineFrame::PeekOffsetCharacter(bool aForward, int32_t* aOffset,
-                                   bool aRespectClusters)
+                                   PeekOffsetCharacterOptions aOptions)
 {
   // Override the implementation in nsFrame, to skip empty inline frames
   NS_ASSERTION (aOffset && *aOffset <= 1, "aOffset out of range");
@@ -256,14 +256,14 @@ nsInlineFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 // Reflow methods
 
 /* virtual */ void
-nsInlineFrame::AddInlineMinISize(nsRenderingContext *aRenderingContext,
+nsInlineFrame::AddInlineMinISize(gfxContext *aRenderingContext,
                                  nsIFrame::InlineMinISizeData *aData)
 {
   DoInlineIntrinsicISize(aRenderingContext, aData, nsLayoutUtils::MIN_ISIZE);
 }
 
 /* virtual */ void
-nsInlineFrame::AddInlinePrefISize(nsRenderingContext *aRenderingContext,
+nsInlineFrame::AddInlinePrefISize(gfxContext *aRenderingContext,
                                   nsIFrame::InlinePrefISizeData *aData)
 {
   DoInlineIntrinsicISize(aRenderingContext, aData, nsLayoutUtils::PREF_ISIZE);
@@ -272,7 +272,7 @@ nsInlineFrame::AddInlinePrefISize(nsRenderingContext *aRenderingContext,
 
 /* virtual */
 LogicalSize
-nsInlineFrame::ComputeSize(nsRenderingContext *aRenderingContext,
+nsInlineFrame::ComputeSize(gfxContext *aRenderingContext,
                            WritingMode aWM,
                            const LogicalSize& aCBSize,
                            nscoord aAvailableISize,
@@ -467,7 +467,7 @@ nsInlineFrame::Reflow(nsPresContext*          aPresContext,
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aMetrics);
 }
 
-nsresult 
+nsresult
 nsInlineFrame::AttributeChanged(int32_t aNameSpaceID,
                                 nsIAtom* aAttribute,
                                 int32_t aModType)
@@ -660,7 +660,7 @@ nsInlineFrame::ReflowFrames(nsPresContext* aPresContext,
               }
             }
             else {
-#ifdef DEBUG              
+#ifdef DEBUG
               // Once we find a next-in-flow that isn't ours none of the
               // remaining next-in-flows should be either.
               for ( ; nextInFlow; nextInFlow = nextInFlow->GetNextInFlow()) {
@@ -919,7 +919,7 @@ nsInlineFrame::PushFrames(nsPresContext* aPresContext,
   NS_PRECONDITION(aPrevSibling->GetNextSibling() == aFromChild, "bad prev sibling");
 
 #ifdef NOISY_PUSHING
-  printf("%p pushing aFromChild %p, disconnecting from prev sib %p\n", 
+  printf("%p pushing aFromChild %p, disconnecting from prev sib %p\n",
          this, aFromChild, aPrevSibling);
 #endif
 
@@ -1014,9 +1014,8 @@ nsInlineFrame::AccessibleType()
 #endif
 
 void
-nsInlineFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
-                                             nsStyleChangeList& aChangeList,
-                                             nsChangeHint aHintForThisFrame)
+nsInlineFrame::UpdateStyleOfOwnedAnonBoxesForIBSplit(
+  ServoRestyleState& aRestyleState)
 {
   MOZ_ASSERT(GetStateBits() & NS_FRAME_OWNS_ANON_BOXES,
              "Why did we get called?");
@@ -1033,16 +1032,19 @@ nsInlineFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
   nsIFrame* blockFrame = GetProperty(nsIFrame::IBSplitSibling());
   MOZ_ASSERT(blockFrame, "Why did we have an IB split?");
 
+  // The later inlines need to get our style.
+  ServoStyleContext* ourStyle = StyleContext()->AsServo();
+
   // The anonymous block's style inherits from ours, and we already have our new
   // style context.
-  RefPtr<nsStyleContext> newContext =
-    aStyleSet.ResolveInheritingAnonymousBoxStyle(
-      nsCSSAnonBoxes::mozBlockInsideInlineWrapper, StyleContext());
+  RefPtr<ServoStyleContext> newContext =
+    aRestyleState.StyleSet().ResolveInheritingAnonymousBoxStyle(
+      nsCSSAnonBoxes::mozBlockInsideInlineWrapper, ourStyle);
 
   // We're guaranteed that newContext only differs from the old style context on
   // the block in things they might inherit from us.  And changehint processing
   // guarantees walking the continuation and ib-sibling chains, so our existing
-  // changehint beign in aChangeList is good enough.  So we don't need to touch
+  // changehint being in aChangeList is good enough.  So we don't need to touch
   // aChangeList at all here.
 
   while (blockFrame) {
@@ -1053,16 +1055,19 @@ nsInlineFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
                nsCSSAnonBoxes::mozBlockInsideInlineWrapper,
                "Unexpected kind of style context");
 
-    // We _could_ just walk along using GetNextContinuationWithSameStyle here,
-    // but it would involve going back to the first continuation every so often,
-    // which is a bit silly when we can just keep track of our first
-    // continuations.
+    // We don't want to just walk through using GetNextContinuationWithSameStyle
+    // here, because we want to set updated style contexts on both our
+    // ib-sibling blocks and inlines.
     for (nsIFrame* cont = blockFrame; cont; cont = cont->GetNextContinuation()) {
       cont->SetStyleContext(newContext);
     }
 
     nsIFrame* nextInline = blockFrame->GetProperty(nsIFrame::IBSplitSibling());
     MOZ_ASSERT(nextInline, "There is always a trailing inline in an IB split");
+
+    for (nsIFrame* cont = nextInline; cont; cont = cont->GetNextContinuation()) {
+      cont->SetStyleContext(ourStyle);
+    }
     blockFrame = nextInline->GetProperty(nsIFrame::IBSplitSibling());
   }
 }

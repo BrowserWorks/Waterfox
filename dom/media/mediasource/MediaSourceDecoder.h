@@ -37,15 +37,12 @@ class MediaSourceDecoder : public MediaDecoder
 public:
   explicit MediaSourceDecoder(MediaDecoderInit& aInit);
 
-  MediaDecoder* Clone(MediaDecoderInit& aInit) override;
   MediaDecoderStateMachine* CreateStateMachine() override;
-  nsresult Load(nsIStreamListener**) override;
+  nsresult Load(nsIPrincipal* aPrincipal);
   media::TimeIntervals GetSeekable() override;
   media::TimeIntervals GetBuffered() override;
 
   void Shutdown() override;
-
-  static already_AddRefed<MediaResource> CreateResource(nsIPrincipal* aPrincipal = nullptr);
 
   void AttachMediaSource(dom::MediaSource* aMediaSource);
   void DetachMediaSource();
@@ -72,10 +69,6 @@ public:
   MediaDecoderOwner::NextFrameStatus NextFrameBufferedStatus() override;
   bool CanPlayThrough() override;
 
-  void NotifyWaitingForKey() override;
-
-  MediaEventSource<void>* WaitingForKeyEvent() override;
-
   bool IsMSE() const override { return true; }
 
   void NotifyInitDataArrived();
@@ -89,8 +82,6 @@ private:
   // mMediaSource.
   dom::MediaSource* mMediaSource;
   RefPtr<MediaSourceDemuxer> mDemuxer;
-  RefPtr<MediaFormatReader> mReader;
-  MediaEventProducer<void> mWaitingForKeyEvent;
 
   bool mEnded;
 };

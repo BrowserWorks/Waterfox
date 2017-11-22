@@ -36,10 +36,10 @@ NS_IMPL_ISUPPORTS(HttpServer,
                   nsIServerSocketListener,
                   nsILocalCertGetCallback)
 
-HttpServer::HttpServer(AbstractThread* aMainThread)
+HttpServer::HttpServer(nsISerialEventTarget* aEventTarget)
   : mPort()
   , mHttps()
-  , mAbstractMainThread(aMainThread)
+  , mEventTarget(aEventTarget)
 {
 }
 
@@ -89,10 +89,9 @@ void
 HttpServer::NotifyStarted(nsresult aStatus)
 {
   RefPtr<HttpServerListener> listener = mListener;
-  nsCOMPtr<nsIRunnable> event = NS_NewRunnableFunction([listener, aStatus] ()
-  {
-    listener->OnServerStarted(aStatus);
-  });
+  nsCOMPtr<nsIRunnable> event = NS_NewRunnableFunction(
+    "dom::HttpServer::NotifyStarted",
+    [listener, aStatus]() { listener->OnServerStarted(aStatus); });
   NS_DispatchToCurrentThread(event);
 }
 
@@ -288,12 +287,12 @@ HttpServer::TransportProvider::MaybeNotify()
 {
   if (mTransport && mListener) {
     RefPtr<TransportProvider> self = this;
-    nsCOMPtr<nsIRunnable> event = NS_NewRunnableFunction([self, this] ()
-    {
-      DebugOnly<nsresult> rv = mListener->OnTransportAvailable(mTransport,
-                                                               mInput, mOutput);
-      MOZ_ASSERT(NS_SUCCEEDED(rv));
-    });
+    nsCOMPtr<nsIRunnable> event = NS_NewRunnableFunction(
+      "dom::HttpServer::TransportProvider::MaybeNotify", [self, this]() {
+        DebugOnly<nsresult> rv =
+          mListener->OnTransportAvailable(mTransport, mInput, mOutput);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
+      });
     NS_DispatchToCurrentThread(event);
   }
 }
@@ -327,7 +326,7 @@ HttpServer::Connection::Connection(nsISocketTransport* aTransport,
   if (mServer->mHttps) {
     SetSecurityObserver(true);
   } else {
-    mInput->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+    mInput->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
   }
 }
 
@@ -340,7 +339,7 @@ HttpServer::Connection::OnHandshakeDone(nsITLSServerSocket* aServer,
   // XXX Verify connection security
 
   SetSecurityObserver(false);
-  mInput->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+  mInput->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
 
   return NS_OK;
 }
@@ -391,7 +390,7 @@ HttpServer::Connection::OnInputStreamReady(nsIAsyncInputStream* aStream)
                             &numRead);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = mInput->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+  rv = mInput->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
   NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
@@ -633,11 +632,9 @@ HttpServer::Connection::ConsumeLine(const char* aBuffer,
 
       RefPtr<HttpServerListener> listener = mServer->mListener;
       RefPtr<InternalRequest> request = mPendingWebSocketRequest;
-      nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableFunction([listener, request] ()
-      {
-        listener->OnWebSocket(request);
-      });
+      nsCOMPtr<nsIRunnable> event = NS_NewRunnableFunction(
+        "dom::HttpServer::Connection::ConsumeLine",
+        [listener, request]() { listener->OnWebSocket(request); });
       NS_DispatchToCurrentThread(event);
 
       return NS_OK;
@@ -702,11 +699,9 @@ HttpServer::Connection::ConsumeLine(const char* aBuffer,
 
     RefPtr<HttpServerListener> listener = mServer->mListener;
     RefPtr<InternalRequest> request = mPendingReq.forget();
-    nsCOMPtr<nsIRunnable> event =
-      NS_NewRunnableFunction([listener, request] ()
-    {
-      listener->OnRequest(request);
-    });
+    nsCOMPtr<nsIRunnable> event = NS_NewRunnableFunction(
+      "dom::HttpServer::Connection::ConsumeLine",
+      [listener, request]() { listener->OnRequest(request); });
     NS_DispatchToCurrentThread(event);
 
     mPendingReqVersion = 0;
@@ -862,7 +857,7 @@ HttpServer::Connection::HandleWebSocketResponse(InternalResponse* aResponse)
 
   mState = eRequestLine;
   mPendingWebSocketRequest = nullptr;
-  mInput->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+  mInput->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
 
   QueueResponse(aResponse);
 }
@@ -1233,7 +1228,7 @@ HttpServer::Connection::OnOutputStreamReady(nsIAsyncOutputStream* aStream)
         buffer.Cut(0, written);
 
         if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
-          return mOutput->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+          return mOutput->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
         }
 
         if (NS_FAILED(rv)) {
@@ -1256,7 +1251,7 @@ HttpServer::Connection::OnOutputStreamReady(nsIAsyncOutputStream* aStream)
       RefPtr<Connection> self = this;
 
       mOutputCopy->
-        Then(mServer->mAbstractMainThread,
+        Then(mServer->mEventTarget,
              __func__,
              [self, this] (nsresult aStatus) {
                MOZ_ASSERT(mOutputBuffers[0].mStream);

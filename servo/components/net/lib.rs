@@ -28,9 +28,7 @@ extern crate net_traits;
 extern crate openssl;
 extern crate parse_hosts;
 extern crate profile_traits;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde;
 extern crate serde_json;
 extern crate servo_config;
 extern crate servo_url;
@@ -40,7 +38,7 @@ extern crate tinyfiledialogs;
 extern crate unicase;
 extern crate url;
 extern crate uuid;
-extern crate webrender_traits;
+extern crate webrender_api;
 extern crate websocket;
 
 mod blob_loader;

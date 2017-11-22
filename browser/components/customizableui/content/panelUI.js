@@ -2,19 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
-                                  "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ScrollbarSampler",
                                   "resource:///modules/ScrollbarSampler.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "ShortcutUtils",
-                                  "resource://gre/modules/ShortcutUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-                                  "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AppMenuNotifications",
                                   "resource://gre/modules/AppMenuNotifications.jsm");
-
-XPCOMUtils.defineLazyPreferenceGetter(this, "gPhotonStructure",
-  "browser.photon.structure.enabled", false);
 
 /**
  * Maintains the state and dispatches events for the main menu panel.
@@ -121,9 +112,11 @@ const PanelUI = {
       this.overflowFixedList.previousSibling.hidden = false;
       CustomizableUI.registerMenuPanel(this.overflowFixedList, CustomizableUI.AREA_FIXED_OVERFLOW_PANEL);
       this.navbar.setAttribute("photon-structure", "true");
+      document.documentElement.setAttribute("photon-structure", "true");
       this.updateOverflowStatus();
     } else {
       this.navbar.removeAttribute("photon-structure");
+      document.documentElement.removeAttribute("photon-structure");
     }
   },
 
@@ -271,10 +264,12 @@ const PanelUI = {
         }
 
         let anchor;
+        let domEvent = null;
         if (!aEvent ||
             aEvent.type == "command") {
           anchor = this.menuButton;
         } else {
+          domEvent = aEvent;
           anchor = aEvent.target;
         }
 
@@ -283,7 +278,7 @@ const PanelUI = {
         }, {once: true});
 
         anchor = this._getPanelAnchor(anchor);
-        this.panel.openPopup(anchor);
+        this.panel.openPopup(anchor, { triggerEvent: domEvent });
       }, (reason) => {
         console.error("Error showing the PanelUI menu", reason);
       });
@@ -444,7 +439,7 @@ const PanelUI = {
       this._updateQuitTooltip();
       this.panel.hidden = false;
       this._isReady = true;
-    })().then(null, Cu.reportError);
+    })().catch(Cu.reportError);
 
     return this._readyPromise;
   },
@@ -473,8 +468,22 @@ const PanelUI = {
    * @param aViewId the ID of the subview to show.
    * @param aAnchor the element that spawned the subview.
    * @param aPlacementArea the CustomizableUI area that aAnchor is in.
+   * @param aEvent the event triggering the view showing.
    */
-  async showSubView(aViewId, aAnchor, aPlacementArea) {
+  async showSubView(aViewId, aAnchor, aPlacementArea, aEvent) {
+
+    let domEvent = null;
+    if (aEvent) {
+      if (aEvent.type == "command" && aEvent.inputSource != null) {
+        // Synthesize a new DOM mouse event to pass on the inputSource.
+        domEvent = document.createEvent("MouseEvent");
+        domEvent.initNSMouseEvent("click", true, true, null, 0, aEvent.screenX, aEvent.screenY,
+                                  0, 0, false, false, false, false, 0, aEvent.target, 0, aEvent.inputSource);
+      } else if (aEvent.mozInputSource != null) {
+        domEvent = aEvent;
+      }
+    }
+
     this._ensureEventListenersAdded();
     let viewNode = document.getElementById(aViewId);
     if (!viewNode) {
@@ -515,12 +524,14 @@ const PanelUI = {
       multiView.setAttribute("nosubviews", "true");
       multiView.setAttribute("viewCacheId", "appMenu-viewCache");
       if (gPhotonStructure) {
+        tempPanel.setAttribute("photon", true);
         multiView.setAttribute("mainViewId", viewNode.id);
         multiView.appendChild(viewNode);
       }
       tempPanel.appendChild(multiView);
-      multiView.setAttribute("mainViewIsSubView", "true");
-      multiView.setMainView(viewNode);
+      if (!gPhotonStructure) {
+        multiView.setMainView(viewNode);
+      }
       viewNode.classList.add("cui-widget-panelview");
 
       let viewShown = false;
@@ -530,8 +541,9 @@ const PanelUI = {
           CustomizableUI.removePanelCloseListeners(tempPanel);
           tempPanel.removeEventListener("popuphidden", panelRemover);
 
-          let evt = new CustomEvent("ViewHiding", {detail: viewNode});
-          viewNode.dispatchEvent(evt);
+          let currentView = multiView.current || viewNode;
+          let evt = new CustomEvent("ViewHiding", {detail: currentView});
+          currentView.dispatchEvent(evt);
         }
         aAnchor.open = false;
 
@@ -579,7 +591,10 @@ const PanelUI = {
         anchor.setAttribute("consumeanchor", aAnchor.id);
       }
 
-      tempPanel.openPopup(anchor, "bottomcenter topright");
+      tempPanel.openPopup(anchor, {
+        position: "bottomcenter topright",
+        triggerEvent: domEvent,
+      });
     }
   },
 
@@ -635,6 +650,12 @@ const PanelUI = {
         (this.panel.state == "open" ||
          document.documentElement.hasAttribute("customizing"))) {
       this._adjustLabelsForAutoHyphens(aNode);
+    }
+  },
+
+  onAreaReset(aArea, aContainer) {
+    if (gPhotonStructure && aContainer == this.overflowFixedList) {
+      this.updateOverflowStatus();
     }
   },
 

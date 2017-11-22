@@ -7,6 +7,7 @@
 #ifndef TabGroup_h
 #define TabGroup_h
 
+#include "nsHashKeys.h"
 #include "nsISupportsImpl.h"
 #include "nsIPrincipal.h"
 #include "nsTHashtable.h"
@@ -25,6 +26,7 @@ namespace mozilla {
 class AbstractThread;
 class ThrottledEventQueue;
 namespace dom {
+class TabChild;
 
 // Two browsing contexts are considered "related" if they are reachable from one
 // another through window.opener, window.parent, or window.frames. This is the
@@ -42,6 +44,7 @@ namespace dom {
 // window.opener. A DocGroup is a member of exactly one TabGroup.
 
 class DocGroup;
+class TabChild;
 
 class TabGroup final : public SchedulerGroup
 {
@@ -119,13 +122,25 @@ public:
 
   // This method is always safe to call off the main thread. The nsIEventTarget
   // can always be used off the main thread.
-  nsIEventTarget* EventTargetFor(TaskCategory aCategory) const override;
+  nsISerialEventTarget* EventTargetFor(TaskCategory aCategory) const override;
 
   void WindowChangedBackgroundStatus(bool aIsNowBackground);
 
   // Returns true if all of the TabGroup's top-level windows are in
   // the background.
   bool IsBackground() const override;
+
+  // Increase/Decrease the number of IndexedDB transactions/databases for the
+  // decision making of the preemption in the scheduler.
+  Atomic<uint32_t>& IndexedDBTransactionCounter()
+  {
+    return mNumOfIndexedDBTransactions;
+  }
+
+  Atomic<uint32_t>& IndexedDBDatabaseCounter()
+  {
+    return mNumOfIndexedDBDatabases;
+  }
 
 private:
   virtual AbstractThread*
@@ -140,6 +155,8 @@ private:
   // Thread-safe members
   Atomic<bool> mLastWindowLeft;
   Atomic<bool> mThrottledQueuesInitialized;
+  Atomic<uint32_t> mNumOfIndexedDBTransactions;
+  Atomic<uint32_t> mNumOfIndexedDBDatabases;
   const bool mIsChrome;
 
   // Main thread only

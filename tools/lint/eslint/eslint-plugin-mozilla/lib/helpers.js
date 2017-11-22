@@ -6,17 +6,17 @@
  */
 "use strict";
 
-var espree = require("espree");
-var estraverse = require("estraverse");
-var path = require("path");
-var fs = require("fs");
-var ini = require("ini-parser");
+const espree = require("espree");
+const estraverse = require("estraverse");
+const path = require("path");
+const fs = require("fs");
+const ini = require("ini-parser");
 
 var gModules = null;
 var gRootDir = null;
 var directoryManifests = new Map();
 
-var definitions = [
+const callExpressionDefinitions = [
   /^loader\.lazyGetter\(this, "(\w+)"/,
   /^loader\.lazyImporter\(this, "(\w+)"/,
   /^loader\.lazyServiceGetter\(this, "(\w+)"/,
@@ -24,21 +24,21 @@ var definitions = [
   /^XPCOMUtils\.defineLazyGetter\(this, "(\w+)"/,
   /^XPCOMUtils\.defineLazyModuleGetter\(this, "(\w+)"/,
   /^XPCOMUtils\.defineLazyPreferenceGetter\(this, "(\w+)"/,
+  /^XPCOMUtils\.defineLazyScriptGetter\(this, "(\w+)"/,
   /^XPCOMUtils\.defineLazyServiceGetter\(this, "(\w+)"/,
   /^XPCOMUtils\.defineConstant\(this, "(\w+)"/,
   /^DevToolsUtils\.defineLazyModuleGetter\(this, "(\w+)"/,
   /^DevToolsUtils\.defineLazyGetter\(this, "(\w+)"/,
   /^Object\.defineProperty\(this, "(\w+)"/,
   /^Reflect\.defineProperty\(this, "(\w+)"/,
-  /^this\.__defineGetter__\("(\w+)"/,
-  /^this\.(\w+) =/
+  /^this\.__defineGetter__\("(\w+)"/
 ];
 
-var imports = [
+const imports = [
   /^(?:Cu|Components\.utils)\.import\(".*\/((.*?)\.jsm?)"(?:, this)?\)/
 ];
 
-var workerImportFilenameMatch = /(.*\/)*(.*?\.jsm?)/;
+const workerImportFilenameMatch = /(.*\/)*(.*?\.jsm?)/;
 
 module.exports = {
   get modulesGlobalData() {
@@ -104,6 +104,8 @@ module.exports = {
         return this.getASTSource(node.expression) + ";";
       case "FunctionExpression":
         return "function() {}";
+      case "ArrayExpression":
+        return "[" + node.elements.map(this.getASTSource, this).join(",") + "]";
       case "ArrowFunctionExpression":
         return "() => {}";
       case "AssignmentExpression":
@@ -115,8 +117,8 @@ module.exports = {
   },
 
   /**
-   * This walks an AST in a manner similar to ESLint passing node and comment
-   * events to the listener. The listener is expected to be a simple function
+   * This walks an AST in a manner similar to ESLint passing node events to the
+   * listener. The listener is expected to be a simple function
    * which accepts node type, node and parents arguments.
    *
    * @param  {Object} ast
@@ -128,41 +130,14 @@ module.exports = {
   walkAST(ast, listener) {
     let parents = [];
 
-    let seenComments = new Set();
-    function sendCommentEvents(comments) {
-      if (!comments) {
-        return;
-      }
-
-      for (let comment of comments) {
-        if (seenComments.has(comment)) {
-          return;
-        }
-        seenComments.add(comment);
-
-        listener(comment.type + "Comment", comment, parents);
-      }
-    }
-
     estraverse.traverse(ast, {
       enter(node, parent) {
-        // Comments are held in node.comments for empty programs
-        let leadingComments = node.leadingComments;
-        if (node.type === "Program" && node.body.length == 0) {
-          leadingComments = node.comments;
-        }
-
-        sendCommentEvents(leadingComments);
         listener(node.type, node, parents);
-        sendCommentEvents(node.trailingComments);
 
         parents.push(node);
       },
 
       leave(node, parent) {
-        // TODO send comment exit events
-        listener(node.type + ":exit", node, parents);
-
         if (parents.length == 0) {
           throw new Error("Left more nodes than entered.");
         }
@@ -223,28 +198,59 @@ module.exports = {
     return results;
   },
 
-  convertExpressionToGlobals(node, isGlobal) {
+  /**
+   * Attempts to convert an AssignmentExpression into a global variable
+   * definition if it applies to `this` in the global scope.
+   *
+   * @param  {Object} node
+   *         The AST node to convert.
+   * @param  {boolean} isGlobal
+   *         True if the current node is in the global scope.
+   *
+   * @return {Array}
+   *         An array of objects that contain details about the globals:
+   *         - {String} name
+   *                    The name of the global.
+   *         - {Boolean} writable
+   *                     If the global is writeable or not.
+   */
+  convertThisAssignmentExpressionToGlobals(node, isGlobal) {
+    if (isGlobal &&
+        node.expression.left &&
+        node.expression.left.object &&
+        node.expression.left.object.type === "ThisExpression" &&
+        node.expression.left.property &&
+        node.expression.left.property.type === "Identifier") {
+      return [{ name: node.expression.left.property.name, writable: true }];
+    }
+    return [];
+  },
+
+  /**
+   * Attempts to convert an CallExpressions that look like module imports
+   * into global variable definitions, using modules.json data if appropriate.
+   *
+   * @param  {Object} node
+   *         The AST node to convert.
+   * @param  {boolean} isGlobal
+   *         True if the current node is in the global scope.
+   *
+   * @return {Array}
+   *         An array of objects that contain details about the globals:
+   *         - {String} name
+   *                    The name of the global.
+   *         - {Boolean} writable
+   *                     If the global is writeable or not.
+   */
+  convertCallExpressionToGlobals(node, isGlobal) {
+    let source;
     try {
-      var source = this.getASTSource(node);
+      source = this.getASTSource(node);
     } catch (e) {
       return [];
     }
 
-    for (var reg of definitions) {
-      let match = source.match(reg);
-      if (match) {
-        // Must be in the global scope
-        if (!isGlobal) {
-          return [];
-        }
-
-        return [match[1]];
-      }
-    }
-
-    let globalModules = this.modulesGlobalData;
-
-    for (reg of imports) {
+    for (let reg of imports) {
       let match = source.match(reg);
       if (match) {
         // The two argument form is only acceptable in the global scope
@@ -252,12 +258,35 @@ module.exports = {
           return [];
         }
 
+        let globalModules = this.modulesGlobalData;
+
         if (match[1] in globalModules) {
-          return globalModules[match[1]];
+          return globalModules[match[1]].map(name => ({ name, writable: true }));
         }
 
-        return [match[2]];
+        return [{ name: match[2], writable: true }];
       }
+    }
+
+    // The definition matches below must be in the global scope for us to define
+    // a global, so bail out early if we're not a global.
+    if (!isGlobal) {
+      return [];
+    }
+
+    for (let reg of callExpressionDefinitions) {
+      let match = source.match(reg);
+      if (match) {
+        return [{ name: match[1], writable: true }];
+      }
+    }
+
+    if (node.expression.callee.type == "MemberExpression" &&
+        node.expression.callee.property.type == "Identifier" &&
+        node.expression.callee.property.name == "defineLazyScriptGetter") {
+      // The case where we have a single symbol as a string has already been
+      // handled by the regexp, so we have an array of symbols here.
+      return node.expression.arguments[1].elements.map(n => ({ name: n.value, writable: true }));
     }
 
     return [];
@@ -410,8 +439,16 @@ module.exports = {
     }
 
     let manifests = [];
+    let names = [];
+    try {
+      names = fs.readdirSync(dir);
+    } catch (err) {
+      // Ignore directory not found, it might be faked by a test
+      if (err.code !== "ENOENT") {
+        throw err;
+      }
+    }
 
-    let names = fs.readdirSync(dir);
     for (let name of names) {
       if (!name.endsWith(".ini")) {
         continue;
@@ -488,10 +525,11 @@ module.exports = {
    *         Test type: xpcshell, browser, chrome, mochitest
    */
   getTestType(scope) {
+    let testTypes = ["browser", "xpcshell", "chrome", "mochitest", "a11y"];
     let manifest = this.getTestManifest(scope);
     if (manifest) {
       let name = path.basename(manifest);
-      for (let testType of ["browser", "xpcshell", "chrome", "mochitest"]) {
+      for (let testType of testTypes) {
         if (name.startsWith(testType)) {
           return testType;
         }
@@ -506,9 +544,18 @@ module.exports = {
     }
 
     if (filename.startsWith("test_")) {
-      return "xpcshell";
+      let parent = path.basename(path.dirname(filepath));
+      for (let testType of testTypes) {
+        if (parent.startsWith(testType)) {
+          return testType;
+        }
+      }
+
+      // It likely is a test, we're just not sure what kind.
+      return "unknown";
     }
 
+    // Likely not a test
     return null;
   },
 
@@ -526,10 +573,10 @@ module.exports = {
    */
   get rootDir() {
     if (!gRootDir) {
-      function searchUpForIgnore(dirName) {
+      function searchUpForIgnore(dirName, filename) {
         let parsed = path.parse(dirName);
         while (parsed.root !== dirName) {
-          if (fs.existsSync(path.join(dirName, ".eslintignore"))) {
+          if (fs.existsSync(path.join(dirName, filename))) {
             return dirName;
           }
           // Move up a level
@@ -539,13 +586,18 @@ module.exports = {
         return null;
       }
 
-      let possibleRoot = searchUpForIgnore(path.dirname(module.filename));
+      let possibleRoot = searchUpForIgnore(path.dirname(module.filename), ".eslintignore");
       if (!possibleRoot) {
-        possibleRoot = searchUpForIgnore(path.resolve());
-        if (!possibleRoot) {
-          // We've couldn't find a root from the module or CWD
-          throw new Error("Unable to find root of repository");
-        }
+        possibleRoot = searchUpForIgnore(path.resolve(), ".eslintignore");
+      }
+      if (!possibleRoot) {
+        possibleRoot = searchUpForIgnore(path.resolve(), "package.json");
+      }
+      if (!possibleRoot) {
+        // We've couldn't find a root from the module or CWD, so lets just go
+        // for the CWD. We really don't want to throw if possible, as that
+        // tends to give confusing results when used with ESLint.
+        possibleRoot = process.cwd();
       }
 
       gRootDir = possibleRoot;
