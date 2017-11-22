@@ -118,35 +118,20 @@ function promiseEvent(event, target, capture = false) {
   });
 }
 
+function removeGoogleAnalytics(aSubject, aTopic, aData) {
+  let httpChannel = aSubject.QueryInterface(Ci.nsIHttpChannel);
+  let requestUrl = httpChannel.URI.spec
+  if (requestUrl.indexOf('google-analytics.com') > -1) {
+     httpChannel.cancel(Cr.NS_BINDING_ABORTED);
+  }
+}
+
 var gPendingInitializations = 1;
 Object.defineProperty(this, "gIsInitializing", {
   get: () => gPendingInitializations > 0
 });
 
-// Block URLs as seen in https://github.com/Noitidart/PortableTester/blob/block-urls/bootstrap.js#L14
-var obsGA = {
-    'http-on-modify-request': {
-        observe: function (aSubject, aTopic, aData) {
-            //console.info('http-on-modify-request: aSubject = ' + aSubject + ' | aTopic = ' + aTopic + ' | aData = ' + aData);
-            var httpChannel = aSubject.QueryInterface(Ci.nsIHttpChannel);
-            var requestUrl = httpChannel.URI.spec
-            if (requestUrl.indexOf('google-analytics.com') > -1) {
-               httpChannel.cancel(Cr.NS_BINDING_ABORTED); //this aborts the load
-            }
-        },
-        reg: function () {
-            Services.obs.addObserver(obsGA['http-on-modify-request'], 'http-on-modify-request', false);
-        },
-        unreg: function () {
-            Services.obs.removeObserver(obsGA['http-on-modify-request'], 'http-on-modify-request');
-        }
-    }
-};
-
 function initialize(event) {
-  for (var o in obsGA) {
-    obsGA[o].reg();
-  }
   // XXXbz this listener gets _all_ load events for all nodes in the
   // document... but relies on not being called "too early".
   if (event.target instanceof XMLStylesheetProcessingInstruction) {
@@ -206,6 +191,7 @@ function initialize(event) {
   gEventManager.initialize();
   Services.obs.addObserver(sendEMPong, "EM-ping");
   Services.obs.notifyObservers(window, "EM-loaded");
+  Services.obs.addObserver(removeGoogleAnalytics, "http-on-modify-request");
 
   // If the initial view has already been selected (by a call to loadView from
   // the above notifications) then bail out now
@@ -248,9 +234,7 @@ function shutdown() {
   gEventManager.shutdown();
   gViewController.shutdown();
   Services.obs.removeObserver(sendEMPong, "EM-ping");
-  for (var o in obsGA) {
-    obsGA[o].unreg();
-  }
+  Services.obs.removeObserver(removeGoogleAnalytics, "http-on-modify-request");
 }
 
 function sendEMPong(aSubject, aTopic, aData) {
