@@ -3076,27 +3076,8 @@ esac
 AC_SUBST(MOZ_GAMEPAD_BACKEND)
 
 dnl ========================================================
-dnl = Breakpad crash reporting (on by default on supported platforms)
+dnl = Breakpad crash reporting
 dnl ========================================================
-
-case $target in
-i?86-*-mingw*|x86_64-*-mingw*)
-  MOZ_CRASHREPORTER=1
-  ;;
-i?86-apple-darwin*|x86_64-apple-darwin*)
-  if test -z "$MOZ_IOS"; then
-    MOZ_CRASHREPORTER=1
-  fi
-  ;;
-i?86-*-linux*|x86_64-*-linux*|arm-*-linux*)
-  if test "$MOZ_ENABLE_GTK"; then
-    MOZ_CRASHREPORTER=1
-  fi
-  ;;
-*-android*|*-linuxandroid*)
-  MOZ_CRASHREPORTER=1
-  ;;
-esac
 
 MOZ_ARG_DISABLE_BOOL(crashreporter,
 [  --disable-crashreporter Disable breakpad crash reporting],
