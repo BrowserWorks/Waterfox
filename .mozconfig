@@ -24,7 +24,7 @@ ac_add_options --enable-pulseaudio
 ac_add_options --enable-alsa
 fi
 
-X=$(bc <<< "1.5*$(getconf _NPROCESSORS_ONLN)")
+X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 mk_add_options MOZ_OBJDIR=objdir
