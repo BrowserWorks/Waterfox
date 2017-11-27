@@ -2059,7 +2059,7 @@ CreateNPObjectMember(NPP npp, JSContext *cx,
   // Make sure to clear all members in case something fails here
   // during initialization.
   memset(memberPrivate, 0, sizeof(NPObjectMemberPrivate));
-  
+
   JS::Rooted<JSObject*> obj(cx, aObj);
 
   JSObject *memobj = ::JS_NewObject(cx, &sNPObjectMemberClass);
