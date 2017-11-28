@@ -6816,6 +6816,9 @@ nsGridContainerFrame::GetGridFrameWithComputedInfo(nsIFrame* aFrame)
 
     if (reflowNeeded) {
       // Trigger a reflow that generates additional grid property data.
+      // Hold onto aFrame while we do this, in case reflow destroys it.
+      AutoWeakFrame weakFrameRef(aFrame);
+
       nsIPresShell* shell = gridFrame->PresContext()->PresShell();
       gridFrame->AddStateBits(NS_STATE_GRID_GENERATE_COMPUTED_VALUES);
       shell->FrameNeedsReflow(gridFrame,
@@ -6823,8 +6826,14 @@ nsGridContainerFrame::GetGridFrameWithComputedInfo(nsIFrame* aFrame)
                               NS_FRAME_IS_DIRTY);
       shell->FlushPendingNotifications(FlushType::Layout);
 
-      // Since the reflow may have side effects, get the grid frame again.
-      gridFrame = GetGridContainerFrame(aFrame);
+      // Since the reflow may have side effects, get the grid frame
+      // again. But if the weakFrameRef is no longer valid, then we
+      // must bail out.
+      if (!weakFrameRef.IsAlive()) {
+        return nullptr;
+      }
+
+      gridFrame = GetGridContainerFrame(weakFrameRef.GetFrame());
 
       // Assert the grid properties are present
       MOZ_ASSERT(!gridFrame ||
