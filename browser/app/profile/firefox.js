@@ -1704,4 +1704,4 @@ pref("browser.onboarding.newtour", "private,addons,customize,search,default,sync
 pref("browser.onboarding.updatetour", "");
 
 // Preference that allows individual users to disable Screenshots.
-pref("extensions.screenshots.disabled", true);
+// pref("extensions.screenshots.disabled", true);

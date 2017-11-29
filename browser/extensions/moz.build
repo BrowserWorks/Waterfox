@@ -6,7 +6,6 @@
 
 DIRS += [
     'pdfjs',
-    'screenshots',
 ]
 
 FINAL_TARGET_FILES.features += [
