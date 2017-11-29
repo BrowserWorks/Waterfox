@@ -9176,8 +9176,10 @@ nsContentUtils::InternalStorageAllowedForPrincipal(nsIPrincipal* aPrincipal,
     }
   }
 
-  // We don't want to prompt for every attempt to access permissions.
-  if (behavior == nsICookieService::BEHAVIOR_REJECT) {
+  // We don't want to prompt for every attempt to access permissions., so we
+  // treat the cookie ASK_BEFORE_ACCEPT as though it was a reject.
+  if (behavior == nsICookieService::BEHAVIOR_REJECT ||
+      lifetimePolicy == nsICookieService::ASK_BEFORE_ACCEPT) {
     return StorageAccess::eDeny;
   }
 

@@ -6,6 +6,12 @@
 
 #include "nsISupports.idl"
 
+%{C++
+#include "mozilla/BasePrincipal.h"
+%}
+
+native OriginAttributes(mozilla::OriginAttributes);
+
 /** 
  * An optional interface for accessing the HTTP or
  * javascript cookie object
@@ -76,6 +82,10 @@ interface nsICookie : nsISupports {
     const nsCookiePolicy POLICY_EXPLICIT_CONSENT=4;
     const nsCookiePolicy POLICY_NO_II=5;
     readonly attribute nsCookiePolicy policy;
+
+    [noscript, nostdcall, binaryname(GetOriginAttributes2)]
+    OriginAttributes binaryGetOriginAttributes();
+
 
     /**
      * The origin attributes for this cookie
