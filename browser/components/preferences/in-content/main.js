@@ -9,7 +9,6 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 Components.utils.import("resource:///modules/ShellService.jsm");
 Components.utils.import("resource:///modules/TransientPrefs.jsm");
 
-
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CloudStorage",
@@ -112,7 +111,7 @@ var gMainPane = {
     setEventListener("localeSelect", "keypress", function (e) {
       gMainPane._updateLocale(e);
     });
-	
+
     if (AppConstants.E10S_TESTING_ONLY) {
       setEventListener("e10sAutoStart", "command",
                        gMainPane.enableE10SChange);
@@ -169,7 +168,7 @@ var gMainPane = {
 
     return e10sEnabled;
   },
-  
+
   // Sets language selector to current locale value
   getDefaultLocale: function(){
 	  let selectedLocale = document.getElementById("localeSelect");
