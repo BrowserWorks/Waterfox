@@ -29,7 +29,7 @@ function testConnection(){
 
 # Apply KDE Plasma patch to locally downloaded repository.
 function ApplyKDE(){
-_patchrev=b2ba34e0dc10 # Waterfox 55.2.0
+_patchrev=7339b115a221 # Waterfox 56.0
 	# Download patch if not exist and replace some words
 	if [ ! -f "$SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch" ] && [ ! -f "$SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch" ]; then
 		# Check url next release for changes.	
