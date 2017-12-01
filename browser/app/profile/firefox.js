@@ -1554,8 +1554,8 @@ pref("extensions.allow-non-mpc-extensions", true);
 
 // Enable blocking of e10s and e10s-multi for add-on users on beta/release.
 #if defined(RELEASE_OR_BETA) && !defined(MOZ_DEV_EDITION)
-pref("extensions.e10sBlocksEnabling", true);
-pref("extensions.e10sMultiBlocksEnabling", true);
+pref("extensions.e10sBlocksEnabling", false);
+pref("extensions.e10sMultiBlocksEnabling", false);
 #endif
 
 // How often to check for CPOW timeouts. CPOWs are only timed out by
@@ -1704,4 +1704,4 @@ pref("browser.onboarding.newtour", "private,addons,customize,search,default,sync
 pref("browser.onboarding.updatetour", "");
 
 // Preference that allows individual users to disable Screenshots.
-pref("extensions.screenshots.disabled", false);
+// pref("extensions.screenshots.disabled", true);

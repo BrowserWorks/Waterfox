@@ -3,12 +3,14 @@
 # macOS Specific Options
 if test `uname -s` = Darwin; then
 ac_add_options --enable-optimize="-O2 -march=core2 -mtune=generic -w"
+ac_add_options --enable-eme=widevine
 ac_add_options --with-ccache=ccache
 ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
 elif test `uname -s` = MINGW32_NT-6.2; then
 ac_add_options --enable-optimize="-O2"
+ac_add_options --enable-eme=widevine
 ac_add_options --host=x86_64-pc-mingw32
 ac_add_options --target=x86_64-pc-mingw32
 export WIN32_REDIST_DIR="/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x64/Microsoft.VC140.CRT"
@@ -18,13 +20,14 @@ elif test `uname -s` = Linux; then
 export CC=clang
 export CXX=clang++
 ac_add_options --enable-optimize
+ac_add_options --enable-eme=widevine
 ac_add_options --target=x86_64-pc-linux-gnu
 ac_add_options --with-ccache=ccache
 ac_add_options --enable-pulseaudio
 ac_add_options --enable-alsa
 fi
 
-X=$(bc <<< "1.5*$(getconf _NPROCESSORS_ONLN)")
+X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 mk_add_options MOZ_OBJDIR=objdir
@@ -39,9 +42,8 @@ ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
-ac_add_options --disable-updater
 
-ac_add_options --enable-eme=widevine
+ac_add_options --disable-updater
 
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-app-basename=Waterfox
