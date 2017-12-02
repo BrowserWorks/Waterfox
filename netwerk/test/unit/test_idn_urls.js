@@ -286,7 +286,7 @@ const testcases = [
     // Thai (also tests that node with over 63 UTF-8 octets doesn't fail)
     ["เครื่องทําน้ําทําน้ําแข็ง",
                  "xn--22cdjb2fanb9fyepcbbb9dwh4a3igze4fdcd",
-                                                     false, true, true]
+                                                     false, true, true],
 
     // Effect of adding valid or invalid subdomains (bug 1399540)
     ["䕮䕵䕶䕱.ascii", "xn--google.ascii",                       false, true,  true],
