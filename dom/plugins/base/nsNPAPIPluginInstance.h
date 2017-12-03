@@ -302,9 +302,6 @@ private:
   // is this instance Java and affected by bug 750480?
   bool mHaveJavaC2PJSObjectQuirk;
 
-  // is this instance Java and affected by bug 750480?
-  bool mHaveJavaC2PJSObjectQuirk;
-
   static uint32_t gInUnsafePluginCalls;
 
   // The arrays can only be released when the plugin instance is destroyed,

@@ -1792,8 +1792,9 @@ nsPluginHost::GetSpecialType(const nsACString & aMIMEType)
 
   // The java mime pref may well not be one of these,
   // e.g. application/x-java-test used in the test suite
-  nsAdoptingCString javaMIME = Preferences::GetCString(kPrefJavaMIME);
-  if ((!javaMIME.IsEmpty() && noParam.LowerCaseEqualsASCII(javaMIME)) ||
+  nsAutoCString javaMIME;
+  Preferences::GetCString(kPrefJavaMIME, javaMIME);
+  if ((!javaMIME.IsEmpty() && noParam.LowerCaseEqualsASCII(javaMIME.get())) ||
       noParam.LowerCaseEqualsASCII("application/x-java-vm") ||
       noParam.LowerCaseEqualsASCII("application/x-java-applet") ||
       noParam.LowerCaseEqualsASCII("application/x-java-bean")) {
