@@ -21,6 +21,7 @@
 #include "nsIDOMCustomEvent.h"
 #include "nsIDOMDocument.h"
 #include "nsIDOMHTMLObjectElement.h"
+#include "nsIDOMHTMLAppletElement.h"
 #include "nsIExternalProtocolHandler.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIObjectFrame.h"
