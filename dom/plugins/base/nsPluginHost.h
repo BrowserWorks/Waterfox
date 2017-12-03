@@ -199,7 +199,10 @@ public:
     // Needed to whitelist for async init support
     eSpecialType_Test,
     // Informs some decisions about OOP and quirks
-    eSpecialType_Flash
+    eSpecialType_Flash,
+    // Binds to the <applet> tag, has various special
+    // rules around opening channels, codebase, ...
+    eSpecialType_Java
   };
   static SpecialType GetSpecialType(const nsACString & aMIMEType);
 

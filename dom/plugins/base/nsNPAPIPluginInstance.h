@@ -240,6 +240,11 @@ protected:
 
   nsresult GetTagType(nsPluginTagType *result);
 
+  // check if this is a Java applet and affected by bug 750480
+  void CheckJavaC2PJSObjectQuirk(uint16_t paramCount,
+                                 const char* const* names,
+                                 const char* const* values);
+
   nsresult CreateAudioChannelAgentIfNeeded();
 
   // The structure used to communicate between the plugin instance and
@@ -293,6 +298,9 @@ private:
   // Timestamp for the last time this plugin was stopped.
   // This is only valid when the plugin is actually stopped!
   mozilla::TimeStamp mStopTime;
+
+  // is this instance Java and affected by bug 750480?
+  bool mHaveJavaC2PJSObjectQuirk;
 
   // is this instance Java and affected by bug 750480?
   bool mHaveJavaC2PJSObjectQuirk;
