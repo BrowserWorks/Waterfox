@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_HTMLEmbedElement_h
-#define mozilla_dom_HTMLEmbedElement_h
+#ifndef mozilla_dom_HTMLSharedObjectElement_h
+#define mozilla_dom_HTMLSharedObjectElement_h
 
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
@@ -17,18 +17,18 @@
 namespace mozilla {
 namespace dom {
 
-class HTMLEmbedElement final : public nsGenericHTMLElement
-                             , public nsObjectLoadingContent
-                             , public nsIDOMHTMLEmbedElement
+class HTMLSharedObjectElement final : public nsGenericHTMLElement
+                                    , public nsObjectLoadingContent
+                                    , public nsIDOMHTMLEmbedElement
 {
 public:
-  explicit HTMLEmbedElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
-                            mozilla::dom::FromParser aFromParser = mozilla::dom::NOT_FROM_PARSER);
+  explicit HTMLSharedObjectElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
+                                   mozilla::dom::FromParser aFromParser = mozilla::dom::NOT_FROM_PARSER);
 
   NS_DECL_NSIDOMHTMLEMBEDELEMENT
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
-  NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLEmbedElement, embed)
+
   virtual int32_t TabIndexDefault() override;
 
 #ifdef XP_MACOSX
@@ -48,10 +48,13 @@ public:
   virtual bool IsHTMLFocusable(bool aWithMouse, bool *aIsFocusable, int32_t *aTabIndex) override;
   virtual IMEState GetDesiredIMEState() override;
 
+  virtual void DoneAddingChildren(bool aHaveNotified) override;
+  virtual bool IsDoneAddingChildren() override;
+
   virtual bool ParseAttribute(int32_t aNamespaceID,
-                              nsIAtom *aAttribute,
-                              const nsAString &aValue,
-                              nsAttrValue &aResult) override;
+                                nsIAtom *aAttribute,
+                                const nsAString &aValue,
+                                nsAttrValue &aResult) override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom *aAttribute) const override;
   virtual EventStates IntrinsicState() const override;
@@ -67,7 +70,7 @@ public:
 
   void StartObjectLoad() { StartObjectLoad(true, false); }
 
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_NO_UNLINK(HTMLEmbedElement,
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_NO_UNLINK(HTMLSharedObjectElement,
                                                      nsGenericHTMLElement)
 
   // WebIDL <embed> api
@@ -141,9 +144,13 @@ protected:
                                           bool aNotify) override;
 
 private:
-  ~HTMLEmbedElement();
+  ~HTMLSharedObjectElement();
 
   nsContentPolicyType GetContentPolicyType() const override;
+
+  // mIsDoneAddingChildren is only really used for <applet>.  This boolean is
+  // always true for <embed>, per the documentation in nsIContent.h.
+  bool mIsDoneAddingChildren;
 
   virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
@@ -165,4 +172,4 @@ private:
 } // namespace dom
 } // namespace mozilla
 
-#endif // mozilla_dom_HTMLEmbedElement_h
+#endif // mozilla_dom_HTMLSharedObjectElement_h
