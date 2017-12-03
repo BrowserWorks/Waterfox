@@ -1187,7 +1187,7 @@ nsIHTMLCollection*
 nsHTMLDocument::Applets()
 {
   if (!mApplets) {
-    mApplets = new nsEmptyContentList(this);
+    mApplets = new nsContentList(this, kNameSpaceID_XHTML, nsGkAtoms::applet, nsGkAtoms::applet);
   }
   return mApplets;
 }
