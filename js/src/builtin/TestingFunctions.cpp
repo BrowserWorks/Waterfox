@@ -3893,7 +3893,7 @@ GetModuleEnvironmentNames(JSContext* cx, unsigned argc, Value* vp)
     }
 
     RootedModuleObject module(cx, &args[0].toObject().as<ModuleObject>());
-    if (module->status() == MODULE_STATUS_ERRORED) {
+    if (module->hadEvaluationError()) {
         JS_ReportErrorASCII(cx, "Module environment unavailable");
         return false;
     }
@@ -3936,7 +3936,7 @@ GetModuleEnvironmentValue(JSContext* cx, unsigned argc, Value* vp)
     }
 
     RootedModuleObject module(cx, &args[0].toObject().as<ModuleObject>());
-    if (module->status() == MODULE_STATUS_ERRORED) {
+    if (module->hadEvaluationError()) {
         JS_ReportErrorASCII(cx, "Module environment unavailable");
         return false;
     }
