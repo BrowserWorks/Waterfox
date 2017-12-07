@@ -103,19 +103,19 @@ include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
 
 ifeq (bundle, $(MOZ_FS_LAYOUT))
 BINPATH = $(_BINPATH)
-DEFINES += -DAPPNAME=$(_APPNAME)
+DEFINES += -DAPPNAME='$(_APPNAME)'
 else
 # Every other platform just winds up in dist/bin
 BINPATH = bin
 endif
-DEFINES += -DBINPATH=$(BINPATH)
+DEFINES += -DBINPATH='$(BINPATH)'
 
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
 RESPATH = $(_APPNAME)/Contents/Resources
 else
 RESPATH = $(BINPATH)
 endif
-DEFINES += -DRESPATH=$(RESPATH)
+DEFINES += -DRESPATH='$(RESPATH)'
 
 LPROJ_ROOT = $(firstword $(subst -, ,$(AB_CD)))
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
@@ -167,7 +167,7 @@ FINDPATH=bin
 endif
 
 package-compare::
-	cd $(DIST); find $(PKGCOMP_FIND_OPTS) $(FINDPATH) -type f | sort > bin-list.txt
+	cd $(DIST); find $(PKGCOMP_FIND_OPTS) '$(FINDPATH)' -type f | sort > bin-list.txt
 	$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) $(MOZ_PKG_MANIFEST)) | grep '^$(BINPATH)' | sed -e 's/^\///' | sort > $(DIST)/pack-list.txt
 	-diff -u $(DIST)/pack-list.txt $(DIST)/bin-list.txt
 	rm -f $(DIST)/pack-list.txt $(DIST)/bin-list.txt
