@@ -9,6 +9,7 @@ SFX_MODULE = $(topsrcdir)/other-licenses/7zstub/firefox/7zSD.sfx
 
 INSTALLER_FILES = \
 	app.tag \
+	License.rtf \
 	nsis/installer.nsi \
 	nsis/uninstaller.nsi \
 	nsis/stub.nsi \

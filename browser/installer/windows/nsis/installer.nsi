@@ -152,6 +152,10 @@ ShowInstDetails nevershow
 !define MUI_PAGE_CUSTOMFUNCTION_PRE preWelcome
 !insertmacro MUI_PAGE_WELCOME
 
+; License Page
+!define MUI_LICENSEPAGE_BUTTON "$(^AgreeBtn)"
+!insertmacro MUI_PAGE_LICENSE "License.rtf"
+
 ; Custom Options Page
 Page custom preOptions leaveOptions
 
