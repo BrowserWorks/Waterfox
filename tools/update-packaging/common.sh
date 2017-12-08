@@ -78,7 +78,7 @@ make_add_instruction() {
   else
     notice "        add \"$f\"$forced"
     echo "add \"$f\"" >> "$filev2"
-    if [ ! $filev3 = "" ]; then
+    if [ ! "$filev3" = "" ]; then
       echo "add \"$f\"" >> "$filev3"
     fi
   fi
@@ -112,7 +112,7 @@ make_add_if_not_instruction() {
   filev3="$2"
 
   notice " add-if-not \"$f\" \"$f\""
-  echo "add-if-not \"$f\" \"$f\"" >> $filev3
+  echo "add-if-not \"$f\" \"$f\"" >> "$filev3"
 }
 
 make_patch_instruction() {
