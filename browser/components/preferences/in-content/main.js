@@ -14,7 +14,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
 XPCOMUtils.defineLazyModuleGetter(this, "CloudStorage",
                                   "resource://gre/modules/CloudStorage.jsm");
 
-if (AppConstants.E10S_TESTING_ONLY) {
+if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
   XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
                                     "resource://gre/modules/UpdateUtils.jsm");
 }
@@ -112,7 +112,7 @@ var gMainPane = {
       gMainPane._updateLocale(e);
     });
 
-    if (AppConstants.E10S_TESTING_ONLY) {
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       setEventListener("e10sAutoStart", "command",
                        gMainPane.enableE10SChange);
       let e10sCheckbox = document.getElementById("e10sAutoStart");
@@ -201,7 +201,7 @@ var gMainPane = {
 },
     
   enableE10SChange() {
-    if (AppConstants.E10S_TESTING_ONLY) {
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       let e10sCheckbox = document.getElementById("e10sAutoStart");
       let e10sPref = document.getElementById("browser.tabs.remote.autostart");
       let e10sTempPref = document.getElementById("e10sTempPref");

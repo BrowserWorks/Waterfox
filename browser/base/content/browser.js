@@ -1556,7 +1556,7 @@ var gBrowserInit = {
     BrowserOffline.init();
     IndexedDBPromptHelper.init();
 
-    if (AppConstants.E10S_TESTING_ONLY)
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13)))
       gRemoteTabsUI.init();
 
     // Initialize the full zoom setting.
@@ -1988,7 +1988,7 @@ if (AppConstants.platform == "macosx") {
       gSync.init();
     }, {timeout: 1000 * 5});
 
-    if (AppConstants.E10S_TESTING_ONLY) {
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       gRemoteTabsUI.init();
     }
   };
@@ -8288,7 +8288,7 @@ var TabContextMenu = {
     if (this.contextTab.hasAttribute("customizemode"))
       document.getElementById("context_openTabInWindow").disabled = true;
 
-    if (AppConstants.E10S_TESTING_ONLY) {
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       menuItems = aPopupMenu.getElementsByAttribute("tbattr", "tabbrowser-remote");
       for (let menuItem of menuItems) {
         menuItem.hidden = !gMultiProcessBrowser;
