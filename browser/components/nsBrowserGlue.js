@@ -542,16 +542,13 @@ BrowserGlue.prototype = {
     this._flashHangCount = 0;
     this._firstWindowReady = new Promise(resolve => this._firstWindowLoaded = resolve);
     
-    // There may be a better way to do this, but for now on older OS X version we need to disable HW
-    // acceleration and e10s otherwise tabs will keep crashing.
-    if (!Services.prefs.prefHasUserValue("browser.migration.version")) {
-        if (AppConstants.isPlatformAndVersionAtMost("macosx", 13)) {
-            Services.prefs.setBoolPref("browser.tabs.remote.autostart", false);
-            Services.prefs.setBoolPref("browser.tabs.remote.autostart.2", false);
-            Services.prefs.setBoolPref("layers.acceleration.disabled", true);
-            Services.prefs.setBoolPref("extensions.e10sBlockedByAddons", true);
-            Services.prefs.setBoolPref("extensions.e10sMultiBlockedByAddons", true);
-        }
+    // There may be a better way to do this, but for now on older OS X versions
+    // we need to disable e10s otherwise tabs will keep crashing.
+    if (AppConstants.isPlatformAndVersionAtMost("macosx", 13)) {
+        Services.prefs.setBoolPref("browser.tabs.remote.autostart", false);
+        Services.prefs.setBoolPref("browser.tabs.remote.autostart.2", false);
+        Services.prefs.setBoolPref("extensions.e10sBlockedByAddons", true);
+        Services.prefs.setBoolPref("extensions.e10sMultiBlockedByAddons", true);
     }
 
     if (AppConstants.platform == "macosx" ||
@@ -2043,7 +2040,6 @@ BrowserGlue.prototype = {
     	if (AppConstants.isPlatformAndVersionAtMost("macosx", 13)) {
     		Services.prefs.setBoolPref("browser.tabs.remote.autostart", false);
     		Services.prefs.setBoolPref("browser.tabs.remote.autostart.2", false);
-    		Services.prefs.setBoolPref("layers.acceleration.disabled", true);
     		Services.prefs.setBoolPref("extensions.e10sBlockedByAddons", true);
     		Services.prefs.setBoolPref("extensions.e10sMultiBlockedByAddons", true);
     	}

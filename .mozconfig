@@ -4,6 +4,7 @@
 if test `uname -s` = Darwin; then
 ac_add_options --enable-optimize="-O2 -march=core2 -mtune=generic -w"
 ac_add_options --enable-eme=widevine
+ac_add_options --enable-macos-target=10.7
 ac_add_options --with-ccache=ccache
 ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
