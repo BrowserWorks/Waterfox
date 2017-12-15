@@ -309,7 +309,7 @@ protected:
   void *GenerateParserKey(void);
 
   RefPtr<nsContentList> mImages;
-  RefPtr<nsEmptyContentList> mApplets;
+  RefPtr<nsContentList> mApplets;
   RefPtr<nsContentList> mEmbeds;
   RefPtr<nsContentList> mLinks;
   RefPtr<nsContentList> mAnchors;

@@ -538,7 +538,8 @@ nsXMLContentSink::CloseElement(nsIContent* aContent)
         nodeInfo->NameAtom() == nsGkAtoms::textarea ||
         nodeInfo->NameAtom() == nsGkAtoms::video ||
         nodeInfo->NameAtom() == nsGkAtoms::audio ||
-        nodeInfo->NameAtom() == nsGkAtoms::object))
+        nodeInfo->NameAtom() == nsGkAtoms::object ||
+        nodeInfo->NameAtom() == nsGkAtoms::applet))
       || nodeInfo->NameAtom() == nsGkAtoms::title
       ) {
     aContent->DoneAddingChildren(HaveNotifiedForCurrentContent());
@@ -1559,7 +1560,8 @@ nsXMLContentSink::IsMonolithicContainer(mozilla::dom::NodeInfo* aNodeInfo)
   return ((aNodeInfo->NamespaceID() == kNameSpaceID_XHTML &&
           (aNodeInfo->NameAtom() == nsGkAtoms::tr ||
            aNodeInfo->NameAtom() == nsGkAtoms::select ||
-           aNodeInfo->NameAtom() == nsGkAtoms::object)) ||
+           aNodeInfo->NameAtom() == nsGkAtoms::object ||
+           aNodeInfo->NameAtom() == nsGkAtoms::applet)) ||
           (aNodeInfo->NamespaceID() == kNameSpaceID_MathML &&
           (aNodeInfo->NameAtom() == nsGkAtoms::math))
           );

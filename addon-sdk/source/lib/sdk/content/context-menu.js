@@ -78,6 +78,7 @@ function getSelection(window) {
 //the page context doesn't apply.
 const NON_PAGE_CONTEXT_ELTS = [
   Ci.nsIDOMHTMLAnchorElement,
+  Ci.nsIDOMHTMLAppletElement,
   Ci.nsIDOMHTMLAreaElement,
   Ci.nsIDOMHTMLButtonElement,
   Ci.nsIDOMHTMLCanvasElement,

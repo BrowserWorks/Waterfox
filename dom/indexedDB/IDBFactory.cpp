@@ -615,7 +615,6 @@ IDBFactory::OpenInternal(JSContext* aCx,
   MOZ_ASSERT_IF(!mWindow, !mPrivateBrowsingMode);
 
   CommonFactoryRequestParams commonParams;
-  commonParams.privateBrowsingMode() = mPrivateBrowsingMode;
 
   PrincipalInfo& principalInfo = commonParams.principalInfo();
 

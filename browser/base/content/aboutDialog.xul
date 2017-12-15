@@ -139,6 +139,8 @@
       <hbox pack="center">
         <label class="text-link bottom-link" useoriginprincipal="true" href="about:license">&bottomLinks.license;</label>
         <label class="text-link bottom-link" useoriginprincipal="true" href="about:rights">&bottomLinks.rights;</label>
+        <label class="text-link bottom-link" useoriginprincipal="true" href="https://www.waterfoxproject.org/privacy">Privacy Policy</label>
+        <label class="text-link bottom-link" useoriginprincipal="true" href="https://www.waterfoxproject.org/terms">Legal and Terms</label>
       </hbox>
       <description id="trademark">&trademarkInfo.part1;</description>
     </vbox>

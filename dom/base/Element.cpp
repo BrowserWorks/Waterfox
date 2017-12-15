@@ -489,10 +489,11 @@ Element::GetBindingURL(nsIDocument *aDocument, css::URLValue **aResult)
   // If we have a frame the frame has already loaded the binding.  And
   // otherwise, don't do anything else here unless we're dealing with
   // XUL or an HTML element that may have a plugin-related overlay
-  // (i.e. object or embed).
+  // (i.e. object, embed, or applet).
   bool isXULorPluginElement = (IsXULElement() ||
                                IsHTMLElement(nsGkAtoms::object) ||
-                               IsHTMLElement(nsGkAtoms::embed));
+                               IsHTMLElement(nsGkAtoms::embed) ||
+                               IsHTMLElement(nsGkAtoms::applet));
   nsIPresShell* shell = aDocument->GetShell();
   if (!shell || GetPrimaryFrame() || !isXULorPluginElement) {
     *aResult = nullptr;

@@ -288,6 +288,7 @@ txMozillaXMLOutput::endElement()
         // Handle elements that are different when parser-created
         if (element->IsAnyOfHTMLElements(nsGkAtoms::title,
                                          nsGkAtoms::object,
+                                         nsGkAtoms::applet,
                                          nsGkAtoms::select,
                                          nsGkAtoms::textarea) ||
             element->IsSVGElement(nsGkAtoms::title)) {

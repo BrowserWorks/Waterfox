@@ -1365,7 +1365,7 @@ if (Services.prefs.getBoolPref("privacy.panicButton.enabled")) {
   });
 }
 
-if (AppConstants.E10S_TESTING_ONLY) {
+if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
   if (Services.appinfo.browserTabsRemoteAutostart) {
     CustomizableWidgets.push({
       id: "e10s-button",

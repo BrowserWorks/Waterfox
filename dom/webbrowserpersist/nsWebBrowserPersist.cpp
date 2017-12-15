@@ -61,6 +61,7 @@
 #include "nsIMIMEInfo.h"
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/HTMLSharedElement.h"
+#include "mozilla/dom/HTMLSharedObjectElement.h"
 #include "mozilla/Printf.h"
 
 using namespace mozilla;

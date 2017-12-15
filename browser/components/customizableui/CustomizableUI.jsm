@@ -216,7 +216,7 @@ var CustomizableUIInternal = {
       panelPlacements.splice(-1, 0, "developer-button");
     }
 
-    if (AppConstants.E10S_TESTING_ONLY) {
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       if (gPalette.has("e10s-button")) {
         let newWindowIndex = panelPlacements.indexOf("new-window-button");
         if (newWindowIndex > -1) {
