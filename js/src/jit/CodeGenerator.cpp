@@ -1610,7 +1610,7 @@ CreateDependentString::generateFallback(MacroAssembler& masm, LiveRegisterSet re
         masm.callWithABI(kind == FallbackKind::FatInlineString
                          ? JS_FUNC_TO_DATA_PTR(void*, AllocateFatInlineString)
                          : JS_FUNC_TO_DATA_PTR(void*, AllocateString));
-        masm.storeCallWordResult(string_);
+        masm.storeCallPointerResult(string_);
 
         masm.PopRegsInMask(regsToSave);
 
@@ -1648,7 +1648,7 @@ CreateMatchResultFallback(MacroAssembler& masm, LiveRegisterSet regsToSave,
     masm.move32(Imm32(int32_t(templateObj->as<NativeObject>().numDynamicSlots())), temp5);
     masm.passABIArg(temp5);
     masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, CreateMatchResultFallbackFunc));
-    masm.storeCallWordResult(object);
+    masm.storeCallPointerResult(object);
 
     masm.PopRegsInMask(regsToSave);
 
@@ -7847,7 +7847,7 @@ JitRuntime::generateMallocStub(JSContext* cx)
     masm.passABIArg(regRuntime);
     masm.passABIArg(regNBytes);
     masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, MallocWrapper));
-    masm.storeCallWordResult(regReturn);
+    masm.storeCallPointerResult(regReturn);
 
     masm.PopRegsInMask(save);
     masm.ret();
@@ -9242,7 +9242,7 @@ CodeGenerator::emitRest(LInstruction* lir, Register array, Register numActuals,
     callVM(InitRestParameterInfo, lir);
 
     if (saveAndRestore) {
-        storeResultTo(resultreg);
+        storePointerResultTo(resultreg);
         restoreLive(lir);
     }
 }
@@ -10465,8 +10465,8 @@ CodeGenerator::visitOutOfLineTypeOfV(OutOfLineTypeOfV* ool)
     masm.passABIArg(obj);
     masm.movePtr(ImmPtr(GetJitContext()->runtime), output);
     masm.passABIArg(output);
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, TypeOfObject));
-    masm.storeCallWordResult(output);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, jit::TypeOfObject));
+    masm.storeCallPointerResult(output);
     restoreVolatile(output);
 
     masm.jump(ool->rejoin());

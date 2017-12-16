@@ -1804,7 +1804,7 @@ MacroAssembler::outOfLineTruncateSlow(FloatRegister src, Register dest, bool wid
         passABIArg(src, MoveOp::DOUBLE);
         callWithABI(mozilla::BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32));
     }
-    storeCallWordResult(dest);
+    storeCallInt32Result(dest);
 
 #if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64) || \
     defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
