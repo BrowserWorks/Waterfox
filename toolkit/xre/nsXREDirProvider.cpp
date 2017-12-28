@@ -420,7 +420,7 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
         rv = localDir->AppendNative(NS_LITERAL_CSTRING("NativeMessagingHosts"));
       }
 #else
-      rv = localDir->AppendNative(NS_LITERAL_CSTRING(".mozilla"));
+      rv = localDir->AppendNative(NS_LITERAL_CSTRING(".waterfox"));
       if (NS_SUCCEEDED(rv)) {
         rv = localDir->AppendNative(NS_LITERAL_CSTRING("native-messaging-hosts"));
       }
@@ -1650,7 +1650,7 @@ nsXREDirProvider::AppendSysUserExtensionPath(nsIFile* aFile)
 
 #elif defined(XP_UNIX)
 
-  static const char* const sXR = ".mozilla";
+  static const char* const sXR = ".waterfox";
   rv = aFile->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
 
