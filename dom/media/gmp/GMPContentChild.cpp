@@ -336,7 +336,8 @@ GMPContentChild::RecvPChromiumCDMConstructor(PChromiumCDMChild* aActor)
     }
   }
 
-  child->Init(static_cast<cdm::ContentDecryptionModule_9*>(cdm));
+  child->Init(static_cast<cdm::ContentDecryptionModule_9*>(cdm),
+              mGMPChild->mStorageId);
 
   return IPC_OK();
 }
