@@ -71,7 +71,7 @@ public:
   void OnDeferredInitializationDone(cdm::StreamType aStreamType,
                                     cdm::Status aDecoderStatus) override {}
   // cdm::Host_9 interface
-  void RequestStorageId(uint32_t aVersion) override {}
+  void RequestStorageId(uint32_t aVersion) override;
   cdm::FileIO* CreateFileIO(cdm::FileIOClient* aClient) override;
 
   // cdm::Host_8 implementation
