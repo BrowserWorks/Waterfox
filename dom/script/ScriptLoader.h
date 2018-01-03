@@ -242,9 +242,7 @@ public:
                             ScriptLoadRequest* aRequest,
                             nsresult aChannelStatus,
                             nsresult aSRIStatus,
-                            mozilla::dom::SRICheckDataVerifier* aSRIDataVerifier);
-
-  void HandleLoadError(ScriptLoadRequest *aRequest, nsresult aResult);
+                            SRICheckDataVerifier* aSRIDataVerifier);
 
   /**
    * Returns wether any request is queued, and not executed yet.
@@ -389,6 +387,8 @@ public:
    */
   nsresult RestartLoad(ScriptLoadRequest* aRequest);
 
+  void HandleLoadError(ScriptLoadRequest *aRequest, nsresult aResult);
+
   /**
    * Process any pending requests asynchronously (i.e. off an event) if there
    * are any. Note that this is a no-op if there aren't any currently pending
@@ -422,6 +422,16 @@ public:
   {
     return mEnabled && !mBlockerCount;
   }
+
+  nsresult VerifySRI(ScriptLoadRequest *aRequest,
+                     nsIIncrementalStreamLoader* aLoader,
+                     nsresult aSRIStatus,
+                     SRICheckDataVerifier* aSRIDataVerifier) const;
+
+  nsresult SaveSRIHash(ScriptLoadRequest *aRequest,
+                       SRICheckDataVerifier* aSRIDataVerifier) const;
+
+  void ReportErrorToConsole(ScriptLoadRequest *aRequest, nsresult aResult) const;
 
   nsresult AttemptAsyncScriptCompile(ScriptLoadRequest* aRequest);
   nsresult ProcessRequest(ScriptLoadRequest* aRequest);
