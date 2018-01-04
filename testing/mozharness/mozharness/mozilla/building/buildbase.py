@@ -369,6 +369,7 @@ class BuildOptionParser(object):
         'api-16-debug-artifact': 'builds/releng_sub_%s_configs/%s_api_16_debug_artifact.py',
         'api-16-gradle': 'builds/releng_sub_%s_configs/%s_api_16_gradle.py',
         'api-16-gradle-artifact': 'builds/releng_sub_%s_configs/%s_api_16_gradle_artifact.py',
+        'api-16-without-google-play-services': 'builds/releng_sub_%s_configs/%s_api_16_without_google_play_services.py',
         'x86': 'builds/releng_sub_%s_configs/%s_x86.py',
         'x86-old-id': 'builds/releng_sub_%s_configs/%s_x86_old_id.py',
         'x86-artifact': 'builds/releng_sub_%s_configs/%s_x86_artifact.py',
