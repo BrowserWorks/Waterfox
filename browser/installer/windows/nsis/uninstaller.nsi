@@ -284,21 +284,21 @@ Section "Uninstall"
     ${un.SetAppLSPCategories}
   ${EndIf}
 
-  ${un.RegCleanAppHandler} "FirefoxURL-$AppUserModelID"
-  ${un.RegCleanAppHandler} "FirefoxHTML-$AppUserModelID"
+  ${un.RegCleanAppHandler} "WaterfoxURL-$AppUserModelID"
+  ${un.RegCleanAppHandler} "WaterfoxHTML-$AppUserModelID"
   ${un.RegCleanProtocolHandler} "ftp"
   ${un.RegCleanProtocolHandler} "http"
   ${un.RegCleanProtocolHandler} "https"
-  ${un.RegCleanFileHandler}  ".htm"   "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".html"  "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".shtml" "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".xht"   "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".xhtml" "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".oga"  "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".ogg"  "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".ogv"  "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".pdf"  "FirefoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".webm"  "FirefoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".htm"   "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".html"  "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".shtml" "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".xht"   "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".xhtml" "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".oga"  "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".ogg"  "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".ogv"  "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".pdf"  "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".webm"  "WaterfoxHTML-$AppUserModelID"
 
   SetShellVarContext all  ; Set SHCTX to HKLM
   ${un.GetSecondInstallPath} "Software\Mozilla" $R9
@@ -315,20 +315,20 @@ Section "Uninstall"
 
   ; Remove old protocol handler and StartMenuInternet keys without install path
   ; hashes, but only if they're for this installation.
-  ReadRegStr $0 HKLM "Software\Classes\FirefoxHTML\DefaultIcon" ""
+  ReadRegStr $0 HKLM "Software\Classes\WaterfoxHTML\DefaultIcon" ""
   StrCpy $0 $0 -2
   ${If} $0 == "$INSTDIR\${FileMainEXE}"
-    DeleteRegKey HKLM "Software\Classes\FirefoxHTML"
-    DeleteRegKey HKLM "Software\Classes\FirefoxURL"
+    DeleteRegKey HKLM "Software\Classes\WaterfoxHTML"
+    DeleteRegKey HKLM "Software\Classes\WaterfoxURL"
     ${StrFilter} "${FileMainEXE}" "+" "" "" $R9
     DeleteRegKey HKLM "Software\Clients\StartMenuInternet\$R9"
     DeleteRegValue HKLM "Software\RegisteredApplications" "${AppRegName}"
   ${EndIf}
-  ReadRegStr $0 HKCU "Software\Classes\FirefoxHTML\DefaultIcon" ""
+  ReadRegStr $0 HKCU "Software\Classes\WaterfoxHTML\DefaultIcon" ""
   StrCpy $0 $0 -2
   ${If} $0 == "$INSTDIR\${FileMainEXE}"
-    DeleteRegKey HKCU "Software\Classes\FirefoxHTML"
-    DeleteRegKey HKCU "Software\Classes\FirefoxURL"
+    DeleteRegKey HKCU "Software\Classes\WaterfoxHTML"
+    DeleteRegKey HKCU "Software\Classes\WaterfoxURL"
     ${StrFilter} "${FileMainEXE}" "+" "" "" $R9
     DeleteRegKey HKCU "Software\Clients\StartMenuInternet\$R9"
     DeleteRegValue HKCU "Software\RegisteredApplications" "${AppRegName}"
@@ -442,12 +442,12 @@ Section "Uninstall"
   ; clients registry key by the OS under some conditions.
   System::Call "shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i 0, i 0, i 0)"
 
-  ; Users who uninstall then reinstall expecting Firefox to use a clean profile
-  ; may be surprised during first-run. This key is checked during startup of Firefox and
+  ; Users who uninstall then reinstall expecting Waterfox to use a clean profile
+  ; may be surprised during first-run. This key is checked during startup of Waterfox and
   ; subsequently deleted after checking. If the value is found during startup
-  ; the browser will offer to Reset Firefox. We use the UpdateChannel to match
-  ; uninstalls of Firefox-release with reinstalls of Firefox-release, for example.
-  WriteRegStr HKCU "Software\Mozilla\Firefox" "Uninstalled-${UpdateChannel}" "True"
+  ; the browser will offer to Reset Waterfox. We use the UpdateChannel to match
+  ; uninstalls of Waterfox-release with reinstalls of Waterfox-release, for example.
+  WriteRegStr HKCU "Software\Mozilla\Waterfox" "Uninstalled-${UpdateChannel}" "True"
 
 !ifdef MOZ_MAINTENANCE_SERVICE
   ; Get the path the allowed cert is at and remove it
