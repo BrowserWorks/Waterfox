@@ -13,7 +13,7 @@ SOURCES += [
     'cubeb_log.cpp',
     'cubeb_mixer.cpp',
     'cubeb_panner.cpp',
-    'cubeb_utils.c'
+    'cubeb_strings.c'
 ]
 
 if CONFIG['MOZ_ALSA']:
@@ -89,4 +89,4 @@ CFLAGS += CONFIG['MOZ_ALSA_CFLAGS']
 CFLAGS += CONFIG['MOZ_PULSEAUDIO_CFLAGS']
 
 # We allow warnings for third-party code that can be updated from upstream.
-ALLOW_COMPILER_WARNINGS = True
+AllowCompilerWarnings()

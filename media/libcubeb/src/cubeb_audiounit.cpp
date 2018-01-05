@@ -63,6 +63,8 @@ void audiounit_stream_stop_internal(cubeb_stream * stm);
 void audiounit_stream_start_internal(cubeb_stream * stm);
 static void audiounit_close_stream(cubeb_stream *stm);
 static int audiounit_setup_stream(cubeb_stream *stm);
+static std::vector<AudioObjectID>
+audiounit_get_devices_of_type(cubeb_device_type devtype);
 
 extern cubeb_ops const audiounit_ops;
 
@@ -574,7 +576,7 @@ static int audiounit_stream_set_volume(cubeb_stream * stm, float volume);
 static int audiounit_uninstall_device_changed_callback(cubeb_stream * stm);
 static AudioObjectID audiounit_get_default_device_id(cubeb_device_type type);
 
-static void
+static int
 audiounit_set_device_info(cubeb_stream * stm, AudioDeviceID id, io_side side)
 {
   assert(stm);
@@ -599,6 +601,9 @@ audiounit_set_device_info(cubeb_stream * stm, AudioDeviceID id, io_side side)
   }
 
   AudioDeviceID default_device_id = audiounit_get_default_device_id(type);
+  if (default_device_id == kAudioObjectUnknown) {
+    return CUBEB_ERROR;
+  }
   if (id == kAudioObjectUnknown) {
     info->id = default_device_id;
     info->flags |= DEV_SELECTED_DEFAULT;
@@ -611,6 +616,8 @@ audiounit_set_device_info(cubeb_stream * stm, AudioDeviceID id, io_side side)
   assert(info->id);
   assert(info->flags & DEV_INPUT && !(info->flags & DEV_OUTPUT) ||
            !(info->flags & DEV_INPUT) && info->flags & DEV_OUTPUT);
+
+  return CUBEB_OK;
 }
 
 
@@ -643,12 +650,20 @@ audiounit_reinit_stream(cubeb_stream * stm, device_flags_value flags)
      * default system device change. In both cases cubeb switch on the new default
      * device. This is considered the most expected behavior for the user. */
     if (flags & DEV_INPUT) {
-      audiounit_set_device_info(stm, 0, INPUT);
+      r = audiounit_set_device_info(stm, 0, INPUT);
+      if (r != CUBEB_OK) {
+        LOG("(%p) Set input device info failed. This can happen when last media device is unplugged", stm);
+        return CUBEB_ERROR;
+      }
     }
     /* Always use the default output on reinit. This is not correct in every case
      * but it is sufficient for Firefox and prevent reinit from reporting failures.
      * It will change soon when reinit mechanism will be updated. */
-    audiounit_set_device_info(stm, 0, OUTPUT);
+    r = audiounit_set_device_info(stm, 0, OUTPUT);
+    if (r != CUBEB_OK) {
+      LOG("(%p) Set output device info failed. This can happen when last media device is unplugged", stm);
+      return CUBEB_ERROR;
+    }
 
     if (audiounit_setup_stream(stm) != CUBEB_OK) {
       LOG("(%p) Stream reinit failed.", stm);
@@ -671,12 +686,35 @@ audiounit_reinit_stream(cubeb_stream * stm, device_flags_value flags)
   return CUBEB_OK;
 }
 
+static char const *
+event_addr_to_string(AudioObjectPropertySelector selector)
+{
+  switch(selector) {
+    case kAudioHardwarePropertyDefaultOutputDevice:
+      return "kAudioHardwarePropertyDefaultOutputDevice";
+    case kAudioHardwarePropertyDefaultInputDevice:
+      return "kAudioHardwarePropertyDefaultInputDevice";
+    case kAudioDevicePropertyDeviceIsAlive:
+      return "kAudioDevicePropertyDeviceIsAlive";
+    case kAudioDevicePropertyDataSource:
+      return "kAudioDevicePropertyDataSource";
+    default:
+      return "Unknown";
+  }
+}
+
+static int audiounit_uninstall_system_changed_callback(cubeb_stream * stm);
+
 static OSStatus
-audiounit_property_listener_callback(AudioObjectID /* id */, UInt32 address_count,
+audiounit_property_listener_callback(AudioObjectID id, UInt32 address_count,
                                      const AudioObjectPropertyAddress * addresses,
                                      void * user)
 {
   cubeb_stream * stm = (cubeb_stream*) user;
+  if (stm->switching_device) {
+    LOG("Switching is already taking place. Skip Event %s for id=%d", event_addr_to_string(addresses[0].mSelector), id);
+    return noErr;
+  }
   stm->switching_device = true;
   device_flags_value switch_side = DEV_UKNOWN;
 
@@ -684,23 +722,24 @@ audiounit_property_listener_callback(AudioObjectID /* id */, UInt32 address_coun
   for (UInt32 i = 0; i < address_count; i++) {
     switch(addresses[i].mSelector) {
       case kAudioHardwarePropertyDefaultOutputDevice: {
-          LOG("Event[%u] - mSelector == kAudioHardwarePropertyDefaultOutputDevice", (unsigned int) i);
+          LOG("Event[%u] - mSelector == kAudioHardwarePropertyDefaultOutputDevice for id=%d", (unsigned int) i, id);
           // Allow restart to choose the new default
           switch_side |= DEV_OUTPUT;
         }
         break;
       case kAudioHardwarePropertyDefaultInputDevice: {
-          LOG("Event[%u] - mSelector == kAudioHardwarePropertyDefaultInputDevice", (unsigned int) i);
+          LOG("Event[%u] - mSelector == kAudioHardwarePropertyDefaultInputDevice for id=%d", (unsigned int) i, id);
           // Allow restart to choose the new default
           switch_side |= DEV_INPUT;
         }
       break;
       case kAudioDevicePropertyDeviceIsAlive: {
-          LOG("Event[%u] - mSelector == kAudioDevicePropertyDeviceIsAlive", (unsigned int) i);
+          LOG("Event[%u] - mSelector == kAudioDevicePropertyDeviceIsAlive for id=%d", (unsigned int) i, id);
           // If this is the default input device ignore the event,
           // kAudioHardwarePropertyDefaultInputDevice will take care of the switch
           if (stm->input_device.flags & DEV_SYSTEM_DEFAULT) {
             LOG("It's the default input device, ignore the event");
+            stm->switching_device = false;
             return noErr;
           }
           // Allow restart to choose the new default. Event register only for input.
@@ -708,11 +747,18 @@ audiounit_property_listener_callback(AudioObjectID /* id */, UInt32 address_coun
         }
         break;
       case kAudioDevicePropertyDataSource: {
-          LOG("Event[%u] - mSelector == kAudioHardwarePropertyDataSource", (unsigned int) i);
-          return noErr;
+          LOG("Event[%u] - mSelector == kAudioHardwarePropertyDataSource for id=%d", (unsigned int) i, id);
+          if (stm->input_unit) {
+            switch_side |= DEV_INPUT;
+          }
+          if (stm->output_unit) {
+            switch_side |= DEV_OUTPUT;
+          }
         }
+        break;
       default:
         LOG("Event[%u] - mSelector == Unexpected Event id %d, return", (unsigned int) i, addresses[i].mSelector);
+        stm->switching_device = false;
         return noErr;
     }
   }
@@ -737,6 +783,9 @@ audiounit_property_listener_callback(AudioObjectID /* id */, UInt32 address_coun
   // Get/SetProperties method from inside notify callback
   dispatch_async(stm->context->serial_queue, ^() {
     if (audiounit_reinit_stream(stm, switch_side) != CUBEB_OK) {
+      if (audiounit_uninstall_system_changed_callback(stm) != CUBEB_OK) {
+        LOG("(%p) Could not uninstall the device changed callback", stm);
+      }
       stm->state_callback(stm, stm->user_ptr, CUBEB_STATE_STOPPED);
       LOG("(%p) Could not reopen the stream after switching.", stm);
     }
@@ -883,7 +932,7 @@ audiounit_uninstall_system_changed_callback(cubeb_stream * stm)
 {
   OSStatus r;
 
-  if (stm->output_unit) {
+  if (has_output(stm)) {
     r = audiounit_remove_listener(stm, kAudioObjectSystemObject, kAudioHardwarePropertyDefaultOutputDevice,
                                   kAudioObjectPropertyScopeGlobal, &audiounit_property_listener_callback);
     if (r != noErr) {
@@ -891,7 +940,7 @@ audiounit_uninstall_system_changed_callback(cubeb_stream * stm)
     }
   }
 
-  if (stm->input_unit) {
+  if (has_input(stm)) {
     r = audiounit_remove_listener(stm, kAudioObjectSystemObject, kAudioHardwarePropertyDefaultInputDevice,
                                   kAudioObjectPropertyScopeGlobal, &audiounit_property_listener_callback);
     if (r != noErr) {
@@ -1616,7 +1665,8 @@ audiounit_activate_clock_drift_compensation(const AudioDeviceID aggregate_device
                                                kAudioObjectPropertyScopeGlobal,
                                                kAudioObjectPropertyElementMaster };
 
-  for (UInt32 i = 0; i < subdevices_num; ++i) {
+  // Start from the second device since the first is the master clock
+  for (UInt32 i = 1; i < subdevices_num; ++i) {
     UInt32 drift_compensation_value = 1;
     rv = AudioObjectSetPropertyData(sub_devices[i],
                                     &address_drift,
@@ -1690,6 +1740,9 @@ audiounit_create_aggregate_device(cubeb_stream * stm)
 static int
 audiounit_destroy_aggregate_device(AudioObjectID plugin_id, AudioDeviceID * aggregate_device_id)
 {
+  assert(aggregate_device_id &&
+         *aggregate_device_id != kAudioDeviceUnknown &&
+         plugin_id != kAudioObjectUnknown);
   AudioObjectPropertyAddress destroy_aggregate_device_addr = { kAudioPlugInDestroyAggregateDevice,
                                                                kAudioObjectPropertyScopeGlobal,
                                                                kAudioObjectPropertyElementMaster};
@@ -2262,7 +2315,8 @@ audiounit_setup_stream(cubeb_stream * stm)
   device_info in_dev_info = stm->input_device;
   device_info out_dev_info = stm->output_device;
 
-  if (has_input(stm) && has_output(stm)) {
+  if (has_input(stm) && has_output(stm) &&
+      stm->input_device.id != stm->output_device.id) {
     r = audiounit_create_aggregate_device(stm);
     if (r != CUBEB_OK) {
       stm->aggregate_device_id = 0;
@@ -2455,7 +2509,9 @@ audiounit_stream_init(cubeb * context,
                       cubeb_state_callback state_callback,
                       void * user_ptr)
 {
-  std::unique_ptr<cubeb_stream, decltype(&audiounit_stream_destroy)> stm(nullptr, audiounit_stream_destroy);
+  std::unique_ptr<cubeb_stream, decltype(&audiounit_stream_destroy)> stm(new cubeb_stream(context),
+                                                                         audiounit_stream_destroy);
+  context->active_streams += 1;
   int r;
 
   assert(context);
@@ -2466,8 +2522,6 @@ audiounit_stream_init(cubeb * context,
     return CUBEB_ERROR_INVALID_PARAMETER;
   }
 
-  stm.reset(new cubeb_stream(context));
-
   /* These could be different in the future if we have both
    * full-duplex stream and different devices for input vs output. */
   stm->data_callback = data_callback;
@@ -2476,11 +2530,19 @@ audiounit_stream_init(cubeb * context,
   stm->latency_frames = latency_frames;
   if (input_stream_params) {
     stm->input_stream_params = *input_stream_params;
-    audiounit_set_device_info(stm.get(), reinterpret_cast<uintptr_t>(input_device), INPUT);
+    r = audiounit_set_device_info(stm.get(), reinterpret_cast<uintptr_t>(input_device), INPUT);
+    if (r != CUBEB_OK) {
+      LOG("(%p) Fail to set device info for input.", stm.get());
+      return r;
+    }
   }
   if (output_stream_params) {
     stm->output_stream_params = *output_stream_params;
-    audiounit_set_device_info(stm.get(), reinterpret_cast<uintptr_t>(output_device), OUTPUT);
+    r = audiounit_set_device_info(stm.get(), reinterpret_cast<uintptr_t>(output_device), OUTPUT);
+    if (r != CUBEB_OK) {
+      LOG("(%p) Fail to set device info for output.", stm.get());
+      return r;
+    }
   }
 
   auto_lock context_lock(context->mutex);
@@ -2488,7 +2550,6 @@ audiounit_stream_init(cubeb * context,
     // It's not critical to lock here, because no other thread has been started
     // yet, but it allows to assert that the lock has been taken in
     // `audiounit_setup_stream`.
-    context->active_streams += 1;
     auto_lock lock(stm->mutex);
     r = audiounit_setup_stream(stm.get());
   }
@@ -2869,35 +2930,6 @@ int audiounit_stream_register_device_changed_callback(cubeb_stream * stream,
   return CUBEB_OK;
 }
 
-static OSStatus
-audiounit_get_devices(std::vector<AudioObjectID> & devices)
-{
-  OSStatus ret;
-  UInt32 size = 0;
-  AudioObjectPropertyAddress adr = { kAudioHardwarePropertyDevices,
-                                     kAudioObjectPropertyScopeGlobal,
-                                     kAudioObjectPropertyElementMaster };
-
-  ret = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &adr, 0, NULL, &size);
-  if (ret != noErr) {
-    return ret;
-  }
-
-  uint32_t count = static_cast<uint32_t>(size / sizeof(AudioObjectID));
-  if (count == 0) {
-    return -1;
-  }
-  assert(devices.empty());
-  devices.resize(count);
-
-  ret = AudioObjectGetPropertyData(kAudioObjectSystemObject, &adr, 0, NULL, &size, devices.data());
-  if (ret != noErr) {
-    devices.clear();
-  }
-
-  return ret;
-}
-
 static char *
 audiounit_strref_to_cstr_utf8(CFStringRef strref)
 {
@@ -3104,22 +3136,30 @@ static int
 audiounit_enumerate_devices(cubeb * /* context */, cubeb_device_type type,
                             cubeb_device_collection * collection)
 {
-  std::vector<AudioObjectID> hwdevs;
-  uint32_t i;
-  OSStatus err;
+  std::vector<AudioObjectID> input_devs;
+  std::vector<AudioObjectID> output_devs;
 
-  err = audiounit_get_devices(hwdevs);
-  if (err != noErr) {
-    return CUBEB_ERROR;
+  // Count number of input and output devices.  This is not
+  // necessarily the same as the count of raw devices supported by the
+  // system since, for example, with Soundflower installed, some
+  // devices may report as being both input *and* output and cubeb
+  // separates those into two different devices.
+
+  if (type & CUBEB_DEVICE_TYPE_OUTPUT) {
+    output_devs = audiounit_get_devices_of_type(CUBEB_DEVICE_TYPE_OUTPUT);
   }
 
-  auto devices = new cubeb_device_info[hwdevs.size()];
+  if (type & CUBEB_DEVICE_TYPE_INPUT) {
+    input_devs = audiounit_get_devices_of_type(CUBEB_DEVICE_TYPE_INPUT);
+  }
+
+  auto devices = new cubeb_device_info[output_devs.size() + input_devs.size()];
   collection->count = 0;
 
   if (type & CUBEB_DEVICE_TYPE_OUTPUT) {
-    for (i = 0; i < hwdevs.size(); i++) {
+    for (auto dev: output_devs) {
       auto device = &devices[collection->count];
-      auto err = audiounit_create_device_from_hwdev(device, hwdevs[i], CUBEB_DEVICE_TYPE_OUTPUT);
+      auto err = audiounit_create_device_from_hwdev(device, dev, CUBEB_DEVICE_TYPE_OUTPUT);
       if (err != CUBEB_OK) {
         continue;
       }
@@ -3128,9 +3168,9 @@ audiounit_enumerate_devices(cubeb * /* context */, cubeb_device_type type,
   }
 
   if (type & CUBEB_DEVICE_TYPE_INPUT) {
-    for (i = 0; i < hwdevs.size(); i++) {
+    for (auto dev: input_devs) {
       auto device = &devices[collection->count];
-      auto err = audiounit_create_device_from_hwdev(device, hwdevs[i], CUBEB_DEVICE_TYPE_INPUT);
+      auto err = audiounit_create_device_from_hwdev(device, dev, CUBEB_DEVICE_TYPE_INPUT);
       if (err != CUBEB_OK) {
         continue;
       }
