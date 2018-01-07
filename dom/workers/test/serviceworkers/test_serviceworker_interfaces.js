@@ -25,7 +25,7 @@ var ecmaGlobals =
   [
     "Array",
     "ArrayBuffer",
-    "Atomics",
+    {name: "Atomics", disabled: true},
     "Boolean",
     {name: "ByteLengthQueuingStrategy", optional: true},
     {name: "CountQueuingStrategy", optional: true},
@@ -57,7 +57,7 @@ var ecmaGlobals =
     "Reflect",
     "RegExp",
     "Set",
-    "SharedArrayBuffer",
+    {name: "SharedArrayBuffer", disabled: true},
     {name: "SIMD", nightly: true},
     "StopIteration",
     "String",
@@ -254,7 +254,8 @@ function createInterfaceMap(version, userAgent) {
             (entry.nonReleaseAndroid === !(isAndroid && !isRelease) && isAndroid) ||
             (entry.desktop === !isDesktop) ||
             (entry.android === !isAndroid && !entry.nonReleaseAndroid && !entry.nightlyAndroid) ||
-            (entry.release === !isRelease)) {
+            (entry.release === !isRelease) ||
+            entry.disabled) {
           interfaceMap[entry.name] = false;
         } else if (entry.optional) {
           interfaceMap[entry.name] = "optional";
