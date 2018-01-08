@@ -28,8 +28,8 @@
 
 !define FileMainEXE           "@MOZ_APP_NAME@.exe"
 !define WindowClass           "FirefoxMessageWindow"
-!define DDEApplication        "Firefox"
-!define AppRegName            "Firefox"
+!define DDEApplication        "Waterfox"
+!define AppRegName            "Waterfox"
 
 !ifndef DEV_EDITION
 !define BrandShortName        "@MOZ_APP_DISPLAYNAME@"
