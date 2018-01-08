@@ -478,6 +478,7 @@ public:
                                 nsresult aStatus);
 
   void AddDeferRequest(ScriptLoadRequest* aRequest);
+  void AddAsyncRequest(ScriptLoadRequest* aRequest);
   bool MaybeRemovedDeferRequests();
 
   void MaybeMoveToLoadedList(ScriptLoadRequest* aRequest);
