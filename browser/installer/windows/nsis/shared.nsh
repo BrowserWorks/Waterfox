@@ -537,6 +537,12 @@
 !macro SetStartMenuInternet RegKey
   ${GetLongPath} "$INSTDIR\${FileMainEXE}" $8
   ${GetLongPath} "$INSTDIR\uninstall\helper.exe" $7
+  
+  ; Handle the Firefox-$AppUserModelID Key and Value that can exist
+  ; from previous Waterfox versions where ${AppRegName} was set to "Firefox".
+  DeleteRegKey ${RegKey} "Software\Clients\StartMenuInternet\Firefox-$AppUserModelID"
+  DeleteRegValue ${RegKey} "Software\RegisteredApplications" "Firefox-$AppUserModelID"
+  ClearErrors
 
   ; If we already have keys at the old FIREFOX.EXE path, then just update those.
   ; We have to be careful to update the existing keys in place so that we don't
