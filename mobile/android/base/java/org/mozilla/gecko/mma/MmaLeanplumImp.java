@@ -39,13 +39,7 @@ public class MmaLeanplumImp implements MmaInterface {
             Leanplum.setAppIdForDevelopmentMode(MmaConstants.MOZ_LEANPLUM_SDK_CLIENTID, MmaConstants.MOZ_LEANPLUM_SDK_KEY);
         }
 
-        final SharedPreferences sharedPreferences = activity.getPreferences(0);
-        String deviceId = sharedPreferences.getString(KEY_ANDROID_PREF_STRING_LEANPLUM_DEVICE_ID, null);
-        if (deviceId == null) {
-            deviceId = UUID.randomUUID().toString();
-            sharedPreferences.edit().putString(KEY_ANDROID_PREF_STRING_LEANPLUM_DEVICE_ID, deviceId).apply();
-        }
-        Leanplum.setDeviceId(deviceId);
+        LeanplumPushService.setGcmSenderId(AppConstants.MOZ_ANDROID_GCM_SENDERIDS);
 
         if (attributes != null) {
             Leanplum.start(activity, attributes);
@@ -71,6 +65,18 @@ public class MmaLeanplumImp implements MmaInterface {
     }
 
     @Override
+    public void setCustomIcon(@DrawableRes final int iconResId) {
+        LeanplumPushService.setCustomizer(new LeanplumPushNotificationCustomizer() {
+            @Override
+            public void customize(NotificationCompat.Builder builder, Bundle notificationPayload) {
+                builder.setSmallIcon(iconResId);
+                builder.setDefaults(Notification.DEFAULT_SOUND);
+            }
+
+        });
+    }
+
+    @Override
     public void start(Context context) {
 
     }
@@ -90,6 +96,20 @@ public class MmaLeanplumImp implements MmaInterface {
     @Override
     public void stop() {
         Leanplum.stop();
+    }
+
+    @Override
+    public boolean handleGcmMessage(Context context, String from, Bundle bundle) {
+        if (from != null && from.equals(MmaConstants.MOZ_MMA_SENDER_ID) && bundle.containsKey(Constants.Keys.PUSH_MESSAGE_TEXT)) {
+            LeanplumPushService.handleNotification(context, bundle);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void setDeviceId(@NonNull String deviceId) {
+        Leanplum.setDeviceId(deviceId);
     }
 
 }

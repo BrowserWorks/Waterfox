@@ -19,6 +19,11 @@ public class MmaStubImp implements MmaInterface {
     }
 
     @Override
+    public void setCustomIcon(@DrawableRes int iconResId) {
+
+    }
+
+    @Override
     public void start(Context context) {
 
     }
@@ -35,6 +40,16 @@ public class MmaStubImp implements MmaInterface {
 
     @Override
     public void stop() {
+
+    }
+
+    @Override
+    public boolean handleGcmMessage(Context context, String from, Bundle bundle) {
+        return false;
+    }
+
+    @Override
+    public void setDeviceId(@NonNull String deviceId) {
 
     }
 

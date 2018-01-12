@@ -15,6 +15,8 @@ import java.util.Map;
 public interface MmaInterface {
     void init(Activity Activity, Map<String, ?> attributes);
 
+    void setCustomIcon(@DrawableRes int iconResId);
+
     void start(Context context);
 
     void event(String mmaEvent);
@@ -22,4 +24,8 @@ public interface MmaInterface {
     void event(String mmaEvent, double value);
 
     void stop();
+
+    @CheckResult boolean handleGcmMessage(Context context, String from, Bundle bundle);
+
+    void setDeviceId(@NonNull String deviceId);
 }

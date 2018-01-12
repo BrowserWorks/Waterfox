@@ -62,7 +62,21 @@ public class MmaDelegate {
 
     public static void init(Activity activity) {
         applicationContext = new WeakReference<>(activity.getApplicationContext());
-        setupPrefHandler(activity);
+        // Since user attributes are gathered in Fennec, not in MMA implementation,
+        // we gather the information here then pass to mmaHelper.init()
+        // Note that generateUserAttribute always return a non null HashMap.
+        final Map<String, Object> attributes = gatherUserAttributes(activity);
+        final String deviceId = getDeviceId(activity);
+        mmaHelper.setDeviceId(deviceId);
+        PrefsHelper.setPref(GeckoPreferences.PREFS_MMA_DEVICE_ID, deviceId);
+        // above two config setup required to be invoked before mmaHelper.init.
+        mmaHelper.init(activity, attributes);
+
+        if (!isDefaultBrowser(activity)) {
+            mmaHelper.event(MmaDelegate.LAUNCH_BUT_NOT_DEFAULT_BROWSER);
+        }
+        mmaHelper.event(MmaDelegate.LAUNCH_BROWSER);
+
     }
 
     public static void stop() {
@@ -155,4 +169,27 @@ public class MmaDelegate {
         return (TextUtils.equals(packageName, context.getPackageName()));
     }
 
+    // Always use pass-in context. Do not use applicationContext here. applicationContext will be null if MmaDelegate.init() is not called.
+    public static boolean handleGcmMessage(@NonNull Context context, String from, @NonNull Bundle bundle) {
+        if (isMmaEnabled(context)) {
+            mmaHelper.setCustomIcon(R.drawable.ic_status_logo);
+            return mmaHelper.handleGcmMessage(context, from, bundle);
+        } else {
+            return false;
+        }
+    }
+
+    private static String getDeviceId(Activity activity) {
+        if (SwitchBoard.isInExperiment(activity, Experiments.LEANPLUM_DEBUG)) {
+            return DEBUG_LEANPLUM_DEVICE_ID;
+        }
+
+        final SharedPreferences sharedPreferences = activity.getPreferences(Context.MODE_PRIVATE);
+        String deviceId = sharedPreferences.getString(KEY_ANDROID_PREF_STRING_LEANPLUM_DEVICE_ID, null);
+        if (deviceId == null) {
+            deviceId = UUID.randomUUID().toString();
+            sharedPreferences.edit().putString(KEY_ANDROID_PREF_STRING_LEANPLUM_DEVICE_ID, deviceId).apply();
+        }
+        return deviceId;
+    }
 }
