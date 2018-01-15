@@ -11,7 +11,9 @@
 #include "GMPVideoEncoderChild.h"
 #include "GMPVideoHost.h"
 #include "nsDebugImpl.h"
+#ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
+#endif
 #include "nsIFile.h"
 #include "nsXULAppAPI.h"
 #include "gmp-video-decode.h"
@@ -556,8 +558,10 @@ GMPChild::AnswerStartPlugin(const nsString& aAdapter)
 
   nsCString libPath;
   if (!GetUTF8LibPath(libPath)) {
+    #ifdef MOZ_CRASHREPORTER
     CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("GMPLibraryPath"),
                                        NS_ConvertUTF16toUTF8(mPluginPath));
+    #endif
 
 #ifdef XP_WIN
     return IPC_FAIL(
@@ -611,8 +615,10 @@ GMPChild::AnswerStartPlugin(const nsString& aAdapter)
                         adapter)) {
     NS_WARNING("Failed to load GMP");
     delete platformAPI;
+    #ifdef MOZ_CRASHREPORTER
     CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("GMPLibraryPath"),
                                        NS_ConvertUTF16toUTF8(mPluginPath));
+    #endif
 
 #ifdef XP_WIN
     return IPC_FAIL(

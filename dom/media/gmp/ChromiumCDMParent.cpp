@@ -58,7 +58,7 @@ ChromiumCDMParent::Init(ChromiumCDMCallback* aCDMCallback,
                                         !aCDMCallback,
                                         !aMainThread);
     GMP_LOG("ChromiumCDMParent::Init(this=%p) failure since aCDMCallback(%p) or"
-            " aMainThread(%p) is nullptr", this, aCDMCallback, mMainThread);
+            " aMainThread(%p) is nullptr", this, aCDMCallback, aMainThread);
     return false;
   }
   mCDMCallback = aCDMCallback;
