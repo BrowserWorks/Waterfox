@@ -66,6 +66,7 @@ selfhosted.inputs = [
     'Function.js',
     'Generator.js',
     'Intl.js',
+    'intl/Collator.js',
     'intl/CurrencyDataGenerated.js',
     'intl/DateTimeFormat.js',
     'intl/IntlObject.js',
