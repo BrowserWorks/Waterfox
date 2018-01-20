@@ -67,6 +67,7 @@ selfhosted.inputs = [
     'Generator.js',
     'Intl.js',
     'intl/CurrencyDataGenerated.js',
+    'intl/IntlObject.js',
     'intl/LangTagMappingsGenerated.js',
     'Iterator.js',
     'Map.js',
