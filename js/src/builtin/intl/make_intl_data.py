@@ -13,8 +13,8 @@
     Target "langtags":
     This script extracts information about mappings between deprecated and
     current BCP 47 language tags from the IANA Language Subtag Registry and
-    converts it to JavaScript object definitions in IntlData.js. The definitions
-    are used in Intl.js.
+    converts it to JavaScript object definitions in
+    LangTagMappingsGenerated.js. The definitions are used in Intl.js.
 
     The IANA Language Subtag Registry is imported from
     https://www.iana.org/assignments/language-subtag-registry
@@ -214,7 +214,7 @@ def writeLanguageTagData(intlData, fileDate, url, langTagMappings, langSubtagMap
                      fileDate, url)
 
 def updateLangTags(args):
-    """ Update the IntlData.js file. """
+    """ Update the LangTagMappingsGenerated.js file. """
     url = args.url
     out = args.out
     filename = args.file
@@ -746,8 +746,8 @@ def processTimeZones(tzdataDir, icuDir, icuTzDir, version, ignoreBackzone, ignor
         println(tzdataVersionComment.format(version))
         println("")
 
-        println("#ifndef builtin_IntlTimeZoneData_h")
-        println("#define builtin_IntlTimeZoneData_h")
+        println("#ifndef builtin_intl_TimeZoneDataGenerated_h")
+        println("#define builtin_intl_TimeZoneDataGenerated_h")
         println("")
 
         println("namespace js {")
@@ -788,7 +788,7 @@ def processTimeZones(tzdataDir, icuDir, icuTzDir, version, ignoreBackzone, ignor
         println("} // namespace timezone")
         println("} // namespace js")
         println("")
-        println("#endif /* builtin_IntlTimeZoneData_h */")
+        println("#endif /* builtin_intl_TimeZoneDataGenerated_h */")
 
 def updateBackzoneLinks(tzdataDir, links):
     withZone = lambda fn: lambda zone_target: fn(zone_target[0])
@@ -1043,7 +1043,7 @@ def writeCurrencyFile(published, currencies, out):
         println("};")
 
 def updateCurrency(topsrcdir, args):
-    """ Update the IntlCurrency.js file. """
+    """ Update the CurrencyDataGenerated.js file. """
     import xml.etree.ElementTree as ET
     from random import randint
 
@@ -1063,7 +1063,7 @@ def updateCurrency(topsrcdir, args):
         published = tree.getroot().attrib["Pblshd"]
         currencies = readCurrencyFile(tree)
 
-        print("Writing IntlCurrency file...")
+        print("Writing CurrencyData file...")
         writeCurrencyFile(published, currencies, out)
 
     if filename is not None:
@@ -1084,12 +1084,12 @@ def updateCurrency(topsrcdir, args):
 if __name__ == "__main__":
     import argparse
 
-    # This script must reside in js/src/builtin to work correctly.
+    # This script must reside in js/src/builtin/intl to work correctly.
     (thisDir, thisFile) = os.path.split(os.path.abspath(sys.argv[0]))
     dirPaths = os.path.normpath(thisDir).split(os.sep)
-    if "/".join(dirPaths[-3:]) != "js/src/builtin":
-        raise RuntimeError("%s must reside in js/src/builtin" % sys.argv[0])
-    topsrcdir = "/".join(dirPaths[:-3])
+    if "/".join(dirPaths[-4:]) != "js/src/builtin/intl":
+        raise RuntimeError("%s must reside in js/src/builtin/intl" % sys.argv[0])
+    topsrcdir = "/".join(dirPaths[:-4])
 
     def EnsureHttps(v):
         if not v.startswith("https:"):
@@ -1107,7 +1107,7 @@ if __name__ == "__main__":
                              type=EnsureHttps,
                              help="Download url for language-subtag-registry.txt (default: %(default)s)")
     parser_tags.add_argument("--out",
-                             default="IntlData.js",
+                             default="LangTagMappingsGenerated.js",
                              help="Output file (default: %(default)s)")
     parser_tags.add_argument("file",
                              nargs="?",
@@ -1128,7 +1128,7 @@ if __name__ == "__main__":
                                 "accurate time zone canonicalization reflecting the actual time "
                                 "zones as used by ICU.")
     parser_tz.add_argument("--out",
-                           default="IntlTimeZoneData.h",
+                           default="TimeZoneDataGenerated.h",
                            help="Output file (default: %(default)s)")
     parser_tz.set_defaults(func=partial(updateTzdata, topsrcdir))
 
@@ -1141,7 +1141,7 @@ if __name__ == "__main__":
                                  help="Download url for the currency & funds code list (default: "
                                       "%(default)s)")
     parser_currency.add_argument("--out",
-                                 default="IntlCurrency.js",
+                                 default="CurrencyDataGenerated.js",
                                  help="Output file (default: %(default)s)")
     parser_currency.add_argument("file",
                                  nargs="?",
