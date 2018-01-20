@@ -70,6 +70,7 @@ selfhosted.inputs = [
     'intl/DateTimeFormat.js',
     'intl/IntlObject.js',
     'intl/LangTagMappingsGenerated.js',
+    'intl/NumberFormat.js',
     'intl/PluralRules.js',
     'intl/RelativeTimeFormat.js',
     'Iterator.js',
