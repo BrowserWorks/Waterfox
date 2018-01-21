@@ -17,6 +17,7 @@ UNIFIED_SOURCES += [
     'Eval.cpp',
     'Intl.cpp',
     'intl/CommonFunctions.cpp',
+    'intl/NumberFormat.cpp',
     'MapObject.cpp',
     'ModuleObject.cpp',
     'Object.cpp',
