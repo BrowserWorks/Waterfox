@@ -18,6 +18,7 @@ UNIFIED_SOURCES += [
     'Intl.cpp',
     'intl/Collator.cpp',
     'intl/CommonFunctions.cpp',
+    'intl/DateTimeFormat.cpp',
     'intl/NumberFormat.cpp',
     'intl/SharedIntlData.cpp',
     'MapObject.cpp',
