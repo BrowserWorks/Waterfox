@@ -19,6 +19,7 @@ UNIFIED_SOURCES += [
     'intl/Collator.cpp',
     'intl/CommonFunctions.cpp',
     'intl/NumberFormat.cpp',
+    'intl/SharedIntlData.cpp',
     'MapObject.cpp',
     'ModuleObject.cpp',
     'Object.cpp',
