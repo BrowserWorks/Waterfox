@@ -16,6 +16,7 @@ UNIFIED_SOURCES += [
     'DataViewObject.cpp',
     'Eval.cpp',
     'Intl.cpp',
+    'intl/Collator.cpp',
     'intl/CommonFunctions.cpp',
     'intl/NumberFormat.cpp',
     'MapObject.cpp',
