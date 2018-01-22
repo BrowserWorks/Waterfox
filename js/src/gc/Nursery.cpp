@@ -17,6 +17,7 @@
 #include "jsgc.h"
 #include "jsutil.h"
 
+#include "gc/FreeOp.h"
 #include "gc/GCInternals.h"
 #include "gc/Memory.h"
 #include "jit/JitFrames.h"

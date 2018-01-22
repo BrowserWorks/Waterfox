@@ -37,6 +37,7 @@
 #include "frontend/BytecodeCompiler.h"
 #include "frontend/BytecodeEmitter.h"
 #include "frontend/SharedContext.h"
+#include "gc/FreeOp.h"
 #include "gc/Marking.h"
 #include "jit/BaselineJIT.h"
 #include "jit/Ion.h"

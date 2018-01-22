@@ -9,6 +9,7 @@
 #include "jsapi.h"
 #include "jscntxt.h"
 
+#include "gc/FreeOp.h"
 #include "vm/SelfHosting.h"
 
 #include "vm/Interpreter-inl.h"

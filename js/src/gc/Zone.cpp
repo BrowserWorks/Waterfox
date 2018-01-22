@@ -8,6 +8,7 @@
 
 #include "jsgc.h"
 
+#include "gc/FreeOp.h"
 #include "gc/Policy.h"
 #include "jit/BaselineJIT.h"
 #include "jit/Ion.h"

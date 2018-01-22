@@ -39,6 +39,7 @@
 
 #include "builtin/DataViewObject.h"
 #include "gc/Barrier.h"
+#include "gc/FreeOp.h"
 #include "gc/Marking.h"
 #include "gc/Memory.h"
 #include "js/Conversions.h"
