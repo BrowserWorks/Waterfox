@@ -12,6 +12,9 @@ class nsIDOMNode;
 class nsIURI;
 class nsString;
 
+template<class> class nsCOMPtr;
+template<class> class nsTArray;
+
 #define NS_ITRANSFORMOBSERVER_IID \
 { 0x04b2d17c, 0xe98d, 0x45f5, \
   { 0x9a, 0x67, 0xb7, 0x01, 0x19, 0x59, 0x7d, 0xe7 } }
@@ -43,7 +46,8 @@ public:
 
   NS_IMETHOD SetTransformObserver(nsITransformObserver* aObserver) = 0;
   NS_IMETHOD LoadStyleSheet(nsIURI* aUri, nsIDocument* aLoaderDocument) = 0;
-  NS_IMETHOD SetSourceContentModel(nsIDOMNode* aSource) = 0;
+  NS_IMETHOD SetSourceContentModel(nsIDocument* aDocument,
+                                   const nsTArray<nsCOMPtr<nsIContent>>& aSource) = 0;
   NS_IMETHOD CancelLoads() = 0;
 
   NS_IMETHOD AddXSLTParamNamespace(const nsString& aPrefix,
