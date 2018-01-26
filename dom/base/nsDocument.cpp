@@ -10595,7 +10595,7 @@ nsIDocument::GetScrollingElement()
 {
   // Keep this in sync with IsScrollingElement.
   if (GetCompatibilityMode() == eCompatibility_NavQuirks) {
-    HTMLBodyElement* body = GetBodyElement();
+    RefPtr<HTMLBodyElement> body = GetBodyElement();
     if (body && !IsPotentiallyScrollable(body)) {
       return body;
     }
@@ -10616,6 +10616,7 @@ nsIDocument::IsScrollingElement(Element* aElement)
     return aElement == GetRootElement();
   }
 
+  // In the common case when aElement != body, avoid refcounting.
   HTMLBodyElement* body = GetBodyElement();
   if (aElement != body) {
     return false;
@@ -10624,7 +10625,8 @@ nsIDocument::IsScrollingElement(Element* aElement)
   // Now we know body is non-null, since aElement is not null.  It's the
   // scrolling element for the document if it itself is not potentially
   // scrollable.
-  return !IsPotentiallyScrollable(body);
+  RefPtr<HTMLBodyElement> strongBody(body);
+  return !IsPotentiallyScrollable(strongBody);
 }
 
 void
