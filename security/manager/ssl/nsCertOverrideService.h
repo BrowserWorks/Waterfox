@@ -29,6 +29,7 @@ public:
 
   nsCertOverride()
     : mPort(-1)
+    , mIsTemporary(false)
     , mOverrideBits(OverrideBits::None)
   {
   }

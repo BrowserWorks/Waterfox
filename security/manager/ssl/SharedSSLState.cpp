@@ -123,6 +123,7 @@ SharedSSLState::SharedSSLState()
 , mSocketCreated(false)
 , mOCSPStaplingEnabled(false)
 , mOCSPMustStapleEnabled(false)
+, mSignedCertTimestampsEnabled(false)
 {
   mIOLayerHelpers.Init();
   mClientAuthRemember->Init();
