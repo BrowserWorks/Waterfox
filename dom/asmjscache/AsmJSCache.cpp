@@ -68,12 +68,18 @@ namespace asmjscache {
 
 namespace {
 
+class ParentRunnable;
+
 // Anything smaller should compile fast enough that caching will just add
 // overhead.
 static const size_t sMinCachedModuleLength = 10000;
 
 // The number of characters to hash into the Metadata::Entry::mFastHash.
 static const unsigned sNumFastHashChars = 4096;
+
+// Track all live parent actors.
+typedef nsTArray<const ParentRunnable*> ParentActorArray;
+StaticAutoPtr<ParentActorArray> sLiveParentActors;
 
 nsresult
 WriteMetadataFile(nsIFile* aMetadataFile, const Metadata& aMetadata)
@@ -803,6 +809,13 @@ ParentRunnable::FinishOnOwningThread()
   FileDescriptorHolder::Finish();
 
   mDirectoryLock = nullptr;
+
+  MOZ_ASSERT(sLiveParentActors);
+  sLiveParentActors->RemoveElement(this);
+
+  if (sLiveParentActors->IsEmpty()) {
+    sLiveParentActors = nullptr;
+  }
 }
 
 NS_IMETHODIMP
@@ -1039,6 +1052,12 @@ AllocEntryParent(OpenMode aOpenMode,
 
   RefPtr<ParentRunnable> runnable =
     new ParentRunnable(aPrincipalInfo, aOpenMode, aWriteParams);
+
+  if (!sLiveParentActors) {
+    sLiveParentActors = new ParentActorArray();
+  }
+
+  sLiveParentActors->AppendElement(runnable);
 
   nsresult rv = NS_DispatchToMainThread(runnable);
   NS_ENSURE_SUCCESS(rv, nullptr);
@@ -1718,7 +1737,15 @@ public:
 
   void
   ShutdownWorkThreads() override
-  { }
+  {
+    AssertIsOnBackgroundThread();
+
+    if (sLiveParentActors) {
+      MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() {
+        return !sLiveParentActors;
+      }));
+    }
+  }
 
 private:
   nsAutoRefCnt mRefCnt;
