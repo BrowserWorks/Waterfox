@@ -1028,11 +1028,6 @@ struct DeletePolicy<js::ModuleScope::Data>
   : public js::GCManagedDeletePolicy<js::ModuleScope::Data>
 { };
 
-template <>
-struct DeletePolicy<js::WasmInstanceScope::Data>
-  : public js::GCManagedDeletePolicy<js::WasmInstanceScope::Data>
-{ };
-
 } // namespace JS
 
 #endif // gc_Zone_h
