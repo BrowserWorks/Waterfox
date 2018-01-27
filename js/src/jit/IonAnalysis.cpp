@@ -4432,7 +4432,8 @@ jit::AnalyzeArgumentsUsage(JSContext* cx, JSScript* scriptArg)
     if (script->length() > MAX_SCRIPT_SIZE)
         return true;
 
-    if (!script->ensureHasTypes(cx))
+    AutoKeepTypeScripts keepTypes(cx);
+    if (!script->ensureHasTypes(cx, keepTypes))
         return false;
 
     TraceLoggerThread* logger = TraceLoggerForCurrentThread(cx);
